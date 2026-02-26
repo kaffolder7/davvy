@@ -28,7 +28,7 @@ This MVP uses `sabre/dav` because:
 - Autodiscovery redirects for `/.well-known/caldav` and `/.well-known/carddav`
 - ICS/vCard validation and normalization for stronger client interoperability
 - DAV sync token change tracking with `added`, `modified`, and `deleted` deltas
-- Docker packaging + Railway deployment config (single replica or scaled replicas)
+- Docker packaging + deployment docs for Railway or Coolify (single replica or scaled replicas)
 - PHPUnit tests for key workflows
 
 ## Quick Start (Docker) 🐳
@@ -134,15 +134,19 @@ docker compose run --build --rm --user root --entrypoint sh app -lc "cp .env.exa
 
 ## Deployment ☁️
 
-Railway is configured via [`railway.toml`](railway.toml).
+Davvy is packaged as a Dockerized app and can be deployed on Railway or Coolify.
+
+Railway is configured via [`railway.toml`](railway.toml).  
+Coolify can deploy the same [`Dockerfile`](Dockerfile) without code changes.
 
 Production startup runs `php artisan app:preflight` before DB bootstrap so insecure configuration fails fast.
 
-When deployed with PostgreSQL on Railway, startup DB bootstrap (`migrate` and optional `db:seed`) is guarded by a PostgreSQL advisory lock, so the app can safely run with one or more replicas.
+When deployed with PostgreSQL on Railway or Coolify, startup DB bootstrap (`migrate` and optional `db:seed`) is guarded by a PostgreSQL advisory lock, so the app can safely run with one or more replicas.
 
 See docs:
 - [Architecture](docs/architecture.md)
 - [API Reference](docs/api.md)
 - [DAV Client Setup](docs/clients.md)
-- [Deployment](docs/deployment.md)
-- [Release Checklist](docs/release-checklist.md)
+- [Deployment](docs/deployment.md) (Railway + Coolify)
+- [Release Checklist (Railway)](docs/release-checklist.md)
+- [Release Checklist (Coolify)](docs/release-checklist-coolify.md)
