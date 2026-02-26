@@ -45,7 +45,7 @@ class DavBackendPermissionTest extends TestCase
         $backend->createCalendarObject(
             $calendar->id,
             'event-1.ics',
-            "BEGIN:VCALENDAR\nBEGIN:VEVENT\nUID:1\nSUMMARY:Read-only Test\nEND:VEVENT\nEND:VCALENDAR"
+            "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Davvy//Tests//EN\nBEGIN:VEVENT\nUID:1\nDTSTAMP:20260227T090000Z\nDTSTART:20260227T100000Z\nSUMMARY:Read-only Test\nEND:VEVENT\nEND:VCALENDAR"
         );
     }
 
@@ -75,7 +75,7 @@ class DavBackendPermissionTest extends TestCase
         $etag = $backend->createCalendarObject(
             $calendar->id,
             'event-2.ics',
-            "BEGIN:VCALENDAR\nBEGIN:VEVENT\nUID:2\nSUMMARY:Admin Test\nEND:VEVENT\nEND:VCALENDAR"
+            "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Davvy//Tests//EN\nBEGIN:VEVENT\nUID:2\nDTSTAMP:20260227T090000Z\nDTSTART:20260227T100000Z\nSUMMARY:Admin Test\nEND:VEVENT\nEND:VCALENDAR"
         );
 
         $this->assertNotEmpty($etag);

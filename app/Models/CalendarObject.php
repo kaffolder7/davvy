@@ -13,6 +13,7 @@ class CalendarObject extends Model
     protected $fillable = [
         'calendar_id',
         'uri',
+        'uid',
         'etag',
         'size',
         'component_type',

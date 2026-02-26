@@ -4,6 +4,7 @@ namespace App\Services\Dav;
 
 use DateTimeImmutable;
 use Sabre\DAV\Exception\BadRequest;
+use Sabre\VObject\Component;
 use Sabre\VObject\Component\VCalendar;
 use Sabre\VObject\ParseException;
 use Sabre\VObject\Reader;
@@ -11,6 +12,48 @@ use Sabre\VObject\Reader;
 class IcsValidator
 {
     public function validateAndNormalize(string $calendarData): array
+    {
+        $component = $this->parseVCalendar($calendarData);
+        $this->validateCalendarEnvelope($component);
+        if (! $component instanceof VCalendar) {
+            throw new BadRequest('Expected VCALENDAR payload.');
+        }
+
+        $primaryComponents = $this->primaryComponents($component);
+        $componentType = $this->resolvePrimaryType($primaryComponents);
+        $uid = $this->validatePrimaryComponents($primaryComponents, $componentType);
+
+        [$firstOccurredAt, $lastOccurredAt] = $this->detectOccurrenceBounds($component);
+
+        return [
+            'data' => $component->serialize(),
+            'uid' => $uid,
+            'component_type' => $componentType,
+            'first_occurred_at' => $firstOccurredAt,
+            'last_occurred_at' => $lastOccurredAt,
+        ];
+    }
+
+    public function extractUid(string $calendarData): ?string
+    {
+        try {
+            $component = $this->parseVCalendar($calendarData);
+        } catch (BadRequest) {
+            return null;
+        }
+
+        $primaryComponents = $this->primaryComponents($component);
+
+        if ($primaryComponents === []) {
+            return null;
+        }
+
+        $uid = trim((string) ($primaryComponents[0]->UID ?? ''));
+
+        return $uid !== '' ? $uid : null;
+    }
+
+    private function parseVCalendar(string $calendarData): VCalendar
     {
         try {
             $component = Reader::read($calendarData);
@@ -22,41 +65,210 @@ class IcsValidator
             throw new BadRequest('Expected VCALENDAR payload.');
         }
 
-        $componentType = $this->detectPrimaryComponentType($component);
+        return $component;
+    }
 
-        if (! $componentType) {
+    private function validateCalendarEnvelope(VCalendar $calendar): void
+    {
+        if (trim((string) ($calendar->VERSION ?? '')) !== '2.0') {
+            throw new BadRequest('VCALENDAR must include VERSION:2.0.');
+        }
+
+        if (trim((string) ($calendar->PRODID ?? '')) === '') {
+            throw new BadRequest('VCALENDAR must include PRODID.');
+        }
+    }
+
+    /**
+     * @return array<int, Component>
+     */
+    private function primaryComponents(VCalendar $calendar): array
+    {
+        $components = [];
+
+        foreach (['VEVENT', 'VTODO', 'VJOURNAL'] as $type) {
+            foreach ($calendar->select($type) as $component) {
+                if ($component instanceof Component) {
+                    $components[] = $component;
+                }
+            }
+        }
+
+        return $components;
+    }
+
+    /**
+     * @param  array<int, Component>  $components
+     */
+    private function resolvePrimaryType(array $components): string
+    {
+        if ($components === []) {
             throw new BadRequest('Calendar payload must include VEVENT, VTODO, or VJOURNAL.');
         }
 
-        foreach ($component->children() as $child) {
-            if (! in_array($child->name, ['VEVENT', 'VTODO', 'VJOURNAL'], true)) {
+        $type = $components[0]->name;
+
+        foreach ($components as $component) {
+            if ($component->name !== $type) {
+                throw new BadRequest('Mixed primary component types in one resource are not supported.');
+            }
+        }
+
+        return $type;
+    }
+
+    /**
+     * @param  array<int, Component>  $components
+     */
+    private function validatePrimaryComponents(array $components, string $componentType): string
+    {
+        $resourceUid = null;
+        $recurrenceIds = [];
+        $hasMasterComponent = false;
+
+        foreach ($components as $component) {
+            $uid = trim((string) ($component->UID ?? ''));
+
+            if ($uid === '') {
+                throw new BadRequest('Calendar components must include UID.');
+            }
+
+            if ($resourceUid !== null && $resourceUid !== $uid) {
+                throw new BadRequest('All components in a calendar resource must share the same UID.');
+            }
+
+            $resourceUid ??= $uid;
+
+            if (trim((string) ($component->DTSTAMP ?? '')) === '') {
+                throw new BadRequest($componentType.' components must include DTSTAMP.');
+            }
+
+            $this->validateSequence($component);
+            $this->validateRRule($component);
+
+            if (isset($component->{'RECURRENCE-ID'})) {
+                $recurrenceId = trim((string) $component->{'RECURRENCE-ID'});
+
+                if ($recurrenceId === '') {
+                    throw new BadRequest('RECURRENCE-ID must not be empty.');
+                }
+
+                if (isset($recurrenceIds[$recurrenceId])) {
+                    throw new BadRequest('Duplicate RECURRENCE-ID values are not allowed in one resource.');
+                }
+
+                $recurrenceIds[$recurrenceId] = true;
+            } else {
+                $hasMasterComponent = true;
+            }
+
+            if ($componentType === 'VEVENT') {
+                $this->validateEventComponent($component);
+            }
+
+            if ($componentType === 'VTODO') {
+                $this->validateTodoComponent($component);
+            }
+        }
+
+        if ($recurrenceIds !== [] && ! $hasMasterComponent) {
+            throw new BadRequest('Detached recurrence instances require a master component in the same resource.');
+        }
+
+        if ($resourceUid === null) {
+            throw new BadRequest('Calendar components must include UID.');
+        }
+
+        return $resourceUid;
+    }
+
+    private function validateEventComponent(Component $component): void
+    {
+        if (! isset($component->DTSTART)) {
+            throw new BadRequest('VEVENT components must include DTSTART.');
+        }
+
+        if (isset($component->DTEND) && isset($component->DURATION)) {
+            throw new BadRequest('VEVENT cannot contain both DTEND and DURATION.');
+        }
+
+        $start = $this->safeDateTime($component->DTSTART);
+        $end = $this->safeDateTime($component->DTEND ?? null);
+
+        if ($start && $end && $end < $start) {
+            throw new BadRequest('VEVENT DTEND must be greater than or equal to DTSTART.');
+        }
+    }
+
+    private function validateTodoComponent(Component $component): void
+    {
+        if (isset($component->DUE) && isset($component->DURATION)) {
+            throw new BadRequest('VTODO cannot contain both DUE and DURATION.');
+        }
+
+        if (isset($component->DURATION) && ! isset($component->DTSTART)) {
+            throw new BadRequest('VTODO with DURATION must include DTSTART.');
+        }
+    }
+
+    private function validateSequence(Component $component): void
+    {
+        if (! isset($component->SEQUENCE)) {
+            return;
+        }
+
+        $sequence = trim((string) $component->SEQUENCE);
+
+        if (! preg_match('/^\d+$/', $sequence)) {
+            throw new BadRequest('SEQUENCE must be a non-negative integer.');
+        }
+    }
+
+    private function validateRRule(Component $component): void
+    {
+        if (! isset($component->RRULE)) {
+            return;
+        }
+
+        $parts = [];
+
+        foreach (explode(';', (string) $component->RRULE) as $segment) {
+            if ($segment === '') {
                 continue;
             }
 
-            if (! isset($child->UID) || trim((string) $child->UID) === '') {
-                throw new BadRequest('Calendar components must include UID.');
+            $pair = explode('=', $segment, 2);
+
+            if (count($pair) !== 2) {
+                throw new BadRequest('RRULE segments must be key=value.');
             }
+
+            [$key, $value] = $pair;
+            $key = strtoupper(trim($key));
+            $value = trim($value);
+
+            if ($key === '' || $value === '') {
+                throw new BadRequest('RRULE segments must be key=value.');
+            }
+
+            $parts[$key] = $value;
         }
 
-        [$firstOccurredAt, $lastOccurredAt] = $this->detectOccurrenceBounds($component);
-
-        return [
-            'data' => $component->serialize(),
-            'component_type' => $componentType,
-            'first_occurred_at' => $firstOccurredAt,
-            'last_occurred_at' => $lastOccurredAt,
-        ];
-    }
-
-    private function detectPrimaryComponentType(VCalendar $calendar): ?string
-    {
-        foreach (['VEVENT', 'VTODO', 'VJOURNAL'] as $type) {
-            if (count($calendar->select($type)) > 0) {
-                return $type;
-            }
+        if (! isset($parts['FREQ'])) {
+            throw new BadRequest('RRULE must include FREQ.');
         }
 
-        return null;
+        if (isset($parts['COUNT']) && isset($parts['UNTIL'])) {
+            throw new BadRequest('RRULE cannot include both COUNT and UNTIL.');
+        }
+
+        if (isset($parts['COUNT']) && (! preg_match('/^\d+$/', $parts['COUNT']) || (int) $parts['COUNT'] <= 0)) {
+            throw new BadRequest('RRULE COUNT must be a positive integer.');
+        }
+
+        if (isset($parts['INTERVAL']) && (! preg_match('/^\d+$/', $parts['INTERVAL']) || (int) $parts['INTERVAL'] <= 0)) {
+            throw new BadRequest('RRULE INTERVAL must be a positive integer.');
+        }
     }
 
     private function detectOccurrenceBounds(VCalendar $calendar): array

@@ -15,7 +15,9 @@ use App\Services\ResourceAccessService;
 use Illuminate\Support\Str;
 use Sabre\CardDAV\Backend\AbstractBackend;
 use Sabre\DAV\Exception\BadRequest;
+use Sabre\DAV\Exception\Conflict;
 use Sabre\DAV\Exception\Forbidden;
+use Sabre\DAV\Exception\InvalidSyncToken;
 use Sabre\DAV\Exception\NotFound;
 use Sabre\DAV\PropPatch;
 
@@ -178,14 +180,20 @@ class LaravelCardDavBackend extends AbstractBackend
         }
 
         $normalized = $this->vCardValidator->validateAndNormalize((string) $cardData);
-        $etag = md5($normalized);
+
+        if ($this->uidConflictExists($addressBook->id, $normalized['uid'])) {
+            throw new Conflict('A contact with the same UID already exists in this address book.');
+        }
+
+        $etag = md5($normalized['data']);
 
         Card::query()->create([
             'address_book_id' => $addressBook->id,
             'uri' => $cardUri,
+            'uid' => $normalized['uid'],
             'etag' => $etag,
-            'size' => strlen($normalized),
-            'data' => $normalized,
+            'size' => strlen($normalized['data']),
+            'data' => $normalized['data'],
         ]);
 
         $this->syncService->recordAdded(ShareResourceType::AddressBook, $addressBook->id, (string) $cardUri);
@@ -213,12 +221,18 @@ class LaravelCardDavBackend extends AbstractBackend
         }
 
         $normalized = $this->vCardValidator->validateAndNormalize((string) $cardData);
-        $etag = md5($normalized);
+
+        if ($this->uidConflictExists($addressBook->id, $normalized['uid'], exceptCardId: $card->id)) {
+            throw new Conflict('A contact with the same UID already exists in this address book.');
+        }
+
+        $etag = md5($normalized['data']);
 
         $card->update([
+            'uid' => $normalized['uid'],
             'etag' => $etag,
-            'size' => strlen($normalized),
-            'data' => $normalized,
+            'size' => strlen($normalized['data']),
+            'data' => $normalized['data'],
         ]);
 
         $this->syncService->recordModified(ShareResourceType::AddressBook, $addressBook->id, (string) $cardUri);
@@ -254,12 +268,10 @@ class LaravelCardDavBackend extends AbstractBackend
     {
         $addressBook = $this->loadReadableAddressBook($addressBookId);
 
-        $token = is_numeric($syncToken) ? (int) $syncToken : 0;
-
         return $this->syncService->getChangesSince(
             resourceType: ShareResourceType::AddressBook,
             resourceId: $addressBook->id,
-            syncToken: $token,
+            syncToken: $this->parseSyncToken($syncToken),
             limit: $limit !== null ? (int) $limit : null,
         );
     }
@@ -317,5 +329,35 @@ class LaravelCardDavBackend extends AbstractBackend
         if (! $user || ! $this->accessService->userCanWriteAddressBook($user, $addressBook)) {
             throw new Forbidden('Write access denied for address book.');
         }
+    }
+
+    private function parseSyncToken(mixed $syncToken): int
+    {
+        if (is_int($syncToken) && $syncToken >= 0) {
+            return $syncToken;
+        }
+
+        if (is_string($syncToken)) {
+            $token = trim($syncToken);
+
+            if (preg_match('/^\d+$/', $token) === 1) {
+                return (int) $token;
+            }
+        }
+
+        throw new InvalidSyncToken('Sync token format is invalid.');
+    }
+
+    private function uidConflictExists(int $addressBookId, string $uid, ?int $exceptCardId = null): bool
+    {
+        $query = Card::query()
+            ->where('address_book_id', $addressBookId)
+            ->where('uid', $uid);
+
+        if ($exceptCardId !== null) {
+            $query->where('id', '!=', $exceptCardId);
+        }
+
+        return $query->exists();
     }
 }
