@@ -70,10 +70,15 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+
+      - name: Install PHP dependencies (no scripts)
+        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts
+
       - name: Run Pint in test mode
         run: |
-          docker run --rm \
-            -v "$PWD:/app" \
-            -w /app \
-            ghcr.io/laravel/pint:latest \
-            --test
+          ./vendor/bin/pint --test
