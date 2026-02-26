@@ -20,4 +20,15 @@ class RegistrationSettingsServiceTest extends TestCase
 
         $this->assertTrue($service->isPublicRegistrationEnabled());
     }
+
+    public function test_owner_share_management_setting_can_be_toggled(): void
+    {
+        $service = app(RegistrationSettingsService::class);
+
+        $this->assertTrue($service->isOwnerShareManagementEnabled());
+
+        $service->setOwnerShareManagementEnabled(false);
+
+        $this->assertFalse($service->isOwnerShareManagementEnabled());
+    }
 }

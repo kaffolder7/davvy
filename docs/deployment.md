@@ -1,8 +1,8 @@
-# Deployment
+# Deployment ☁️
 
 ## Railway
 
-This project includes [`railway.toml`](../railway.toml) and a production `Dockerfile`.
+This repo includes [`railway.toml`](../railway.toml) and a production `Dockerfile`.
 
 ### Required environment variables
 
@@ -16,20 +16,22 @@ This project includes [`railway.toml`](../railway.toml) and a production `Docker
 - `DB_PASSWORD`
 - `DEFAULT_ADMIN_EMAIL` (optional)
 - `DEFAULT_ADMIN_PASSWORD` (optional)
+- `ENABLE_PUBLIC_REGISTRATION` (optional)
+- `ENABLE_OWNER_SHARE_MANAGEMENT` (optional)
 
 ### Deploy flow
 
 1. Create Railway project linked to this repo.
-2. Provision PostgreSQL plugin.
+2. Provision PostgreSQL.
 3. Set env vars.
 4. Deploy.
-5. Confirm health at `/up`.
+5. Verify health at `/up`.
 
-## Generic Docker Host
+## Generic Docker Host 🐳
 
 ```bash
 docker build -t davvy .
 docker run -p 8080:8080 --env-file .env davvy
 ```
 
-Ensure DB connectivity before app start.
+Ensure DB connectivity before app startup.

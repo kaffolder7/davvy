@@ -81,4 +81,20 @@ class AdminController extends Controller
             'enabled' => $this->registrationSettings->isPublicRegistrationEnabled(),
         ]);
     }
+
+    public function setOwnerShareManagementSetting(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'enabled' => ['required', 'boolean'],
+        ]);
+
+        $this->registrationSettings->setOwnerShareManagementEnabled(
+            enabled: (bool) $data['enabled'],
+            actor: $request->user()
+        );
+
+        return response()->json([
+            'enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
+        ]);
+    }
 }

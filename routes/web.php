@@ -29,11 +29,16 @@ Route::middleware('auth')->group(function (): void {
     Route::patch('/api/address-books/{addressBook}', [AddressBookController::class, 'update']);
     Route::delete('/api/address-books/{addressBook}', [AddressBookController::class, 'destroy']);
 
+    Route::get('/api/shares', [ShareController::class, 'index']);
+    Route::post('/api/shares', [ShareController::class, 'upsert']);
+    Route::delete('/api/shares/{share}', [ShareController::class, 'destroy']);
+
     Route::middleware('admin')->group(function (): void {
         Route::get('/api/admin/users', [AdminController::class, 'users']);
         Route::post('/api/admin/users', [AdminController::class, 'createUser']);
         Route::get('/api/admin/resources', [AdminController::class, 'sharableResources']);
         Route::patch('/api/admin/settings/registration', [AdminController::class, 'setRegistrationSetting']);
+        Route::patch('/api/admin/settings/owner-share-management', [AdminController::class, 'setOwnerShareManagementSetting']);
 
         Route::get('/api/admin/shares', [ShareController::class, 'index']);
         Route::post('/api/admin/shares', [ShareController::class, 'upsert']);

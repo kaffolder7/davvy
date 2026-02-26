@@ -6,14 +6,21 @@ use App\Enums\ShareResourceType;
 use App\Models\AddressBook;
 use App\Models\Calendar;
 use App\Models\ResourceShare;
+use App\Models\User;
+use App\Services\RegistrationSettingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
+    public function __construct(private readonly RegistrationSettingsService $settings)
+    {
+    }
+
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
+        $ownerShareManagementEnabled = $this->settings->isOwnerShareManagementEnabled();
 
         $ownedCalendars = Calendar::query()
             ->where('owner_id', $user->id)
@@ -84,6 +91,37 @@ class DashboardController extends Controller
             })
             ->all();
 
+        $sharesCreatedByUser = ResourceShare::query()
+            ->with('sharedWith')
+            ->where('owner_id', $user->id)
+            ->orderByDesc('id')
+            ->get()
+            ->map(function (ResourceShare $share): array {
+                return [
+                    'id' => $share->id,
+                    'resource_type' => $share->resource_type->value,
+                    'resource_id' => $share->resource_id,
+                    'permission' => $share->permission->value,
+                    'shared_with' => [
+                        'id' => $share->sharedWith?->id,
+                        'name' => $share->sharedWith?->name,
+                        'email' => $share->sharedWith?->email,
+                    ],
+                ];
+            })
+            ->all();
+
+        $shareTargets = User::query()
+            ->where('id', '!=', $user->id)
+            ->orderBy('name')
+            ->get(['id', 'name', 'email'])
+            ->map(fn (User $target): array => [
+                'id' => $target->id,
+                'name' => $target->name,
+                'email' => $target->email,
+            ])
+            ->all();
+
         return response()->json([
             'owned' => [
                 'calendars' => $ownedCalendars,
@@ -92,6 +130,12 @@ class DashboardController extends Controller
             'shared' => [
                 'calendars' => $sharedCalendars,
                 'address_books' => $sharedAddressBooks,
+            ],
+            'sharing' => [
+                'owner_share_management_enabled' => $ownerShareManagementEnabled,
+                'can_manage' => $user->isAdmin() || $ownerShareManagementEnabled,
+                'targets' => $shareTargets,
+                'outgoing' => $sharesCreatedByUser,
             ],
         ]);
     }

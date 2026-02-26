@@ -1,13 +1,13 @@
-# Architecture
+# Architecture 🏗️
 
 ## Stack
 
-- Backend: Laravel 11 (PHP 8.3)
+- Backend: Laravel 12 (PHP 8.4 target)
 - DAV protocol: SabreDAV (`sabre/dav`) CalDAV + CardDAV plugins
 - Frontend: React 18 + TailwindCSS + Vite
 - Database: PostgreSQL (default via Docker)
 
-## Data Model
+## Data Model 🗂️
 
 - `users`: login + role (`admin` or `regular`)
 - `calendars`: user-owned calendars
@@ -15,31 +15,45 @@
 - `address_books`: user-owned address books
 - `cards`: vCard resources (`.vcf`)
 - `resource_shares`: per-resource permissions (`read_only`, `admin`)
-- `app_settings`: global toggles (public registration)
+- `app_settings`: global toggles (`public_registration_enabled`, `owner_share_management_enabled`)
+- `dav_resource_sync_states`: per-resource DAV sync tokens
+- `dav_resource_sync_changes`: sync change feed (`added`, `modified`, `deleted`)
 
-## Permissions
+## Permissions 🔐
 
 - Owners always have full edit.
 - Shared users can be:
   - `read_only`
   - `admin` (full edit)
-- Admin web users can manage users and share assignments globally.
+- Admin users can manage users and all shares globally.
+- Non-admin owners can manage shares for their own resources when owner-share-management is enabled.
 
-## DAV Layer
+## DAV Layer 🌐
 
 Custom SabreDAV backends:
 
-- `LaravelAuthBackend`: basic auth with Laravel user passwords
+- `LaravelAuthBackend`: basic auth via Laravel password hashes
 - `LaravelPrincipalBackend`: principals from `users`
 - `LaravelCalendarBackend`: CalDAV storage from `calendars` + `calendar_objects`
 - `LaravelCardDavBackend`: CardDAV storage from `address_books` + `cards`
 
-Mounted endpoint:
+Endpoint:
 
 - `/dav/*`
 
-## Default Resources
+Autodiscovery redirects:
 
-On user creation, a listener-like model hook provisions:
+- `/.well-known/caldav` -> `/dav`
+- `/.well-known/carddav` -> `/dav`
+
+## Validation + Sync Improvements ✅
+
+- Calendar payloads are validated and normalized as VCALENDAR content.
+- Card payloads are validated and normalized as VCARD content.
+- DAV incremental sync now tracks added/modified/deleted resources with per-collection sync tokens.
+
+## Default Resources 🎯
+
+On user creation, Davvy auto-provisions:
 - `Default Calendar`
 - `Default Address Book`

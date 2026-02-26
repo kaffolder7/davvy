@@ -8,17 +8,29 @@ use App\Models\AddressBook;
 use App\Models\Calendar;
 use App\Models\ResourceShare;
 use App\Models\User;
+use App\Services\RegistrationSettingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ShareController extends Controller
 {
-    public function index(): JsonResponse
+    public function __construct(private readonly RegistrationSettingsService $settings)
     {
-        $shares = ResourceShare::query()
+    }
+
+    public function index(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $query = ResourceShare::query()
             ->with(['owner', 'sharedWith'])
-            ->orderByDesc('id')
-            ->get()
+            ->orderByDesc('id');
+
+        if (! $user->isAdmin()) {
+            $this->assertOwnerShareManagementAllowed();
+            $query->where('owner_id', $user->id);
+        }
+
+        $shares = $query->get()
             ->map(function (ResourceShare $share): array {
                 return [
                     'id' => $share->id,
@@ -44,6 +56,8 @@ class ShareController extends Controller
 
     public function upsert(Request $request): JsonResponse
     {
+        $actor = $request->user();
+
         $data = $request->validate([
             'resource_type' => ['required', 'in:calendar,address_book'],
             'resource_id' => ['required', 'integer', 'min:1'],
@@ -64,6 +78,14 @@ class ShareController extends Controller
             abort(422, 'You cannot share a resource with its owner.');
         }
 
+        if (! $actor->isAdmin()) {
+            $this->assertOwnerShareManagementAllowed();
+
+            if ($resourceOwnerId !== $actor->id) {
+                abort(403, 'You can only manage shares for resources you own.');
+            }
+        }
+
         $share = ResourceShare::query()->updateOrCreate(
             [
                 'resource_type' => $resourceType,
@@ -79,8 +101,18 @@ class ShareController extends Controller
         return response()->json($share->fresh(), 201);
     }
 
-    public function destroy(ResourceShare $share): JsonResponse
+    public function destroy(Request $request, ResourceShare $share): JsonResponse
     {
+        $actor = $request->user();
+
+        if (! $actor->isAdmin()) {
+            $this->assertOwnerShareManagementAllowed();
+
+            if ($share->owner_id !== $actor->id) {
+                abort(403, 'You can only remove shares for resources you own.');
+            }
+        }
+
         $share->delete();
 
         return response()->json(['ok' => true]);
@@ -97,5 +129,12 @@ class ShareController extends Controller
         $addressBook = AddressBook::query()->findOrFail($resourceId);
 
         return [$addressBook->owner_id, $addressBook->is_sharable];
+    }
+
+    private function assertOwnerShareManagementAllowed(): void
+    {
+        if (! $this->settings->isOwnerShareManagementEnabled()) {
+            abort(403, 'Resource owner share management is currently disabled by admins.');
+        }
     }
 }

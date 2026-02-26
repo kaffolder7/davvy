@@ -7,11 +7,14 @@ use App\Enums\ShareResourceType;
 use App\Models\AddressBook;
 use App\Models\Card;
 use App\Models\ResourceShare;
+use App\Services\Dav\DavSyncService;
+use App\Services\Dav\VCardValidator;
 use App\Services\DavRequestContext;
 use App\Services\PrincipalUriService;
 use App\Services\ResourceAccessService;
 use Illuminate\Support\Str;
 use Sabre\CardDAV\Backend\AbstractBackend;
+use Sabre\DAV\Exception\BadRequest;
 use Sabre\DAV\Exception\Forbidden;
 use Sabre\DAV\Exception\NotFound;
 use Sabre\DAV\PropPatch;
@@ -22,6 +25,8 @@ class LaravelCardDavBackend extends AbstractBackend
         private readonly PrincipalUriService $principalUriService,
         private readonly ResourceAccessService $accessService,
         private readonly DavRequestContext $davContext,
+        private readonly VCardValidator $vCardValidator,
+        private readonly DavSyncService $syncService,
     ) {
     }
 
@@ -89,7 +94,7 @@ class LaravelCardDavBackend extends AbstractBackend
             throw new NotFound('Principal does not exist.');
         }
 
-        AddressBook::query()->create([
+        $addressBook = AddressBook::query()->create([
             'owner_id' => $user->id,
             'uri' => Str::slug((string) $url),
             'display_name' => (string) ($properties['{DAV:}displayname'] ?? 'Address Book'),
@@ -97,6 +102,8 @@ class LaravelCardDavBackend extends AbstractBackend
             'is_default' => false,
             'is_sharable' => false,
         ]);
+
+        $this->syncService->ensureResource(ShareResourceType::AddressBook, $addressBook->id);
     }
 
     public function deleteAddressBook($addressBookId): void
@@ -162,15 +169,27 @@ class LaravelCardDavBackend extends AbstractBackend
 
         $this->assertWritableAddressBook($addressBook);
 
-        $etag = md5($cardData);
+        $existing = Card::query()
+            ->where('address_book_id', $addressBook->id)
+            ->where('uri', $cardUri)
+            ->exists();
+
+        if ($existing) {
+            throw new BadRequest('Card already exists for the requested URI.');
+        }
+
+        $normalized = $this->vCardValidator->validateAndNormalize((string) $cardData);
+        $etag = md5($normalized);
 
         Card::query()->create([
             'address_book_id' => $addressBook->id,
             'uri' => $cardUri,
             'etag' => $etag,
-            'size' => strlen($cardData),
-            'data' => $cardData,
+            'size' => strlen($normalized),
+            'data' => $normalized,
         ]);
+
+        $this->syncService->recordAdded(ShareResourceType::AddressBook, $addressBook->id, (string) $cardUri);
 
         return '"'.$etag.'"';
     }
@@ -194,13 +213,16 @@ class LaravelCardDavBackend extends AbstractBackend
             throw new NotFound('Card not found.');
         }
 
-        $etag = md5($cardData);
+        $normalized = $this->vCardValidator->validateAndNormalize((string) $cardData);
+        $etag = md5($normalized);
 
         $card->update([
             'etag' => $etag,
-            'size' => strlen($cardData),
-            'data' => $cardData,
+            'size' => strlen($normalized),
+            'data' => $normalized,
         ]);
+
+        $this->syncService->recordModified(ShareResourceType::AddressBook, $addressBook->id, (string) $cardUri);
 
         return '"'.$etag.'"';
     }
@@ -215,35 +237,32 @@ class LaravelCardDavBackend extends AbstractBackend
 
         $this->assertWritableAddressBook($addressBook);
 
-        Card::query()
+        $card = Card::query()
             ->where('address_book_id', $addressBook->id)
             ->where('uri', $cardUri)
-            ->delete();
+            ->first();
+
+        if (! $card) {
+            return;
+        }
+
+        $card->delete();
+
+        $this->syncService->recordDeleted(ShareResourceType::AddressBook, $addressBook->id, (string) $cardUri);
     }
 
     public function getChangesForAddressBook($addressBookId, $syncToken, $syncLevel, $limit = null): array
     {
         $addressBook = $this->loadReadableAddressBook($addressBookId);
 
-        $lastToken = (int) $syncToken;
-        $query = Card::query()
-            ->where('address_book_id', $addressBook->id)
-            ->where('id', '>', $lastToken)
-            ->orderBy('id');
+        $token = is_numeric($syncToken) ? (int) $syncToken : 0;
 
-        if ($limit !== null) {
-            $query->limit((int) $limit);
-        }
-
-        $cards = $query->get();
-        $newToken = (int) ($cards->max('id') ?? $lastToken);
-
-        return [
-            'syncToken' => (string) $newToken,
-            'added' => $cards->pluck('uri')->all(),
-            'modified' => [],
-            'deleted' => [],
-        ];
+        return $this->syncService->getChangesSince(
+            resourceType: ShareResourceType::AddressBook,
+            resourceId: $addressBook->id,
+            syncToken: $token,
+            limit: $limit !== null ? (int) $limit : null,
+        );
     }
 
     private function transformAddressBook(AddressBook $addressBook, SharePermission $permission, string $principalUri): array

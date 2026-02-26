@@ -3,18 +3,38 @@ import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-r
 import { api, extractError } from './lib/api';
 
 function App() {
-  const [auth, setAuth] = useState({ loading: true, user: null, registrationEnabled: false });
+  const [auth, setAuth] = useState({
+    loading: true,
+    user: null,
+    registrationEnabled: false,
+    ownerShareManagementEnabled: false,
+  });
 
   const refreshAuth = async () => {
     try {
       const { data } = await api.get('/api/auth/me');
-      setAuth({ loading: false, user: data.user, registrationEnabled: !!data.registration_enabled });
+      setAuth({
+        loading: false,
+        user: data.user,
+        registrationEnabled: !!data.registration_enabled,
+        ownerShareManagementEnabled: !!data.owner_share_management_enabled,
+      });
     } catch {
       try {
         const { data } = await api.get('/api/public/config');
-        setAuth({ loading: false, user: null, registrationEnabled: !!data.registration_enabled });
+        setAuth({
+          loading: false,
+          user: null,
+          registrationEnabled: !!data.registration_enabled,
+          ownerShareManagementEnabled: !!data.owner_share_management_enabled,
+        });
       } catch {
-        setAuth({ loading: false, user: null, registrationEnabled: false });
+        setAuth({
+          loading: false,
+          user: null,
+          registrationEnabled: false,
+          ownerShareManagementEnabled: false,
+        });
       }
     }
   };
@@ -76,7 +96,12 @@ function LoginPage({ auth }) {
 
     try {
       const { data } = await api.post('/api/auth/login', form);
-      auth.setAuth({ loading: false, user: data.user, registrationEnabled: !!data.registration_enabled });
+      auth.setAuth({
+        loading: false,
+        user: data.user,
+        registrationEnabled: !!data.registration_enabled,
+        ownerShareManagementEnabled: !!data.owner_share_management_enabled,
+      });
       navigate('/');
     } catch (err) {
       setError(extractError(err, 'Unable to sign in.'));
@@ -126,7 +151,12 @@ function RegisterPage({ auth }) {
 
     try {
       const { data } = await api.post('/api/auth/register', form);
-      auth.setAuth({ loading: false, user: data.user, registrationEnabled: !!data.registration_enabled });
+      auth.setAuth({
+        loading: false,
+        user: data.user,
+        registrationEnabled: !!data.registration_enabled,
+        ownerShareManagementEnabled: !!data.owner_share_management_enabled,
+      });
       navigate('/');
     } catch (err) {
       setError(extractError(err, 'Unable to register.'));
@@ -161,9 +191,14 @@ function RegisterPage({ auth }) {
 function DashboardPage({ auth }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [data, setData] = useState({ owned: { calendars: [], address_books: [] }, shared: { calendars: [], address_books: [] } });
+  const [data, setData] = useState({
+    owned: { calendars: [], address_books: [] },
+    shared: { calendars: [], address_books: [] },
+    sharing: { can_manage: false, targets: [], outgoing: [] },
+  });
   const [calendarForm, setCalendarForm] = useState({ display_name: '', is_sharable: false });
   const [bookForm, setBookForm] = useState({ display_name: '', is_sharable: false });
+  const [shareForm, setShareForm] = useState({ resource_type: 'calendar', resource_id: '', shared_with_id: '', permission: 'read_only' });
 
   const loadDashboard = async () => {
     setLoading(true);
@@ -214,6 +249,34 @@ function DashboardPage({ auth }) {
     }
   };
 
+  const saveShare = async (event) => {
+    event.preventDefault();
+    try {
+      await api.post('/api/shares', {
+        ...shareForm,
+        resource_id: Number(shareForm.resource_id),
+        shared_with_id: Number(shareForm.shared_with_id),
+      });
+      setShareForm((prev) => ({ ...prev, resource_id: '', shared_with_id: '' }));
+      await loadDashboard();
+    } catch (err) {
+      setError(extractError(err, 'Unable to save share assignment.'));
+    }
+  };
+
+  const deleteShare = async (shareId) => {
+    try {
+      await api.delete(`/api/shares/${shareId}`);
+      await loadDashboard();
+    } catch (err) {
+      setError(extractError(err, 'Unable to remove share assignment.'));
+    }
+  };
+
+  const shareableResourceOptions = shareForm.resource_type === 'calendar'
+    ? data.owned.calendars.filter((item) => item.is_sharable)
+    : data.owned.address_books.filter((item) => item.is_sharable);
+
   return (
     <AppShell auth={auth}>
       <section className="fade-up grid gap-4 md:grid-cols-3">
@@ -248,6 +311,51 @@ function DashboardPage({ auth }) {
             onToggle={(id, next) => toggleSharable('address-book', id, next)}
           />
         </div>
+      ) : null}
+
+      {!loading && data.sharing.can_manage ? (
+        <section className="surface mt-6 rounded-3xl p-6">
+          <h2 className="text-xl font-semibold text-slate-900">Share Your Resources</h2>
+          <p className="mt-1 text-sm text-slate-600">Grant read-only or full edit access for resources you own and marked as sharable.</p>
+          <form className="mt-4 grid gap-3 md:grid-cols-4" onSubmit={saveShare}>
+            <select className="input" value={shareForm.resource_type} onChange={(event) => setShareForm({ ...shareForm, resource_type: event.target.value, resource_id: '' })}>
+              <option value="calendar">Calendar</option>
+              <option value="address_book">Address Book</option>
+            </select>
+            <select className="input" value={shareForm.resource_id} onChange={(event) => setShareForm({ ...shareForm, resource_id: event.target.value })} required>
+              <option value="">Select sharable resource</option>
+              {shareableResourceOptions.map((resource) => (
+                <option key={resource.id} value={resource.id}>{resource.display_name}</option>
+              ))}
+            </select>
+            <select className="input" value={shareForm.shared_with_id} onChange={(event) => setShareForm({ ...shareForm, shared_with_id: event.target.value })} required>
+              <option value="">Select user</option>
+              {data.sharing.targets.map((target) => (
+                <option key={target.id} value={target.id}>{target.name} ({target.email})</option>
+              ))}
+            </select>
+            <div className="flex gap-2">
+              <select className="input" value={shareForm.permission} onChange={(event) => setShareForm({ ...shareForm, permission: event.target.value })}>
+                <option value="read_only">Read-only</option>
+                <option value="admin">Full edit</option>
+              </select>
+              <button className="btn" type="submit">Share</button>
+            </div>
+          </form>
+
+          <div className="mt-5 space-y-2">
+            {data.sharing.outgoing.length === 0 ? <p className="text-sm text-slate-500">No outgoing shares yet.</p> : data.sharing.outgoing.map((share) => (
+              <div key={share.id} className="rounded-xl border border-slate-200 bg-white p-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-semibold text-slate-900">{share.resource_type} #{share.resource_id}</p>
+                  <PermissionBadge permission={share.permission} />
+                </div>
+                <p className="text-slate-600">Shared with: {share.shared_with?.name} ({share.shared_with?.email})</p>
+                <button className="mt-2 text-xs font-semibold text-red-700" onClick={() => deleteShare(share.id)}>Revoke</button>
+              </div>
+            ))}
+          </div>
+        </section>
       ) : null}
     </AppShell>
   );
@@ -321,6 +429,7 @@ function AdminPage({ auth }) {
     resources: { calendars: [], address_books: [] },
     error: '',
     registrationEnabled: auth.registrationEnabled,
+    ownerShareManagementEnabled: auth.ownerShareManagementEnabled,
   });
   const [userForm, setUserForm] = useState({ name: '', email: '', password: '', role: 'regular' });
   const [shareForm, setShareForm] = useState({ resource_type: 'calendar', resource_id: '', shared_with_id: '', permission: 'read_only' });
@@ -397,6 +506,18 @@ function AdminPage({ auth }) {
     }
   };
 
+  const toggleOwnerShareManagement = async () => {
+    const next = !state.ownerShareManagementEnabled;
+
+    try {
+      const response = await api.patch('/api/admin/settings/owner-share-management', { enabled: next });
+      setState((prev) => ({ ...prev, ownerShareManagementEnabled: !!response.data.enabled }));
+      auth.setAuth((prev) => ({ ...prev, ownerShareManagementEnabled: !!response.data.enabled }));
+    } catch (err) {
+      setState((prev) => ({ ...prev, error: extractError(err, 'Unable to update owner share management setting.') }));
+    }
+  };
+
   const resourceOptions = shareForm.resource_type === 'calendar' ? state.resources.calendars : state.resources.address_books;
 
   return (
@@ -404,9 +525,14 @@ function AdminPage({ auth }) {
       <div className="surface fade-up rounded-3xl p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-2xl font-bold">Admin Control Center</h2>
-          <button className="btn-outline" onClick={toggleRegistration}>
-            Public registration: {state.registrationEnabled ? 'ON' : 'OFF'}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button className="btn-outline" onClick={toggleRegistration}>
+              Public registration: {state.registrationEnabled ? 'ON' : 'OFF'}
+            </button>
+            <button className="btn-outline" onClick={toggleOwnerShareManagement}>
+              Owner sharing: {state.ownerShareManagementEnabled ? 'ON' : 'OFF'}
+            </button>
+          </div>
         </div>
         {state.error ? <p className="mt-3 text-sm text-red-700">{state.error}</p> : null}
       </div>
@@ -489,7 +615,12 @@ function AppShell({ auth, children }) {
 
   const logout = async () => {
     await api.post('/api/auth/logout');
-    auth.setAuth({ loading: false, user: null, registrationEnabled: auth.registrationEnabled });
+    auth.setAuth({
+      loading: false,
+      user: null,
+      registrationEnabled: auth.registrationEnabled,
+      ownerShareManagementEnabled: auth.ownerShareManagementEnabled,
+    });
     navigate('/login');
   };
 
