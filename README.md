@@ -1,26 +1,36 @@
-# Davvy
+# Davvy 🚀
 
-Davvy is an MVP Laravel + React + Tailwind web application for managing users, calendars, and address books backed by a SabreDAV (`sabre/dav`) CalDAV/CardDAV server.
+Davvy is an MVP Laravel + React + Tailwind web app for managing users, calendars, and address books backed by a SabreDAV (`sabre/dav`) CalDAV/CardDAV server.
 
-## MVP Features
+## Why SabreDAV? 🧩
 
-- Laravel backend + React/Tailwind frontend
-- Admin and regular users
+This MVP uses `sabre/dav` because:
+- It embeds directly into Laravel/PHP app logic.
+- CalDAV + CardDAV storage is fully customizable with your own DB models.
+- User/role/sharing workflows stay in one codebase.
+
+## MVP Features ✨
+
+- Laravel `12.x` backend + React/Tailwind frontend
+- PHP `8.4` runtime target
+- Admin + regular users
 - Public registration toggle (default OFF)
+- Owner-sharing toggle (admin-controlled, default ON)
 - Admin-created users
-- Automatic default calendar + address book creation for each new user
-- User dashboard with:
+- Automatic default calendar + address book per new user
+- Dashboard views for:
   - Owned calendars/address books
-  - Shared calendars/address books
-  - Visual permission labels (`Read-only`, `Full Edit`)
-- Sharable resource toggle per calendar/address book
-- Admin screen to assign/revoke share permissions
-- Built-in CalDAV/CardDAV endpoint via SabreDAV at `/dav`
+  - Shared-with-you calendars/address books
+  - Permission badges (`Read-only`, `Full Edit`)
+- Owner and admin share assignment/revocation flows
+- SabreDAV CalDAV/CardDAV endpoint at `/dav`
 - Autodiscovery redirects for `/.well-known/caldav` and `/.well-known/carddav`
+- ICS/vCard validation and normalization for stronger client interoperability
+- DAV sync token change tracking with `added`, `modified`, and `deleted` deltas
 - Docker packaging + Railway deployment config
 - PHPUnit tests for key workflows
 
-## Quick Start (Docker)
+## Quick Start (Docker) 🐳
 
 1. Build and run:
 
@@ -39,19 +49,21 @@ docker compose up --build
 - Email: `admin@davvy.local`
 - Password: `ChangeMe123!`
 
-Change these with env vars:
+Configurable envs:
 - `DEFAULT_ADMIN_EMAIL`
 - `DEFAULT_ADMIN_PASSWORD`
+- `ENABLE_PUBLIC_REGISTRATION`
+- `ENABLE_OWNER_SHARE_MANAGEMENT`
 
-## Running Tests
+## Running Tests 🧪
 
 ```bash
-docker compose run --rm app php artisan test
+docker compose run --build --rm --user root --entrypoint sh app -lc "cp .env.example .env && composer install --prefer-dist --no-interaction && APP_ENV=testing APP_KEY='base64:MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=' DB_CONNECTION=sqlite DB_DATABASE=':memory:' CACHE_STORE=array SESSION_DRIVER=array QUEUE_CONNECTION=sync MAIL_MAILER=array php artisan test"
 ```
 
-## Deployment
+## Deployment ☁️
 
-Railway is configured using [`railway.toml`](railway.toml).
+Railway is configured via [`railway.toml`](railway.toml).
 
 See docs:
 - [Architecture](docs/architecture.md)

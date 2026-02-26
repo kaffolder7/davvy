@@ -41,6 +41,7 @@ class AuthController extends Controller
         return response()->json([
             'user' => $user,
             'registration_enabled' => $this->registrationSettings->isPublicRegistrationEnabled(),
+            'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
         ], 201);
     }
 
@@ -48,6 +49,7 @@ class AuthController extends Controller
     {
         return response()->json([
             'registration_enabled' => $this->registrationSettings->isPublicRegistrationEnabled(),
+            'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
         ]);
     }
 
@@ -69,6 +71,7 @@ class AuthController extends Controller
         return response()->json([
             'user' => $request->user(),
             'registration_enabled' => $this->registrationSettings->isPublicRegistrationEnabled(),
+            'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
         ]);
     }
 
@@ -87,6 +90,7 @@ class AuthController extends Controller
         return response()->json([
             'user' => $request->user(),
             'registration_enabled' => $this->registrationSettings->isPublicRegistrationEnabled(),
+            'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
         ]);
     }
 }

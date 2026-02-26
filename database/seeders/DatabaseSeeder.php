@@ -24,11 +24,17 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        app(RegistrationSettingsService::class)->setPublicRegistrationEnabled(false, null);
+        $settings = app(RegistrationSettingsService::class);
+        $settings->setPublicRegistrationEnabled(false, null);
+        $settings->setOwnerShareManagementEnabled(
+            enabled: (bool) env('ENABLE_OWNER_SHARE_MANAGEMENT', true),
+            actor: null
+        );
 
+        AppSetting::query()->updateOrCreate(['key' => 'public_registration_enabled'], ['value' => 'false']);
         AppSetting::query()->updateOrCreate(
-            ['key' => 'public_registration_enabled'],
-            ['value' => 'false']
+            ['key' => 'owner_share_management_enabled'],
+            ['value' => env('ENABLE_OWNER_SHARE_MANAGEMENT', true) ? 'true' : 'false']
         );
     }
 }

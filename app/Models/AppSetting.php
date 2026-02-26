@@ -20,10 +20,26 @@ class AppSetting extends Model
 
     public static function publicRegistrationEnabled(): bool
     {
-        $setting = self::query()->find('public_registration_enabled');
+        return self::booleanSetting(
+            key: 'public_registration_enabled',
+            default: (bool) config('services.registration.enabled', false),
+        );
+    }
+
+    public static function ownerShareManagementEnabled(): bool
+    {
+        return self::booleanSetting(
+            key: 'owner_share_management_enabled',
+            default: (bool) config('services.sharing.owner_management_enabled', true),
+        );
+    }
+
+    private static function booleanSetting(string $key, bool $default): bool
+    {
+        $setting = self::query()->find($key);
 
         if (! $setting) {
-            return (bool) config('services.registration.enabled', false);
+            return $default;
         }
 
         return filter_var($setting->value, FILTER_VALIDATE_BOOL);

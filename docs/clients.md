@@ -1,18 +1,18 @@
-# CalDAV/CardDAV Client Setup
+# CalDAV/CardDAV Client Setup 📱💻
 
 Use these account values:
 
 - Server URL: `https://your-domain.tld/dav`
-- Username: user email (e.g. `alice@example.com`)
+- Username: user email (example: `alice@example.com`)
 - Password: account password
 - Principal URI (if manual): `principals/{user_id}`
 
-Autodiscovery endpoints are also enabled:
+Autodiscovery endpoints:
 
 - `https://your-domain.tld/.well-known/caldav` -> `/dav`
 - `https://your-domain.tld/.well-known/carddav` -> `/dav`
 
-## macOS / iOS
+## macOS / iOS 🍎
 
 ### Calendar (CalDAV)
 
@@ -28,31 +28,31 @@ Autodiscovery endpoints are also enabled:
 3. Choose `Manual`.
 4. Enter server URL, username, password.
 
-## Android
+## Android 🤖
 
 Recommended app: DAVx5.
 
 1. Add account in DAVx5.
-2. Use login with URL and username.
+2. Use URL + username sign-in.
 3. Base URL: `https://your-domain.tld/dav`.
 4. Enter email/password.
 5. Select calendars/address books to sync.
 
-## Thunderbird
+## Thunderbird ✉️
 
 1. Install TbSync + provider addon(s) if needed.
 2. Add CalDAV/CardDAV account.
 3. DAV URL: `https://your-domain.tld/dav`.
 4. Use same credentials.
 
-## Sharing Behavior
+## Sharing Behavior 🤝
 
-- Shared resources appear in client discovery and in UI dashboard.
+- Shared resources appear in client discovery and in the web dashboard.
 - `read_only` shares block write operations.
 - `admin` shares allow full edits.
 
-## Troubleshooting
+## Troubleshooting 🛠️
 
 - `401 Unauthorized`: verify email/password.
-- `403 Forbidden`: resource likely shared as read-only.
-- Missing resources: confirm resource is marked sharable and a share exists.
+- `403 Forbidden`: likely read-only share or owner sharing disabled.
+- Missing resources: ensure resource is sharable and share assignment exists.

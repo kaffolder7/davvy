@@ -2,13 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ShareResourceType;
 use App\Models\AddressBook;
+use App\Services\Dav\DavSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class AddressBookController extends Controller
 {
+    public function __construct(private readonly DavSyncService $syncService)
+    {
+    }
+
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -29,6 +35,7 @@ class AddressBookController extends Controller
             'is_sharable' => (bool) ($data['is_sharable'] ?? false),
             'is_default' => false,
         ]);
+        $this->syncService->ensureResource(ShareResourceType::AddressBook, $addressBook->id);
 
         return response()->json($addressBook, 201);
     }

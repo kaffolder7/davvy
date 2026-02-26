@@ -13,7 +13,7 @@ COPY resources ./resources
 COPY vite.config.js tailwind.config.js postcss.config.js ./
 RUN npm run build
 
-FROM php:8.3-cli-alpine AS runtime
+FROM php:8.4-cli-alpine AS runtime
 WORKDIR /var/www/html
 
 RUN apk add --no-cache bash libpq-dev zip unzip icu-dev oniguruma-dev \

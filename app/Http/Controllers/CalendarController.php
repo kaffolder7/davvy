@@ -2,13 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ShareResourceType;
 use App\Models\Calendar;
+use App\Services\Dav\DavSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class CalendarController extends Controller
 {
+    public function __construct(private readonly DavSyncService $syncService)
+    {
+    }
+
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -33,6 +39,7 @@ class CalendarController extends Controller
             'is_sharable' => (bool) ($data['is_sharable'] ?? false),
             'is_default' => false,
         ]);
+        $this->syncService->ensureResource(ShareResourceType::Calendar, $calendar->id);
 
         return response()->json($calendar, 201);
     }

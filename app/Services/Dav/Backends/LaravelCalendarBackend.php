@@ -7,11 +7,14 @@ use App\Enums\ShareResourceType;
 use App\Models\Calendar;
 use App\Models\CalendarObject;
 use App\Models\ResourceShare;
+use App\Services\Dav\DavSyncService;
+use App\Services\Dav\IcsValidator;
 use App\Services\DavRequestContext;
 use App\Services\PrincipalUriService;
 use App\Services\ResourceAccessService;
 use Illuminate\Support\Str;
 use Sabre\CalDAV\Backend\AbstractBackend;
+use Sabre\DAV\Exception\BadRequest;
 use Sabre\DAV\Exception\Forbidden;
 use Sabre\DAV\Exception\NotFound;
 use Sabre\DAV\PropPatch;
@@ -22,6 +25,8 @@ class LaravelCalendarBackend extends AbstractBackend
         private readonly PrincipalUriService $principalUriService,
         private readonly ResourceAccessService $accessService,
         private readonly DavRequestContext $davContext,
+        private readonly IcsValidator $icsValidator,
+        private readonly DavSyncService $syncService,
     ) {
     }
 
@@ -61,7 +66,7 @@ class LaravelCalendarBackend extends AbstractBackend
             throw new NotFound('Principal does not exist.');
         }
 
-        Calendar::query()->create([
+        $calendar = Calendar::query()->create([
             'owner_id' => $user->id,
             'uri' => Str::slug((string) $calendarUri),
             'display_name' => (string) ($properties['{DAV:}displayname'] ?? 'Calendar'),
@@ -71,6 +76,8 @@ class LaravelCalendarBackend extends AbstractBackend
             'is_default' => false,
             'is_sharable' => false,
         ]);
+
+        $this->syncService->ensureResource(ShareResourceType::Calendar, $calendar->id);
     }
 
     public function updateCalendar($calendarId, PropPatch $propPatch): void
@@ -174,16 +181,30 @@ class LaravelCalendarBackend extends AbstractBackend
 
         $this->assertWritableCalendar($calendar);
 
-        $etag = md5($calendarData);
+        $existing = CalendarObject::query()
+            ->where('calendar_id', $calendar->id)
+            ->where('uri', $objectUri)
+            ->exists();
+
+        if ($existing) {
+            throw new BadRequest('Calendar object already exists for the requested URI.');
+        }
+
+        $normalized = $this->icsValidator->validateAndNormalize((string) $calendarData);
+        $etag = md5($normalized['data']);
 
         CalendarObject::query()->create([
             'calendar_id' => $calendar->id,
             'uri' => $objectUri,
             'etag' => $etag,
-            'size' => strlen($calendarData),
-            'component_type' => $this->extractComponentType($calendarData),
-            'data' => $calendarData,
+            'size' => strlen($normalized['data']),
+            'component_type' => $normalized['component_type'],
+            'first_occurred_at' => $normalized['first_occurred_at'],
+            'last_occurred_at' => $normalized['last_occurred_at'],
+            'data' => $normalized['data'],
         ]);
+
+        $this->syncService->recordAdded(ShareResourceType::Calendar, $calendar->id, (string) $objectUri);
 
         return '"'.$etag.'"';
     }
@@ -207,14 +228,19 @@ class LaravelCalendarBackend extends AbstractBackend
             throw new NotFound('Calendar object not found.');
         }
 
-        $etag = md5($calendarData);
+        $normalized = $this->icsValidator->validateAndNormalize((string) $calendarData);
+        $etag = md5($normalized['data']);
 
         $object->update([
             'etag' => $etag,
-            'size' => strlen($calendarData),
-            'component_type' => $this->extractComponentType($calendarData),
-            'data' => $calendarData,
+            'size' => strlen($normalized['data']),
+            'component_type' => $normalized['component_type'],
+            'first_occurred_at' => $normalized['first_occurred_at'],
+            'last_occurred_at' => $normalized['last_occurred_at'],
+            'data' => $normalized['data'],
         ]);
+
+        $this->syncService->recordModified(ShareResourceType::Calendar, $calendar->id, (string) $objectUri);
 
         return '"'.$etag.'"';
     }
@@ -229,10 +255,18 @@ class LaravelCalendarBackend extends AbstractBackend
 
         $this->assertWritableCalendar($calendar);
 
-        CalendarObject::query()
+        $object = CalendarObject::query()
             ->where('calendar_id', $calendar->id)
             ->where('uri', $objectUri)
-            ->delete();
+            ->first();
+
+        if (! $object) {
+            return;
+        }
+
+        $object->delete();
+
+        $this->syncService->recordDeleted(ShareResourceType::Calendar, $calendar->id, (string) $objectUri);
     }
 
     public function calendarQuery($calendarId, array $filters): array
@@ -249,25 +283,14 @@ class LaravelCalendarBackend extends AbstractBackend
     {
         $calendar = $this->loadReadableCalendar($calendarId);
 
-        $lastToken = (int) $syncToken;
-        $query = CalendarObject::query()
-            ->where('calendar_id', $calendar->id)
-            ->where('id', '>', $lastToken)
-            ->orderBy('id');
+        $token = is_numeric($syncToken) ? (int) $syncToken : 0;
 
-        if ($limit !== null) {
-            $query->limit((int) $limit);
-        }
-
-        $objects = $query->get();
-        $newToken = (int) ($objects->max('id') ?? $lastToken);
-
-        return [
-            'syncToken' => (string) $newToken,
-            'added' => $objects->pluck('uri')->all(),
-            'modified' => [],
-            'deleted' => [],
-        ];
+        return $this->syncService->getChangesSince(
+            resourceType: ShareResourceType::Calendar,
+            resourceId: $calendar->id,
+            syncToken: $token,
+            limit: $limit !== null ? (int) $limit : null,
+        );
     }
 
     private function transformCalendar(Calendar $calendar, SharePermission $permission, string $principalUri): array
@@ -299,15 +322,6 @@ class LaravelCalendarBackend extends AbstractBackend
         }
 
         return $data;
-    }
-
-    private function extractComponentType(string $calendarData): ?string
-    {
-        if (preg_match('/BEGIN:(VEVENT|VTODO|VJOURNAL)/i', $calendarData, $matches) !== 1) {
-            return null;
-        }
-
-        return strtoupper($matches[1]);
     }
 
     private function loadReadableCalendar(int $calendarId): Calendar

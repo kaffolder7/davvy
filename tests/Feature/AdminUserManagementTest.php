@@ -46,4 +46,18 @@ class AdminUserManagementTest extends TestCase
 
         $response->assertForbidden();
     }
+
+    public function test_admin_can_toggle_owner_share_management_setting(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this
+            ->actingAs($admin)
+            ->patchJson('/api/admin/settings/owner-share-management', [
+                'enabled' => false,
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('enabled', false);
+    }
 }
