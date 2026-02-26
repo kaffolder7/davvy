@@ -1193,8 +1193,8 @@ function AppShell({ auth, children }) {
                 <Link
                   className={
                     location.pathname === "/admin"
-                      ? "admin-chip admin-chip-active group"
-                      : "admin-chip group"
+                      ? "btn-outline btn-outline-sm admin-cta admin-cta-active group"
+                      : "btn-outline btn-outline-sm admin-cta group"
                   }
                   to="/admin"
                   aria-label="Open Admin Control Center"

@@ -86,6 +86,10 @@ body {
     @apply inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900;
   }
 
+  .btn-outline-sm {
+    @apply px-2.5 py-1 text-xs;
+  }
+
   .tab {
     @apply rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900;
   }
@@ -94,12 +98,12 @@ body {
     @apply bg-slate-900 text-white hover:bg-slate-900 hover:text-white;
   }
 
-  .admin-chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm font-semibold text-amber-900 shadow-sm transition hover:border-amber-400 hover:bg-amber-100 hover:shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2;
+  .admin-cta {
+    @apply rounded-xl gap-1.5 border-amber-300 bg-amber-50 text-amber-900 shadow-sm hover:border-amber-400 hover:bg-amber-100 hover:text-amber-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2;
   }
 
-  .admin-chip-active {
-    @apply border-amber-700 bg-amber-700 text-white hover:border-amber-700 hover:bg-amber-700 focus-visible:ring-amber-700;
+  .admin-cta-active {
+    @apply border-amber-700 bg-amber-700 text-white hover:border-amber-700 hover:bg-amber-700 hover:text-white focus-visible:ring-amber-700;
   }
 }
 
