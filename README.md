@@ -85,16 +85,28 @@ ddev artisan key:generate
 ddev artisan migrate --seed
 ```
 
-4. Access services:
+4. Start frontend assets (required before opening the app URL):
+
+```bash
+ddev vite
+```
+
+Keep `ddev vite` running in its own terminal for hot reload.  
+If you prefer not to run Vite in watch mode, build assets once with:
+
+```bash
+ddev npm run build
+```
+
+5. Access services:
 - App URL: `https://davvy.ddev.site`
 - DAV endpoint: `https://davvy.ddev.site/dav`
-- Vite dev server: `https://davvy.ddev.site:5173` (run with `ddev vite`)
+- Vite dev server: `https://davvy.ddev.site:5173` (from `ddev vite`)
 
-5. Run Laravel + frontend workflows:
+6. Run tests:
 
 ```bash
 ddev artisan test
-ddev vite
 ```
 
 ## Running Tests 🧪
