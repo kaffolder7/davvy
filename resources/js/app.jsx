@@ -1187,9 +1187,49 @@ function AppShell({ auth, children }) {
             <h1 className="text-2xl font-bold text-slate-900">
               CalDAV + CardDAV Manager
             </h1>
-            <p className="text-sm text-slate-600">
-              Signed in as {auth.user.email}
-            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2">
+              <p className="text-sm text-slate-600">Signed in as {auth.user.email}</p>
+              {auth.user.role === "admin" ? (
+                <Link
+                  className={
+                    location.pathname === "/admin"
+                      ? "admin-chip admin-chip-active group"
+                      : "admin-chip group"
+                  }
+                  to="/admin"
+                  aria-label="Open Admin Control Center"
+                  title="Open Admin Control Center"
+                >
+                  <svg
+                    aria-hidden="true"
+                    className="h-4 w-4 opacity-85 transition group-hover:opacity-100"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 3l7 3v6c0 4.4-2.8 8.2-7 9-4.2-.8-7-4.6-7-9V6l7-3z" />
+                    <path d="M9.5 12.5l1.7 1.7 3.3-3.6" />
+                  </svg>
+                  <span>Admin Console</span>
+                  <svg
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5 transition group-hover:translate-x-0.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M5 12h14" />
+                    <path d="M13 6l6 6-6 6" />
+                  </svg>
+                </Link>
+              ) : null}
+            </div>
           </div>
           <nav className="flex items-center gap-2">
             <Link
@@ -1219,14 +1259,6 @@ function AppShell({ auth, children }) {
                 <path d="M5 20c1.6-3.3 4-5 7-5s5.4 1.7 7 5" />
               </svg>
             </Link>
-            {auth.user.role === "admin" ? (
-              <Link
-                className={location.pathname === "/admin" ? "tab tab-active" : "tab"}
-                to="/admin"
-              >
-                Admin
-              </Link>
-            ) : null}
             <button className="btn-outline" onClick={logout}>
               Sign Out
             </button>
