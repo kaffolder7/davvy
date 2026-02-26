@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { api, extractError } from './lib/api';
 
 function App() {
@@ -712,6 +713,16 @@ function FullPageState({ label, compact = false }) {
     <div className={compact ? 'mt-4 text-sm font-semibold text-slate-600' : 'flex min-h-screen items-center justify-center text-lg font-semibold text-slate-700'}>
       {label}
     </div>
+  );
+}
+
+const mountNode = document.getElementById('app');
+
+if (mountNode) {
+  createRoot(mountNode).render(
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>,
   );
 }
 
