@@ -2,15 +2,6 @@
 
 Davvy is an MVP Laravel + React + Tailwind web application for managing users, calendars, and address books backed by a SabreDAV (`sabre/dav`) CalDAV/CardDAV server.
 
-## Why SabreDAV (vs Radicale)
-
-This MVP uses `sabre/dav` because:
-- It is embeddable directly in Laravel/PHP app logic.
-- CalDAV and CardDAV backends are fully customizable using your own DB models.
-- It keeps user/role/sharing logic in one codebase.
-
-Radicale is strong as a standalone DAV server, but SabreDAV is a better fit for this integrated Laravel-admin UI architecture.
-
 ## MVP Features
 
 - Laravel backend + React/Tailwind frontend
