@@ -45,10 +45,12 @@ docker compose up --build
 - Health: `http://localhost:8080/up`
 - DAV endpoint: `http://localhost:8080/dav`
 
-3. Default admin credentials:
+3. Default admin credentials (from `compose.yml` defaults):
 
 - Email: `admin@davvy.local`
 - Password: `ChangeMe123!`
+
+If `RUN_DB_SEED=false` or either `DEFAULT_ADMIN_EMAIL`/`DEFAULT_ADMIN_PASSWORD` is empty, this user will not be created.
 
 Configurable envs:
 - `DEFAULT_ADMIN_EMAIL`
@@ -85,7 +87,15 @@ ddev artisan key:generate
 ddev artisan migrate --seed
 ```
 
-4. Start frontend assets (required before opening the app URL):
+4. Bootstrap a local admin user (recommended when public registration is disabled):
+
+```bash
+ddev exec sh -lc "DEFAULT_ADMIN_EMAIL='admin@davvy.local' DEFAULT_ADMIN_PASSWORD='ChangeMe123!' php artisan db:seed --force --no-interaction"
+```
+
+Your `.env.ddev.example` intentionally leaves `DEFAULT_ADMIN_EMAIL` and `DEFAULT_ADMIN_PASSWORD` empty, so no default admin exists until you seed one.
+
+5. Start frontend assets (required before opening the app URL):
 
 ```bash
 ddev vite
@@ -98,12 +108,16 @@ If you prefer not to run Vite in watch mode, build assets once with:
 ddev npm run build
 ```
 
-5. Access services:
+6. Access services:
 - App URL: `https://davvy.ddev.site`
 - DAV endpoint: `https://davvy.ddev.site/dav`
 - Vite dev server: `https://davvy.ddev.site:5173` (from `ddev vite`)
 
-6. Run tests:
+Auth troubleshooting:
+- `401` on `GET /api/auth/me` before sign-in is expected.
+- `422` on `POST /api/auth/login` means the submitted credentials do not match a seeded user.
+
+7. Run tests:
 
 ```bash
 ddev artisan test
