@@ -1,0 +1,79 @@
+name: Lint & Format Checks
+
+on:
+  push:
+    paths:
+      - 'app/**'
+      - 'bootstrap/**'
+      - 'config/**'
+      - 'database/**'
+      - 'resources/**'
+      - 'routes/**'
+      - 'tests/**'
+      - 'composer.json'
+      - '.env.example'
+      - 'vite.config.js'
+      - 'tailwind.config.js'
+      - 'postcss.config.js'
+      - '.github/workflows/lint-checks.yml'
+      - '.github/workflows/pr-tests.yml'
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'app/**'
+      - 'bootstrap/**'
+      - 'config/**'
+      - 'database/**'
+      - 'resources/**'
+      - 'routes/**'
+      - 'tests/**'
+      - 'composer.json'
+      - '.env.example'
+      - 'vite.config.js'
+      - 'tailwind.config.js'
+      - 'postcss.config.js'
+      - '.github/workflows/lint-checks.yml'
+      - '.github/workflows/pr-tests.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lint-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  php-syntax:
+    name: PHP Syntax Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+
+      - name: Lint PHP files
+        run: |
+          find app bootstrap config database routes tests -type f -name '*.php' -print0 | xargs -0 -r -n1 -P4 php -l
+
+  pint-format:
+    name: Laravel Pint (format check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pint in test mode
+        run: |
+          docker run --rm \
+            -v "$PWD:/app" \
+            -w /app \
+            ghcr.io/laravel/pint:latest \
+            --test
