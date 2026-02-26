@@ -59,7 +59,7 @@ Configurable envs:
 
 ## Local Development with DDEV 🧰
 
-This repo now includes a committed `.ddev/` setup for local development convenience and does not replace the existing Docker workflows used for deployment/CI.
+This repo includes a `.ddev/` setup for local development convenience and does not replace the existing Docker workflows used for deployment/CI.
 
 1. Start DDEV:
 
