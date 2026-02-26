@@ -3,39 +3,39 @@ name: Lint & Format Checks
 on:
   push:
     paths:
-      - 'app/**'
-      - 'bootstrap/**'
-      - 'config/**'
-      - 'database/**'
-      - 'resources/**'
-      - 'routes/**'
-      - 'tests/**'
-      - 'composer.json'
-      - 'composer.lock'
-      - '.env.example'
-      - 'vite.config.js'
-      - 'tailwind.config.js'
-      - 'postcss.config.js'
-      - '.github/workflows/lint-checks.yml'
-      - '.github/workflows/pr-tests.yml'
+      - "app/**"
+      - "bootstrap/**"
+      - "config/**"
+      - "database/**"
+      - "resources/**"
+      - "routes/**"
+      - "tests/**"
+      - "composer.json"
+      - "composer.lock"
+      - ".env.example"
+      - "vite.config.js"
+      - "tailwind.config.js"
+      - "postcss.config.js"
+      - ".github/workflows/lint-checks.yml"
+      - ".github/workflows/pr-tests.yml"
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - 'app/**'
-      - 'bootstrap/**'
-      - 'config/**'
-      - 'database/**'
-      - 'resources/**'
-      - 'routes/**'
-      - 'tests/**'
-      - 'composer.json'
-      - 'composer.lock'
-      - '.env.example'
-      - 'vite.config.js'
-      - 'tailwind.config.js'
-      - 'postcss.config.js'
-      - '.github/workflows/lint-checks.yml'
-      - '.github/workflows/pr-tests.yml'
+      - "app/**"
+      - "bootstrap/**"
+      - "config/**"
+      - "database/**"
+      - "resources/**"
+      - "routes/**"
+      - "tests/**"
+      - "composer.json"
+      - "composer.lock"
+      - ".env.example"
+      - "vite.config.js"
+      - "tailwind.config.js"
+      - "postcss.config.js"
+      - ".github/workflows/lint-checks.yml"
+      - ".github/workflows/pr-tests.yml"
 
 permissions:
   contents: read
@@ -57,7 +57,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: "8.4"
 
       - name: Lint PHP files
         run: |
@@ -75,7 +75,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: "8.4"
           tools: composer:v2
 
       - name: Get Composer cache directory
