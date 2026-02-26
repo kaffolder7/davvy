@@ -90,6 +90,14 @@ function App() {
         }
       />
       <Route
+        path="/profile"
+        element={
+          <ProtectedRoute auth={value}>
+            <ProfilePage auth={value} />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="*"
         element={<Navigate to={auth.user ? "/" : "/login"} replace />}
       />
@@ -1030,10 +1038,7 @@ function AdminPage({ auth }) {
   );
 }
 
-function AppShell({ auth, children }) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [passwordPanelOpen, setPasswordPanelOpen] = useState(false);
+function ProfilePage({ auth }) {
   const [passwordSubmitting, setPasswordSubmitting] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
@@ -1042,28 +1047,6 @@ function AppShell({ auth, children }) {
     password: "",
     password_confirmation: "",
   });
-
-  const resetPasswordForm = () => {
-    setPasswordError("");
-    setPasswordSuccess("");
-    setPasswordSubmitting(false);
-    setPasswordForm({
-      current_password: "",
-      password: "",
-      password_confirmation: "",
-    });
-  };
-
-  const togglePasswordPanel = () => {
-    if (passwordPanelOpen) {
-      setPasswordPanelOpen(false);
-      resetPasswordForm();
-      return;
-    }
-
-    resetPasswordForm();
-    setPasswordPanelOpen(true);
-  };
 
   const changePassword = async (event) => {
     event.preventDefault();
@@ -1088,9 +1071,101 @@ function AppShell({ auth, children }) {
     }
   };
 
+  return (
+    <AppShell auth={auth}>
+      <section className="fade-up grid gap-4 md:grid-cols-3">
+        <InfoCard
+          title="Name"
+          value={auth.user.name}
+          helper="Displayed to other users when sharing resources."
+        />
+        <InfoCard
+          title="Email"
+          value={auth.user.email}
+          helper="Used for web sign-in and DAV clients."
+        />
+        <InfoCard
+          title="Role"
+          value={auth.user.role.toUpperCase()}
+          helper="Access level for administrative features."
+        />
+      </section>
+
+      <section className="surface mt-6 rounded-3xl p-6">
+        <h2 className="text-xl font-semibold text-slate-900">Security</h2>
+        <p className="mt-1 text-sm text-slate-600">
+          Change your password for both web access and DAV client connections.
+        </p>
+        <form className="mt-4 grid gap-3 md:grid-cols-3" onSubmit={changePassword}>
+          <Field label="Current password">
+            <input
+              className="input"
+              type="password"
+              value={passwordForm.current_password}
+              onChange={(event) =>
+                setPasswordForm({
+                  ...passwordForm,
+                  current_password: event.target.value,
+                })
+              }
+              required
+            />
+          </Field>
+          <Field label="New password">
+            <input
+              className="input"
+              type="password"
+              value={passwordForm.password}
+              onChange={(event) =>
+                setPasswordForm({
+                  ...passwordForm,
+                  password: event.target.value,
+                })
+              }
+              required
+            />
+          </Field>
+          <Field label="Confirm new password">
+            <input
+              className="input"
+              type="password"
+              value={passwordForm.password_confirmation}
+              onChange={(event) =>
+                setPasswordForm({
+                  ...passwordForm,
+                  password_confirmation: event.target.value,
+                })
+              }
+              required
+            />
+          </Field>
+
+          {passwordError ? (
+            <p className="md:col-span-3 text-sm text-red-700">{passwordError}</p>
+          ) : null}
+          {passwordSuccess ? (
+            <p className="md:col-span-3 text-sm text-teal-700">
+              {passwordSuccess}
+            </p>
+          ) : null}
+
+          <div className="md:col-span-3 flex flex-wrap items-center gap-2">
+            <button className="btn" disabled={passwordSubmitting} type="submit">
+              {passwordSubmitting ? "Updating password..." : "Update Password"}
+            </button>
+          </div>
+        </form>
+      </section>
+    </AppShell>
+  );
+}
+
+function AppShell({ auth, children }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const logout = async () => {
     await api.post("/api/auth/logout");
-    setPasswordPanelOpen(false);
     auth.setAuth({
       loading: false,
       user: null,
@@ -1123,117 +1198,26 @@ function AppShell({ auth, children }) {
             >
               Dashboard
             </Link>
+            <Link
+              className={location.pathname === "/profile" ? "tab tab-active" : "tab"}
+              to="/profile"
+            >
+              Profile
+            </Link>
             {auth.user.role === "admin" ? (
               <Link
-                className={`${location.pathname === "/admin" ? "tab tab-active" : "tab"} inline-flex items-center gap-1.5`}
+                className={location.pathname === "/admin" ? "tab tab-active" : "tab"}
                 to="/admin"
               >
-                <span>Admin</span>
-                <svg
-                  aria-hidden="true"
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="8" r="4" />
-                  <path d="M5 20c1.6-3.3 4-5 7-5s5.4 1.7 7 5" />
-                </svg>
+                Admin
               </Link>
             ) : null}
-            <button className="btn-outline" onClick={togglePasswordPanel}>
-              {passwordPanelOpen ? "Close Password" : "Change Password"}
-            </button>
             <button className="btn-outline" onClick={logout}>
               Sign Out
             </button>
           </nav>
         </div>
       </header>
-      {passwordPanelOpen ? (
-        <section className="surface mt-4 rounded-2xl p-5">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold text-slate-900">
-                Change Password
-              </h2>
-              <p className="text-sm text-slate-600">
-                This updates both web sign-in and DAV client credentials.
-              </p>
-            </div>
-          </div>
-          <form className="mt-4 grid gap-3 md:grid-cols-3" onSubmit={changePassword}>
-            <Field label="Current password">
-              <input
-                className="input"
-                type="password"
-                value={passwordForm.current_password}
-                onChange={(event) =>
-                  setPasswordForm({
-                    ...passwordForm,
-                    current_password: event.target.value,
-                  })
-                }
-                required
-              />
-            </Field>
-            <Field label="New password">
-              <input
-                className="input"
-                type="password"
-                value={passwordForm.password}
-                onChange={(event) =>
-                  setPasswordForm({
-                    ...passwordForm,
-                    password: event.target.value,
-                  })
-                }
-                required
-              />
-            </Field>
-            <Field label="Confirm new password">
-              <input
-                className="input"
-                type="password"
-                value={passwordForm.password_confirmation}
-                onChange={(event) =>
-                  setPasswordForm({
-                    ...passwordForm,
-                    password_confirmation: event.target.value,
-                  })
-                }
-                required
-              />
-            </Field>
-
-            {passwordError ? (
-              <p className="md:col-span-3 text-sm text-red-700">{passwordError}</p>
-            ) : null}
-            {passwordSuccess ? (
-              <p className="md:col-span-3 text-sm text-teal-700">
-                {passwordSuccess}
-              </p>
-            ) : null}
-
-            <div className="md:col-span-3 flex flex-wrap items-center gap-2">
-              <button className="btn" disabled={passwordSubmitting} type="submit">
-                {passwordSubmitting ? "Updating password..." : "Update Password"}
-              </button>
-              <button
-                className="btn-outline"
-                disabled={passwordSubmitting}
-                onClick={togglePasswordPanel}
-                type="button"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </section>
-      ) : null}
       <div className="mt-6">{children}</div>
     </main>
   );
