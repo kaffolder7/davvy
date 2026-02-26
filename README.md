@@ -50,7 +50,8 @@ docker compose up --build
 - Email: `admin@davvy.local`
 - Password: `ChangeMe123!`
 
-If `RUN_DB_SEED=false` or either `DEFAULT_ADMIN_EMAIL`/`DEFAULT_ADMIN_PASSWORD` is empty, this user will not be created.
+> [!NOTE]
+> If `RUN_DB_SEED=false` or either `DEFAULT_ADMIN_EMAIL`/`DEFAULT_ADMIN_PASSWORD` is empty, this user will not be created.
 
 Configurable envs:
 - `DEFAULT_ADMIN_EMAIL`
