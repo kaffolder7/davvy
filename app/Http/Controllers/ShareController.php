@@ -14,9 +14,7 @@ use Illuminate\Http\Request;
 
 class ShareController extends Controller
 {
-    public function __construct(private readonly RegistrationSettingsService $settings)
-    {
-    }
+    public function __construct(private readonly RegistrationSettingsService $settings) {}
 
     public function index(Request $request): JsonResponse
     {

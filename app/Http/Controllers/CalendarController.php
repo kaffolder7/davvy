@@ -11,9 +11,7 @@ use Illuminate\Support\Str;
 
 class CalendarController extends Controller
 {
-    public function __construct(private readonly DavSyncService $syncService)
-    {
-    }
+    public function __construct(private readonly DavSyncService $syncService) {}
 
     public function store(Request $request): JsonResponse
     {

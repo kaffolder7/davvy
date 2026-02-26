@@ -23,8 +23,7 @@ class DavServerFactory
         private readonly LaravelPrincipalBackend $principalBackend,
         private readonly LaravelCalendarBackend $calendarBackend,
         private readonly LaravelCardDavBackend $cardDavBackend,
-    ) {
-    }
+    ) {}
 
     public function make(): Server
     {
@@ -40,10 +39,10 @@ class DavServerFactory
 
         $authPlugin = new AuthPlugin($this->authBackend, 'Davvy DAV');
         $server->addPlugin($authPlugin);
-        $server->addPlugin(new AclPlugin());
-        $server->addPlugin(new CalDavPlugin());
-        $server->addPlugin(new CardDavPlugin());
-        $server->addPlugin(new SyncPlugin());
+        $server->addPlugin(new AclPlugin);
+        $server->addPlugin(new CalDavPlugin);
+        $server->addPlugin(new CardDavPlugin);
+        $server->addPlugin(new SyncPlugin);
 
         return $server;
     }

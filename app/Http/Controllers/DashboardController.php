@@ -13,9 +13,7 @@ use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function __construct(private readonly RegistrationSettingsService $settings)
-    {
-    }
+    public function __construct(private readonly RegistrationSettingsService $settings) {}
 
     public function index(Request $request): JsonResponse
     {

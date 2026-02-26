@@ -12,9 +12,7 @@ use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
-    public function __construct(private readonly RegistrationSettingsService $registrationSettings)
-    {
-    }
+    public function __construct(private readonly RegistrationSettingsService $registrationSettings) {}
 
     public function register(Request $request): JsonResponse
     {

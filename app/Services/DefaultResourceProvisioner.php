@@ -11,9 +11,7 @@ use Illuminate\Support\Str;
 
 class DefaultResourceProvisioner
 {
-    public function __construct(private readonly DavSyncService $syncService)
-    {
-    }
+    public function __construct(private readonly DavSyncService $syncService) {}
 
     public function provisionFor(User $user): void
     {
