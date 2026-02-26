@@ -56,3 +56,4 @@ Recommended app: DAVx5.
 - `401 Unauthorized`: verify email/password.
 - `403 Forbidden`: likely read-only share or owner sharing disabled.
 - Missing resources: ensure resource is sharable and share assignment exists.
+- Legacy client payload errors: admins can enable DAV compatibility mode in the web admin UI.

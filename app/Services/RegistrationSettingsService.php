@@ -32,4 +32,17 @@ class RegistrationSettingsService
             ['value' => $enabled ? 'true' : 'false', 'updated_by' => $actor?->id]
         );
     }
+
+    public function isDavCompatibilityModeEnabled(): bool
+    {
+        return AppSetting::davCompatibilityModeEnabled();
+    }
+
+    public function setDavCompatibilityModeEnabled(bool $enabled, ?User $actor = null): void
+    {
+        AppSetting::query()->updateOrCreate(
+            ['key' => 'dav_compatibility_mode_enabled'],
+            ['value' => $enabled ? 'true' : 'false', 'updated_by' => $actor?->id]
+        );
+    }
 }

@@ -31,4 +31,15 @@ class RegistrationSettingsServiceTest extends TestCase
 
         $this->assertFalse($service->isOwnerShareManagementEnabled());
     }
+
+    public function test_dav_compatibility_mode_setting_can_be_toggled(): void
+    {
+        $service = app(RegistrationSettingsService::class);
+
+        $this->assertFalse($service->isDavCompatibilityModeEnabled());
+
+        $service->setDavCompatibilityModeEnabled(true);
+
+        $this->assertTrue($service->isDavCompatibilityModeEnabled());
+    }
 }

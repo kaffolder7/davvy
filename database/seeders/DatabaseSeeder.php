@@ -30,11 +30,19 @@ class DatabaseSeeder extends Seeder
             enabled: (bool) env('ENABLE_OWNER_SHARE_MANAGEMENT', true),
             actor: null
         );
+        $settings->setDavCompatibilityModeEnabled(
+            enabled: (bool) env('ENABLE_DAV_COMPATIBILITY_MODE', false),
+            actor: null
+        );
 
         AppSetting::query()->updateOrCreate(['key' => 'public_registration_enabled'], ['value' => 'false']);
         AppSetting::query()->updateOrCreate(
             ['key' => 'owner_share_management_enabled'],
             ['value' => env('ENABLE_OWNER_SHARE_MANAGEMENT', true) ? 'true' : 'false']
+        );
+        AppSetting::query()->updateOrCreate(
+            ['key' => 'dav_compatibility_mode_enabled'],
+            ['value' => env('ENABLE_DAV_COMPATIBILITY_MODE', false) ? 'true' : 'false']
         );
     }
 }

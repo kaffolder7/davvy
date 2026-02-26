@@ -2,6 +2,7 @@
 
 namespace App\Services\Dav;
 
+use App\Services\RegistrationSettingsService;
 use Sabre\DAV\Exception\BadRequest;
 use Sabre\VObject\Component\VCard;
 use Sabre\VObject\ParseException;
@@ -9,19 +10,23 @@ use Sabre\VObject\Reader;
 
 class VCardValidator
 {
+    public function __construct(private readonly RegistrationSettingsService $settings) {}
+
     public function validateAndNormalize(string $cardData): array
     {
+        $strictModeEnabled = ! $this->settings->isDavCompatibilityModeEnabled();
+
         $component = $this->parseVCard($cardData);
         if (! $component instanceof VCard) {
             throw new BadRequest('Expected VCARD payload.');
         }
 
-        $version = $this->validateVersion($component);
-        $fn = $this->validateFullName($component);
-        $uid = $this->validateUid($component);
-        $this->validateEmailAddresses($component);
+        $version = $this->validateVersion($component, $strictModeEnabled);
+        $fn = $this->validateFullName($component, $strictModeEnabled);
+        $uid = $this->validateUid($component, $strictModeEnabled);
+        $this->validateEmailAddresses($component, $strictModeEnabled);
 
-        if ($fn === '') {
+        if ($strictModeEnabled && $fn === '') {
             throw new BadRequest('vCard must include FN.');
         }
 
@@ -66,63 +71,80 @@ class VCardValidator
         return $component;
     }
 
-    private function validateVersion(VCard $card): string
+    private function validateVersion(VCard $card, bool $strictModeEnabled): string
     {
         $versions = $card->select('VERSION');
 
-        if (count($versions) !== 1) {
+        if ($strictModeEnabled && count($versions) !== 1) {
             throw new BadRequest('vCard must include exactly one VERSION property.');
         }
 
-        $version = trim((string) $versions[0]);
+        $version = trim((string) ($versions[0] ?? ''));
 
-        if (! in_array($version, ['3.0', '4.0'], true)) {
+        if (! $strictModeEnabled && $version === '') {
+            return '3.0';
+        }
+
+        if ($strictModeEnabled && ! in_array($version, ['3.0', '4.0'], true)) {
             throw new BadRequest('vCard VERSION must be 3.0 or 4.0.');
         }
 
         return $version;
     }
 
-    private function validateFullName(VCard $card): string
+    private function validateFullName(VCard $card, bool $strictModeEnabled): string
     {
         $fnProperties = $card->select('FN');
 
-        if (count($fnProperties) !== 1) {
+        if ($strictModeEnabled && count($fnProperties) !== 1) {
             throw new BadRequest('vCard must include exactly one FN property.');
         }
 
-        $value = trim((string) $fnProperties[0]);
+        $value = trim((string) ($fnProperties[0] ?? ''));
 
-        if ($value === '') {
+        if ($strictModeEnabled && $value === '') {
             throw new BadRequest('vCard FN must not be empty.');
+        }
+
+        if (! $strictModeEnabled && $value === '') {
+            $nameProperty = trim((string) ($card->N ?? ''));
+
+            if ($nameProperty !== '') {
+                return str_replace(';', ' ', $nameProperty);
+            }
+
+            return '';
         }
 
         return $value;
     }
 
-    private function validateUid(VCard $card): string
+    private function validateUid(VCard $card, bool $strictModeEnabled): ?string
     {
         $uidProperties = $card->select('UID');
 
-        if (count($uidProperties) !== 1) {
+        if ($strictModeEnabled && count($uidProperties) !== 1) {
             throw new BadRequest('vCard must include exactly one UID property.');
         }
 
-        $uid = trim((string) $uidProperties[0]);
+        $uid = trim((string) ($uidProperties[0] ?? ''));
 
-        if ($uid === '') {
+        if ($strictModeEnabled && $uid === '') {
             throw new BadRequest('vCard UID must not be empty.');
         }
 
-        return $uid;
+        return $uid !== '' ? $uid : null;
     }
 
-    private function validateEmailAddresses(VCard $card): void
+    private function validateEmailAddresses(VCard $card, bool $strictModeEnabled): void
     {
         foreach ($card->select('EMAIL') as $emailProperty) {
             $email = trim((string) $emailProperty);
 
-            if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            if (
+                $strictModeEnabled
+                && ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false)
+            ) {
                 throw new BadRequest('vCard EMAIL values must be valid email addresses.');
             }
         }

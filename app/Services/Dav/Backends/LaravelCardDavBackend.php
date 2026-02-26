@@ -180,8 +180,9 @@ class LaravelCardDavBackend extends AbstractBackend
         }
 
         $normalized = $this->vCardValidator->validateAndNormalize((string) $cardData);
+        $resourceUid = $normalized['uid'] ?? $this->fallbackUidForLegacyPayload((string) $cardUri);
 
-        if ($this->uidConflictExists($addressBook->id, $normalized['uid'])) {
+        if ($this->uidConflictExists($addressBook->id, $resourceUid)) {
             throw new Conflict('A contact with the same UID already exists in this address book.');
         }
 
@@ -190,7 +191,7 @@ class LaravelCardDavBackend extends AbstractBackend
         Card::query()->create([
             'address_book_id' => $addressBook->id,
             'uri' => $cardUri,
-            'uid' => $normalized['uid'],
+            'uid' => $resourceUid,
             'etag' => $etag,
             'size' => strlen($normalized['data']),
             'data' => $normalized['data'],
@@ -221,15 +222,16 @@ class LaravelCardDavBackend extends AbstractBackend
         }
 
         $normalized = $this->vCardValidator->validateAndNormalize((string) $cardData);
+        $resourceUid = $normalized['uid'] ?? $this->fallbackUidForLegacyPayload((string) $cardUri);
 
-        if ($this->uidConflictExists($addressBook->id, $normalized['uid'], exceptCardId: $card->id)) {
+        if ($this->uidConflictExists($addressBook->id, $resourceUid, exceptCardId: $card->id)) {
             throw new Conflict('A contact with the same UID already exists in this address book.');
         }
 
         $etag = md5($normalized['data']);
 
         $card->update([
-            'uid' => $normalized['uid'],
+            'uid' => $resourceUid,
             'etag' => $etag,
             'size' => strlen($normalized['data']),
             'data' => $normalized['data'],
@@ -359,5 +361,10 @@ class LaravelCardDavBackend extends AbstractBackend
         }
 
         return $query->exists();
+    }
+
+    private function fallbackUidForLegacyPayload(string $cardUri): string
+    {
+        return 'legacy-card-'.sha1($cardUri);
     }
 }

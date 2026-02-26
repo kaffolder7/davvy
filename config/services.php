@@ -7,4 +7,7 @@ return [
     'sharing' => [
         'owner_management_enabled' => (bool) env('ENABLE_OWNER_SHARE_MANAGEMENT', true),
     ],
+    'dav' => [
+        'compatibility_mode_enabled' => (bool) env('ENABLE_DAV_COMPATIBILITY_MODE', false),
+    ],
 ];

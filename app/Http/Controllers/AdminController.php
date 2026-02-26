@@ -95,4 +95,20 @@ class AdminController extends Controller
             'enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
         ]);
     }
+
+    public function setDavCompatibilityModeSetting(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'enabled' => ['required', 'boolean'],
+        ]);
+
+        $this->registrationSettings->setDavCompatibilityModeEnabled(
+            enabled: (bool) $data['enabled'],
+            actor: $request->user()
+        );
+
+        return response()->json([
+            'enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
+        ]);
+    }
 }

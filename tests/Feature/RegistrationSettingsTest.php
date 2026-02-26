@@ -48,4 +48,14 @@ class RegistrationSettingsTest extends TestCase
             'is_default' => true,
         ]);
     }
+
+    public function test_public_config_includes_dav_compatibility_mode_setting(): void
+    {
+        app(RegistrationSettingsService::class)->setDavCompatibilityModeEnabled(true);
+
+        $response = $this->getJson('/api/public/config');
+
+        $response->assertOk();
+        $response->assertJsonPath('dav_compatibility_mode_enabled', true);
+    }
 }

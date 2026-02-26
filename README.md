@@ -16,6 +16,7 @@ This MVP uses `sabre/dav` because:
 - Admin + regular users
 - Public registration toggle (default OFF)
 - Owner-sharing toggle (admin-controlled, default ON)
+- DAV compatibility mode toggle (admin-controlled, default OFF/strict mode)
 - Admin-created users
 - Automatic default calendar + address book per new user
 - Dashboard views for:
@@ -54,6 +55,7 @@ Configurable envs:
 - `DEFAULT_ADMIN_PASSWORD`
 - `ENABLE_PUBLIC_REGISTRATION`
 - `ENABLE_OWNER_SHARE_MANAGEMENT`
+- `ENABLE_DAV_COMPATIBILITY_MODE`
 
 ## Running Tests 🧪
 
