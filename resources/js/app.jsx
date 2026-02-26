@@ -1033,9 +1033,64 @@ function AdminPage({ auth }) {
 function AppShell({ auth, children }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [passwordPanelOpen, setPasswordPanelOpen] = useState(false);
+  const [passwordSubmitting, setPasswordSubmitting] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [passwordForm, setPasswordForm] = useState({
+    current_password: "",
+    password: "",
+    password_confirmation: "",
+  });
+
+  const resetPasswordForm = () => {
+    setPasswordError("");
+    setPasswordSuccess("");
+    setPasswordSubmitting(false);
+    setPasswordForm({
+      current_password: "",
+      password: "",
+      password_confirmation: "",
+    });
+  };
+
+  const togglePasswordPanel = () => {
+    if (passwordPanelOpen) {
+      setPasswordPanelOpen(false);
+      resetPasswordForm();
+      return;
+    }
+
+    resetPasswordForm();
+    setPasswordPanelOpen(true);
+  };
+
+  const changePassword = async (event) => {
+    event.preventDefault();
+    setPasswordSubmitting(true);
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    try {
+      await api.patch("/api/auth/password", passwordForm);
+      setPasswordSuccess(
+        "Password updated. Use your new password for app login and DAV clients.",
+      );
+      setPasswordForm({
+        current_password: "",
+        password: "",
+        password_confirmation: "",
+      });
+    } catch (err) {
+      setPasswordError(extractError(err, "Unable to update password."));
+    } finally {
+      setPasswordSubmitting(false);
+    }
+  };
 
   const logout = async () => {
     await api.post("/api/auth/logout");
+    setPasswordPanelOpen(false);
     auth.setAuth({
       loading: false,
       user: null,
@@ -1089,12 +1144,96 @@ function AppShell({ auth, children }) {
                 </svg>
               </Link>
             ) : null}
+            <button className="btn-outline" onClick={togglePasswordPanel}>
+              {passwordPanelOpen ? "Close Password" : "Change Password"}
+            </button>
             <button className="btn-outline" onClick={logout}>
               Sign Out
             </button>
           </nav>
         </div>
       </header>
+      {passwordPanelOpen ? (
+        <section className="surface mt-4 rounded-2xl p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">
+                Change Password
+              </h2>
+              <p className="text-sm text-slate-600">
+                This updates both web sign-in and DAV client credentials.
+              </p>
+            </div>
+          </div>
+          <form className="mt-4 grid gap-3 md:grid-cols-3" onSubmit={changePassword}>
+            <Field label="Current password">
+              <input
+                className="input"
+                type="password"
+                value={passwordForm.current_password}
+                onChange={(event) =>
+                  setPasswordForm({
+                    ...passwordForm,
+                    current_password: event.target.value,
+                  })
+                }
+                required
+              />
+            </Field>
+            <Field label="New password">
+              <input
+                className="input"
+                type="password"
+                value={passwordForm.password}
+                onChange={(event) =>
+                  setPasswordForm({
+                    ...passwordForm,
+                    password: event.target.value,
+                  })
+                }
+                required
+              />
+            </Field>
+            <Field label="Confirm new password">
+              <input
+                className="input"
+                type="password"
+                value={passwordForm.password_confirmation}
+                onChange={(event) =>
+                  setPasswordForm({
+                    ...passwordForm,
+                    password_confirmation: event.target.value,
+                  })
+                }
+                required
+              />
+            </Field>
+
+            {passwordError ? (
+              <p className="md:col-span-3 text-sm text-red-700">{passwordError}</p>
+            ) : null}
+            {passwordSuccess ? (
+              <p className="md:col-span-3 text-sm text-teal-700">
+                {passwordSuccess}
+              </p>
+            ) : null}
+
+            <div className="md:col-span-3 flex flex-wrap items-center gap-2">
+              <button className="btn" disabled={passwordSubmitting} type="submit">
+                {passwordSubmitting ? "Updating password..." : "Update Password"}
+              </button>
+              <button
+                className="btn-outline"
+                disabled={passwordSubmitting}
+                onClick={togglePasswordPanel}
+                type="button"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </section>
+      ) : null}
       <div className="mt-6">{children}</div>
     </main>
   );

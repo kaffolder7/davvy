@@ -95,4 +95,20 @@ class AuthController extends Controller
             'dav_compatibility_mode_enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
         ]);
     }
+
+    public function changePassword(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'confirmed', 'different:current_password', Password::min(8)],
+        ]);
+
+        $request->user()->update([
+            'password' => $data['password'],
+        ]);
+
+        return response()->json([
+            'ok' => true,
+        ]);
+    }
 }
