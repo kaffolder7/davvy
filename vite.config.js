@@ -3,7 +3,7 @@ import laravel from 'laravel-vite-plugin';
 import react from '@vitejs/plugin-react';
 
 const vitePort = Number(process.env.VITE_PORT ?? 5173);
-const ddevPrimaryUrl = process.env.DDEV_PRIMARY_URL;
+const ddevPrimaryUrl = process.env.DDEV_PRIMARY_URL?.replace(/\/$/, '');
 const ddevHost = ddevPrimaryUrl ? new URL(ddevPrimaryUrl).hostname : undefined;
 
 export default defineConfig({
@@ -20,7 +20,11 @@ export default defineConfig({
     strictPort: true,
     ...(ddevPrimaryUrl
       ? {
-          origin: `${ddevPrimaryUrl.replace(/\/$/, '')}:${vitePort}`,
+          origin: `${ddevPrimaryUrl}:${vitePort}`,
+          cors: {
+            origin: ddevPrimaryUrl,
+            credentials: true,
+          },
           hmr: {
             host: ddevHost,
             protocol: 'wss',
