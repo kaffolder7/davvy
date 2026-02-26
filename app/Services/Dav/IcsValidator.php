@@ -2,6 +2,7 @@
 
 namespace App\Services\Dav;
 
+use App\Services\RegistrationSettingsService;
 use DateTimeImmutable;
 use Sabre\DAV\Exception\BadRequest;
 use Sabre\VObject\Component;
@@ -11,17 +12,21 @@ use Sabre\VObject\Reader;
 
 class IcsValidator
 {
+    public function __construct(private readonly RegistrationSettingsService $settings) {}
+
     public function validateAndNormalize(string $calendarData): array
     {
+        $strictModeEnabled = ! $this->settings->isDavCompatibilityModeEnabled();
+
         $component = $this->parseVCalendar($calendarData);
-        $this->validateCalendarEnvelope($component);
+        $this->validateCalendarEnvelope($component, $strictModeEnabled);
         if (! $component instanceof VCalendar) {
             throw new BadRequest('Expected VCALENDAR payload.');
         }
 
         $primaryComponents = $this->primaryComponents($component);
         $componentType = $this->resolvePrimaryType($primaryComponents);
-        $uid = $this->validatePrimaryComponents($primaryComponents, $componentType);
+        $uid = $this->validatePrimaryComponents($primaryComponents, $componentType, $strictModeEnabled);
 
         [$firstOccurredAt, $lastOccurredAt] = $this->detectOccurrenceBounds($component);
 
@@ -68,13 +73,16 @@ class IcsValidator
         return $component;
     }
 
-    private function validateCalendarEnvelope(VCalendar $calendar): void
+    private function validateCalendarEnvelope(VCalendar $calendar, bool $strictModeEnabled): void
     {
         if (trim((string) ($calendar->VERSION ?? '')) !== '2.0') {
             throw new BadRequest('VCALENDAR must include VERSION:2.0.');
         }
 
-        if (trim((string) ($calendar->PRODID ?? '')) === '') {
+        if (
+            $strictModeEnabled
+            && trim((string) ($calendar->PRODID ?? '')) === ''
+        ) {
             throw new BadRequest('VCALENDAR must include PRODID.');
         }
     }
@@ -120,7 +128,7 @@ class IcsValidator
     /**
      * @param  array<int, Component>  $components
      */
-    private function validatePrimaryComponents(array $components, string $componentType): string
+    private function validatePrimaryComponents(array $components, string $componentType, bool $strictModeEnabled): ?string
     {
         $resourceUid = null;
         $recurrenceIds = [];
@@ -129,22 +137,32 @@ class IcsValidator
         foreach ($components as $component) {
             $uid = trim((string) ($component->UID ?? ''));
 
-            if ($uid === '') {
+            if ($uid === '' && $strictModeEnabled) {
                 throw new BadRequest('Calendar components must include UID.');
             }
 
-            if ($resourceUid !== null && $resourceUid !== $uid) {
+            if (
+                $strictModeEnabled
+                && $uid !== ''
+                && $resourceUid !== null
+                && $resourceUid !== $uid
+            ) {
                 throw new BadRequest('All components in a calendar resource must share the same UID.');
             }
 
-            $resourceUid ??= $uid;
+            if ($uid !== '') {
+                $resourceUid ??= $uid;
+            }
 
-            if (trim((string) ($component->DTSTAMP ?? '')) === '') {
+            if (
+                $strictModeEnabled
+                && trim((string) ($component->DTSTAMP ?? '')) === ''
+            ) {
                 throw new BadRequest($componentType.' components must include DTSTAMP.');
             }
 
             $this->validateSequence($component);
-            $this->validateRRule($component);
+            $this->validateRRule($component, $strictModeEnabled);
 
             if (isset($component->{'RECURRENCE-ID'})) {
                 $recurrenceId = trim((string) $component->{'RECURRENCE-ID'});
@@ -171,11 +189,15 @@ class IcsValidator
             }
         }
 
-        if ($recurrenceIds !== [] && ! $hasMasterComponent) {
+        if (
+            $strictModeEnabled
+            && $recurrenceIds !== []
+            && ! $hasMasterComponent
+        ) {
             throw new BadRequest('Detached recurrence instances require a master component in the same resource.');
         }
 
-        if ($resourceUid === null) {
+        if ($strictModeEnabled && $resourceUid === null) {
             throw new BadRequest('Calendar components must include UID.');
         }
 
@@ -224,7 +246,7 @@ class IcsValidator
         }
     }
 
-    private function validateRRule(Component $component): void
+    private function validateRRule(Component $component, bool $strictModeEnabled): void
     {
         if (! isset($component->RRULE)) {
             return;
@@ -258,15 +280,27 @@ class IcsValidator
             throw new BadRequest('RRULE must include FREQ.');
         }
 
-        if (isset($parts['COUNT']) && isset($parts['UNTIL'])) {
+        if (
+            $strictModeEnabled
+            && isset($parts['COUNT'])
+            && isset($parts['UNTIL'])
+        ) {
             throw new BadRequest('RRULE cannot include both COUNT and UNTIL.');
         }
 
-        if (isset($parts['COUNT']) && (! preg_match('/^\d+$/', $parts['COUNT']) || (int) $parts['COUNT'] <= 0)) {
+        if (
+            $strictModeEnabled
+            && isset($parts['COUNT'])
+            && (! preg_match('/^\d+$/', $parts['COUNT']) || (int) $parts['COUNT'] <= 0)
+        ) {
             throw new BadRequest('RRULE COUNT must be a positive integer.');
         }
 
-        if (isset($parts['INTERVAL']) && (! preg_match('/^\d+$/', $parts['INTERVAL']) || (int) $parts['INTERVAL'] <= 0)) {
+        if (
+            $strictModeEnabled
+            && isset($parts['INTERVAL'])
+            && (! preg_match('/^\d+$/', $parts['INTERVAL']) || (int) $parts['INTERVAL'] <= 0)
+        ) {
             throw new BadRequest('RRULE INTERVAL must be a positive integer.');
         }
     }

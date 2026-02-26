@@ -34,6 +34,14 @@ class AppSetting extends Model
         );
     }
 
+    public static function davCompatibilityModeEnabled(): bool
+    {
+        return self::booleanSetting(
+            key: 'dav_compatibility_mode_enabled',
+            default: (bool) config('services.dav.compatibility_mode_enabled', false),
+        );
+    }
+
     private static function booleanSetting(string $key, bool $default): bool
     {
         $setting = self::query()->find($key);

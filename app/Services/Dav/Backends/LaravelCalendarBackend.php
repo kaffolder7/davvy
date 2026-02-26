@@ -192,8 +192,9 @@ class LaravelCalendarBackend extends AbstractBackend
         }
 
         $normalized = $this->icsValidator->validateAndNormalize((string) $calendarData);
+        $resourceUid = $normalized['uid'] ?? $this->fallbackUidForLegacyPayload((string) $objectUri);
 
-        if ($this->uidConflictExists($calendar->id, $normalized['uid'])) {
+        if ($this->uidConflictExists($calendar->id, $resourceUid)) {
             throw new Conflict('A calendar object with the same UID already exists in this calendar.');
         }
 
@@ -202,7 +203,7 @@ class LaravelCalendarBackend extends AbstractBackend
         CalendarObject::query()->create([
             'calendar_id' => $calendar->id,
             'uri' => $objectUri,
-            'uid' => $normalized['uid'],
+            'uid' => $resourceUid,
             'etag' => $etag,
             'size' => strlen($normalized['data']),
             'component_type' => $normalized['component_type'],
@@ -236,15 +237,16 @@ class LaravelCalendarBackend extends AbstractBackend
         }
 
         $normalized = $this->icsValidator->validateAndNormalize((string) $calendarData);
+        $resourceUid = $normalized['uid'] ?? $this->fallbackUidForLegacyPayload((string) $objectUri);
 
-        if ($this->uidConflictExists($calendar->id, $normalized['uid'], exceptObjectId: $object->id)) {
+        if ($this->uidConflictExists($calendar->id, $resourceUid, exceptObjectId: $object->id)) {
             throw new Conflict('A calendar object with the same UID already exists in this calendar.');
         }
 
         $etag = md5($normalized['data']);
 
         $object->update([
-            'uid' => $normalized['uid'],
+            'uid' => $resourceUid,
             'etag' => $etag,
             'size' => strlen($normalized['data']),
             'component_type' => $normalized['component_type'],
@@ -389,5 +391,10 @@ class LaravelCalendarBackend extends AbstractBackend
         }
 
         return $query->exists();
+    }
+
+    private function fallbackUidForLegacyPayload(string $objectUri): string
+    {
+        return 'legacy-calendar-'.sha1($objectUri);
     }
 }

@@ -30,6 +30,7 @@ All UI endpoints are defined in `routes/web.php` and return JSON.
 - `GET /api/admin/resources`
 - `PATCH /api/admin/settings/registration`
 - `PATCH /api/admin/settings/owner-share-management`
+- `PATCH /api/admin/settings/dav-compatibility-mode`
 - `GET /api/admin/shares`
 - `POST /api/admin/shares`
 - `DELETE /api/admin/shares/{share}`

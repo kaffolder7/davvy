@@ -60,4 +60,18 @@ class AdminUserManagementTest extends TestCase
         $response->assertOk();
         $response->assertJsonPath('enabled', false);
     }
+
+    public function test_admin_can_toggle_dav_compatibility_mode_setting(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this
+            ->actingAs($admin)
+            ->patchJson('/api/admin/settings/dav-compatibility-mode', [
+                'enabled' => true,
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('enabled', true);
+    }
 }

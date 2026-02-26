@@ -15,7 +15,7 @@
 - `address_books`: user-owned address books
 - `cards`: vCard resources (`.vcf`)
 - `resource_shares`: per-resource permissions (`read_only`, `admin`)
-- `app_settings`: global toggles (`public_registration_enabled`, `owner_share_management_enabled`)
+- `app_settings`: global toggles (`public_registration_enabled`, `owner_share_management_enabled`, `dav_compatibility_mode_enabled`)
 - `dav_resource_sync_states`: per-resource DAV sync tokens
 - `dav_resource_sync_changes`: sync change feed (`added`, `modified`, `deleted`)
 
@@ -50,6 +50,7 @@ Autodiscovery redirects:
 
 - Calendar payloads are validated and normalized as VCALENDAR content.
 - Card payloads are validated and normalized as VCARD content.
+- Strict RFC-oriented validation is the default, with an admin-controlled DAV compatibility mode for legacy clients.
 - DAV incremental sync now tracks added/modified/deleted resources with per-collection sync tokens.
 
 ## Default Resources 🎯

@@ -8,6 +8,7 @@ function App() {
     user: null,
     registrationEnabled: false,
     ownerShareManagementEnabled: false,
+    davCompatibilityModeEnabled: false,
   });
 
   const refreshAuth = async () => {
@@ -18,6 +19,7 @@ function App() {
         user: data.user,
         registrationEnabled: !!data.registration_enabled,
         ownerShareManagementEnabled: !!data.owner_share_management_enabled,
+        davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
       });
     } catch {
       try {
@@ -27,6 +29,7 @@ function App() {
           user: null,
           registrationEnabled: !!data.registration_enabled,
           ownerShareManagementEnabled: !!data.owner_share_management_enabled,
+          davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
         });
       } catch {
         setAuth({
@@ -34,6 +37,7 @@ function App() {
           user: null,
           registrationEnabled: false,
           ownerShareManagementEnabled: false,
+          davCompatibilityModeEnabled: false,
         });
       }
     }
@@ -101,6 +105,7 @@ function LoginPage({ auth }) {
         user: data.user,
         registrationEnabled: !!data.registration_enabled,
         ownerShareManagementEnabled: !!data.owner_share_management_enabled,
+        davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
       });
       navigate('/');
     } catch (err) {
@@ -156,6 +161,7 @@ function RegisterPage({ auth }) {
         user: data.user,
         registrationEnabled: !!data.registration_enabled,
         ownerShareManagementEnabled: !!data.owner_share_management_enabled,
+        davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
       });
       navigate('/');
     } catch (err) {
@@ -430,6 +436,7 @@ function AdminPage({ auth }) {
     error: '',
     registrationEnabled: auth.registrationEnabled,
     ownerShareManagementEnabled: auth.ownerShareManagementEnabled,
+    davCompatibilityModeEnabled: auth.davCompatibilityModeEnabled,
   });
   const [userForm, setUserForm] = useState({ name: '', email: '', password: '', role: 'regular' });
   const [shareForm, setShareForm] = useState({ resource_type: 'calendar', resource_id: '', shared_with_id: '', permission: 'read_only' });
@@ -518,6 +525,18 @@ function AdminPage({ auth }) {
     }
   };
 
+  const toggleDavCompatibilityMode = async () => {
+    const next = !state.davCompatibilityModeEnabled;
+
+    try {
+      const response = await api.patch('/api/admin/settings/dav-compatibility-mode', { enabled: next });
+      setState((prev) => ({ ...prev, davCompatibilityModeEnabled: !!response.data.enabled }));
+      auth.setAuth((prev) => ({ ...prev, davCompatibilityModeEnabled: !!response.data.enabled }));
+    } catch (err) {
+      setState((prev) => ({ ...prev, error: extractError(err, 'Unable to update DAV compatibility mode setting.') }));
+    }
+  };
+
   const resourceOptions = shareForm.resource_type === 'calendar' ? state.resources.calendars : state.resources.address_books;
 
   return (
@@ -531,6 +550,9 @@ function AdminPage({ auth }) {
             </button>
             <button className="btn-outline" onClick={toggleOwnerShareManagement}>
               Owner sharing: {state.ownerShareManagementEnabled ? 'ON' : 'OFF'}
+            </button>
+            <button className="btn-outline" onClick={toggleDavCompatibilityMode}>
+              DAV compatibility mode: {state.davCompatibilityModeEnabled ? 'ON' : 'OFF'}
             </button>
           </div>
         </div>
@@ -620,6 +642,7 @@ function AppShell({ auth, children }) {
       user: null,
       registrationEnabled: auth.registrationEnabled,
       ownerShareManagementEnabled: auth.ownerShareManagementEnabled,
+      davCompatibilityModeEnabled: auth.davCompatibilityModeEnabled,
     });
     navigate('/login');
   };

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Dav\Backends\LaravelCalendarBackend;
 use App\Services\Dav\Backends\LaravelCardDavBackend;
 use App\Services\DavRequestContext;
+use App\Services\RegistrationSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Sabre\DAV\Exception\BadRequest;
 use Sabre\DAV\Exception\Conflict;
@@ -176,6 +177,59 @@ class DavInteroperabilityEdgeCasesTest extends TestCase
         $this->expectException(InvalidSyncToken::class);
 
         $backend->getChangesForCalendar($calendar->id, '9999', 1);
+    }
+
+    public function test_strict_mode_rejects_legacy_calendar_payload_without_prodid_or_uid(): void
+    {
+        [$backend, $calendar] = $this->calendarBackendForOwner();
+
+        $this->expectException(BadRequest::class);
+
+        $backend->createCalendarObject(
+            $calendar->id,
+            'strict-reject.ics',
+            "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nDTSTART:20260227T100000Z\nSUMMARY:Legacy Event\nEND:VEVENT\nEND:VCALENDAR"
+        );
+    }
+
+    public function test_compatibility_mode_allows_legacy_calendar_and_card_payloads(): void
+    {
+        app(RegistrationSettingsService::class)->setDavCompatibilityModeEnabled(true);
+
+        $owner = User::factory()->create();
+        $calendar = Calendar::factory()->create(['owner_id' => $owner->id]);
+        $addressBook = AddressBook::factory()->create(['owner_id' => $owner->id]);
+
+        app(DavRequestContext::class)->setAuthenticatedUser($owner);
+
+        $calendarBackend = app(LaravelCalendarBackend::class);
+        $cardBackend = app(LaravelCardDavBackend::class);
+
+        $etag = $calendarBackend->createCalendarObject(
+            $calendar->id,
+            'legacy-event.ics',
+            "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nDTSTART:20260227T100000Z\nSUMMARY:Legacy Event\nEND:VEVENT\nEND:VCALENDAR"
+        );
+
+        $this->assertNotEmpty($etag);
+        $this->assertDatabaseHas('calendar_objects', [
+            'calendar_id' => $calendar->id,
+            'uri' => 'legacy-event.ics',
+            'uid' => 'legacy-calendar-'.sha1('legacy-event.ics'),
+        ]);
+
+        $cardEtag = $cardBackend->createCard(
+            $addressBook->id,
+            'legacy-contact.vcf',
+            "BEGIN:VCARD\nN:Legacy;Contact;;;\nEMAIL:not-an-email\nEND:VCARD"
+        );
+
+        $this->assertNotEmpty($cardEtag);
+        $this->assertDatabaseHas('cards', [
+            'address_book_id' => $addressBook->id,
+            'uri' => 'legacy-contact.vcf',
+            'uid' => 'legacy-card-'.sha1('legacy-contact.vcf'),
+        ]);
     }
 
     private function calendarBackendForOwner(): array

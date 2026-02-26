@@ -39,6 +39,7 @@ Route::middleware('auth')->group(function (): void {
         Route::get('/api/admin/resources', [AdminController::class, 'sharableResources']);
         Route::patch('/api/admin/settings/registration', [AdminController::class, 'setRegistrationSetting']);
         Route::patch('/api/admin/settings/owner-share-management', [AdminController::class, 'setOwnerShareManagementSetting']);
+        Route::patch('/api/admin/settings/dav-compatibility-mode', [AdminController::class, 'setDavCompatibilityModeSetting']);
 
         Route::get('/api/admin/shares', [ShareController::class, 'index']);
         Route::post('/api/admin/shares', [ShareController::class, 'upsert']);
