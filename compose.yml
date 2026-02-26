@@ -21,8 +21,10 @@ services:
       SESSION_DRIVER: database
       CACHE_STORE: database
       QUEUE_CONNECTION: database
+      RUN_DB_SEED: "true"
       ENABLE_PUBLIC_REGISTRATION: "false"
       ENABLE_OWNER_SHARE_MANAGEMENT: "true"
+      ENABLE_DAV_COMPATIBILITY_MODE: "false"
       DEFAULT_ADMIN_EMAIL: admin@davvy.local
       DEFAULT_ADMIN_PASSWORD: ChangeMe123!
 

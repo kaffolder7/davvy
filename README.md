@@ -56,6 +56,9 @@ Configurable envs:
 - `ENABLE_PUBLIC_REGISTRATION`
 - `ENABLE_OWNER_SHARE_MANAGEMENT`
 - `ENABLE_DAV_COMPATIBILITY_MODE`
+- `RUN_DB_SEED` (set `true` to run `db:seed` at container start)
+- `SESSION_SECURE_COOKIE`
+- `TRUSTED_PROXIES`
 
 ## Local Development with DDEV 🧰
 
@@ -103,6 +106,8 @@ docker compose run --build --rm --user root --entrypoint sh app -lc "cp .env.exa
 ## Deployment ☁️
 
 Railway is configured via [`railway.toml`](railway.toml).
+
+Production startup now runs `php artisan app:preflight` before migrations so insecure configuration fails fast.
 
 See docs:
 - [Architecture](docs/architecture.md)

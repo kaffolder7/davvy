@@ -12,17 +12,19 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $adminEmail = env('DEFAULT_ADMIN_EMAIL', 'admin@davvy.local');
-        $adminPassword = env('DEFAULT_ADMIN_PASSWORD', 'ChangeMe123!');
+        $adminEmail = trim((string) env('DEFAULT_ADMIN_EMAIL', ''));
+        $adminPassword = (string) env('DEFAULT_ADMIN_PASSWORD', '');
 
-        User::query()->updateOrCreate(
-            ['email' => $adminEmail],
-            [
-                'name' => 'Davvy Admin',
-                'password' => $adminPassword,
-                'role' => Role::Admin,
-            ]
-        );
+        if ($adminEmail !== '' && $adminPassword !== '') {
+            User::query()->updateOrCreate(
+                ['email' => $adminEmail],
+                [
+                    'name' => 'Davvy Admin',
+                    'password' => $adminPassword,
+                    'role' => Role::Admin,
+                ]
+            );
+        }
 
         $settings = app(RegistrationSettingsService::class);
         $settings->setPublicRegistrationEnabled(false, null);

@@ -9,8 +9,8 @@ use App\Http\Controllers\DavController;
 use App\Http\Controllers\ShareController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/api/auth/login', [AuthController::class, 'login']);
-Route::post('/api/auth/register', [AuthController::class, 'register']);
+Route::post('/api/auth/login', [AuthController::class, 'login'])->middleware('throttle:auth-login');
+Route::post('/api/auth/register', [AuthController::class, 'register'])->middleware('throttle:auth-register');
 Route::get('/api/public/config', [AuthController::class, 'publicConfig']);
 Route::redirect('/.well-known/caldav', '/dav', 301);
 Route::redirect('/.well-known/carddav', '/dav', 301);

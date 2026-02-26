@@ -3,7 +3,7 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "php artisan migrate --force && php artisan db:seed --force && php -S 0.0.0.0:$PORT -t public"
+startCommand = "sh /var/www/html/docker/entrypoint.sh"
 healthcheckPath = "/up"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"
