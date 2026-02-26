@@ -4,25 +4,25 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - 'app/**'
-      - 'bootstrap/**'
-      - 'config/**'
-      - 'database/**'
-      - 'resources/**'
-      - 'routes/**'
-      - 'tests/**'
-      - 'composer.json'
-      - 'composer.lock'
-      - 'package.json'
-      - 'phpunit.xml'
-      - 'Dockerfile'
-      - 'docker-compose.yml'
-      - '.env.example'
-      - 'vite.config.js'
-      - 'tailwind.config.js'
-      - 'postcss.config.js'
-      - '.github/workflows/pr-tests.yml'
-      - '.github/workflows/lint-checks.yml'
+      - "app/**"
+      - "bootstrap/**"
+      - "config/**"
+      - "database/**"
+      - "resources/**"
+      - "routes/**"
+      - "tests/**"
+      - "composer.json"
+      - "composer.lock"
+      - "package.json"
+      - "phpunit.xml"
+      - "Dockerfile"
+      - "compose.yml"
+      - ".env.example"
+      - "vite.config.js"
+      - "tailwind.config.js"
+      - "postcss.config.js"
+      - ".github/workflows/pr-tests.yml"
+      - ".github/workflows/lint-checks.yml"
 
 permissions:
   contents: read
