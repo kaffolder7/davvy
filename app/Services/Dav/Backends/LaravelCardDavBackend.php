@@ -27,8 +27,7 @@ class LaravelCardDavBackend extends AbstractBackend
         private readonly DavRequestContext $davContext,
         private readonly VCardValidator $vCardValidator,
         private readonly DavSyncService $syncService,
-    ) {
-    }
+    ) {}
 
     public function getAddressBooksForUser($principalUri): array
     {

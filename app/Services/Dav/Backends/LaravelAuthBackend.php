@@ -9,9 +9,7 @@ use Sabre\DAV\Auth\Backend\AbstractBasic;
 
 class LaravelAuthBackend extends AbstractBasic
 {
-    public function __construct(private readonly DavRequestContext $context)
-    {
-    }
+    public function __construct(private readonly DavRequestContext $context) {}
 
     protected function validateUserPass($username, $password): bool
     {

@@ -14,8 +14,7 @@ class DavController extends Controller
     public function __construct(
         private readonly DavServerFactory $davServerFactory,
         private readonly DavRequestContext $davContext,
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request): Response
     {
@@ -33,7 +32,7 @@ class DavController extends Controller
             body: $request->getContent(),
         );
 
-        $sabreResponse = new SabreResponse();
+        $sabreResponse = new SabreResponse;
 
         $server = $this->davServerFactory->make();
         $server->invokeMethod($sabreRequest, $sabreResponse, false);

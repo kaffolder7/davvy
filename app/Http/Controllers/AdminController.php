@@ -13,9 +13,7 @@ use Illuminate\Validation\Rules\Password;
 
 class AdminController extends Controller
 {
-    public function __construct(private readonly RegistrationSettingsService $registrationSettings)
-    {
-    }
+    public function __construct(private readonly RegistrationSettingsService $registrationSettings) {}
 
     public function users(): JsonResponse
     {

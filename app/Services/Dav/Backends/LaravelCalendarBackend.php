@@ -27,8 +27,7 @@ class LaravelCalendarBackend extends AbstractBackend
         private readonly DavRequestContext $davContext,
         private readonly IcsValidator $icsValidator,
         private readonly DavSyncService $syncService,
-    ) {
-    }
+    ) {}
 
     public function getCalendarsForUser($principalUri): array
     {

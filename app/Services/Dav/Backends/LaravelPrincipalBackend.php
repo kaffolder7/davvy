@@ -9,9 +9,7 @@ use Sabre\DAVACL\PrincipalBackend\AbstractBackend;
 
 class LaravelPrincipalBackend extends AbstractBackend
 {
-    public function __construct(private readonly PrincipalUriService $principalUriService)
-    {
-    }
+    public function __construct(private readonly PrincipalUriService $principalUriService) {}
 
     public function getPrincipalsByPrefix($prefixPath): array
     {
