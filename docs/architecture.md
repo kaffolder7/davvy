@@ -28,6 +28,12 @@
 - Admin users can manage users and all shares globally.
 - Non-admin owners can manage shares for their own resources when owner-share-management is enabled.
 
+## Release Hardening 🛡️
+
+- Auth endpoints are rate-limited (`/api/auth/login`, `/api/auth/register`).
+- Container startup runs `app:preflight` before migrations.
+- Default admin seeding is opt-in via `RUN_DB_SEED=true` and explicit admin credentials.
+
 ## DAV Layer 🌐
 
 Custom SabreDAV backends:

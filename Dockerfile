@@ -2,7 +2,7 @@
 
 FROM composer:2 AS vendor
 WORKDIR /app
-COPY composer.json ./
+COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --prefer-dist --no-interaction --ignore-platform-reqs
 
 FROM node:20-alpine AS frontend
@@ -26,13 +26,15 @@ COPY --from=frontend /app/public/build ./public/build
 
 RUN addgroup -g 1000 app && adduser -D -G app -u 1000 app \
     && mkdir -p storage/framework/{cache,sessions,views,testing} storage/logs bootstrap/cache \
+    && chmod +x /var/www/html/docker/entrypoint.sh \
     && chown -R app:app /var/www/html/storage /var/www/html/bootstrap/cache
 
 USER app
 ENV APP_ENV=production
 ENV APP_DEBUG=false
+ENV RUN_DB_SEED=false
 ENV PORT=8080
 
 EXPOSE 8080
 
-CMD sh -lc 'if [ -z "${APP_KEY}" ]; then php artisan key:generate --force; fi && php artisan migrate --force && php artisan db:seed --force && php artisan config:cache && php -S 0.0.0.0:${PORT} -t public'
+CMD ["sh", "/var/www/html/docker/entrypoint.sh"]
