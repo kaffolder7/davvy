@@ -114,3 +114,4 @@ See docs:
 - [API Reference](docs/api.md)
 - [DAV Client Setup](docs/clients.md)
 - [Deployment](docs/deployment.md)
+- [Release Checklist](docs/release-checklist.md)

@@ -37,6 +37,8 @@ This repo includes [`railway.toml`](../railway.toml) and a production `Dockerfil
 5. Verify health at `/up`.
 6. Verify startup preflight logs report success.
 
+See also: [Production Release Checklist](./release-checklist.md)
+
 ## Generic Docker Host 🐳
 
 ```bash
