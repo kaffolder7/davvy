@@ -1199,10 +1199,25 @@ function AppShell({ auth, children }) {
               Dashboard
             </Link>
             <Link
-              className={location.pathname === "/profile" ? "tab tab-active" : "tab"}
+              className={`${location.pathname === "/profile" ? "tab tab-active" : "tab"} inline-flex items-center gap-1.5`}
               to="/profile"
+              aria-label="Profile"
+              title="Profile"
             >
-              Profile
+              <span className="max-w-36 truncate">{auth.user.name}</span>
+              <svg
+                aria-hidden="true"
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="8" r="4" />
+                <path d="M5 20c1.6-3.3 4-5 7-5s5.4 1.7 7 5" />
+              </svg>
             </Link>
             {auth.user.role === "admin" ? (
               <Link
