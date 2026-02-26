@@ -18,6 +18,7 @@ Route::redirect('/.well-known/carddav', '/dav', 301);
 Route::middleware('auth')->group(function (): void {
     Route::get('/api/auth/me', [AuthController::class, 'me']);
     Route::post('/api/auth/logout', [AuthController::class, 'logout']);
+    Route::patch('/api/auth/password', [AuthController::class, 'changePassword'])->middleware('throttle:auth-password');
 
     Route::get('/api/dashboard', [DashboardController::class, 'index']);
 

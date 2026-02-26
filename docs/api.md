@@ -12,6 +12,7 @@ All UI endpoints are defined in `routes/web.php` and return JSON.
 
 - `GET /api/auth/me`
 - `POST /api/auth/logout`
+- `PATCH /api/auth/password`
 - `GET /api/dashboard`
 - `POST /api/calendars`
 - `PATCH /api/calendars/{calendar}`
