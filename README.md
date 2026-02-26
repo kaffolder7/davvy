@@ -147,6 +147,6 @@ See docs:
 - [Architecture](docs/architecture.md)
 - [API Reference](docs/api.md)
 - [DAV Client Setup](docs/clients.md)
-- [Deployment](docs/deployment.md) (Railway + Coolify)
+- [Deployment](docs/deployment.md) (Railway, Coolify, etc.)
 - [Release Checklist (Railway)](docs/release-checklist.md)
 - [Release Checklist (Coolify)](docs/release-checklist-coolify.md)
