@@ -57,6 +57,43 @@ Configurable envs:
 - `ENABLE_OWNER_SHARE_MANAGEMENT`
 - `ENABLE_DAV_COMPATIBILITY_MODE`
 
+## Local Development with DDEV 🧰
+
+This repo now includes a committed `.ddev/` setup for local development convenience and does not replace the existing Docker workflows used for deployment/CI.
+
+1. Start DDEV:
+
+```bash
+ddev start
+```
+
+2. Install dependencies:
+
+```bash
+ddev composer install
+ddev npm install
+```
+
+3. Use DDEV-oriented environment config:
+
+```bash
+cp .env.ddev.example .env
+ddev artisan key:generate
+ddev artisan migrate --seed
+```
+
+4. Access services:
+- App URL: `https://davvy.ddev.site`
+- DAV endpoint: `https://davvy.ddev.site/dav`
+- Vite dev server: `https://davvy.ddev.site:5173` (run with `ddev vite`)
+
+5. Run Laravel + frontend workflows:
+
+```bash
+ddev artisan test
+ddev vite
+```
+
 ## Running Tests 🧪
 
 ```bash
