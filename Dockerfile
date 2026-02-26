@@ -32,6 +32,7 @@ RUN addgroup -g 1000 app && adduser -D -G app -u 1000 app \
 USER app
 ENV APP_ENV=production
 ENV APP_DEBUG=false
+ENV RUN_DB_MIGRATIONS=true
 ENV RUN_DB_SEED=false
 ENV PORT=8080
 

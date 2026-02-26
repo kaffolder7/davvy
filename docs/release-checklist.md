@@ -28,6 +28,7 @@ Set these in the **app service** Variables tab.
 | `ENABLE_PUBLIC_REGISTRATION` | `false` | Secure default |
 | `ENABLE_OWNER_SHARE_MANAGEMENT` | `true` | Product default |
 | `ENABLE_DAV_COMPATIBILITY_MODE` | `false` | Secure default (strict mode) |
+| `RUN_DB_MIGRATIONS` | `true` | Recommended; set `false` only if migrations run out-of-band |
 | `RUN_DB_SEED` | `false` | Secure default; opt-in only for bootstrap |
 | `DEFAULT_ADMIN_EMAIL` | *(empty)* | Set only when `RUN_DB_SEED=true` |
 | `DEFAULT_ADMIN_PASSWORD` | *(empty)* | Set only when `RUN_DB_SEED=true` |
@@ -58,6 +59,7 @@ If you want automatic admin creation from seeding:
 6. DAV endpoint reachable:
    - `/dav`
 7. DB migrations applied successfully (no pending migration errors).
+8. If replicas > 1, logs show advisory-lock serialization during startup and no migration race errors.
 
 ## 4. Post-Deploy Security Quick Check
 
