@@ -1163,34 +1163,43 @@ function InfoCard({ title, value, helper, copyable = false }) {
     }
   };
 
+  const copyTooltipLabel =
+    copyState === "copied"
+      ? "Copied!"
+      : copyState === "failed"
+        ? "Copy failed"
+        : "";
+  const copyTooltipTone =
+    copyState === "failed" ? "bg-red-700" : "bg-teal-700";
+
   return (
     <article className="surface rounded-2xl p-4">
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
         {title}
       </p>
       {copyable ? (
-        <button
-          type="button"
-          onClick={() => void copyValue()}
-          className="mt-1 w-full rounded-md text-left text-base font-bold text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
-          aria-label={`Copy ${title}`}
-          title="Click to copy"
-        >
-          <span className="break-all">{value}</span>
-        </button>
+        <div className="relative mt-1">
+          <button
+            type="button"
+            onClick={() => void copyValue()}
+            className="w-full rounded-md text-left text-base font-bold text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+            aria-label={`Copy ${title}`}
+            title="Click to copy"
+          >
+            <span className="break-all">{value}</span>
+          </button>
+          <span
+            className={`pointer-events-none absolute right-0 top-0 rounded-md px-2 py-1 text-[11px] font-semibold text-white transition-opacity duration-150 ${
+              copyState === "idle" ? "opacity-0" : "opacity-100"
+            } ${copyTooltipTone}`}
+          >
+            {copyTooltipLabel}
+          </span>
+        </div>
       ) : (
         <p className="mt-1 break-all text-base font-bold text-slate-900">{value}</p>
       )}
       <p className="mt-2 text-xs text-slate-600">{helper}</p>
-      {copyable && copyState !== "idle" ? (
-        <p
-          className={`mt-1 text-xs font-semibold ${copyState === "copied" ? "text-teal-700" : "text-red-700"}`}
-        >
-          {copyState === "copied"
-            ? "Copied to clipboard."
-            : "Unable to copy. Please copy manually."}
-        </p>
-      ) : null}
     </article>
   );
 }
