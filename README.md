@@ -93,7 +93,8 @@ ddev artisan migrate --seed
 ddev exec sh -lc "DEFAULT_ADMIN_EMAIL='admin@davvy.local' DEFAULT_ADMIN_PASSWORD='ChangeMe123!' php artisan db:seed --force --no-interaction"
 ```
 
-Your `.env.ddev.example` intentionally leaves `DEFAULT_ADMIN_EMAIL` and `DEFAULT_ADMIN_PASSWORD` empty, so no default admin exists until you seed one.
+> [!NOTE]
+> Your `.env.ddev.example` intentionally leaves `DEFAULT_ADMIN_EMAIL` and `DEFAULT_ADMIN_PASSWORD` empty, so no default admin exists until you seed one.
 
 5. Start frontend assets (required before opening the app URL):
 
