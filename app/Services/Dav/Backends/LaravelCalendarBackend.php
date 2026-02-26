@@ -15,7 +15,9 @@ use App\Services\ResourceAccessService;
 use Illuminate\Support\Str;
 use Sabre\CalDAV\Backend\AbstractBackend;
 use Sabre\DAV\Exception\BadRequest;
+use Sabre\DAV\Exception\Conflict;
 use Sabre\DAV\Exception\Forbidden;
+use Sabre\DAV\Exception\InvalidSyncToken;
 use Sabre\DAV\Exception\NotFound;
 use Sabre\DAV\PropPatch;
 
@@ -190,11 +192,17 @@ class LaravelCalendarBackend extends AbstractBackend
         }
 
         $normalized = $this->icsValidator->validateAndNormalize((string) $calendarData);
+
+        if ($this->uidConflictExists($calendar->id, $normalized['uid'])) {
+            throw new Conflict('A calendar object with the same UID already exists in this calendar.');
+        }
+
         $etag = md5($normalized['data']);
 
         CalendarObject::query()->create([
             'calendar_id' => $calendar->id,
             'uri' => $objectUri,
+            'uid' => $normalized['uid'],
             'etag' => $etag,
             'size' => strlen($normalized['data']),
             'component_type' => $normalized['component_type'],
@@ -228,9 +236,15 @@ class LaravelCalendarBackend extends AbstractBackend
         }
 
         $normalized = $this->icsValidator->validateAndNormalize((string) $calendarData);
+
+        if ($this->uidConflictExists($calendar->id, $normalized['uid'], exceptObjectId: $object->id)) {
+            throw new Conflict('A calendar object with the same UID already exists in this calendar.');
+        }
+
         $etag = md5($normalized['data']);
 
         $object->update([
+            'uid' => $normalized['uid'],
             'etag' => $etag,
             'size' => strlen($normalized['data']),
             'component_type' => $normalized['component_type'],
@@ -282,12 +296,10 @@ class LaravelCalendarBackend extends AbstractBackend
     {
         $calendar = $this->loadReadableCalendar($calendarId);
 
-        $token = is_numeric($syncToken) ? (int) $syncToken : 0;
-
         return $this->syncService->getChangesSince(
             resourceType: ShareResourceType::Calendar,
             resourceId: $calendar->id,
-            syncToken: $token,
+            syncToken: $this->parseSyncToken($syncToken),
             limit: $limit !== null ? (int) $limit : null,
         );
     }
@@ -347,5 +359,35 @@ class LaravelCalendarBackend extends AbstractBackend
         if (! $user || ! $this->accessService->userCanWriteCalendar($user, $calendar)) {
             throw new Forbidden('Write access denied for calendar.');
         }
+    }
+
+    private function parseSyncToken(mixed $syncToken): int
+    {
+        if (is_int($syncToken) && $syncToken >= 0) {
+            return $syncToken;
+        }
+
+        if (is_string($syncToken)) {
+            $token = trim($syncToken);
+
+            if (preg_match('/^\d+$/', $token) === 1) {
+                return (int) $token;
+            }
+        }
+
+        throw new InvalidSyncToken('Sync token format is invalid.');
+    }
+
+    private function uidConflictExists(int $calendarId, string $uid, ?int $exceptObjectId = null): bool
+    {
+        $query = CalendarObject::query()
+            ->where('calendar_id', $calendarId)
+            ->where('uid', $uid);
+
+        if ($exceptObjectId !== null) {
+            $query->where('id', '!=', $exceptObjectId);
+        }
+
+        return $query->exists();
     }
 }

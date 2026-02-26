@@ -4,6 +4,7 @@ namespace App\Services\Dav;
 
 use App\Enums\ShareResourceType;
 use Illuminate\Support\Facades\DB;
+use Sabre\DAV\Exception\InvalidSyncToken;
 
 class DavSyncService
 {
@@ -33,8 +34,21 @@ class DavSyncService
         int $syncToken,
         ?int $limit = null,
     ): array {
-        $syncToken = max($syncToken, 0);
+        if ($syncToken < 0) {
+            throw new InvalidSyncToken('Sync token must be non-negative.');
+        }
+
         $this->initializeState($resourceType, $resourceId);
+        $state = DB::table('dav_resource_sync_states')
+            ->where('resource_type', $resourceType->value)
+            ->where('resource_id', $resourceId)
+            ->first();
+
+        $currentToken = (int) ($state->sync_token ?? 0);
+
+        if ($syncToken > $currentToken) {
+            throw new InvalidSyncToken('Sync token is no longer valid for this resource.');
+        }
 
         $query = DB::table('dav_resource_sync_changes')
             ->where('resource_type', $resourceType->value)

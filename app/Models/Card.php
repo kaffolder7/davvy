@@ -13,6 +13,7 @@ class Card extends Model
     protected $fillable = [
         'address_book_id',
         'uri',
+        'uid',
         'etag',
         'size',
         'data',

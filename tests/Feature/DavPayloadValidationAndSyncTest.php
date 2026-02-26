@@ -60,13 +60,13 @@ class DavPayloadValidationAndSyncTest extends TestCase
         $backend->createCalendarObject(
             $calendar->id,
             'event-sync.ics',
-            "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:sync-event-1\nDTSTART:20260227T120000Z\nDTEND:20260227T130000Z\nSUMMARY:Sync Added\nEND:VEVENT\nEND:VCALENDAR"
+            "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Davvy//Tests//EN\nBEGIN:VEVENT\nUID:sync-event-1\nDTSTAMP:20260227T090000Z\nDTSTART:20260227T120000Z\nDTEND:20260227T130000Z\nSUMMARY:Sync Added\nEND:VEVENT\nEND:VCALENDAR"
         );
 
         $backend->updateCalendarObject(
             $calendar->id,
             'event-sync.ics',
-            "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:sync-event-1\nDTSTART:20260227T120000Z\nDTEND:20260227T140000Z\nSUMMARY:Sync Updated\nEND:VEVENT\nEND:VCALENDAR"
+            "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Davvy//Tests//EN\nBEGIN:VEVENT\nUID:sync-event-1\nDTSTAMP:20260227T090000Z\nDTSTART:20260227T120000Z\nDTEND:20260227T140000Z\nSUMMARY:Sync Updated\nEND:VEVENT\nEND:VCALENDAR"
         );
 
         $backend->deleteCalendarObject($calendar->id, 'event-sync.ics');
