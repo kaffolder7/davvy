@@ -28,7 +28,7 @@ This MVP uses `sabre/dav` because:
 - Autodiscovery redirects for `/.well-known/caldav` and `/.well-known/carddav`
 - ICS/vCard validation and normalization for stronger client interoperability
 - DAV sync token change tracking with `added`, `modified`, and `deleted` deltas
-- Docker packaging + Railway deployment config
+- Docker packaging + Railway deployment config (single replica or scaled replicas)
 - PHPUnit tests for key workflows
 
 ## Quick Start (Docker) 🐳
@@ -59,6 +59,7 @@ Configurable envs:
 - `ENABLE_PUBLIC_REGISTRATION`
 - `ENABLE_OWNER_SHARE_MANAGEMENT`
 - `ENABLE_DAV_COMPATIBILITY_MODE`
+- `RUN_DB_MIGRATIONS` (set `false` only when you run migrations out-of-band)
 - `RUN_DB_SEED` (set `true` to run `db:seed` at container start)
 - `SESSION_SECURE_COOKIE`
 - `TRUSTED_PROXIES`
@@ -135,7 +136,9 @@ docker compose run --build --rm --user root --entrypoint sh app -lc "cp .env.exa
 
 Railway is configured via [`railway.toml`](railway.toml).
 
-Production startup now runs `php artisan app:preflight` before migrations so insecure configuration fails fast.
+Production startup runs `php artisan app:preflight` before DB bootstrap so insecure configuration fails fast.
+
+When deployed with PostgreSQL on Railway, startup DB bootstrap (`migrate` and optional `db:seed`) is guarded by a PostgreSQL advisory lock, so the app can safely run with one or more replicas.
 
 See docs:
 - [Architecture](docs/architecture.md)
