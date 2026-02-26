@@ -1092,7 +1092,7 @@ function ProfilePage({ auth }) {
       </section>
 
       <section className="surface mt-6 rounded-3xl p-6">
-        <h2 className="text-xl font-semibold text-slate-900">Security</h2>
+        <h2 className="text-xl font-semibold text-slate-900">Change Password</h2>
         <p className="mt-1 text-sm text-slate-600">
           Change your password for both web access and DAV client connections.
         </p>
