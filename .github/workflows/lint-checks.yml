@@ -18,6 +18,7 @@ on:
       - "postcss.config.js"
       - ".github/workflows/lint-checks.yml"
       - ".github/workflows/pr-tests.yml"
+      - ".github/workflows/release-image.yml"
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
@@ -36,6 +37,7 @@ on:
       - "postcss.config.js"
       - ".github/workflows/lint-checks.yml"
       - ".github/workflows/pr-tests.yml"
+      - ".github/workflows/release-image.yml"
 
 permissions:
   contents: read
