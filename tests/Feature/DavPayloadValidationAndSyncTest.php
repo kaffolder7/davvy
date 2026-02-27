@@ -11,6 +11,7 @@ use App\Services\Dav\Backends\LaravelCalendarBackend;
 use App\Services\Dav\Backends\LaravelCardDavBackend;
 use App\Services\DavRequestContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Sabre\DAV\Exception\BadRequest;
 use Tests\TestCase;
@@ -178,6 +179,8 @@ class DavPayloadValidationAndSyncTest extends TestCase
         $this->assertNotNull($collection);
         $this->assertArrayHasKey('{http://sabredav.org/ns}sync-token', $collection);
         $this->assertArrayHasKey('{http://calendarserver.org/ns/}getctag', $collection);
+        $this->assertNotSame('0', $collection['{http://sabredav.org/ns}sync-token']);
+        $this->assertNotSame('0', $collection['{http://calendarserver.org/ns/}getctag']);
     }
 
     public function test_calendar_listing_exposes_sync_metadata_properties(): void
@@ -194,6 +197,34 @@ class DavPayloadValidationAndSyncTest extends TestCase
         $this->assertNotNull($collection);
         $this->assertArrayHasKey('{http://sabredav.org/ns}sync-token', $collection);
         $this->assertArrayHasKey('{http://calendarserver.org/ns/}getctag', $collection);
+        $this->assertNotSame('0', $collection['{http://sabredav.org/ns}sync-token']);
+        $this->assertNotSame('0', $collection['{http://calendarserver.org/ns/}getctag']);
+    }
+
+    public function test_collection_listing_upgrades_zero_sync_tokens(): void
+    {
+        $owner = User::factory()->create();
+        $addressBook = AddressBook::factory()->create([
+            'owner_id' => $owner->id,
+        ]);
+
+        DB::table('dav_resource_sync_states')
+            ->where('resource_type', 'address_book')
+            ->where('resource_id', $addressBook->id)
+            ->update(['sync_token' => 0]);
+
+        $collections = app(LaravelCardDavBackend::class)->getAddressBooksForUser('principals/'.$owner->id);
+        $collection = collect($collections)->first(fn (array $item): bool => $item['id'] === $addressBook->id);
+
+        $this->assertNotNull($collection);
+        $this->assertNotSame('0', $collection['{http://sabredav.org/ns}sync-token']);
+        $this->assertSame(
+            1,
+            (int) DB::table('dav_resource_sync_states')
+                ->where('resource_type', 'address_book')
+                ->where('resource_id', $addressBook->id)
+                ->value('sync_token')
+        );
     }
 
     public function test_carddav_addressbook_query_report_returns_existing_cards(): void

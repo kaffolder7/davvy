@@ -8,6 +8,8 @@ use Sabre\DAV\Exception\InvalidSyncToken;
 
 class DavSyncService
 {
+    private const INITIAL_SYNC_TOKEN = 1;
+
     public function currentToken(ShareResourceType $resourceType, int $resourceId): int
     {
         $this->initializeState($resourceType, $resourceId);
@@ -17,7 +19,11 @@ class DavSyncService
             ->where('resource_id', $resourceId)
             ->first();
 
-        return (int) ($state->sync_token ?? 0);
+        return $this->normalizePersistedToken(
+            resourceType: $resourceType,
+            resourceId: $resourceId,
+            syncToken: (int) ($state->sync_token ?? 0),
+        );
     }
 
     public function ensureResource(ShareResourceType $resourceType, int $resourceId): void
@@ -56,7 +62,11 @@ class DavSyncService
             ->where('resource_id', $resourceId)
             ->first();
 
-        $currentToken = (int) ($state->sync_token ?? 0);
+        $currentToken = $this->normalizePersistedToken(
+            resourceType: $resourceType,
+            resourceId: $resourceId,
+            syncToken: (int) ($state->sync_token ?? 0),
+        );
 
         if ($syncToken > $currentToken) {
             throw new InvalidSyncToken('Sync token is no longer valid for this resource.');
@@ -73,10 +83,10 @@ class DavSyncService
         }
 
         $rows = $query->get();
-        $resolvedToken = (int) ($rows->max('sync_token') ?? $syncToken);
+        $resolvedToken = (int) ($rows->max('sync_token') ?? $currentToken);
 
         return [
-            'syncToken' => (string) max($resolvedToken, 0),
+            'syncToken' => (string) max($resolvedToken, self::INITIAL_SYNC_TOKEN),
             'added' => $rows->where('operation', 'added')->pluck('uri')->unique()->values()->all(),
             'modified' => $rows->where('operation', 'modified')->pluck('uri')->unique()->values()->all(),
             'deleted' => $rows->where('operation', 'deleted')->pluck('uri')->unique()->values()->all(),
@@ -102,7 +112,13 @@ class DavSyncService
                     ->first();
             }
 
-            $nextToken = (int) $state->sync_token + 1;
+            $currentToken = $this->normalizePersistedToken(
+                resourceType: $resourceType,
+                resourceId: $resourceId,
+                syncToken: (int) ($state->sync_token ?? 0),
+            );
+
+            $nextToken = $currentToken + 1;
 
             DB::table('dav_resource_sync_states')
                 ->where('resource_type', $resourceType->value)
@@ -128,9 +144,30 @@ class DavSyncService
         DB::table('dav_resource_sync_states')->insertOrIgnore([
             'resource_type' => $resourceType->value,
             'resource_id' => $resourceId,
-            'sync_token' => 0,
+            'sync_token' => self::INITIAL_SYNC_TOKEN,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    private function normalizePersistedToken(
+        ShareResourceType $resourceType,
+        int $resourceId,
+        int $syncToken,
+    ): int {
+        if ($syncToken >= self::INITIAL_SYNC_TOKEN) {
+            return $syncToken;
+        }
+
+        DB::table('dav_resource_sync_states')
+            ->where('resource_type', $resourceType->value)
+            ->where('resource_id', $resourceId)
+            ->where('sync_token', '<', self::INITIAL_SYNC_TOKEN)
+            ->update([
+                'sync_token' => self::INITIAL_SYNC_TOKEN,
+                'updated_at' => now(),
+            ]);
+
+        return self::INITIAL_SYNC_TOKEN;
     }
 }

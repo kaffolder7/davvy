@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('resource_type');
             $table->unsignedBigInteger('resource_id');
-            $table->unsignedBigInteger('sync_token')->default(0);
+            $table->unsignedBigInteger('sync_token')->default(1);
             $table->timestamps();
 
             $table->unique(['resource_type', 'resource_id'], 'dav_sync_state_unique');
