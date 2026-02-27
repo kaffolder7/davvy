@@ -1422,7 +1422,7 @@ function AppShell({ auth, children }) {
               </p>
             </div>
           </div>
-          <nav className="flex flex-col items-end gap-2">
+          <nav className="flex flex-col items-end gap-3">
             {auth.user.role === "admin" ? (
               <Link
                 className={
