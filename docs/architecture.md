@@ -62,5 +62,5 @@ Autodiscovery redirects:
 ## Default Resources 🎯
 
 On user creation, Davvy auto-provisions:
-- `Default Calendar`
-- `Default Address Book`
+- `Personal Calendar` (`/personal-calendar`)
+- `Contacts` (`/contacts`)
