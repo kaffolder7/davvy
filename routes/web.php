@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DavController;
+use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ShareController;
 use Illuminate\Support\Facades\Route;
 
@@ -47,6 +48,11 @@ Route::middleware('auth')->group(function (): void {
     Route::patch('/api/auth/password', [AuthController::class, 'changePassword'])->middleware('throttle:auth-password');
 
     Route::get('/api/dashboard', [DashboardController::class, 'index']);
+
+    Route::get('/api/exports/calendars', [ExportController::class, 'exportAllCalendars']);
+    Route::get('/api/exports/calendars/{calendar}', [ExportController::class, 'exportCalendar']);
+    Route::get('/api/exports/address-books', [ExportController::class, 'exportAllAddressBooks']);
+    Route::get('/api/exports/address-books/{addressBook}', [ExportController::class, 'exportAddressBook']);
 
     Route::post('/api/calendars', [CalendarController::class, 'store']);
     Route::patch('/api/calendars/{calendar}', [CalendarController::class, 'update']);

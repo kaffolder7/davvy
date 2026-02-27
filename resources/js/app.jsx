@@ -11,6 +11,72 @@ import {
 } from "react-router-dom";
 import { api, extractError } from "./lib/api";
 
+function fileStem(value, fallback = "export") {
+  const stem = String(value ?? "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-+)|(-+$)/g, "");
+
+  return stem || fallback;
+}
+
+function parseDispositionFilename(header) {
+  if (!header) {
+    return null;
+  }
+
+  const utf8Match = header.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) {
+    try {
+      return decodeURIComponent(utf8Match[1]);
+    } catch {
+      return utf8Match[1];
+    }
+  }
+
+  const standardMatch = header.match(/filename="?([^";]+)"?/i);
+  return standardMatch?.[1] ?? null;
+}
+
+async function downloadExport(url, fallbackName) {
+  const response = await fetch(url, {
+    credentials: "include",
+    headers: {
+      "X-Requested-With": "XMLHttpRequest",
+    },
+  });
+
+  if (!response.ok) {
+    let message = "Unable to download export.";
+
+    try {
+      const payload = await response.json();
+      if (typeof payload?.message === "string" && payload.message) {
+        message = payload.message;
+      }
+    } catch {
+      // ignore parsing issues and use fallback message
+    }
+
+    throw new Error(message);
+  }
+
+  const blob = await response.blob();
+  const fileName =
+    parseDispositionFilename(response.headers.get("content-disposition")) ||
+    fallbackName;
+
+  const objectUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(objectUrl);
+}
+
 function App() {
   const [auth, setAuth] = useState({
     loading: true,
@@ -411,6 +477,19 @@ function DashboardPage({ auth }) {
     }
   };
 
+  const runExport = async (url, fallbackName, fallbackMessage) => {
+    try {
+      setError("");
+      await downloadExport(url, fallbackName);
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : fallbackMessage,
+      );
+    }
+  };
+
   const shareableResourceOptions =
     shareForm.resource_type === "calendar"
       ? data.owned.calendars.filter((item) => item.is_sharable)
@@ -456,11 +535,26 @@ function DashboardPage({ auth }) {
           <ResourcePanel
             title="Your Calendars"
             createLabel="Create Calendar"
+            exportAllLabel="Export All"
             items={data.owned.calendars}
             sharedItems={data.shared.calendars}
             onCreate={createCalendar}
             form={calendarForm}
             setForm={setCalendarForm}
+            onExportAll={() =>
+              runExport(
+                "/api/exports/calendars",
+                "davvy-calendars.zip",
+                "Unable to export calendars.",
+              )
+            }
+            onExportItem={(item) =>
+              runExport(
+                `/api/exports/calendars/${item.id}`,
+                `${fileStem(item.display_name, "calendar")}.ics`,
+                "Unable to export calendar.",
+              )
+            }
             onToggle={(id, next, displayName) =>
               toggleSharable("calendar", id, next, displayName)
             }
@@ -468,11 +562,26 @@ function DashboardPage({ auth }) {
           <ResourcePanel
             title="Your Address Books"
             createLabel="Create Address Book"
+            exportAllLabel="Export All"
             items={data.owned.address_books}
             sharedItems={data.shared.address_books}
             onCreate={createAddressBook}
             form={bookForm}
             setForm={setBookForm}
+            onExportAll={() =>
+              runExport(
+                "/api/exports/address-books",
+                "davvy-address-books.zip",
+                "Unable to export address books.",
+              )
+            }
+            onExportItem={(item) =>
+              runExport(
+                `/api/exports/address-books/${item.id}`,
+                `${fileStem(item.display_name, "address-book")}.vcf`,
+                "Unable to export address book.",
+              )
+            }
             onToggle={(id, next, displayName) =>
               toggleSharable("address-book", id, next, displayName)
             }
@@ -592,16 +701,28 @@ function DashboardPage({ auth }) {
 function ResourcePanel({
   title,
   createLabel,
+  exportAllLabel,
   items,
   sharedItems,
   onCreate,
   form,
   setForm,
+  onExportAll,
+  onExportItem,
   onToggle,
 }) {
   return (
     <section className="surface rounded-3xl p-6">
-      <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
+        <button
+          className="btn-outline btn-outline-sm"
+          type="button"
+          onClick={() => void onExportAll()}
+        >
+          {exportAllLabel}
+        </button>
+      </div>
       <form
         className="mt-4 flex flex-col gap-3 sm:flex-row"
         onSubmit={onCreate}
@@ -646,16 +767,27 @@ function ResourcePanel({
                   </p>
                   <p className="text-xs text-slate-500">/{item.uri}</p>
                 </div>
-                <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={!!item.is_sharable}
-                    onChange={(event) =>
-                      onToggle(item.id, event.target.checked, item.display_name)
-                    }
-                  />
-                  Sharable
-                </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    className="btn-outline btn-outline-sm p-2"
+                    type="button"
+                    onClick={() => void onExportItem(item)}
+                    aria-label={`Export ${item.display_name}`}
+                    title={`Export ${item.display_name}`}
+                  >
+                    <DownloadIcon className="h-4 w-4" />
+                  </button>
+                  <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={!!item.is_sharable}
+                      onChange={(event) =>
+                        onToggle(item.id, event.target.checked, item.display_name)
+                      }
+                    />
+                    Sharable
+                  </label>
+                </div>
               </div>
             </div>
           ))
@@ -684,7 +816,18 @@ function ResourcePanel({
                       Owner: {item.owner_name} ({item.owner_email})
                     </p>
                   </div>
-                  <PermissionBadge permission={item.permission} />
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="btn-outline btn-outline-sm p-2"
+                      type="button"
+                      onClick={() => void onExportItem(item)}
+                      aria-label={`Export ${item.display_name}`}
+                      title={`Export ${item.display_name}`}
+                    >
+                      <DownloadIcon className="h-4 w-4" />
+                    </button>
+                    <PermissionBadge permission={item.permission} />
+                  </div>
                 </div>
               </div>
             ))
@@ -1307,6 +1450,25 @@ function PermissionBadge({ permission }) {
     >
       {permission === "admin" ? "Full Edit" : "Read-only"}
     </span>
+  );
+}
+
+function DownloadIcon({ className }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 4v10" />
+      <path d="M8 10.5 12 14.5l4-4" />
+      <path d="M4.5 18.5h15" />
+    </svg>
   );
 }
 
