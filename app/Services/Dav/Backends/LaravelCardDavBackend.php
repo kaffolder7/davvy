@@ -7,6 +7,7 @@ use App\Enums\ShareResourceType;
 use App\Models\AddressBook;
 use App\Models\Card;
 use App\Models\ResourceShare;
+use App\Services\AddressBookMirrorService;
 use App\Services\Dav\DavSyncService;
 use App\Services\Dav\VCardValidator;
 use App\Services\DavRequestContext;
@@ -29,6 +30,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
         private readonly DavRequestContext $davContext,
         private readonly VCardValidator $vCardValidator,
         private readonly DavSyncService $syncService,
+        private readonly AddressBookMirrorService $mirrorService,
     ) {}
 
     public function getAddressBooksForUser($principalUri): array
@@ -117,6 +119,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
 
         $this->assertWritableAddressBook($addressBook);
 
+        $this->mirrorService->handleSourceAddressBookDeleted($addressBook->id);
         $addressBook->delete();
     }
 
@@ -188,7 +191,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
 
         $etag = md5($normalized['data']);
 
-        Card::query()->create([
+        $card = Card::query()->create([
             'address_book_id' => $addressBook->id,
             'uri' => $cardUri,
             'uid' => $resourceUid,
@@ -198,6 +201,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
         ]);
 
         $this->syncService->recordAdded(ShareResourceType::AddressBook, $addressBook->id, (string) $cardUri);
+        $this->mirrorService->handleSourceCardUpsert($addressBook, $card);
 
         return '"'.$etag.'"';
     }
@@ -238,6 +242,13 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
         ]);
 
         $this->syncService->recordModified(ShareResourceType::AddressBook, $addressBook->id, (string) $cardUri);
+        $card->fill([
+            'uid' => $resourceUid,
+            'etag' => $etag,
+            'size' => strlen($normalized['data']),
+            'data' => $normalized['data'],
+        ]);
+        $this->mirrorService->handleSourceCardUpsert($addressBook, $card);
 
         return '"'.$etag.'"';
     }
@@ -264,6 +275,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
         $card->delete();
 
         $this->syncService->recordDeleted(ShareResourceType::AddressBook, $addressBook->id, (string) $cardUri);
+        $this->mirrorService->handleSourceCardDeleted($addressBook->id, (string) $cardUri);
     }
 
     public function getChangesForAddressBook($addressBookId, $syncToken, $syncLevel, $limit = null): array

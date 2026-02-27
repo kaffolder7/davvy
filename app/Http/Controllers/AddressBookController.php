@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\ShareResourceType;
 use App\Models\AddressBook;
+use App\Services\AddressBookMirrorService;
 use App\Services\Dav\DavSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,7 +12,10 @@ use Illuminate\Support\Str;
 
 class AddressBookController extends Controller
 {
-    public function __construct(private readonly DavSyncService $syncService) {}
+    public function __construct(
+        private readonly DavSyncService $syncService,
+        private readonly AddressBookMirrorService $mirrorService,
+    ) {}
 
     public function store(Request $request): JsonResponse
     {
@@ -61,6 +65,7 @@ class AddressBookController extends Controller
             abort(422, 'Default address books cannot be deleted.');
         }
 
+        $this->mirrorService->handleSourceAddressBookDeleted($addressBook->id);
         $addressBook->delete();
 
         return response()->json(['ok' => true]);
