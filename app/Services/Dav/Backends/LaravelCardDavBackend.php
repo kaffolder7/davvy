@@ -306,7 +306,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
             'uri' => $addressBook->uri,
             'principaluri' => $principalUri,
             '{DAV:}displayname' => $addressBook->display_name,
-            '{urn:ietf:params:xml:ns:carddav}addressbook-description' => $addressBook->description,
+            '{urn:ietf:params:xml:ns:carddav}addressbook-description' => $addressBook->description ?? '',
             '{http://sabredav.org/ns}sync-token' => $syncToken,
             '{http://calendarserver.org/ns/}getctag' => $syncToken,
             '{http://sabredav.org/ns}read-only' => ! $permission->canWrite(),

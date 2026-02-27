@@ -6,6 +6,7 @@ use App\Services\Dav\Backends\LaravelAuthBackend;
 use App\Services\Dav\Backends\LaravelCalendarBackend;
 use App\Services\Dav\Backends\LaravelCardDavBackend;
 use App\Services\Dav\Backends\LaravelPrincipalBackend;
+use App\Services\Dav\Plugins\DavResourceIdPlugin;
 use Sabre\CalDAV\CalendarRoot;
 use Sabre\CalDAV\Plugin as CalDavPlugin;
 use Sabre\CalDAV\Principal\Collection as PrincipalCollection;
@@ -23,6 +24,7 @@ class DavServerFactory
         private readonly LaravelPrincipalBackend $principalBackend,
         private readonly LaravelCalendarBackend $calendarBackend,
         private readonly LaravelCardDavBackend $cardDavBackend,
+        private readonly DavResourceIdPlugin $resourceIdPlugin,
     ) {}
 
     public function make(): Server
@@ -40,6 +42,7 @@ class DavServerFactory
         $authPlugin = new AuthPlugin($this->authBackend, 'Davvy DAV');
         $server->addPlugin($authPlugin);
         $server->addPlugin(new AclPlugin);
+        $server->addPlugin($this->resourceIdPlugin);
         $server->addPlugin(new CalDavPlugin);
         $server->addPlugin(new CardDavPlugin);
         $server->addPlugin(new SyncPlugin);
