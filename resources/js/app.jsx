@@ -294,6 +294,7 @@ function RegisterPage({ auth }) {
 function DashboardPage({ auth }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [shareStatusNotice, setShareStatusNotice] = useState("");
   const [data, setData] = useState({
     owned: { calendars: [], address_books: [] },
     shared: { calendars: [], address_books: [] },
@@ -314,8 +315,10 @@ function DashboardPage({ auth }) {
     permission: "read_only",
   });
 
-  const loadDashboard = async () => {
-    setLoading(true);
+  const loadDashboard = async ({ withLoading = true } = {}) => {
+    if (withLoading) {
+      setLoading(true);
+    }
     setError("");
     try {
       const response = await api.get("/api/dashboard");
@@ -323,7 +326,9 @@ function DashboardPage({ auth }) {
     } catch (err) {
       setError(extractError(err, "Unable to load dashboard data."));
     } finally {
-      setLoading(false);
+      if (withLoading) {
+        setLoading(false);
+      }
     }
   };
 
@@ -331,12 +336,26 @@ function DashboardPage({ auth }) {
     loadDashboard();
   }, []);
 
-  const toggleSharable = async (type, id, next) => {
+  useEffect(() => {
+    if (!shareStatusNotice) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => setShareStatusNotice(""), 2200);
+    return () => window.clearTimeout(timer);
+  }, [shareStatusNotice]);
+
+  const toggleSharable = async (type, id, next, displayName) => {
     const url =
       type === "calendar" ? `/api/calendars/${id}` : `/api/address-books/${id}`;
     try {
       await api.patch(url, { is_sharable: next });
-      await loadDashboard();
+      setShareStatusNotice(
+        next
+          ? `${displayName} is now shared.`
+          : `${displayName} is no longer shared.`,
+      );
+      await loadDashboard({ withLoading: false });
     } catch (err) {
       setError(extractError(err, "Unable to update sharing status."));
     }
@@ -399,6 +418,13 @@ function DashboardPage({ auth }) {
 
   return (
     <AppShell auth={auth}>
+      {shareStatusNotice ? (
+        <div className="pointer-events-none fixed inset-x-0 top-4 z-50 flex justify-center px-4">
+          <p className="rounded-xl border border-teal-200 bg-teal-700/95 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-teal-900/20 backdrop-blur">
+            {shareStatusNotice}
+          </p>
+        </div>
+      ) : null}
       <section className="fade-up grid gap-4 md:grid-cols-3">
         <InfoCard
           title="DAV Endpoint"
@@ -435,7 +461,9 @@ function DashboardPage({ auth }) {
             onCreate={createCalendar}
             form={calendarForm}
             setForm={setCalendarForm}
-            onToggle={(id, next) => toggleSharable("calendar", id, next)}
+            onToggle={(id, next, displayName) =>
+              toggleSharable("calendar", id, next, displayName)
+            }
           />
           <ResourcePanel
             title="Your Address Books"
@@ -445,7 +473,9 @@ function DashboardPage({ auth }) {
             onCreate={createAddressBook}
             form={bookForm}
             setForm={setBookForm}
-            onToggle={(id, next) => toggleSharable("address-book", id, next)}
+            onToggle={(id, next, displayName) =>
+              toggleSharable("address-book", id, next, displayName)
+            }
           />
         </div>
       ) : null}
@@ -621,7 +651,7 @@ function ResourcePanel({
                     type="checkbox"
                     checked={!!item.is_sharable}
                     onChange={(event) =>
-                      onToggle(item.id, event.target.checked)
+                      onToggle(item.id, event.target.checked, item.display_name)
                     }
                   />
                   Sharable
