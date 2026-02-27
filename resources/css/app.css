@@ -39,33 +39,38 @@
 
 :root.dark,
 :root[data-theme="dark"] {
-  --bg-start: #090b0f;
-  --bg-end: #12151b;
-  --bg-glow-1: #33415533;
-  --bg-glow-2: #1f293733;
-  --surface: #141820cc;
-  --surface-solid: #171b23;
-  --ink: #edf1f6;
-  --muted: #a1aab8;
-  --accent: #4f7dff;
-  --accent-strong: #7ea2ff;
+  --bg-start: #090909;
+  --bg-end: #141414;
+  --bg-glow-1: #3f3f462e;
+  --bg-glow-2: #27272a2e;
+  --surface: #18181bcc;
+  --surface-solid: #18181b;
+  --ink: #f5f5f5;
+  --muted: #a3a3a3;
+  --accent: #2fb3a8;
+  --accent-strong: #5fd0c8;
   --warn: #f59e0b;
   --danger: #fca5a5;
   --danger-strong: #fecaca;
   --warn-surface: #312616;
   --warn-edge: #66502e;
-  --accent-edge: #4d66a1;
-  --edge: #2a2f39;
-  --edge-strong: #3a404c;
-  --text-strong: #f3f6fb;
-  --text-base: #cfd6e3;
-  --text-muted: #adb7c7;
-  --text-faint: #8f9db2;
-  --text-dim: #74849b;
+  --accent-edge: #2f8f89;
+  --edge: #2a2a2a;
+  --edge-strong: #3f3f46;
+  --text-strong: #fafafa;
+  --text-base: #d4d4d8;
+  --text-muted: #a1a1aa;
+  --text-faint: #71717a;
+  --text-dim: #52525b;
 }
 
 * {
   box-sizing: border-box;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--accent);
 }
 
 body {
@@ -203,32 +208,27 @@ body {
 
   :root.dark .input,
   :root[data-theme="dark"] .input {
-    @apply border-slate-600 bg-slate-900 text-slate-100 focus:border-slate-400 focus:ring-slate-700;
-  }
-
-  :root.dark .btn,
-  :root[data-theme="dark"] .btn {
-    @apply bg-slate-700 text-slate-100 hover:bg-slate-600;
+    @apply border-zinc-600 bg-zinc-900 text-zinc-100 focus:border-zinc-500 focus:ring-zinc-700;
   }
 
   :root.dark .btn-outline,
   :root[data-theme="dark"] .btn-outline {
-    @apply border-slate-600 bg-slate-900 text-slate-100 hover:border-slate-500 hover:text-white;
+    @apply border-zinc-600 bg-zinc-900 text-zinc-100 hover:border-zinc-500 hover:text-white;
   }
 
   :root.dark .tab,
   :root[data-theme="dark"] .tab {
-    @apply text-slate-300 hover:bg-slate-800 hover:text-slate-100;
+    @apply text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100;
   }
 
   :root.dark .tab-active,
   :root[data-theme="dark"] .tab-active {
-    @apply bg-slate-700 text-slate-100 hover:bg-slate-700 hover:text-slate-100;
+    @apply bg-zinc-700 text-zinc-100 hover:bg-zinc-700 hover:text-zinc-100;
   }
 
   :root.dark .admin-cta,
   :root[data-theme="dark"] .admin-cta {
-    @apply border-amber-700 bg-amber-950 text-amber-100 hover:border-amber-600 hover:bg-amber-900 hover:text-amber-50 focus-visible:ring-offset-slate-900;
+    @apply border-amber-700 bg-amber-950 text-amber-100 hover:border-amber-600 hover:bg-amber-900 hover:text-amber-50 focus-visible:ring-offset-zinc-900;
   }
 
   :root.dark .admin-cta-active,
@@ -245,8 +245,8 @@ body {
 
 :root.dark .pill-admin,
 :root[data-theme="dark"] .pill-admin {
-  background: #1e3a8a;
-  color: #dbeafe;
+  background: #134e4a;
+  color: #99f6e4;
 }
 
 :root.dark .bg-teal-700,
@@ -256,7 +256,7 @@ body {
 
 :root.dark .bg-teal-700\/95,
 :root[data-theme="dark"] .bg-teal-700\/95 {
-  background-color: rgba(79, 125, 255, 0.95);
+  background-color: rgba(47, 179, 168, 0.95);
 }
 
 .text-app-strong {
@@ -313,7 +313,7 @@ body {
 
 :root.dark option,
 :root[data-theme="dark"] option {
-  background-color: #161a22;
+  background-color: #18181b;
   color: var(--text-strong);
 }
 
