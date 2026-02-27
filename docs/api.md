@@ -1,6 +1,6 @@
 # API Reference 🔌
 
-All UI endpoints are defined in `routes/web.php` and return JSON.
+All UI endpoints are defined in `routes/web.php`. Most return JSON; export endpoints return downloadable files.
 
 ## Public
 
@@ -14,6 +14,10 @@ All UI endpoints are defined in `routes/web.php` and return JSON.
 - `POST /api/auth/logout`
 - `PATCH /api/auth/password`
 - `GET /api/dashboard`
+- `GET /api/exports/calendars` (zip download)
+- `GET /api/exports/calendars/{calendar}` (`.ics` download)
+- `GET /api/exports/address-books` (zip download)
+- `GET /api/exports/address-books/{addressBook}` (`.vcf` download)
 - `POST /api/calendars`
 - `PATCH /api/calendars/{calendar}`
 - `DELETE /api/calendars/{calendar}`
