@@ -8,6 +8,18 @@ use Sabre\DAV\Exception\InvalidSyncToken;
 
 class DavSyncService
 {
+    public function currentToken(ShareResourceType $resourceType, int $resourceId): int
+    {
+        $this->initializeState($resourceType, $resourceId);
+
+        $state = DB::table('dav_resource_sync_states')
+            ->where('resource_type', $resourceType->value)
+            ->where('resource_id', $resourceId)
+            ->first();
+
+        return (int) ($state->sync_token ?? 0);
+    }
+
     public function ensureResource(ShareResourceType $resourceType, int $resourceId): void
     {
         $this->initializeState($resourceType, $resourceId);

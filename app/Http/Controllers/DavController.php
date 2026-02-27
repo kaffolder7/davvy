@@ -43,6 +43,9 @@ class DavController extends Controller
 
         $server = $this->davServerFactory->make();
         $sabreRequest->setBaseUrl($server->getBaseUri());
+        $server->httpRequest = $sabreRequest;
+        $server->httpResponse = $sabreResponse;
+
         try {
             $server->invokeMethod($sabreRequest, $sabreResponse, false);
         } catch (DavException $exception) {
