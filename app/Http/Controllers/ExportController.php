@@ -201,7 +201,7 @@ class ExportController extends Controller
             abort(500, 'Unable to create temporary export file.');
         }
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         $opened = $zip->open($tmpPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
         if ($opened !== true) {

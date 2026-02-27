@@ -25,4 +25,3 @@ class AddressBookMirrorSource extends Model
         return $this->belongsTo(AddressBook::class, 'source_address_book_id');
     }
 }
-

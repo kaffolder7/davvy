@@ -33,4 +33,3 @@ class AddressBookMirrorConfig extends Model
         return $this->hasMany(AddressBookMirrorSource::class, 'config_id');
     }
 }
-

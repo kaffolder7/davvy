@@ -207,7 +207,7 @@ class ResourceExportTest extends TestCase
     {
         $this->assertInstanceOf(BinaryFileResponse::class, $response->baseResponse);
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         $opened = $zip->open($response->baseResponse->getFile()->getPathname());
         $this->assertTrue($opened === true, 'Unable to open exported zip archive.');
 

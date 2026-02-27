@@ -33,4 +33,3 @@ class AddressBookMirrorLink extends Model
         return $this->belongsTo(Card::class, 'mirrored_card_id');
     }
 }
-
