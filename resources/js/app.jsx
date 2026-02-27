@@ -61,7 +61,8 @@ async function copyTextToClipboard(value) {
 }
 
 function buildDavCollectionUrl(resourceKind, principalId, resourceUri) {
-  const collectionRoot = resourceKind === "calendar" ? "calendars" : "addressbooks";
+  const collectionRoot =
+    resourceKind === "calendar" ? "calendars" : "addressbooks";
   const normalizedUri = String(resourceUri ?? "")
     .trim()
     .replace(/^\/+/, "")
@@ -254,10 +255,7 @@ function App() {
 
   return (
     <Routes>
-      <Route
-        path="/login"
-        element={<LoginPage auth={value} theme={theme} />}
-      />
+      <Route path="/login" element={<LoginPage auth={value} theme={theme} />} />
       <Route
         path="/register"
         element={<RegisterPage auth={value} theme={theme} />}
@@ -773,8 +771,8 @@ function DashboardPage({ auth, theme }) {
             Share Your Resources
           </h2>
           <p className="mt-1 text-sm text-app-muted">
-            Grant read-only or full edit access for resources you own and marked
-            as sharable.
+            Grant read-only, editor, or admin access for resources you own and
+            marked as sharable. Admin access includes collection delete rights.
           </p>
           <form className="mt-4 grid gap-3 md:grid-cols-4" onSubmit={saveShare}>
             <select
@@ -832,8 +830,9 @@ function DashboardPage({ auth, theme }) {
                   setShareForm({ ...shareForm, permission: event.target.value })
                 }
               >
-                <option value="read_only">Read-only</option>
-                <option value="admin">Full edit</option>
+                <option value="read_only">General (read-only)</option>
+                <option value="editor">Full edit (no delete)</option>
+                <option value="admin">Admin (full edit + delete)</option>
               </select>
               <button className="btn" type="submit">
                 Share
@@ -920,7 +919,9 @@ function DashboardPage({ auth, theme }) {
                 </p>
               ) : (
                 data.apple_compat.source_options.map((option) => {
-                  const checked = appleCompatForm.source_ids.includes(option.id);
+                  const checked = appleCompatForm.source_ids.includes(
+                    option.id,
+                  );
 
                   return (
                     <label
@@ -1549,8 +1550,9 @@ function AdminPage({ auth, theme }) {
                   setShareForm({ ...shareForm, permission: e.target.value })
                 }
               >
-                <option value="read_only">Read-only</option>
-                <option value="admin">Full edit (admin)</option>
+                <option value="read_only">General (read-only)</option>
+                <option value="editor">Editor (full edit, no delete)</option>
+                <option value="admin">Admin (full edit + delete)</option>
               </select>
               <button className="btn" type="submit">
                 Save Share
@@ -1743,12 +1745,16 @@ function AppShell({ auth, theme, children }) {
       <header className="surface fade-up rounded-3xl p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-app-accent">
-              Davvy
-            </p>
-            <h1 className="text-2xl font-bold text-app-strong">
-              CalDAV + CardDAV Manager
-            </h1>
+            <Link className="block" to="/">
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-app-accent">
+                Davvy
+              </p>
+            </Link>
+            <Link className="block" to="/">
+              <h1 className="text-2xl font-bold text-app-strong">
+                CalDAV + CardDAV Manager
+              </h1>
+            </Link>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2">
               <p className="text-sm text-app-muted">
                 Signed in as {auth.user.email}
@@ -1881,13 +1887,15 @@ function ThemeControl({ theme, setTheme, className = "" }) {
 }
 
 function PermissionBadge({ permission }) {
-  return (
-    <span
-      className={permission === "admin" ? "pill pill-admin" : "pill pill-read"}
-    >
-      {permission === "admin" ? "Full Edit" : "Read-only"}
-    </span>
-  );
+  if (permission === "admin") {
+    return <span className="pill pill-admin">Admin</span>;
+  }
+
+  if (permission === "editor") {
+    return <span className="pill pill-editor">Editor</span>;
+  }
+
+  return <span className="pill pill-read">General</span>;
 }
 
 function DownloadIcon({ className }) {
@@ -1967,7 +1975,11 @@ function CopyableResourceUri({ resourceKind, principalId, resourceUri }) {
     .trim()
     .replace(/^\/+/, "")
     .replace(/\/+$/, "");
-  const fullUrl = buildDavCollectionUrl(resourceKind, principalId, normalizedUri);
+  const fullUrl = buildDavCollectionUrl(
+    resourceKind,
+    principalId,
+    normalizedUri,
+  );
 
   useEffect(() => {
     if (copyState === "idle") {

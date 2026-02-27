@@ -53,6 +53,13 @@ class ResourceAccessService
         return $permission?->canWrite() ?? false;
     }
 
+    public function userCanDeleteCalendar(User $user, Calendar $calendar): bool
+    {
+        $permission = $this->calendarPermission($user, $calendar);
+
+        return $permission?->canDelete() ?? false;
+    }
+
     public function userCanReadAddressBook(User $user, AddressBook $addressBook): bool
     {
         return $this->addressBookPermission($user, $addressBook) !== null;
@@ -63,5 +70,12 @@ class ResourceAccessService
         $permission = $this->addressBookPermission($user, $addressBook);
 
         return $permission?->canWrite() ?? false;
+    }
+
+    public function userCanDeleteAddressBook(User $user, AddressBook $addressBook): bool
+    {
+        $permission = $this->addressBookPermission($user, $addressBook);
+
+        return $permission?->canDelete() ?? false;
     }
 }

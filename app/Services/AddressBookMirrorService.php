@@ -10,8 +10,12 @@ use App\Models\Card;
 use App\Models\ResourceShare;
 use App\Models\User;
 use App\Services\Dav\DavSyncService;
+use App\Services\Dav\VCardValidator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Sabre\DAV\Exception\BadRequest;
+use Sabre\DAV\Exception\Forbidden;
+use Sabre\DAV\Exception\NotFound;
 use Sabre\VObject\Component\VCard;
 use Sabre\VObject\Reader;
 use Throwable;
@@ -22,7 +26,11 @@ class AddressBookMirrorService
 
     private const MIRROR_OWNER_PROPERTY = 'X-DAVVY-MIRROR-OWNER';
 
-    public function __construct(private readonly DavSyncService $syncService) {}
+    public function __construct(
+        private readonly DavSyncService $syncService,
+        private readonly ResourceAccessService $accessService,
+        private readonly VCardValidator $vCardValidator,
+    ) {}
 
     public function dashboardDataFor(User $user): array
     {
@@ -205,6 +213,118 @@ class AddressBookMirrorService
         foreach ($links as $link) {
             $this->deleteMirroredLink($link);
         }
+    }
+
+    public function updateSourceFromMirroredCard(?User $actor, Card $mirroredCard, string $incomingCardData): ?string
+    {
+        $link = AddressBookMirrorLink::query()
+            ->where('mirrored_card_id', $mirroredCard->id)
+            ->first();
+
+        if (! $link) {
+            return null;
+        }
+
+        if (! $actor) {
+            throw new Forbidden('Write access denied for mirrored source address book.');
+        }
+
+        $sourceAddressBook = AddressBook::query()->find($link->source_address_book_id);
+        $sourceCard = Card::query()
+            ->where('address_book_id', $link->source_address_book_id)
+            ->where('uri', $link->source_card_uri)
+            ->first();
+
+        if (! $sourceAddressBook || ! $sourceCard) {
+            $this->deleteMirroredLink($link);
+            throw new NotFound('Source contact no longer exists.');
+        }
+
+        if (! $this->accessService->userCanWriteAddressBook($actor, $sourceAddressBook)) {
+            throw new Forbidden('Write access denied for mirrored source address book.');
+        }
+
+        $sourceUid = trim((string) $sourceCard->uid);
+        if ($sourceUid === '') {
+            $sourceUid = 'legacy-card-'.sha1($link->source_card_uri);
+        }
+
+        $normalized = $this->vCardValidator->validateAndNormalize(
+            $this->sourcePayloadFromMirroredUpdate($incomingCardData, $sourceUid),
+        );
+
+        $sourceCard->update([
+            'uid' => $normalized['uid'] ?? $sourceUid,
+            'etag' => md5($normalized['data']),
+            'size' => strlen($normalized['data']),
+            'data' => $normalized['data'],
+        ]);
+
+        $this->syncService->recordModified(
+            resourceType: ShareResourceType::AddressBook,
+            resourceId: $sourceAddressBook->id,
+            uri: $sourceCard->uri,
+        );
+
+        $sourceCard->fill([
+            'uid' => $normalized['uid'] ?? $sourceUid,
+            'etag' => md5($normalized['data']),
+            'size' => strlen($normalized['data']),
+            'data' => $normalized['data'],
+        ]);
+        $this->handleSourceCardUpsert($sourceAddressBook, $sourceCard);
+
+        $refreshedMirroredCard = Card::query()->find($link->mirrored_card_id);
+
+        return $refreshedMirroredCard?->etag;
+    }
+
+    public function deleteSourceFromMirroredCard(?User $actor, Card $mirroredCard): bool
+    {
+        $link = AddressBookMirrorLink::query()
+            ->where('mirrored_card_id', $mirroredCard->id)
+            ->first();
+
+        if (! $link) {
+            return false;
+        }
+
+        if (! $actor) {
+            throw new Forbidden('Write access denied for mirrored source address book.');
+        }
+
+        $sourceAddressBook = AddressBook::query()->find($link->source_address_book_id);
+        if (! $sourceAddressBook) {
+            $this->deleteMirroredLink($link);
+
+            return true;
+        }
+
+        if (! $this->accessService->userCanWriteAddressBook($actor, $sourceAddressBook)) {
+            throw new Forbidden('Write access denied for mirrored source address book.');
+        }
+
+        $sourceCard = Card::query()
+            ->where('address_book_id', $link->source_address_book_id)
+            ->where('uri', $link->source_card_uri)
+            ->first();
+
+        if (! $sourceCard) {
+            $this->deleteMirroredLink($link);
+
+            return true;
+        }
+
+        $sourceCard->delete();
+
+        $this->syncService->recordDeleted(
+            resourceType: ShareResourceType::AddressBook,
+            resourceId: $sourceAddressBook->id,
+            uri: $sourceCard->uri,
+        );
+        $this->handleSourceCardDeleted($sourceAddressBook->id, $sourceCard->uri);
+
+        return true;
     }
 
     private function eligibleSourceOptionsForUser(User $user, ?int $targetAddressBookId): Collection
@@ -479,6 +599,43 @@ class AddressBookMirrorService
 
             return null;
         }
+    }
+
+    private function sourcePayloadFromMirroredUpdate(string $incomingCardData, string $sourceUid): string
+    {
+        try {
+            $vcard = Reader::read($incomingCardData);
+        } catch (Throwable) {
+            throw new BadRequest('Invalid vCard payload.');
+        }
+
+        if (! $vcard instanceof VCard) {
+            throw new BadRequest('Expected VCARD payload.');
+        }
+
+        $uidProperties = $vcard->select('UID');
+        if ($uidProperties !== []) {
+            $uidProperties[0]->setValue($sourceUid);
+
+            foreach (array_slice($uidProperties, 1) as $extraUidProperty) {
+                $extraUidProperty->destroy();
+            }
+        } else {
+            $vcard->add('UID', $sourceUid);
+        }
+
+        foreach ($vcard->select(self::MIRROR_SOURCE_PROPERTY) as $property) {
+            $property->destroy();
+        }
+
+        foreach ($vcard->select(self::MIRROR_OWNER_PROPERTY) as $property) {
+            $property->destroy();
+        }
+
+        $data = $vcard->serialize();
+        $vcard->destroy();
+
+        return $data;
     }
 
     private function mirroredUri(int $userId, int $sourceAddressBookId, string $sourceCardUri): string

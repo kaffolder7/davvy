@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\Dav\Backends\LaravelCardDavBackend;
 use App\Services\DavRequestContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Sabre\DAV\Exception\Forbidden;
 use Tests\TestCase;
 
 class AppleCompatAddressBookMirrorTest extends TestCase
@@ -189,6 +190,162 @@ class AppleCompatAddressBookMirrorTest extends TestCase
         $this->assertSame(0, AddressBookMirrorLink::query()->where('user_id', $user->id)->count());
     }
 
+    public function test_editor_permission_user_can_update_mirrored_contact_and_sync_back_to_source(): void
+    {
+        $owner = User::factory()->create();
+        $recipient = User::factory()->create();
+
+        $source = AddressBook::factory()->create([
+            'owner_id' => $owner->id,
+            'display_name' => 'Family',
+            'uri' => 'family',
+            'is_sharable' => true,
+        ]);
+
+        Card::query()->create([
+            'address_book_id' => $source->id,
+            'uri' => 'source-person.vcf',
+            'uid' => 'source-person-uid',
+            'etag' => md5('source-person'),
+            'size' => 1,
+            'data' => "BEGIN:VCARD\nVERSION:4.0\nFN:Source Person\nUID:source-person-uid\nEMAIL:source@example.test\nEND:VCARD",
+        ]);
+
+        ResourceShare::query()->create([
+            'resource_type' => ShareResourceType::AddressBook,
+            'resource_id' => $source->id,
+            'owner_id' => $owner->id,
+            'shared_with_id' => $recipient->id,
+            'permission' => SharePermission::Editor,
+        ]);
+
+        $this->actingAs($recipient)->patchJson('/api/address-books/apple-compat', [
+            'enabled' => true,
+            'source_ids' => [$source->id],
+        ])->assertOk();
+
+        $target = $this->defaultContactsBookFor($recipient);
+        $mirrored = Card::query()->where('address_book_id', $target->id)->firstOrFail();
+
+        app(DavRequestContext::class)->setAuthenticatedUser($recipient);
+        $backend = app(LaravelCardDavBackend::class);
+        $backend->updateCard(
+            $target->id,
+            $mirrored->uri,
+            "BEGIN:VCARD\nVERSION:4.0\nFN:Source Person Updated\nUID:".$mirrored->uid."\nEMAIL:source.updated@example.test\nEND:VCARD"
+        );
+
+        $sourceCard = Card::query()
+            ->where('address_book_id', $source->id)
+            ->where('uri', 'source-person.vcf')
+            ->firstOrFail();
+        $this->assertStringContainsString('FN:Source Person Updated', $sourceCard->data);
+        $this->assertStringContainsString('EMAIL:source.updated@example.test', $sourceCard->data);
+
+        $mirroredAfter = Card::query()->findOrFail($mirrored->id);
+        $this->assertStringContainsString('FN:Source Person Updated', $mirroredAfter->data);
+        $this->assertStringContainsString('EMAIL:source.updated@example.test', $mirroredAfter->data);
+    }
+
+    public function test_read_only_user_cannot_update_mirrored_contact(): void
+    {
+        $owner = User::factory()->create();
+        $recipient = User::factory()->create();
+
+        $source = AddressBook::factory()->create([
+            'owner_id' => $owner->id,
+            'display_name' => 'Relatives',
+            'uri' => 'relatives',
+            'is_sharable' => true,
+        ]);
+
+        Card::query()->create([
+            'address_book_id' => $source->id,
+            'uri' => 'relative.vcf',
+            'uid' => 'relative-uid',
+            'etag' => md5('relative'),
+            'size' => 1,
+            'data' => "BEGIN:VCARD\nVERSION:4.0\nFN:Relative Original\nUID:relative-uid\nEMAIL:relative@example.test\nEND:VCARD",
+        ]);
+
+        ResourceShare::query()->create([
+            'resource_type' => ShareResourceType::AddressBook,
+            'resource_id' => $source->id,
+            'owner_id' => $owner->id,
+            'shared_with_id' => $recipient->id,
+            'permission' => SharePermission::ReadOnly,
+        ]);
+
+        $this->actingAs($recipient)->patchJson('/api/address-books/apple-compat', [
+            'enabled' => true,
+            'source_ids' => [$source->id],
+        ])->assertOk();
+
+        $target = $this->defaultContactsBookFor($recipient);
+        $mirrored = Card::query()->where('address_book_id', $target->id)->firstOrFail();
+
+        app(DavRequestContext::class)->setAuthenticatedUser($recipient);
+        $backend = app(LaravelCardDavBackend::class);
+
+        $this->expectException(Forbidden::class);
+        $backend->updateCard(
+            $target->id,
+            $mirrored->uri,
+            "BEGIN:VCARD\nVERSION:4.0\nFN:Relative Updated\nUID:".$mirrored->uid."\nEMAIL:relative.updated@example.test\nEND:VCARD"
+        );
+    }
+
+    public function test_editor_permission_user_can_delete_mirrored_contact_and_source_is_deleted(): void
+    {
+        $owner = User::factory()->create();
+        $recipient = User::factory()->create();
+
+        $source = AddressBook::factory()->create([
+            'owner_id' => $owner->id,
+            'display_name' => 'Neighbors',
+            'uri' => 'neighbors',
+            'is_sharable' => true,
+        ]);
+
+        Card::query()->create([
+            'address_book_id' => $source->id,
+            'uri' => 'neighbor.vcf',
+            'uid' => 'neighbor-uid',
+            'etag' => md5('neighbor'),
+            'size' => 1,
+            'data' => "BEGIN:VCARD\nVERSION:4.0\nFN:Neighbor\nUID:neighbor-uid\nEMAIL:neighbor@example.test\nEND:VCARD",
+        ]);
+
+        ResourceShare::query()->create([
+            'resource_type' => ShareResourceType::AddressBook,
+            'resource_id' => $source->id,
+            'owner_id' => $owner->id,
+            'shared_with_id' => $recipient->id,
+            'permission' => SharePermission::Editor,
+        ]);
+
+        $this->actingAs($recipient)->patchJson('/api/address-books/apple-compat', [
+            'enabled' => true,
+            'source_ids' => [$source->id],
+        ])->assertOk();
+
+        $target = $this->defaultContactsBookFor($recipient);
+        $mirrored = Card::query()->where('address_book_id', $target->id)->firstOrFail();
+
+        app(DavRequestContext::class)->setAuthenticatedUser($recipient);
+        $backend = app(LaravelCardDavBackend::class);
+        $backend->deleteCard($target->id, $mirrored->uri);
+
+        $this->assertDatabaseMissing('cards', [
+            'address_book_id' => $source->id,
+            'uri' => 'neighbor.vcf',
+        ]);
+        $this->assertDatabaseMissing('cards', [
+            'id' => $mirrored->id,
+        ]);
+        $this->assertSame(0, AddressBookMirrorLink::query()->where('user_id', $recipient->id)->count());
+    }
+
     private function defaultContactsBookFor(User $user): AddressBook
     {
         return AddressBook::query()
@@ -197,4 +354,3 @@ class AppleCompatAddressBookMirrorTest extends TestCase
             ->firstOrFail();
     }
 }
-

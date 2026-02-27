@@ -64,7 +64,7 @@ class ShareController extends Controller
             'resource_type' => ['required', 'in:calendar,address_book'],
             'resource_id' => ['required', 'integer', 'min:1'],
             'shared_with_id' => ['required', 'integer', 'exists:users,id'],
-            'permission' => ['required', 'in:read_only,admin'],
+            'permission' => ['required', 'in:read_only,editor,admin'],
         ]);
 
         $target = User::query()->findOrFail($data['shared_with_id']);
