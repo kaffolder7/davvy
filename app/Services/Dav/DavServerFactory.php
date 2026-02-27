@@ -34,8 +34,8 @@ class DavServerFactory
         ];
 
         $server = new Server($nodes);
-        $baseUri = trim((string) config('dav.base_uri', '/dav'), '/').'/';
-        $server->setBaseUri('/'.$baseUri);
+        $baseUri = trim((string) config('dav.base_uri', '/dav'), '/');
+        $server->setBaseUri($baseUri === '' ? '/' : '/'.$baseUri);
 
         $authPlugin = new AuthPlugin($this->authBackend, 'Davvy DAV');
         $server->addPlugin($authPlugin);
