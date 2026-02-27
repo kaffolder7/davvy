@@ -6,6 +6,7 @@ use App\Enums\Role;
 use App\Services\DefaultResourceProvisioner;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -55,6 +56,11 @@ class User extends Authenticatable
     public function incomingShares(): HasMany
     {
         return $this->hasMany(ResourceShare::class, 'shared_with_id');
+    }
+
+    public function addressBookMirrorConfig(): HasOne
+    {
+        return $this->hasOne(AddressBookMirrorConfig::class);
     }
 
     public function isAdmin(): bool

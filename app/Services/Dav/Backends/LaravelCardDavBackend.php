@@ -7,6 +7,7 @@ use App\Enums\ShareResourceType;
 use App\Models\AddressBook;
 use App\Models\Card;
 use App\Models\ResourceShare;
+use App\Services\AddressBookMirrorService;
 use App\Services\Dav\DavSyncService;
 use App\Services\Dav\VCardValidator;
 use App\Services\DavRequestContext;
@@ -29,6 +30,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
         private readonly DavRequestContext $davContext,
         private readonly VCardValidator $vCardValidator,
         private readonly DavSyncService $syncService,
+        private readonly AddressBookMirrorService $mirrorService,
     ) {}
 
     public function getAddressBooksForUser($principalUri): array
@@ -115,8 +117,9 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
             return;
         }
 
-        $this->assertWritableAddressBook($addressBook);
+        $this->assertDeletableAddressBook($addressBook);
 
+        $this->mirrorService->handleSourceAddressBookDeleted($addressBook->id);
         $addressBook->delete();
     }
 
@@ -188,7 +191,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
 
         $etag = md5($normalized['data']);
 
-        Card::query()->create([
+        $card = Card::query()->create([
             'address_book_id' => $addressBook->id,
             'uri' => $cardUri,
             'uid' => $resourceUid,
@@ -198,6 +201,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
         ]);
 
         $this->syncService->recordAdded(ShareResourceType::AddressBook, $addressBook->id, (string) $cardUri);
+        $this->mirrorService->handleSourceCardUpsert($addressBook, $card);
 
         return '"'.$etag.'"';
     }
@@ -221,6 +225,16 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
             throw new NotFound('Card not found.');
         }
 
+        $user = $this->davContext->getAuthenticatedUser();
+        $mirroredEtag = $this->mirrorService->updateSourceFromMirroredCard(
+            actor: $user,
+            mirroredCard: $card,
+            incomingCardData: (string) $cardData,
+        );
+        if ($mirroredEtag !== null) {
+            return '"'.$mirroredEtag.'"';
+        }
+
         $normalized = $this->vCardValidator->validateAndNormalize((string) $cardData);
         $resourceUid = $normalized['uid'] ?? $this->fallbackUidForLegacyPayload((string) $cardUri);
 
@@ -238,6 +252,13 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
         ]);
 
         $this->syncService->recordModified(ShareResourceType::AddressBook, $addressBook->id, (string) $cardUri);
+        $card->fill([
+            'uid' => $resourceUid,
+            'etag' => $etag,
+            'size' => strlen($normalized['data']),
+            'data' => $normalized['data'],
+        ]);
+        $this->mirrorService->handleSourceCardUpsert($addressBook, $card);
 
         return '"'.$etag.'"';
     }
@@ -261,9 +282,15 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
             return;
         }
 
+        $user = $this->davContext->getAuthenticatedUser();
+        if ($this->mirrorService->deleteSourceFromMirroredCard($user, $card)) {
+            return;
+        }
+
         $card->delete();
 
         $this->syncService->recordDeleted(ShareResourceType::AddressBook, $addressBook->id, (string) $cardUri);
+        $this->mirrorService->handleSourceCardDeleted($addressBook->id, (string) $cardUri);
     }
 
     public function getChangesForAddressBook($addressBookId, $syncToken, $syncLevel, $limit = null): array
@@ -362,6 +389,15 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
 
         if (! $user || ! $this->accessService->userCanWriteAddressBook($user, $addressBook)) {
             throw new Forbidden('Write access denied for address book.');
+        }
+    }
+
+    private function assertDeletableAddressBook(AddressBook $addressBook): void
+    {
+        $user = $this->davContext->getAuthenticatedUser();
+
+        if (! $user || ! $this->accessService->userCanDeleteAddressBook($user, $addressBook)) {
+            throw new Forbidden('Delete access denied for address book.');
         }
     }
 

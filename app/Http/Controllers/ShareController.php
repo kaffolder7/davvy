@@ -8,13 +8,17 @@ use App\Models\AddressBook;
 use App\Models\Calendar;
 use App\Models\ResourceShare;
 use App\Models\User;
+use App\Services\AddressBookMirrorService;
 use App\Services\RegistrationSettingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ShareController extends Controller
 {
-    public function __construct(private readonly RegistrationSettingsService $settings) {}
+    public function __construct(
+        private readonly RegistrationSettingsService $settings,
+        private readonly AddressBookMirrorService $mirrorService,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -60,7 +64,7 @@ class ShareController extends Controller
             'resource_type' => ['required', 'in:calendar,address_book'],
             'resource_id' => ['required', 'integer', 'min:1'],
             'shared_with_id' => ['required', 'integer', 'exists:users,id'],
-            'permission' => ['required', 'in:read_only,admin'],
+            'permission' => ['required', 'in:read_only,editor,admin'],
         ]);
 
         $target = User::query()->findOrFail($data['shared_with_id']);
@@ -96,6 +100,10 @@ class ShareController extends Controller
             ]
         );
 
+        if ($resourceType === ShareResourceType::AddressBook) {
+            $this->mirrorService->syncUserConfig($target);
+        }
+
         return response()->json($share->fresh(), 201);
     }
 
@@ -111,7 +119,14 @@ class ShareController extends Controller
             }
         }
 
+        $sharedWith = $share->sharedWith;
+        $resourceType = $share->resource_type;
+
         $share->delete();
+
+        if ($resourceType === ShareResourceType::AddressBook && $sharedWith) {
+            $this->mirrorService->syncUserConfig($sharedWith);
+        }
 
         return response()->json(['ok' => true]);
     }

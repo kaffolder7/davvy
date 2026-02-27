@@ -127,7 +127,7 @@ class LaravelCalendarBackend extends AbstractBackend implements \Sabre\CalDAV\Ba
             return;
         }
 
-        $this->assertWritableCalendar($calendar);
+        $this->assertDeletableCalendar($calendar);
 
         $calendar->delete();
     }
@@ -392,6 +392,15 @@ class LaravelCalendarBackend extends AbstractBackend implements \Sabre\CalDAV\Ba
 
         if (! $user || ! $this->accessService->userCanWriteCalendar($user, $calendar)) {
             throw new Forbidden('Write access denied for calendar.');
+        }
+    }
+
+    private function assertDeletableCalendar(Calendar $calendar): void
+    {
+        $user = $this->davContext->getAuthenticatedUser();
+
+        if (! $user || ! $this->accessService->userCanDeleteCalendar($user, $calendar)) {
+            throw new Forbidden('Delete access denied for calendar.');
         }
     }
 

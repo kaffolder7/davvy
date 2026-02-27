@@ -47,8 +47,8 @@ class DavResourceIdPlugin extends ServerPlugin
 
         $timeLow = substr($hash, 0, 8);
         $timeMid = substr($hash, 8, 4);
-        $timeHiAndVersion = (hexdec(substr($hash, 12, 4)) & 0x0fff) | 0x5000;
-        $clockSeq = (hexdec(substr($hash, 16, 4)) & 0x3fff) | 0x8000;
+        $timeHiAndVersion = (hexdec(substr($hash, 12, 4)) & 0x0FFF) | 0x5000;
+        $clockSeq = (hexdec(substr($hash, 16, 4)) & 0x3FFF) | 0x8000;
         $node = substr($hash, 20, 12);
 
         return sprintf(
