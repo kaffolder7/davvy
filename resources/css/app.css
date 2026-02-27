@@ -39,29 +39,29 @@
 
 :root.dark,
 :root[data-theme="dark"] {
-  --bg-start: #061412;
-  --bg-end: #0b1d1a;
-  --bg-glow-1: #16716866;
-  --bg-glow-2: #74512666;
-  --surface: #0f2420cc;
-  --surface-solid: #132a25;
-  --ink: #e7f0ee;
-  --muted: #9eb3af;
-  --accent: #46d1c6;
-  --accent-strong: #2cb2a8;
+  --bg-start: #090b0f;
+  --bg-end: #12151b;
+  --bg-glow-1: #33415533;
+  --bg-glow-2: #1f293733;
+  --surface: #141820cc;
+  --surface-solid: #171b23;
+  --ink: #edf1f6;
+  --muted: #a1aab8;
+  --accent: #4f7dff;
+  --accent-strong: #7ea2ff;
   --warn: #f59e0b;
   --danger: #fca5a5;
   --danger-strong: #fecaca;
-  --warn-surface: #3a301d;
-  --warn-edge: #6b5a31;
-  --accent-edge: #2d8f88;
-  --edge: #2a4b45;
-  --edge-strong: #3a5e57;
-  --text-strong: #f1f5f9;
-  --text-base: #cbd5e1;
-  --text-muted: #aebcca;
-  --text-faint: #90a3b8;
-  --text-dim: #a3b5c7;
+  --warn-surface: #312616;
+  --warn-edge: #66502e;
+  --accent-edge: #4d66a1;
+  --edge: #2a2f39;
+  --edge-strong: #3a404c;
+  --text-strong: #f3f6fb;
+  --text-base: #cfd6e3;
+  --text-muted: #adb7c7;
+  --text-faint: #8f9db2;
+  --text-dim: #74849b;
 }
 
 * {
@@ -203,7 +203,12 @@ body {
 
   :root.dark .input,
   :root[data-theme="dark"] .input {
-    @apply border-slate-600 bg-slate-900 text-slate-100 focus:border-teal-400 focus:ring-teal-900;
+    @apply border-slate-600 bg-slate-900 text-slate-100 focus:border-slate-400 focus:ring-slate-700;
+  }
+
+  :root.dark .btn,
+  :root[data-theme="dark"] .btn {
+    @apply bg-slate-700 text-slate-100 hover:bg-slate-600;
   }
 
   :root.dark .btn-outline,
@@ -218,7 +223,7 @@ body {
 
   :root.dark .tab-active,
   :root[data-theme="dark"] .tab-active {
-    @apply bg-slate-100 text-slate-900 hover:bg-slate-100 hover:text-slate-900;
+    @apply bg-slate-700 text-slate-100 hover:bg-slate-700 hover:text-slate-100;
   }
 
   :root.dark .admin-cta,
@@ -240,8 +245,18 @@ body {
 
 :root.dark .pill-admin,
 :root[data-theme="dark"] .pill-admin {
-  background: #14532d;
-  color: #dcfce7;
+  background: #1e3a8a;
+  color: #dbeafe;
+}
+
+:root.dark .bg-teal-700,
+:root[data-theme="dark"] .bg-teal-700 {
+  background-color: var(--accent);
+}
+
+:root.dark .bg-teal-700\/95,
+:root[data-theme="dark"] .bg-teal-700\/95 {
+  background-color: rgba(79, 125, 255, 0.95);
 }
 
 .text-app-strong {
@@ -298,7 +313,7 @@ body {
 
 :root.dark option,
 :root[data-theme="dark"] option {
-  background-color: #10211d;
+  background-color: #161a22;
   color: var(--text-strong);
 }
 
