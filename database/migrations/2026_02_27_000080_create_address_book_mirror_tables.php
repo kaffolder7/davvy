@@ -59,4 +59,3 @@ return new class extends Migration
         Schema::dropIfExists('address_book_mirror_configs');
     }
 };
-

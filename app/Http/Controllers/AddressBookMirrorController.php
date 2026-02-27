@@ -29,4 +29,3 @@ class AddressBookMirrorController extends Controller
         ]);
     }
 }
-
