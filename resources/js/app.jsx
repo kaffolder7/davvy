@@ -108,7 +108,93 @@ async function downloadExport(url, fallbackName) {
   window.URL.revokeObjectURL(objectUrl);
 }
 
+const THEME_STORAGE_KEY = "davvy-theme";
+const VALID_THEMES = new Set(["system", "light", "dark"]);
+
+function getSystemTheme() {
+  if (typeof window === "undefined" || !window.matchMedia) {
+    return "light";
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
+function normalizeTheme(value) {
+  return VALID_THEMES.has(value) ? value : "system";
+}
+
+function resolveTheme(theme) {
+  return theme === "system" ? getSystemTheme() : theme;
+}
+
+function applyTheme(theme) {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  const resolved = resolveTheme(theme);
+  const root = document.documentElement;
+
+  root.classList.toggle("dark", resolved === "dark");
+  root.dataset.theme = resolved;
+  root.style.colorScheme = resolved;
+}
+
+function useThemePreference() {
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === "undefined") {
+      return "system";
+    }
+
+    try {
+      return normalizeTheme(window.localStorage.getItem(THEME_STORAGE_KEY));
+    } catch {
+      return "system";
+    }
+  });
+
+  useEffect(() => {
+    applyTheme(theme);
+
+    if (theme !== "system" || !window.matchMedia) {
+      return undefined;
+    }
+
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const syncTheme = () => applyTheme("system");
+
+    if (media.addEventListener) {
+      media.addEventListener("change", syncTheme);
+      return () => media.removeEventListener("change", syncTheme);
+    }
+
+    media.addListener(syncTheme);
+    return () => media.removeListener(syncTheme);
+  }, [theme]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      if (theme === "system") {
+        window.localStorage.removeItem(THEME_STORAGE_KEY);
+      } else {
+        window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+      }
+    } catch {
+      // Ignore storage failures.
+    }
+  }, [theme]);
+
+  return { theme, setTheme };
+}
+
 function App() {
+  const theme = useThemePreference();
   const [auth, setAuth] = useState({
     loading: true,
     user: null,
@@ -168,13 +254,19 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage auth={value} />} />
-      <Route path="/register" element={<RegisterPage auth={value} />} />
+      <Route
+        path="/login"
+        element={<LoginPage auth={value} theme={theme} />}
+      />
+      <Route
+        path="/register"
+        element={<RegisterPage auth={value} theme={theme} />}
+      />
       <Route
         path="/"
         element={
           <ProtectedRoute auth={value}>
-            <DashboardPage auth={value} />
+            <DashboardPage auth={value} theme={theme} />
           </ProtectedRoute>
         }
       />
@@ -182,7 +274,7 @@ function App() {
         path="/admin"
         element={
           <ProtectedRoute auth={value} adminOnly>
-            <AdminPage auth={value} />
+            <AdminPage auth={value} theme={theme} />
           </ProtectedRoute>
         }
       />
@@ -190,7 +282,7 @@ function App() {
         path="/profile"
         element={
           <ProtectedRoute auth={value}>
-            <ProfilePage auth={value} />
+            <ProfilePage auth={value} theme={theme} />
           </ProtectedRoute>
         }
       />
@@ -214,7 +306,7 @@ function ProtectedRoute({ auth, adminOnly = false, children }) {
   return children;
 }
 
-function LoginPage({ auth }) {
+function LoginPage({ auth, theme }) {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -248,6 +340,7 @@ function LoginPage({ auth }) {
 
   return (
     <AuthShell
+      theme={theme}
       title="Welcome Back"
       subtitle="Sign in to manage your CalDAV and CardDAV resources."
     >
@@ -270,15 +363,15 @@ function LoginPage({ auth }) {
             required
           />
         </Field>
-        {error ? <p className="text-sm text-red-700">{error}</p> : null}
+        {error ? <p className="text-sm text-app-danger">{error}</p> : null}
         <button className="btn w-full" disabled={submitting}>
           {submitting ? "Signing in..." : "Sign In"}
         </button>
       </form>
-      <p className="mt-5 text-sm text-slate-600">
+      <p className="mt-5 text-sm text-app-muted">
         Need an account?{" "}
         {auth.registrationEnabled ? (
-          <Link to="/register" className="font-semibold text-teal-700">
+          <Link to="/register" className="font-semibold text-app-accent">
             Register here
           </Link>
         ) : (
@@ -289,7 +382,7 @@ function LoginPage({ auth }) {
   );
 }
 
-function RegisterPage({ auth }) {
+function RegisterPage({ auth, theme }) {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     name: "",
@@ -332,6 +425,7 @@ function RegisterPage({ auth }) {
 
   return (
     <AuthShell
+      theme={theme}
       title="Create Account"
       subtitle="Your default calendar and address book are generated automatically."
     >
@@ -373,14 +467,14 @@ function RegisterPage({ auth }) {
             required
           />
         </Field>
-        {error ? <p className="text-sm text-red-700">{error}</p> : null}
+        {error ? <p className="text-sm text-app-danger">{error}</p> : null}
         <button className="btn w-full" disabled={submitting}>
           {submitting ? "Creating account..." : "Register"}
         </button>
       </form>
-      <p className="mt-5 text-sm text-slate-600">
+      <p className="mt-5 text-sm text-app-muted">
         Already registered?{" "}
-        <Link to="/login" className="font-semibold text-teal-700">
+        <Link to="/login" className="font-semibold text-app-accent">
           Sign in
         </Link>
       </p>
@@ -388,7 +482,7 @@ function RegisterPage({ auth }) {
   );
 }
 
-function DashboardPage({ auth }) {
+function DashboardPage({ auth, theme }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [shareStatusNotice, setShareStatusNotice] = useState("");
@@ -539,10 +633,10 @@ function DashboardPage({ auth }) {
       : data.owned.address_books.filter((item) => item.is_sharable);
 
   return (
-    <AppShell auth={auth}>
+    <AppShell auth={auth} theme={theme}>
       {shareStatusNotice ? (
         <div className="pointer-events-none fixed inset-x-0 top-4 z-50 flex justify-center px-4">
-          <p className="rounded-xl border border-teal-200 bg-teal-700/95 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-teal-900/20 backdrop-blur">
+          <p className="rounded-xl border border-app-accent-edge bg-teal-700/95 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-teal-900/20 backdrop-blur">
             {shareStatusNotice}
           </p>
         </div>
@@ -567,7 +661,7 @@ function DashboardPage({ auth }) {
       </section>
 
       {error ? (
-        <div className="surface mt-4 rounded-2xl p-3 text-sm text-red-700">
+        <div className="surface mt-4 rounded-2xl p-3 text-sm text-app-danger">
           {error}
         </div>
       ) : null}
@@ -644,10 +738,10 @@ function DashboardPage({ auth }) {
 
       {!loading && data.sharing.can_manage ? (
         <section className="surface mt-6 rounded-3xl p-6">
-          <h2 className="text-xl font-semibold text-slate-900">
+          <h2 className="text-xl font-semibold text-app-strong">
             Share Your Resources
           </h2>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-sm text-app-muted">
             Grant read-only or full edit access for resources you own and marked
             as sharable.
           </p>
@@ -718,25 +812,25 @@ function DashboardPage({ auth }) {
 
           <div className="mt-5 space-y-2">
             {data.sharing.outgoing.length === 0 ? (
-              <p className="text-sm text-slate-500">No outgoing shares yet.</p>
+              <p className="text-sm text-app-faint">No outgoing shares yet.</p>
             ) : (
               data.sharing.outgoing.map((share) => (
                 <div
                   key={share.id}
-                  className="rounded-xl border border-slate-200 bg-white p-3 text-sm"
+                  className="rounded-xl border border-app-edge bg-app-surface p-3 text-sm"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold text-slate-900">
+                    <p className="font-semibold text-app-strong">
                       {share.resource_type} #{share.resource_id}
                     </p>
                     <PermissionBadge permission={share.permission} />
                   </div>
-                  <p className="text-slate-600">
+                  <p className="text-app-muted">
                     Shared with: {share.shared_with?.name} (
                     {share.shared_with?.email})
                   </p>
                   <button
-                    className="mt-2 text-xs font-semibold text-red-700"
+                    className="mt-2 text-xs font-semibold text-app-danger"
                     onClick={() => deleteShare(share.id)}
                   >
                     Revoke
@@ -809,7 +903,7 @@ function ResourcePanel({
   return (
     <section className="surface rounded-3xl p-6">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
+        <h2 className="text-xl font-semibold text-app-strong">{title}</h2>
         <button
           className="btn-outline btn-outline-sm"
           type="button"
@@ -831,7 +925,7 @@ function ResourcePanel({
           }
           required
         />
-        <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+        <label className="inline-flex items-center gap-2 text-sm font-medium text-app-base">
           <input
             type="checkbox"
             checked={form.is_sharable}
@@ -848,12 +942,12 @@ function ResourcePanel({
 
       <div className="mt-5 space-y-3">
         {items.length === 0 ? (
-          <p className="text-sm text-slate-500">No owned resources yet.</p>
+          <p className="text-sm text-app-faint">No owned resources yet.</p>
         ) : (
           items.map((item) => (
             <div
               key={item.id}
-              className="rounded-xl border border-slate-200 bg-white p-3"
+              className="rounded-xl border border-app-edge bg-app-surface p-3"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
@@ -888,11 +982,11 @@ function ResourcePanel({
                     </form>
                   ) : (
                     <div className="flex items-center gap-1">
-                      <p className="truncate font-medium text-slate-900">
+                      <p className="truncate font-medium text-app-strong">
                         {item.display_name}
                       </p>
                       <button
-                        className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:text-teal-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                        className="inline-flex h-5 w-5 items-center justify-center rounded text-app-dim transition hover:text-app-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
                         type="button"
                         onClick={() => startEditing(item)}
                         aria-label={`Edit name for ${item.display_name}`}
@@ -918,7 +1012,7 @@ function ResourcePanel({
                   >
                     <DownloadIcon className="h-3.5 w-3.5" />
                   </button>
-                  <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
+                  <label className="inline-flex items-center gap-2 text-xs font-semibold text-app-base">
                     <input
                       type="checkbox"
                       checked={!!item.is_sharable}
@@ -939,25 +1033,25 @@ function ResourcePanel({
         )}
       </div>
 
-      <div className="mt-6 border-t border-slate-200 pt-4">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">
+      <div className="mt-6 border-t border-app-edge pt-4">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
           Shared with you
         </h3>
         <div className="mt-3 space-y-2">
           {sharedItems.length === 0 ? (
-            <p className="text-sm text-slate-500">No shared resources.</p>
+            <p className="text-sm text-app-faint">No shared resources.</p>
           ) : (
             sharedItems.map((item) => (
               <div
                 key={`${item.id}-${item.share_id}`}
-                className="rounded-xl border border-amber-100 bg-amber-50 p-3"
+                className="rounded-xl border border-app-warn-edge bg-app-warn-surface p-3"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium text-slate-900">
+                    <p className="font-medium text-app-strong">
                       {item.display_name}
                     </p>
-                    <p className="text-xs text-slate-600">
+                    <p className="text-xs text-app-muted">
                       Owner: {item.owner_name} ({item.owner_email})
                     </p>
                     <CopyableResourceUri
@@ -988,7 +1082,7 @@ function ResourcePanel({
   );
 }
 
-function AdminPage({ auth }) {
+function AdminPage({ auth, theme }) {
   const [state, setState] = useState({
     loading: true,
     users: [],
@@ -1168,7 +1262,7 @@ function AdminPage({ auth }) {
       : state.resources.address_books;
 
   return (
-    <AppShell auth={auth}>
+    <AppShell auth={auth} theme={theme}>
       <div className="surface fade-up rounded-3xl p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-2xl font-bold">Admin Control Center</h2>
@@ -1192,7 +1286,7 @@ function AdminPage({ auth }) {
           </div>
         </div>
         {state.error ? (
-          <p className="mt-3 text-sm text-red-700">{state.error}</p>
+          <p className="mt-3 text-sm text-app-danger">{state.error}</p>
         ) : null}
       </div>
 
@@ -1251,11 +1345,11 @@ function AdminPage({ auth }) {
               {state.users.map((user) => (
                 <div
                   key={user.id}
-                  className="rounded-xl border border-slate-200 bg-white p-3 text-sm"
+                  className="rounded-xl border border-app-edge bg-app-surface p-3 text-sm"
                 >
-                  <p className="font-semibold text-slate-900">{user.name}</p>
-                  <p className="text-slate-600">{user.email}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="font-semibold text-app-strong">{user.name}</p>
+                  <p className="text-app-muted">{user.email}</p>
+                  <p className="text-xs text-app-faint">
                     Role: {user.role} | Calendars: {user.calendars_count} |
                     Address books: {user.address_books_count}
                   </p>
@@ -1330,23 +1424,23 @@ function AdminPage({ auth }) {
               {state.shares.map((share) => (
                 <div
                   key={share.id}
-                  className="rounded-xl border border-slate-200 bg-white p-3 text-sm"
+                  className="rounded-xl border border-app-edge bg-app-surface p-3 text-sm"
                 >
                   <div className="flex items-center justify-between">
-                    <p className="font-semibold text-slate-900">
+                    <p className="font-semibold text-app-strong">
                       {share.resource_type} #{share.resource_id}
                     </p>
                     <PermissionBadge permission={share.permission} />
                   </div>
-                  <p className="text-slate-600">
+                  <p className="text-app-muted">
                     Owner: {share.owner.name} ({share.owner.email})
                   </p>
-                  <p className="text-slate-600">
+                  <p className="text-app-muted">
                     Shared with: {share.shared_with.name} (
                     {share.shared_with.email})
                   </p>
                   <button
-                    className="mt-2 text-xs font-semibold text-red-700"
+                    className="mt-2 text-xs font-semibold text-app-danger"
                     onClick={() => deleteShare(share.id)}
                   >
                     Remove
@@ -1361,7 +1455,7 @@ function AdminPage({ auth }) {
   );
 }
 
-function ProfilePage({ auth }) {
+function ProfilePage({ auth, theme }) {
   const [passwordSubmitting, setPasswordSubmitting] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
@@ -1395,7 +1489,7 @@ function ProfilePage({ auth }) {
   };
 
   return (
-    <AppShell auth={auth}>
+    <AppShell auth={auth} theme={theme}>
       <section className="fade-up grid gap-4 md:grid-cols-3">
         <InfoCard
           title="Name"
@@ -1415,10 +1509,10 @@ function ProfilePage({ auth }) {
       </section>
 
       <section className="surface mt-6 rounded-3xl p-6">
-        <h2 className="text-xl font-semibold text-slate-900">
+        <h2 className="text-xl font-semibold text-app-strong">
           Change Password
         </h2>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-app-muted">
           Change your password for both web access and DAV client connections.
         </p>
         <form
@@ -1469,12 +1563,12 @@ function ProfilePage({ auth }) {
           </Field>
 
           {passwordError ? (
-            <p className="md:col-span-3 text-sm text-red-700">
+            <p className="md:col-span-3 text-sm text-app-danger">
               {passwordError}
             </p>
           ) : null}
           {passwordSuccess ? (
-            <p className="md:col-span-3 text-sm text-teal-700">
+            <p className="md:col-span-3 text-sm text-app-accent">
               {passwordSuccess}
             </p>
           ) : null}
@@ -1490,7 +1584,7 @@ function ProfilePage({ auth }) {
   );
 }
 
-function AppShell({ auth, children }) {
+function AppShell({ auth, theme, children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const onAdminPage = location.pathname === "/admin";
@@ -1512,14 +1606,14 @@ function AppShell({ auth, children }) {
       <header className="surface fade-up rounded-3xl p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-teal-700">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-app-accent">
               Davvy
             </p>
-            <h1 className="text-2xl font-bold text-slate-900">
+            <h1 className="text-2xl font-bold text-app-strong">
               CalDAV + CardDAV Manager
             </h1>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2">
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-app-muted">
                 Signed in as {auth.user.email}
               </p>
             </div>
@@ -1603,7 +1697,49 @@ function AppShell({ auth, children }) {
         </div>
       </header>
       <div className="mt-6">{children}</div>
+      <div className="mt-6 flex justify-end">
+        <ThemeControl
+          theme={theme.theme}
+          setTheme={theme.setTheme}
+          className="theme-control-inline"
+        />
+      </div>
     </main>
+  );
+}
+
+function ThemeControl({ theme, setTheme, className = "" }) {
+  const options = [
+    { value: "system", label: "System" },
+    { value: "light", label: "Light" },
+    { value: "dark", label: "Dark" },
+  ];
+
+  return (
+    <div
+      className={`theme-control ${className}`.trim()}
+      role="group"
+      aria-label="Theme"
+    >
+      <p className="theme-control-label">Theme</p>
+      <div className="theme-control-options">
+        {options.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            className={
+              theme === option.value
+                ? "theme-control-option theme-control-option-active"
+                : "theme-control-option"
+            }
+            onClick={() => setTheme(option.value)}
+            aria-pressed={theme === option.value}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -1654,13 +1790,20 @@ function PencilIcon({ className }) {
   );
 }
 
-function AuthShell({ title, subtitle, children }) {
+function AuthShell({ theme, title, subtitle, children }) {
   return (
     <main className="mx-auto flex min-h-screen max-w-md items-center px-4 py-10">
       <section className="surface fade-up w-full rounded-3xl p-8">
-        <h1 className="text-3xl font-bold text-slate-900">{title}</h1>
-        <p className="mt-2 text-sm text-slate-600">{subtitle}</p>
+        <h1 className="text-3xl font-bold text-app-strong">{title}</h1>
+        <p className="mt-2 text-sm text-app-muted">{subtitle}</p>
         <div className="mt-6">{children}</div>
+        <div className="mt-6 flex justify-center sm:justify-end">
+          <ThemeControl
+            theme={theme.theme}
+            setTheme={theme.setTheme}
+            className="theme-control-inline"
+          />
+        </div>
       </section>
     </main>
   );
@@ -1705,7 +1848,7 @@ function CopyableResourceUri({ resourceKind, principalId, resourceUri }) {
       <button
         type="button"
         onClick={() => void copyUrl()}
-        className="break-all bg-transparent p-0 text-left text-xs font-normal text-slate-500 focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-teal-500"
+        className="break-all bg-transparent p-0 text-left text-xs font-normal text-app-faint focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-teal-500"
         title={fullUrl}
         aria-label={`Copy ${normalizedUri || "resource"} URL`}
       >
@@ -1757,7 +1900,7 @@ function InfoCard({ title, value, helper, copyable = false }) {
 
   return (
     <article className="surface rounded-2xl p-4">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <p className="text-xs font-semibold uppercase tracking-wide text-app-faint">
         {title}
       </p>
       {copyable ? (
@@ -1765,7 +1908,7 @@ function InfoCard({ title, value, helper, copyable = false }) {
           <button
             type="button"
             onClick={() => void copyValue()}
-            className="w-full rounded-md text-left text-base font-bold text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+            className="w-full rounded-md text-left text-base font-bold text-app-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
             aria-label={`Copy ${title}`}
             title="Click to copy"
           >
@@ -1780,11 +1923,11 @@ function InfoCard({ title, value, helper, copyable = false }) {
           </span>
         </div>
       ) : (
-        <p className="mt-1 break-all text-base font-bold text-slate-900">
+        <p className="mt-1 break-all text-base font-bold text-app-strong">
           {value}
         </p>
       )}
-      <p className="mt-2 text-xs text-slate-600">{helper}</p>
+      <p className="mt-2 text-xs text-app-muted">{helper}</p>
     </article>
   );
 }
@@ -1792,7 +1935,7 @@ function InfoCard({ title, value, helper, copyable = false }) {
 function Field({ label, children }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-semibold text-slate-700">
+      <span className="mb-1 block text-sm font-semibold text-app-base">
         {label}
       </span>
       {children}
@@ -1805,8 +1948,8 @@ function FullPageState({ label, compact = false }) {
     <div
       className={
         compact
-          ? "mt-4 text-sm font-semibold text-slate-600"
-          : "flex min-h-screen items-center justify-center text-lg font-semibold text-slate-700"
+          ? "mt-4 text-sm font-semibold text-app-muted"
+          : "flex min-h-screen items-center justify-center text-lg font-semibold text-app-base"
       }
     >
       {label}
