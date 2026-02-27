@@ -262,4 +262,34 @@ class DavPayloadValidationAndSyncTest extends TestCase
         $response->assertStatus(207);
         $this->assertStringContainsString('existing-contact.vcf', (string) $response->getContent());
     }
+
+    public function test_carddav_propfind_returns_empty_description_for_address_books_without_one(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'description-test@example.test',
+            'password' => Hash::make('password1234'),
+        ]);
+
+        $addressBook = AddressBook::factory()->create([
+            'owner_id' => $user->id,
+            'uri' => 'team-contacts',
+            'description' => null,
+        ]);
+
+        $response = $this->call(
+            method: 'PROPFIND',
+            uri: '/dav/addressbooks/'.$user->id.'/'.$addressBook->uri.'/',
+            server: [
+                'HTTP_AUTHORIZATION' => 'Basic '.base64_encode($user->email.':password1234'),
+                'HTTP_DEPTH' => '0',
+                'CONTENT_TYPE' => 'application/xml; charset=utf-8',
+            ],
+            content: '<?xml version="1.0" encoding="utf-8"?><d:propfind xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav"><d:prop><card:addressbook-description/></d:prop></d:propfind>',
+        );
+
+        $response->assertStatus(207);
+        $this->assertStringContainsString('<d:status>HTTP/1.1 200 OK</d:status>', (string) $response->getContent());
+        $this->assertStringContainsString('<card:addressbook-description', (string) $response->getContent());
+        $this->assertStringNotContainsString('HTTP/1.1 404 Not Found', (string) $response->getContent());
+    }
 }

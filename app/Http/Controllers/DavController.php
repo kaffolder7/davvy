@@ -6,6 +6,7 @@ use App\Services\Dav\DavServerFactory;
 use App\Services\DavRequestContext;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Sabre\DAV\Exception as DavException;
 use Sabre\HTTP\Request as SabreRequest;
 use Sabre\HTTP\Response as SabreResponse;
@@ -20,6 +21,9 @@ class DavController extends Controller
     public function handle(Request $request): Response
     {
         $this->davContext->clear();
+
+        $rawBody = $request->getContent();
+        $shouldLogClientDavTraffic = $this->shouldLogClientDavTraffic($request);
 
         $headers = [];
         foreach ($request->headers->all() as $name => $values) {
@@ -36,7 +40,7 @@ class DavController extends Controller
             method: $request->method(),
             url: $sabreUrl,
             headers: $headers,
-            body: $request->getContent(),
+            body: $rawBody,
         );
 
         $sabreResponse = new SabreResponse;
@@ -68,6 +72,19 @@ class DavController extends Controller
             }
         }
 
+        if ($shouldLogClientDavTraffic) {
+            Log::debug('DAV client request/response', [
+                'method' => $request->method(),
+                'path' => $request->getPathInfo(),
+                'user_agent' => $request->userAgent(),
+                'depth' => $request->header('Depth'),
+                'content_type' => $request->header('Content-Type'),
+                'request_body' => $rawBody,
+                'response_status' => $sabreResponse->getStatus(),
+                'response_body' => $sabreResponse->getBodyAsString(),
+            ]);
+        }
+
         $response = response(
             content: $sabreResponse->getBodyAsString(),
             status: $sabreResponse->getStatus()
@@ -88,6 +105,25 @@ class DavController extends Controller
         $this->davContext->clear();
 
         return $response;
+    }
+
+    private function shouldLogClientDavTraffic(Request $request): bool
+    {
+        if (! config('dav.log_client_traffic', false)) {
+            return false;
+        }
+
+        $path = $request->getPathInfo();
+        if (! str_starts_with($path, '/dav')) {
+            return false;
+        }
+
+        $method = strtoupper($request->method());
+        if (! in_array($method, ['PROPFIND', 'REPORT', 'OPTIONS'], true)) {
+            return false;
+        }
+
+        return str_contains((string) $request->userAgent(), 'AddressBookCore');
     }
 
     private function serializeDavException(DavException $exception): string

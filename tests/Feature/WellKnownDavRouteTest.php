@@ -65,4 +65,49 @@ class WellKnownDavRouteTest extends TestCase
         $this->assertSame(207, $response->getStatusCode());
         $this->assertStringContainsString('/dav/principals/'.$user->id.'/', (string) $response->getContent());
     }
+
+    public function test_authenticated_principal_propfind_returns_stable_resource_id(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'principal-resource-id@example.test',
+            'password' => 'password1234',
+        ]);
+
+        $response = $this->call(
+            method: 'PROPFIND',
+            uri: '/dav/principals/'.$user->id.'/',
+            server: [
+                'HTTP_AUTHORIZATION' => 'Basic '.base64_encode($user->email.':password1234'),
+                'HTTP_DEPTH' => '0',
+                'CONTENT_TYPE' => 'application/xml; charset=utf-8',
+            ],
+            content: '<?xml version="1.0" encoding="utf-8"?><d:propfind xmlns:d="DAV:"><d:prop><d:resource-id/></d:prop></d:propfind>',
+        );
+
+        $this->assertSame(207, $response->getStatusCode());
+        $this->assertStringContainsString('<d:resource-id><d:href>urn:uuid:', (string) $response->getContent());
+    }
+
+    public function test_address_book_home_propfind_exposes_display_name_and_sync_token(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'addressbook-home-sync@example.test',
+            'password' => 'password1234',
+        ]);
+
+        $response = $this->call(
+            method: 'PROPFIND',
+            uri: '/dav/addressbooks/'.$user->id.'/',
+            server: [
+                'HTTP_AUTHORIZATION' => 'Basic '.base64_encode($user->email.':password1234'),
+                'HTTP_DEPTH' => '0',
+                'CONTENT_TYPE' => 'application/xml; charset=utf-8',
+            ],
+            content: '<?xml version="1.0" encoding="utf-8"?><d:propfind xmlns:d="DAV:"><d:prop><d:displayname/><d:sync-token/></d:prop></d:propfind>',
+        );
+
+        $this->assertSame(207, $response->getStatusCode());
+        $this->assertStringContainsString('<d:displayname>Address Books</d:displayname>', (string) $response->getContent());
+        $this->assertStringContainsString('<d:sync-token>http://sabre.io/ns/sync/home-', (string) $response->getContent());
+    }
 }
