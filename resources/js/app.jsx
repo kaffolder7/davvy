@@ -1585,7 +1585,7 @@ function CopyableResourceUri({ resourceKind, principalId, resourceUri }) {
       <button
         type="button"
         onClick={() => void copyUrl()}
-        className="break-all rounded-md bg-slate-100 px-1.5 py-0.5 text-left text-xs font-medium text-slate-600 transition hover:bg-slate-200 hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+        className="break-all bg-transparent p-0 text-left text-xs font-normal text-slate-500 focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-teal-500"
         title={fullUrl}
         aria-label={`Copy ${normalizedUri || "resource"} URL`}
       >
