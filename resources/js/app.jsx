@@ -458,6 +458,20 @@ function DashboardPage({ auth }) {
     }
   };
 
+  const renameOwnedResource = async (type, id, displayName) => {
+    const url =
+      type === "calendar" ? `/api/calendars/${id}` : `/api/address-books/${id}`;
+
+    try {
+      // Keep DAV collection URL stable by updating only the display name.
+      await api.patch(url, { display_name: displayName });
+      await loadDashboard({ withLoading: false });
+    } catch (err) {
+      setError(extractError(err, "Unable to rename resource."));
+      throw err;
+    }
+  };
+
   const createCalendar = async (event) => {
     event.preventDefault();
     try {
@@ -589,6 +603,9 @@ function DashboardPage({ auth }) {
             onToggle={(id, next, displayName) =>
               toggleSharable("calendar", id, next, displayName)
             }
+            onRename={(id, displayName) =>
+              renameOwnedResource("calendar", id, displayName)
+            }
           />
           <ResourcePanel
             title="Your Address Books"
@@ -617,6 +634,9 @@ function DashboardPage({ auth }) {
             }
             onToggle={(id, next, displayName) =>
               toggleSharable("address-book", id, next, displayName)
+            }
+            onRename={(id, displayName) =>
+              renameOwnedResource("address-book", id, displayName)
             }
           />
         </div>
@@ -745,7 +765,47 @@ function ResourcePanel({
   onExportAll,
   onExportItem,
   onToggle,
+  onRename,
 }) {
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [nameDraft, setNameDraft] = useState("");
+  const [renamingItemId, setRenamingItemId] = useState(null);
+
+  const startEditing = (item) => {
+    setEditingItemId(item.id);
+    setNameDraft(item.display_name ?? "");
+  };
+
+  const cancelEditing = () => {
+    setEditingItemId(null);
+    setNameDraft("");
+    setRenamingItemId(null);
+  };
+
+  const submitRename = async (event, item) => {
+    event.preventDefault();
+    const nextName = nameDraft.trim();
+
+    if (!nextName) {
+      return;
+    }
+
+    if (nextName === item.display_name) {
+      cancelEditing();
+      return;
+    }
+
+    setRenamingItemId(item.id);
+    try {
+      await onRename(item.id, nextName);
+      cancelEditing();
+    } catch {
+      // Errors are surfaced by DashboardPage.
+    } finally {
+      setRenamingItemId(null);
+    }
+  };
+
   return (
     <section className="surface rounded-3xl p-6">
       <div className="flex items-center justify-between gap-3">
@@ -796,10 +856,52 @@ function ResourcePanel({
               className="rounded-xl border border-slate-200 bg-white p-3"
             >
               <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-medium text-slate-900">
-                    {item.display_name}
-                  </p>
+                <div className="min-w-0 flex-1">
+                  {editingItemId === item.id ? (
+                    <form
+                      className="flex flex-wrap items-center gap-2"
+                      onSubmit={(event) => void submitRename(event, item)}
+                    >
+                      <input
+                        className="input h-8 flex-1 px-2 py-1 text-sm"
+                        value={nameDraft}
+                        onChange={(event) => setNameDraft(event.target.value)}
+                        aria-label={`Edit name for ${item.display_name}`}
+                        required
+                        autoFocus
+                      />
+                      <button
+                        className="btn-outline btn-outline-sm rounded-xl"
+                        type="submit"
+                        disabled={renamingItemId === item.id}
+                      >
+                        Save
+                      </button>
+                      <button
+                        className="btn-outline btn-outline-sm rounded-xl"
+                        type="button"
+                        onClick={cancelEditing}
+                        disabled={renamingItemId === item.id}
+                      >
+                        Cancel
+                      </button>
+                    </form>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <p className="truncate font-medium text-slate-900">
+                        {item.display_name}
+                      </p>
+                      <button
+                        className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-500 transition hover:text-teal-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                        type="button"
+                        onClick={() => startEditing(item)}
+                        aria-label={`Edit name for ${item.display_name}`}
+                        title={`Edit name for ${item.display_name}`}
+                      >
+                        <PencilIcon className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
                   <CopyableResourceUri
                     resourceKind={resourceKind}
                     principalId={principalId}
@@ -1530,6 +1632,24 @@ function DownloadIcon({ className }) {
       <path d="M12 4v10" />
       <path d="M8 10.5 12 14.5l4-4" />
       <path d="M4.5 18.5h15" />
+    </svg>
+  );
+}
+
+function PencilIcon({ className }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 20h9" />
+      <path d="m16.5 3.5 4 4L8 20H4v-4L16.5 3.5Z" />
     </svg>
   );
 }
