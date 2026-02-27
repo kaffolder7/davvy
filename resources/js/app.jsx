@@ -1345,6 +1345,7 @@ function ProfilePage({ auth }) {
 function AppShell({ auth, children }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const onAdminPage = location.pathname === "/admin";
 
   const logout = async () => {
     await api.post("/api/auth/logout");
@@ -1373,31 +1374,35 @@ function AppShell({ auth, children }) {
               <p className="text-sm text-slate-600">
                 Signed in as {auth.user.email}
               </p>
-              {auth.user.role === "admin" ? (
-                <Link
-                  className={
-                    location.pathname === "/admin"
-                      ? "btn-outline btn-outline-sm admin-cta admin-cta-active group"
-                      : "btn-outline btn-outline-sm admin-cta group"
-                  }
-                  to="/admin"
-                  aria-label="Open Admin Control Center"
-                  title="Open Admin Control Center"
+            </div>
+          </div>
+          <nav className="flex flex-col items-end gap-2">
+            {auth.user.role === "admin" ? (
+              <Link
+                className={
+                  onAdminPage
+                    ? "btn-outline btn-outline-sm admin-cta admin-cta-active group"
+                    : "btn-outline btn-outline-sm admin-cta group"
+                }
+                to="/admin"
+                aria-label="Open Admin Control Center"
+                title="Open Admin Control Center"
+              >
+                <svg
+                  aria-hidden="true"
+                  className="h-4 w-4 opacity-85 transition group-hover:opacity-100"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
-                  <svg
-                    aria-hidden="true"
-                    className="h-4 w-4 opacity-85 transition group-hover:opacity-100"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M12 3l7 3v6c0 4.4-2.8 8.2-7 9-4.2-.8-7-4.6-7-9V6l7-3z" />
-                    <path d="M9.5 12.5l1.7 1.7 3.3-3.6" />
-                  </svg>
-                  <span>Admin Console</span>
+                  <path d="M12 3l7 3v6c0 4.4-2.8 8.2-7 9-4.2-.8-7-4.6-7-9V6l7-3z" />
+                  <path d="M9.5 12.5l1.7 1.7 3.3-3.6" />
+                </svg>
+                <span>Admin Control Center</span>
+                {onAdminPage ? null : (
                   <svg
                     aria-hidden="true"
                     className="h-3.5 w-3.5 transition group-hover:translate-x-0.5"
@@ -1411,41 +1416,41 @@ function AppShell({ auth, children }) {
                     <path d="M5 12h14" />
                     <path d="M13 6l6 6-6 6" />
                   </svg>
-                </Link>
-              ) : null}
-            </div>
-          </div>
-          <nav className="flex items-center gap-2">
-            <Link
-              className={location.pathname === "/" ? "tab tab-active" : "tab"}
-              to="/"
-            >
-              Dashboard
-            </Link>
-            <Link
-              className={`${location.pathname === "/profile" ? "tab tab-active" : "tab"} inline-flex items-center gap-1.5`}
-              to="/profile"
-              aria-label="Profile"
-              title="Profile"
-            >
-              <span className="max-w-36 truncate">{auth.user.name}</span>
-              <svg
-                aria-hidden="true"
-                className="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                )}
+              </Link>
+            ) : null}
+            <div className="flex items-center gap-2">
+              <Link
+                className={location.pathname === "/" ? "tab tab-active" : "tab"}
+                to="/"
               >
-                <circle cx="12" cy="8" r="4" />
-                <path d="M5 20c1.6-3.3 4-5 7-5s5.4 1.7 7 5" />
-              </svg>
-            </Link>
-            <button className="btn-outline" onClick={logout}>
-              Sign Out
-            </button>
+                Dashboard
+              </Link>
+              <Link
+                className={`${location.pathname === "/profile" ? "tab tab-active" : "tab"} inline-flex items-center gap-1.5`}
+                to="/profile"
+                aria-label="Profile"
+                title="Profile"
+              >
+                <span className="max-w-36 truncate">{auth.user.name}</span>
+                <svg
+                  aria-hidden="true"
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M5 20c1.6-3.3 4-5 7-5s5.4 1.7 7 5" />
+                </svg>
+              </Link>
+              <button className="btn-outline" onClick={logout}>
+                Sign Out
+              </button>
+            </div>
           </nav>
         </div>
       </header>
