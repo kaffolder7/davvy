@@ -1607,12 +1607,16 @@ function AppShell({ auth, theme, children }) {
       <header className="surface fade-up rounded-3xl p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-app-accent">
-              Davvy
-            </p>
-            <h1 className="text-2xl font-bold text-app-strong">
-              CalDAV + CardDAV Manager
-            </h1>
+            <Link className="block" to="/">
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-app-accent">
+                Davvy
+              </p>
+            </Link>
+            <Link className="block" to="/">
+              <h1 className="text-2xl font-bold text-app-strong">
+                CalDAV + CardDAV Manager
+              </h1>
+            </Link>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2">
               <p className="text-sm text-app-muted">
                 Signed in as {auth.user.email}
