@@ -892,7 +892,7 @@ function ResourcePanel({
                         {item.display_name}
                       </p>
                       <button
-                        className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-500 transition hover:text-teal-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                        className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:text-teal-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
                         type="button"
                         onClick={() => startEditing(item)}
                         aria-label={`Edit name for ${item.display_name}`}
