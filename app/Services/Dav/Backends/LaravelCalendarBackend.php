@@ -21,7 +21,7 @@ use Sabre\DAV\Exception\InvalidSyncToken;
 use Sabre\DAV\Exception\NotFound;
 use Sabre\DAV\PropPatch;
 
-class LaravelCalendarBackend extends AbstractBackend
+class LaravelCalendarBackend extends AbstractBackend implements \Sabre\CalDAV\Backend\SyncSupport
 {
     public function __construct(
         private readonly PrincipalUriService $principalUriService,
@@ -298,6 +298,22 @@ class LaravelCalendarBackend extends AbstractBackend
     {
         $calendar = $this->loadReadableCalendar($calendarId);
 
+        if ($this->isInitialSyncRequest($syncToken)) {
+            return [
+                'syncToken' => (string) $this->syncService->currentToken(
+                    resourceType: ShareResourceType::Calendar,
+                    resourceId: $calendar->id,
+                ),
+                'added' => CalendarObject::query()
+                    ->where('calendar_id', $calendar->id)
+                    ->orderBy('id')
+                    ->pluck('uri')
+                    ->all(),
+                'modified' => [],
+                'deleted' => [],
+            ];
+        }
+
         return $this->syncService->getChangesSince(
             resourceType: ShareResourceType::Calendar,
             resourceId: $calendar->id,
@@ -308,6 +324,11 @@ class LaravelCalendarBackend extends AbstractBackend
 
     private function transformCalendar(Calendar $calendar, SharePermission $permission, string $principalUri): array
     {
+        $syncToken = (string) $this->syncService->currentToken(
+            resourceType: ShareResourceType::Calendar,
+            resourceId: $calendar->id,
+        );
+
         return [
             'id' => $calendar->id,
             'uri' => $calendar->uri,
@@ -316,8 +337,19 @@ class LaravelCalendarBackend extends AbstractBackend
             '{urn:ietf:params:xml:ns:caldav}calendar-description' => $calendar->description,
             '{http://apple.com/ns/ical/}calendar-color' => $calendar->color,
             '{urn:ietf:params:xml:ns:caldav}calendar-timezone' => $calendar->timezone,
+            '{http://sabredav.org/ns}sync-token' => $syncToken,
+            '{http://calendarserver.org/ns/}getctag' => $syncToken,
             '{http://sabredav.org/ns}read-only' => ! $permission->canWrite(),
         ];
+    }
+
+    private function isInitialSyncRequest(mixed $syncToken): bool
+    {
+        if ($syncToken === null) {
+            return true;
+        }
+
+        return is_string($syncToken) && trim($syncToken) === '';
     }
 
     private function transformCalendarObject(CalendarObject $object, bool $withData): array

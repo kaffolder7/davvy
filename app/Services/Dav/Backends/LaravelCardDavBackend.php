@@ -21,7 +21,7 @@ use Sabre\DAV\Exception\InvalidSyncToken;
 use Sabre\DAV\Exception\NotFound;
 use Sabre\DAV\PropPatch;
 
-class LaravelCardDavBackend extends AbstractBackend
+class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Backend\SyncSupport
 {
     public function __construct(
         private readonly PrincipalUriService $principalUriService,
@@ -270,6 +270,22 @@ class LaravelCardDavBackend extends AbstractBackend
     {
         $addressBook = $this->loadReadableAddressBook($addressBookId);
 
+        if ($this->isInitialSyncRequest($syncToken)) {
+            return [
+                'syncToken' => (string) $this->syncService->currentToken(
+                    resourceType: ShareResourceType::AddressBook,
+                    resourceId: $addressBook->id,
+                ),
+                'added' => Card::query()
+                    ->where('address_book_id', $addressBook->id)
+                    ->orderBy('id')
+                    ->pluck('uri')
+                    ->all(),
+                'modified' => [],
+                'deleted' => [],
+            ];
+        }
+
         return $this->syncService->getChangesSince(
             resourceType: ShareResourceType::AddressBook,
             resourceId: $addressBook->id,
@@ -280,14 +296,30 @@ class LaravelCardDavBackend extends AbstractBackend
 
     private function transformAddressBook(AddressBook $addressBook, SharePermission $permission, string $principalUri): array
     {
+        $syncToken = (string) $this->syncService->currentToken(
+            resourceType: ShareResourceType::AddressBook,
+            resourceId: $addressBook->id,
+        );
+
         return [
             'id' => $addressBook->id,
             'uri' => $addressBook->uri,
             'principaluri' => $principalUri,
             '{DAV:}displayname' => $addressBook->display_name,
             '{urn:ietf:params:xml:ns:carddav}addressbook-description' => $addressBook->description,
+            '{http://sabredav.org/ns}sync-token' => $syncToken,
+            '{http://calendarserver.org/ns/}getctag' => $syncToken,
             '{http://sabredav.org/ns}read-only' => ! $permission->canWrite(),
         ];
+    }
+
+    private function isInitialSyncRequest(mixed $syncToken): bool
+    {
+        if ($syncToken === null) {
+            return true;
+        }
+
+        return is_string($syncToken) && trim($syncToken) === '';
     }
 
     private function transformCard(Card $card, bool $withData): array
