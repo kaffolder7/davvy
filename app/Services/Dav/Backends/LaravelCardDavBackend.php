@@ -117,7 +117,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
             return;
         }
 
-        $this->assertWritableAddressBook($addressBook);
+        $this->assertDeletableAddressBook($addressBook);
 
         $this->mirrorService->handleSourceAddressBookDeleted($addressBook->id);
         $addressBook->delete();
@@ -225,6 +225,16 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
             throw new NotFound('Card not found.');
         }
 
+        $user = $this->davContext->getAuthenticatedUser();
+        $mirroredEtag = $this->mirrorService->updateSourceFromMirroredCard(
+            actor: $user,
+            mirroredCard: $card,
+            incomingCardData: (string) $cardData,
+        );
+        if ($mirroredEtag !== null) {
+            return '"'.$mirroredEtag.'"';
+        }
+
         $normalized = $this->vCardValidator->validateAndNormalize((string) $cardData);
         $resourceUid = $normalized['uid'] ?? $this->fallbackUidForLegacyPayload((string) $cardUri);
 
@@ -269,6 +279,11 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
             ->first();
 
         if (! $card) {
+            return;
+        }
+
+        $user = $this->davContext->getAuthenticatedUser();
+        if ($this->mirrorService->deleteSourceFromMirroredCard($user, $card)) {
             return;
         }
 
@@ -374,6 +389,15 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
 
         if (! $user || ! $this->accessService->userCanWriteAddressBook($user, $addressBook)) {
             throw new Forbidden('Write access denied for address book.');
+        }
+    }
+
+    private function assertDeletableAddressBook(AddressBook $addressBook): void
+    {
+        $user = $this->davContext->getAuthenticatedUser();
+
+        if (! $user || ! $this->accessService->userCanDeleteAddressBook($user, $addressBook)) {
+            throw new Forbidden('Delete access denied for address book.');
         }
     }
 

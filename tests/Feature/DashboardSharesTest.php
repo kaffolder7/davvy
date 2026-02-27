@@ -58,4 +58,30 @@ class DashboardSharesTest extends TestCase
         $response->assertJsonFragment(['display_name' => 'Team Calendar']);
         $response->assertJsonFragment(['display_name' => 'Team Contacts']);
     }
+
+    public function test_dashboard_includes_editor_permission_for_shared_resources(): void
+    {
+        $owner = User::factory()->create();
+        $recipient = User::factory()->create();
+
+        $sharedAddressBook = AddressBook::factory()->create([
+            'owner_id' => $owner->id,
+            'display_name' => 'Editor Contacts',
+            'uri' => 'editor-contacts',
+            'is_sharable' => true,
+        ]);
+
+        ResourceShare::query()->create([
+            'resource_type' => ShareResourceType::AddressBook,
+            'resource_id' => $sharedAddressBook->id,
+            'owner_id' => $owner->id,
+            'shared_with_id' => $recipient->id,
+            'permission' => SharePermission::Editor,
+        ]);
+
+        $response = $this->actingAs($recipient)->getJson('/api/dashboard');
+
+        $response->assertOk();
+        $response->assertJsonPath('shared.address_books.0.permission', 'editor');
+    }
 }
