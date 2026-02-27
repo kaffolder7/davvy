@@ -93,4 +93,33 @@ class OwnerShareManagementTest extends TestCase
             'permission' => 'admin',
         ]);
     }
+
+    public function test_owner_can_assign_editor_permission_when_feature_enabled(): void
+    {
+        app(RegistrationSettingsService::class)->setOwnerShareManagementEnabled(true);
+
+        $owner = User::factory()->create();
+        $recipient = User::factory()->create();
+
+        $calendar = Calendar::factory()->create([
+            'owner_id' => $owner->id,
+            'is_sharable' => true,
+        ]);
+
+        $response = $this->actingAs($owner)->postJson('/api/shares', [
+            'resource_type' => 'calendar',
+            'resource_id' => $calendar->id,
+            'shared_with_id' => $recipient->id,
+            'permission' => 'editor',
+        ]);
+
+        $response->assertCreated();
+        $this->assertDatabaseHas('resource_shares', [
+            'owner_id' => $owner->id,
+            'shared_with_id' => $recipient->id,
+            'resource_type' => 'calendar',
+            'resource_id' => $calendar->id,
+            'permission' => 'editor',
+        ]);
+    }
 }

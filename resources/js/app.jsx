@@ -61,7 +61,8 @@ async function copyTextToClipboard(value) {
 }
 
 function buildDavCollectionUrl(resourceKind, principalId, resourceUri) {
-  const collectionRoot = resourceKind === "calendar" ? "calendars" : "addressbooks";
+  const collectionRoot =
+    resourceKind === "calendar" ? "calendars" : "addressbooks";
   const normalizedUri = String(resourceUri ?? "")
     .trim()
     .replace(/^\/+/, "")
@@ -254,10 +255,7 @@ function App() {
 
   return (
     <Routes>
-      <Route
-        path="/login"
-        element={<LoginPage auth={value} theme={theme} />}
-      />
+      <Route path="/login" element={<LoginPage auth={value} theme={theme} />} />
       <Route
         path="/register"
         element={<RegisterPage auth={value} theme={theme} />}
@@ -492,6 +490,18 @@ function DashboardPage({ auth, theme }) {
     owned: { calendars: [], address_books: [] },
     shared: { calendars: [], address_books: [] },
     sharing: { can_manage: false, targets: [], outgoing: [] },
+    apple_compat: {
+      enabled: false,
+      target_address_book_id: null,
+      target_address_book_uri: null,
+      target_display_name: null,
+      selected_source_ids: [],
+      source_options: [],
+    },
+  });
+  const [appleCompatForm, setAppleCompatForm] = useState({
+    enabled: false,
+    source_ids: [],
   });
   const [calendarForm, setCalendarForm] = useState({
     display_name: "",
@@ -515,7 +525,12 @@ function DashboardPage({ auth, theme }) {
     setError("");
     try {
       const response = await api.get("/api/dashboard");
-      setData(response.data);
+      const payload = response.data;
+      setData(payload);
+      setAppleCompatForm({
+        enabled: !!payload.apple_compat?.enabled,
+        source_ids: payload.apple_compat?.selected_source_ids ?? [],
+      });
     } catch (err) {
       setError(extractError(err, "Unable to load dashboard data."));
     } finally {
@@ -625,6 +640,19 @@ function DashboardPage({ auth, theme }) {
     } catch (err) {
       setError(
         err instanceof Error && err.message ? err.message : fallbackMessage,
+      );
+    }
+  };
+
+  const saveAppleCompat = async (event) => {
+    event.preventDefault();
+    try {
+      setError("");
+      await api.patch("/api/address-books/apple-compat", appleCompatForm);
+      await loadDashboard({ withLoading: false });
+    } catch (err) {
+      setError(
+        extractError(err, "Unable to update Apple compatibility settings."),
       );
     }
   };
@@ -744,8 +772,8 @@ function DashboardPage({ auth, theme }) {
             Share Your Resources
           </h2>
           <p className="mt-1 text-sm text-app-muted">
-            Grant read-only or full edit access for resources you own and marked
-            as sharable.
+            Grant read-only, editor, or admin access for resources you own and
+            marked as sharable. Admin access includes collection delete rights.
           </p>
           <form className="mt-4 grid gap-3 md:grid-cols-4" onSubmit={saveShare}>
             <select
@@ -803,8 +831,9 @@ function DashboardPage({ auth, theme }) {
                   setShareForm({ ...shareForm, permission: event.target.value })
                 }
               >
-                <option value="read_only">Read-only</option>
-                <option value="admin">Full edit</option>
+                <option value="read_only">General (read-only)</option>
+                <option value="editor">Full edit (no delete)</option>
+                <option value="admin">Admin (full edit + delete)</option>
               </select>
               <button className="btn" type="submit">
                 Share
@@ -841,6 +870,114 @@ function DashboardPage({ auth, theme }) {
               ))
             )}
           </div>
+        </section>
+      ) : null}
+
+      {!loading ? (
+        <section className="surface mt-6 rounded-3xl p-6">
+          <h2 className="text-xl font-semibold text-app-strong">
+            Apple Contacts Compatibility
+          </h2>
+          <p className="mt-1 text-sm text-app-muted">
+            Off by default. Mirror selected address books into your{" "}
+            <code>/contacts</code> book so macOS and iOS clients can see them.
+          </p>
+
+          {data.apple_compat.target_address_book_id ? (
+            <p className="mt-2 text-xs text-app-faint">
+              Mirror target: {data.apple_compat.target_display_name} (
+              {data.apple_compat.target_address_book_uri})
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-app-danger">
+              No default Contacts address book found for your account.
+            </p>
+          )}
+
+          <form className="mt-4 space-y-4" onSubmit={saveAppleCompat}>
+            <label className="inline-flex items-center gap-2 text-sm font-medium text-app-base">
+              <input
+                type="checkbox"
+                checked={appleCompatForm.enabled}
+                onChange={(event) =>
+                  setAppleCompatForm({
+                    ...appleCompatForm,
+                    enabled: event.target.checked,
+                  })
+                }
+                disabled={!data.apple_compat.target_address_book_id}
+              />
+              Enable Apple compatibility mirroring
+            </label>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-app-strong">
+                Source address books to mirror
+              </p>
+              {data.apple_compat.source_options.length === 0 ? (
+                <p className="text-sm text-app-faint">
+                  No eligible owned/shared address books available.
+                </p>
+              ) : (
+                data.apple_compat.source_options.map((option) => {
+                  const checked = appleCompatForm.source_ids.includes(
+                    option.id,
+                  );
+
+                  return (
+                    <label
+                      key={option.id}
+                      className="flex items-start gap-2 rounded-xl border border-app-edge bg-app-surface px-3 py-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(event) => {
+                          if (event.target.checked) {
+                            setAppleCompatForm({
+                              ...appleCompatForm,
+                              source_ids: [
+                                ...appleCompatForm.source_ids,
+                                option.id,
+                              ],
+                            });
+                            return;
+                          }
+
+                          setAppleCompatForm({
+                            ...appleCompatForm,
+                            source_ids: appleCompatForm.source_ids.filter(
+                              (id) => id !== option.id,
+                            ),
+                          });
+                        }}
+                        disabled={!data.apple_compat.target_address_book_id}
+                      />
+                      <span className="min-w-0">
+                        <span className="block font-medium text-app-strong">
+                          {option.display_name}
+                        </span>
+                        <span className="block text-xs text-app-faint">
+                          {option.scope === "owned" ? "Owned" : "Shared"} •{" "}
+                          {option.owner_name} ({option.owner_email})
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })
+              )}
+            </div>
+
+            <div>
+              <button
+                className="btn"
+                type="submit"
+                disabled={!data.apple_compat.target_address_book_id}
+              >
+                Save Apple Compatibility Settings
+              </button>
+            </div>
+          </form>
         </section>
       ) : null}
     </AppShell>
@@ -1414,8 +1551,9 @@ function AdminPage({ auth, theme }) {
                   setShareForm({ ...shareForm, permission: e.target.value })
                 }
               >
-                <option value="read_only">Read-only</option>
-                <option value="admin">Full edit (admin)</option>
+                <option value="read_only">General (read-only)</option>
+                <option value="editor">Editor (full edit, no delete)</option>
+                <option value="admin">Admin (full edit + delete)</option>
               </select>
               <button className="btn" type="submit">
                 Save Share
@@ -1781,13 +1919,15 @@ function ThemeControl({ theme, setTheme, className = "" }) {
 }
 
 function PermissionBadge({ permission }) {
-  return (
-    <span
-      className={permission === "admin" ? "pill pill-admin" : "pill pill-read"}
-    >
-      {permission === "admin" ? "Full Edit" : "Read-only"}
-    </span>
-  );
+  if (permission === "admin") {
+    return <span className="pill pill-admin">Admin</span>;
+  }
+
+  if (permission === "editor") {
+    return <span className="pill pill-editor">Editor</span>;
+  }
+
+  return <span className="pill pill-read">General</span>;
 }
 
 function DownloadIcon({ className }) {
@@ -1867,7 +2007,11 @@ function CopyableResourceUri({ resourceKind, principalId, resourceUri }) {
     .trim()
     .replace(/^\/+/, "")
     .replace(/\/+$/, "");
-  const fullUrl = buildDavCollectionUrl(resourceKind, principalId, normalizedUri);
+  const fullUrl = buildDavCollectionUrl(
+    resourceKind,
+    principalId,
+    normalizedUri,
+  );
 
   useEffect(() => {
     if (copyState === "idle") {

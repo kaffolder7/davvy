@@ -7,13 +7,17 @@ use App\Models\AddressBook;
 use App\Models\Calendar;
 use App\Models\ResourceShare;
 use App\Models\User;
+use App\Services\AddressBookMirrorService;
 use App\Services\RegistrationSettingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function __construct(private readonly RegistrationSettingsService $settings) {}
+    public function __construct(
+        private readonly RegistrationSettingsService $settings,
+        private readonly AddressBookMirrorService $mirrorService,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -135,6 +139,7 @@ class DashboardController extends Controller
                 'targets' => $shareTargets,
                 'outgoing' => $sharesCreatedByUser,
             ],
+            'apple_compat' => $this->mirrorService->dashboardDataFor($user),
         ]);
     }
 }

@@ -173,6 +173,11 @@ body {
   color: #166534;
 }
 
+.pill-editor {
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
 .fade-up {
   animation: fadeUp 0.45s ease both;
 }
@@ -251,6 +256,12 @@ body {
 :root[data-theme="dark"] .pill-admin {
   background: #134e4a;
   color: #99f6e4;
+}
+
+:root.dark .pill-editor,
+:root[data-theme="dark"] .pill-editor {
+  background: #1e3a8a;
+  color: #dbeafe;
 }
 
 :root.dark .bg-teal-700,
