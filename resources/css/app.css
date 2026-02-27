@@ -47,14 +47,14 @@
   --surface-solid: #18181b;
   --ink: #f5f5f5;
   --muted: #a3a3a3;
-  --accent: #1f7f78;
-  --accent-strong: #2d9289;
+  --accent: #238b83;
+  --accent-strong: #329c93;
   --warn: #f59e0b;
   --danger: #fca5a5;
   --danger-strong: #fecaca;
   --warn-surface: #312616;
   --warn-edge: #66502e;
-  --accent-edge: #256f69;
+  --accent-edge: #2b7f79;
   --edge: #2a2a2a;
   --edge-strong: #3f3f46;
   --text-strong: #fafafa;
@@ -256,7 +256,7 @@ body {
 
 :root.dark .bg-teal-700\/95,
 :root[data-theme="dark"] .bg-teal-700\/95 {
-  background-color: rgba(31, 127, 120, 0.95);
+  background-color: rgba(35, 139, 131, 0.95);
 }
 
 .text-app-strong {
