@@ -483,9 +483,7 @@ function DashboardPage({ auth }) {
       await downloadExport(url, fallbackName);
     } catch (err) {
       setError(
-        err instanceof Error && err.message
-          ? err.message
-          : fallbackMessage,
+        err instanceof Error && err.message ? err.message : fallbackMessage,
       );
     }
   };
@@ -767,22 +765,26 @@ function ResourcePanel({
                   </p>
                   <p className="text-xs text-slate-500">/{item.uri}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4">
                   <button
-                    className="btn-outline btn-outline-sm p-2"
+                    className="btn-outline btn-outline-sm rounded-xl"
                     type="button"
                     onClick={() => void onExportItem(item)}
                     aria-label={`Export ${item.display_name}`}
                     title={`Export ${item.display_name}`}
                   >
-                    <DownloadIcon className="h-4 w-4" />
+                    <DownloadIcon className="h-3.5 w-3.5" />
                   </button>
                   <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
                     <input
                       type="checkbox"
                       checked={!!item.is_sharable}
                       onChange={(event) =>
-                        onToggle(item.id, event.target.checked, item.display_name)
+                        onToggle(
+                          item.id,
+                          event.target.checked,
+                          item.display_name,
+                        )
                       }
                     />
                     Sharable
@@ -818,13 +820,13 @@ function ResourcePanel({
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      className="btn-outline btn-outline-sm p-2"
+                      className="btn-outline btn-outline-sm rounded-xl"
                       type="button"
                       onClick={() => void onExportItem(item)}
                       aria-label={`Export ${item.display_name}`}
                       title={`Export ${item.display_name}`}
                     >
-                      <DownloadIcon className="h-4 w-4" />
+                      <DownloadIcon className="h-3.5 w-3.5" />
                     </button>
                     <PermissionBadge permission={item.permission} />
                   </div>
@@ -1265,11 +1267,16 @@ function ProfilePage({ auth }) {
       </section>
 
       <section className="surface mt-6 rounded-3xl p-6">
-        <h2 className="text-xl font-semibold text-slate-900">Change Password</h2>
+        <h2 className="text-xl font-semibold text-slate-900">
+          Change Password
+        </h2>
         <p className="mt-1 text-sm text-slate-600">
           Change your password for both web access and DAV client connections.
         </p>
-        <form className="mt-4 grid gap-3 md:grid-cols-3" onSubmit={changePassword}>
+        <form
+          className="mt-4 grid gap-3 md:grid-cols-3"
+          onSubmit={changePassword}
+        >
           <Field label="Current password">
             <input
               className="input"
@@ -1314,7 +1321,9 @@ function ProfilePage({ auth }) {
           </Field>
 
           {passwordError ? (
-            <p className="md:col-span-3 text-sm text-red-700">{passwordError}</p>
+            <p className="md:col-span-3 text-sm text-red-700">
+              {passwordError}
+            </p>
           ) : null}
           {passwordSuccess ? (
             <p className="md:col-span-3 text-sm text-teal-700">
@@ -1361,7 +1370,9 @@ function AppShell({ auth, children }) {
               CalDAV + CardDAV Manager
             </h1>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2">
-              <p className="text-sm text-slate-600">Signed in as {auth.user.email}</p>
+              <p className="text-sm text-slate-600">
+                Signed in as {auth.user.email}
+              </p>
               {auth.user.role === "admin" ? (
                 <Link
                   className={
@@ -1531,8 +1542,7 @@ function InfoCard({ title, value, helper, copyable = false }) {
       : copyState === "failed"
         ? "Copy failed"
         : "";
-  const copyTooltipTone =
-    copyState === "failed" ? "bg-red-700" : "bg-teal-700";
+  const copyTooltipTone = copyState === "failed" ? "bg-red-700" : "bg-teal-700";
 
   return (
     <article className="surface rounded-2xl p-4">
@@ -1559,7 +1569,9 @@ function InfoCard({ title, value, helper, copyable = false }) {
           </span>
         </div>
       ) : (
-        <p className="mt-1 break-all text-base font-bold text-slate-900">{value}</p>
+        <p className="mt-1 break-all text-base font-bold text-slate-900">
+          {value}
+        </p>
       )}
       <p className="mt-2 text-xs text-slate-600">{helper}</p>
     </article>
