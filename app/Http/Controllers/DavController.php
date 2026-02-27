@@ -6,6 +6,7 @@ use App\Services\Dav\DavServerFactory;
 use App\Services\DavRequestContext;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Sabre\DAV\Exception as DavException;
 use Sabre\HTTP\Request as SabreRequest;
 use Sabre\HTTP\Response as SabreResponse;
 
@@ -25,9 +26,15 @@ class DavController extends Controller
             $headers[$name] = implode(', ', $values);
         }
 
+        $sabreUrl = $request->getPathInfo();
+        $queryString = $request->getQueryString();
+        if ($queryString !== null && $queryString !== '') {
+            $sabreUrl .= '?'.$queryString;
+        }
+
         $sabreRequest = new SabreRequest(
             method: $request->method(),
-            url: $request->getRequestUri(),
+            url: $sabreUrl,
             headers: $headers,
             body: $request->getContent(),
         );
@@ -35,7 +42,28 @@ class DavController extends Controller
         $sabreResponse = new SabreResponse;
 
         $server = $this->davServerFactory->make();
-        $server->invokeMethod($sabreRequest, $sabreResponse, false);
+        $sabreRequest->setBaseUrl($server->getBaseUri());
+        try {
+            $server->invokeMethod($sabreRequest, $sabreResponse, false);
+        } catch (DavException $exception) {
+            $sabreResponse->setStatus($exception->getHTTPCode());
+            $sabreResponse->setHeaders($exception->getHTTPHeaders($server));
+
+            if (
+                $sabreResponse->getStatus() === 401
+                && ! $sabreResponse->hasHeader('WWW-Authenticate')
+            ) {
+                $sabreResponse->setHeader('WWW-Authenticate', 'Basic realm="Davvy DAV", charset="UTF-8"');
+            }
+
+            if (! $sabreResponse->hasHeader('Content-Type')) {
+                $sabreResponse->setHeader('Content-Type', 'application/xml; charset=utf-8');
+            }
+
+            if ($sabreResponse->getBodyAsString() === '') {
+                $sabreResponse->setBody($this->serializeDavException($exception));
+            }
+        }
 
         $response = response(
             content: $sabreResponse->getBodyAsString(),
@@ -57,5 +85,17 @@ class DavController extends Controller
         $this->davContext->clear();
 
         return $response;
+    }
+
+    private function serializeDavException(DavException $exception): string
+    {
+        $message = htmlspecialchars($exception->getMessage(), ENT_NOQUOTES, 'UTF-8');
+        $class = htmlspecialchars($exception::class, ENT_NOQUOTES, 'UTF-8');
+
+        return sprintf(
+            '<?xml version="1.0" encoding="utf-8"?><d:error xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns"><s:exception>%s</s:exception><s:message>%s</s:message></d:error>',
+            $class,
+            $message
+        );
     }
 }

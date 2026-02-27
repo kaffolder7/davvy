@@ -14,6 +14,32 @@ Route::post('/api/auth/register', [AuthController::class, 'register'])->middlewa
 Route::get('/api/public/config', [AuthController::class, 'publicConfig']);
 Route::redirect('/.well-known/caldav', '/dav', 301);
 Route::redirect('/.well-known/carddav', '/dav', 301);
+Route::match([
+    'OPTIONS',
+    'PROPFIND',
+    'PROPPATCH',
+    'MKCOL',
+    'COPY',
+    'MOVE',
+    'LOCK',
+    'UNLOCK',
+    'REPORT',
+    'MKCALENDAR',
+    'ACL',
+], '/.well-known/caldav', fn () => redirect('/dav', 308));
+Route::match([
+    'OPTIONS',
+    'PROPFIND',
+    'PROPPATCH',
+    'MKCOL',
+    'COPY',
+    'MOVE',
+    'LOCK',
+    'UNLOCK',
+    'REPORT',
+    'MKCALENDAR',
+    'ACL',
+], '/.well-known/carddav', fn () => redirect('/dav', 308));
 
 Route::middleware('auth')->group(function (): void {
     Route::get('/api/auth/me', [AuthController::class, 'me']);
@@ -48,6 +74,24 @@ Route::middleware('auth')->group(function (): void {
     });
 });
 
-Route::any('/dav/{path?}', [DavController::class, 'handle'])->where('path', '.*');
+Route::match([
+    'GET',
+    'HEAD',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS',
+    'PROPFIND',
+    'PROPPATCH',
+    'MKCOL',
+    'COPY',
+    'MOVE',
+    'LOCK',
+    'UNLOCK',
+    'REPORT',
+    'MKCALENDAR',
+    'ACL',
+], '/dav/{path?}', [DavController::class, 'handle'])->where('path', '.*');
 
 Route::view('/{any?}', 'app')->where('any', '^(?!api|dav).*$');

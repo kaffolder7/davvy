@@ -27,6 +27,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/*',
             'dav',
             'dav/*',
+            '.well-known/caldav',
+            '.well-known/carddav',
         ]);
 
         $middleware->alias([
