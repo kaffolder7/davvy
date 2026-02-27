@@ -39,6 +39,37 @@ function parseDispositionFilename(header) {
   return standardMatch?.[1] ?? null;
 }
 
+async function copyTextToClipboard(value) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "absolute";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  document.body.removeChild(textarea);
+
+  if (!copied) {
+    throw new Error("copy-failed");
+  }
+}
+
+function buildDavCollectionUrl(resourceKind, principalId, resourceUri) {
+  const collectionRoot = resourceKind === "calendar" ? "calendars" : "addressbooks";
+  const normalizedUri = String(resourceUri ?? "")
+    .trim()
+    .replace(/^\/+/, "")
+    .replace(/\/+$/, "");
+
+  return `${window.location.origin}/dav/${collectionRoot}/${principalId}/${normalizedUri}`;
+}
+
 async function downloadExport(url, fallbackName) {
   const response = await fetch(url, {
     credentials: "include",
@@ -534,6 +565,8 @@ function DashboardPage({ auth }) {
             title="Your Calendars"
             createLabel="Create Calendar"
             exportAllLabel="Export All"
+            resourceKind="calendar"
+            principalId={auth.user.id}
             items={data.owned.calendars}
             sharedItems={data.shared.calendars}
             onCreate={createCalendar}
@@ -561,6 +594,8 @@ function DashboardPage({ auth }) {
             title="Your Address Books"
             createLabel="Create Address Book"
             exportAllLabel="Export All"
+            resourceKind="address-book"
+            principalId={auth.user.id}
             items={data.owned.address_books}
             sharedItems={data.shared.address_books}
             onCreate={createAddressBook}
@@ -700,6 +735,8 @@ function ResourcePanel({
   title,
   createLabel,
   exportAllLabel,
+  resourceKind,
+  principalId,
   items,
   sharedItems,
   onCreate,
@@ -763,7 +800,11 @@ function ResourcePanel({
                   <p className="font-medium text-slate-900">
                     {item.display_name}
                   </p>
-                  <p className="text-xs text-slate-500">/{item.uri}</p>
+                  <CopyableResourceUri
+                    resourceKind={resourceKind}
+                    principalId={principalId}
+                    resourceUri={item.uri}
+                  />
                 </div>
                 <div className="flex items-center gap-4">
                   <button
@@ -817,6 +858,11 @@ function ResourcePanel({
                     <p className="text-xs text-slate-600">
                       Owner: {item.owner_name} ({item.owner_email})
                     </p>
+                    <CopyableResourceUri
+                      resourceKind={resourceKind}
+                      principalId={principalId}
+                      resourceUri={item.uri}
+                    />
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -1500,6 +1546,62 @@ function AuthShell({ title, subtitle, children }) {
   );
 }
 
+function CopyableResourceUri({ resourceKind, principalId, resourceUri }) {
+  const [copyState, setCopyState] = useState("idle");
+  const normalizedUri = String(resourceUri ?? "")
+    .trim()
+    .replace(/^\/+/, "")
+    .replace(/\/+$/, "");
+  const fullUrl = buildDavCollectionUrl(resourceKind, principalId, normalizedUri);
+
+  useEffect(() => {
+    if (copyState === "idle") {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => setCopyState("idle"), 1800);
+    return () => window.clearTimeout(timer);
+  }, [copyState]);
+
+  const copyUrl = async () => {
+    try {
+      await copyTextToClipboard(fullUrl);
+      setCopyState("copied");
+    } catch {
+      setCopyState("failed");
+    }
+  };
+
+  const copyLabel =
+    copyState === "copied"
+      ? "Copied URL"
+      : copyState === "failed"
+        ? "Copy failed"
+        : "";
+  const copyTone = copyState === "failed" ? "bg-red-700" : "bg-teal-700";
+
+  return (
+    <div className="relative mt-1">
+      <button
+        type="button"
+        onClick={() => void copyUrl()}
+        className="break-all rounded-md bg-slate-100 px-1.5 py-0.5 text-left text-xs font-medium text-slate-600 transition hover:bg-slate-200 hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+        title={fullUrl}
+        aria-label={`Copy ${normalizedUri || "resource"} URL`}
+      >
+        /{normalizedUri}
+      </button>
+      <span
+        className={`pointer-events-none absolute left-0 top-full mt-1 rounded-md px-2 py-0.5 text-[10px] font-semibold text-white transition-opacity duration-150 ${
+          copyState === "idle" ? "opacity-0" : "opacity-100"
+        } ${copyTone}`}
+      >
+        {copyLabel}
+      </span>
+    </div>
+  );
+}
+
 function InfoCard({ title, value, helper, copyable = false }) {
   const [copyState, setCopyState] = useState("idle");
 
@@ -1518,23 +1620,7 @@ function InfoCard({ title, value, helper, copyable = false }) {
     }
 
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(value);
-      } else {
-        const textarea = document.createElement("textarea");
-        textarea.value = value;
-        textarea.setAttribute("readonly", "");
-        textarea.style.position = "absolute";
-        textarea.style.left = "-9999px";
-        document.body.appendChild(textarea);
-        textarea.select();
-        const copied = document.execCommand("copy");
-        document.body.removeChild(textarea);
-        if (!copied) {
-          throw new Error("copy-failed");
-        }
-      }
-
+      await copyTextToClipboard(value);
       setCopyState("copied");
     } catch {
       setCopyState("failed");
