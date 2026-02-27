@@ -425,6 +425,7 @@ function RegisterPage({ auth, theme }) {
   return (
     <AuthShell
       theme={theme}
+      themeControlPlacement="window-bottom-right"
       title="Create Account"
       subtitle="Your default calendar and address book are generated automatically."
     >
