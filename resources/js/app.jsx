@@ -1120,10 +1120,15 @@ function ResourcePanel({
                       </button>
                     </form>
                   ) : (
-                    <div className="flex items-center gap-1">
+                    <div className="flex min-w-0 items-center gap-1">
                       <p className="truncate font-medium text-app-strong">
                         {item.display_name}
                       </p>
+                      {item.is_default ? (
+                        <span className="shrink-0 text-xs font-semibold text-app-faint">
+                          (default)
+                        </span>
+                      ) : null}
                       <button
                         className="inline-flex h-5 w-5 items-center justify-center rounded text-app-dim transition hover:text-app-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
                         type="button"
