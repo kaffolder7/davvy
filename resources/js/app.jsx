@@ -885,7 +885,7 @@ function DashboardPage({ auth, theme }) {
 
           {data.apple_compat.target_address_book_id ? (
             <p className="mt-2 text-xs text-app-faint">
-              Mirror target: {data.apple_compat.target_display_name} (
+              Mirror target: {data.apple_compat.target_display_name} (/
               {data.apple_compat.target_address_book_uri})
             </p>
           ) : (
