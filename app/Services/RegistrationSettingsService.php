@@ -58,4 +58,19 @@ class RegistrationSettingsService
             ['value' => $enabled ? 'true' : 'false', 'updated_by' => $actor?->id]
         );
     }
+
+    public function contactChangeRequestRetentionDays(): int
+    {
+        return AppSetting::contactChangeRequestRetentionDays();
+    }
+
+    public function setContactChangeRequestRetentionDays(int $days, ?User $actor = null): void
+    {
+        $normalized = max(1, min(3650, $days));
+
+        AppSetting::query()->updateOrCreate(
+            ['key' => 'contact_change_request_retention_days'],
+            ['value' => (string) $normalized, 'updated_by' => $actor?->id]
+        );
+    }
 }

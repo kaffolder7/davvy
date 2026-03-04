@@ -12,5 +12,6 @@ return [
     ],
     'contacts' => [
         'management_enabled' => (bool) env('ENABLE_CONTACT_MANAGEMENT', false),
+        'change_request_retention_days' => (int) env('CONTACT_CHANGE_REQUEST_RETENTION_DAYS', 90),
     ],
 ];

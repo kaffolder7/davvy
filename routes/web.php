@@ -7,6 +7,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ContactChangeRequestController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DavController;
 use App\Http\Controllers\ExportController;
@@ -78,6 +79,11 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/api/shares', [ShareController::class, 'upsert']);
     Route::delete('/api/shares/{share}', [ShareController::class, 'destroy']);
 
+    Route::get('/api/contact-change-requests', [ContactChangeRequestController::class, 'index']);
+    Route::post('/api/contact-change-requests/bulk', [ContactChangeRequestController::class, 'bulk']);
+    Route::patch('/api/contact-change-requests/{contactChangeRequest}/approve', [ContactChangeRequestController::class, 'approve']);
+    Route::patch('/api/contact-change-requests/{contactChangeRequest}/deny', [ContactChangeRequestController::class, 'deny']);
+
     Route::middleware('admin')->group(function (): void {
         Route::get('/api/admin/users', [AdminController::class, 'users']);
         Route::post('/api/admin/users', [AdminController::class, 'createUser']);
@@ -86,6 +92,8 @@ Route::middleware('auth')->group(function (): void {
         Route::patch('/api/admin/settings/owner-share-management', [AdminController::class, 'setOwnerShareManagementSetting']);
         Route::patch('/api/admin/settings/dav-compatibility-mode', [AdminController::class, 'setDavCompatibilityModeSetting']);
         Route::patch('/api/admin/settings/contact-management', [AdminController::class, 'setContactManagementSetting']);
+        Route::get('/api/admin/settings/contact-change-retention', [AdminController::class, 'contactChangeRequestRetentionSetting']);
+        Route::patch('/api/admin/settings/contact-change-retention', [AdminController::class, 'setContactChangeRequestRetentionSetting']);
         Route::post('/api/admin/contact-milestones/purge-generated-calendars', [AdminController::class, 'purgeGeneratedMilestoneCalendars']);
 
         Route::get('/api/admin/shares', [ShareController::class, 'index']);
