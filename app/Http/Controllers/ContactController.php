@@ -6,6 +6,7 @@ use App\Models\Contact;
 use App\Services\Contacts\ContactService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class ContactController extends Controller
 {
@@ -156,6 +157,16 @@ class ContactController extends Controller
             'related_names' => $this->normalizeValueRows($data['related_names'] ?? []),
             'instant_messages' => $this->normalizeValueRows($data['instant_messages'] ?? []),
         ];
+
+        if (
+            $payload['first_name'] === null
+            && $payload['last_name'] === null
+            && $payload['company'] === null
+        ) {
+            throw ValidationException::withMessages([
+                'first_name' => ['Enter at least a first name, last name, or company.'],
+            ]);
+        }
 
         $addressBookIds = collect($data['address_book_ids'] ?? [])
             ->map(fn (mixed $id): int => (int) $id)
