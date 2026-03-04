@@ -3015,6 +3015,38 @@ function ResourcePanel({
   );
 }
 
+function AdminFeatureToggle({ label, enabled, onClick }) {
+  return (
+    <button
+      className={`btn-outline inline-flex items-center gap-1.5 rounded-lg !px-2.5 !py-1.5 !text-sm ${
+        enabled
+          ? "border-app-accent-edge bg-app-surface text-app-strong ring-1 ring-teal-500/25 hover:border-app-accent-edge"
+          : "border-app-edge bg-app-surface text-app-base hover:border-app-edge"
+      }`}
+      type="button"
+      aria-pressed={enabled}
+      onClick={onClick}
+    >
+      <span
+        aria-hidden="true"
+        className={`h-2.5 w-2.5 rounded-full ${
+          enabled ? "bg-teal-500 shadow-[0_0_0_2px_rgba(20,184,166,0.2)]" : "bg-zinc-400"
+        }`}
+      />
+      <span className="whitespace-nowrap text-sm">{label}</span>
+      <span
+        className={`rounded-full border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+          enabled
+            ? "border-app-accent-edge text-app-accent"
+            : "border-app-edge text-app-faint"
+        }`}
+      >
+        {enabled ? "On" : "Off"}
+      </span>
+    </button>
+  );
+}
+
 function AdminPage({ auth, theme }) {
   const [state, setState] = useState({
     loading: true,
@@ -3224,29 +3256,30 @@ function AdminPage({ auth, theme }) {
   return (
     <AppShell auth={auth} theme={theme}>
       <div className="surface fade-up rounded-3xl p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3">
           <h2 className="text-2xl font-bold">Admin Control Center</h2>
-          <div className="flex flex-wrap items-center gap-2">
-            <button className="btn-outline" onClick={toggleRegistration}>
-              Public registration: {state.registrationEnabled ? "ON" : "OFF"}
-            </button>
-            <button
-              className="btn-outline"
-              onClick={toggleOwnerShareManagement}
-            >
-              Owner sharing: {state.ownerShareManagementEnabled ? "ON" : "OFF"}
-            </button>
-            <button
-              className="btn-outline"
-              onClick={toggleDavCompatibilityMode}
-            >
-              DAV compatibility mode:{" "}
-              {state.davCompatibilityModeEnabled ? "ON" : "OFF"}
-            </button>
-            <button className="btn-outline" onClick={toggleContactManagement}>
-              Contact management: {state.contactManagementEnabled ? "ON" : "OFF"}
-            </button>
-          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          <AdminFeatureToggle
+            label="Public registration"
+            enabled={state.registrationEnabled}
+            onClick={toggleRegistration}
+          />
+          <AdminFeatureToggle
+            label="Owner sharing"
+            enabled={state.ownerShareManagementEnabled}
+            onClick={toggleOwnerShareManagement}
+          />
+          <AdminFeatureToggle
+            label="DAV compatibility mode"
+            enabled={state.davCompatibilityModeEnabled}
+            onClick={toggleDavCompatibilityMode}
+          />
+          <AdminFeatureToggle
+            label="Contact management"
+            enabled={state.contactManagementEnabled}
+            onClick={toggleContactManagement}
+          />
         </div>
         {state.error ? (
           <p className="mt-3 text-sm text-app-danger">{state.error}</p>
