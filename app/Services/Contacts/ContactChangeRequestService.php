@@ -186,6 +186,23 @@ class ContactChangeRequestService
         return $query->get();
     }
 
+    public function pendingReviewCount(User $reviewer): int
+    {
+        $this->purgeExpiredTerminalRequests();
+
+        $query = ContactChangeRequest::query()
+            ->whereIn('status', [
+                ContactChangeStatus::Pending->value,
+                ContactChangeStatus::ManualMergeNeeded->value,
+            ]);
+
+        if (! $reviewer->isAdmin()) {
+            $query->where('approval_owner_id', $reviewer->id);
+        }
+
+        return (int) $query->count();
+    }
+
     /**
      * @param  array<string, mixed>|null  $resolvedPayload
      * @param  array<int, int>|null  $resolvedAddressBookIds

@@ -80,6 +80,7 @@ Route::middleware('auth')->group(function (): void {
     Route::delete('/api/shares/{share}', [ShareController::class, 'destroy']);
 
     Route::get('/api/contact-change-requests', [ContactChangeRequestController::class, 'index']);
+    Route::get('/api/contact-change-requests/summary', [ContactChangeRequestController::class, 'summary']);
     Route::post('/api/contact-change-requests/bulk', [ContactChangeRequestController::class, 'bulk']);
     Route::patch('/api/contact-change-requests/{contactChangeRequest}/approve', [ContactChangeRequestController::class, 'approve']);
     Route::patch('/api/contact-change-requests/{contactChangeRequest}/deny', [ContactChangeRequestController::class, 'deny']);

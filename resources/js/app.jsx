@@ -3864,6 +3864,7 @@ function ContactChangeQueuePage({ auth, theme }) {
       await api.patch(`/api/contact-change-requests/${row.id}/approve`, payload);
       setNotice("Request approved.");
       await loadQueue({ withLoading: false });
+      window.dispatchEvent(new Event("review-queue-updated"));
     } catch (err) {
       setError(extractError(err, "Unable to approve request."));
     } finally {
@@ -3879,6 +3880,7 @@ function ContactChangeQueuePage({ auth, theme }) {
       await api.patch(`/api/contact-change-requests/${row.id}/deny`);
       setNotice("Request denied.");
       await loadQueue({ withLoading: false });
+      window.dispatchEvent(new Event("review-queue-updated"));
     } catch (err) {
       setError(extractError(err, "Unable to deny request."));
     } finally {
@@ -3913,6 +3915,7 @@ function ContactChangeQueuePage({ auth, theme }) {
       const skipped = Number(response.data?.skipped ?? 0);
       setNotice(`${processed} request group(s) processed. ${skipped} skipped.`);
       await loadQueue({ withLoading: false });
+      window.dispatchEvent(new Event("review-queue-updated"));
     } catch (err) {
       setError(extractError(err, "Unable to process bulk action."));
     } finally {
@@ -4884,6 +4887,7 @@ function AppShell({ auth, theme, children }) {
   const location = useLocation();
   const onAdminPage = location.pathname === "/admin";
   const onReviewQueuePage = location.pathname === "/review-queue";
+  const [reviewQueueCount, setReviewQueueCount] = useState(0);
 
   const logout = async () => {
     await api.post("/api/auth/logout");
@@ -4897,6 +4901,52 @@ function AppShell({ auth, theme, children }) {
     });
     navigate("/login");
   };
+
+  useEffect(() => {
+    if (!auth.user) {
+      setReviewQueueCount(0);
+      return undefined;
+    }
+
+    let active = true;
+
+    const refreshReviewQueueCount = async () => {
+      try {
+        const response = await api.get("/api/contact-change-requests/summary");
+        if (!active) {
+          return;
+        }
+
+        setReviewQueueCount(Number(response.data?.needs_review_count || 0));
+      } catch {
+        if (!active) {
+          return;
+        }
+
+        setReviewQueueCount(0);
+      }
+    };
+
+    void refreshReviewQueueCount();
+
+    const onQueueUpdated = () => {
+      void refreshReviewQueueCount();
+    };
+
+    window.addEventListener("review-queue-updated", onQueueUpdated);
+    const timer = window.setInterval(() => {
+      void refreshReviewQueueCount();
+    }, 30000);
+
+    return () => {
+      active = false;
+      window.removeEventListener("review-queue-updated", onQueueUpdated);
+      window.clearInterval(timer);
+    };
+  }, [auth.user, location.pathname]);
+
+  const reviewQueueCountLabel =
+    reviewQueueCount > 99 ? "99+" : String(reviewQueueCount);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -4980,10 +5030,15 @@ function AppShell({ auth, theme, children }) {
                 </Link>
               ) : null}
               <Link
-                className={onReviewQueuePage ? "tab tab-active" : "tab"}
+                className={`${onReviewQueuePage ? "tab tab-active" : "tab"} inline-flex items-center gap-1.5`}
                 to="/review-queue"
               >
-                Review Queue
+                <span>Review Queue</span>
+                {reviewQueueCount > 0 ? (
+                  <span className="rounded-full border border-app-accent-edge bg-app-surface px-2 py-0.5 text-[10px] font-semibold leading-none text-app-accent">
+                    {reviewQueueCountLabel}
+                  </span>
+                ) : null}
               </Link>
               <Link
                 className={`${location.pathname === "/profile" ? "tab tab-active" : "tab"} inline-flex items-center gap-1.5`}
