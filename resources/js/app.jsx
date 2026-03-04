@@ -1100,6 +1100,8 @@ const OPTIONAL_CONTACT_FIELDS = [
   { id: "dates", label: "Date" },
 ];
 
+const CONTACTS_PAGE_SIZE = 12;
+
 function hasTextValue(value) {
   return typeof value === "string" ? value.trim() !== "" : false;
 }
@@ -1403,6 +1405,10 @@ function ContactsPage({ auth, theme }) {
   const [fieldSearchTerm, setFieldSearchTerm] = useState("");
   const [fieldPickerOpen, setFieldPickerOpen] = useState(false);
   const [pendingHideFieldId, setPendingHideFieldId] = useState(null);
+  const [contactSearchTerm, setContactSearchTerm] = useState("");
+  const [contactAddressBookFilter, setContactAddressBookFilter] =
+    useState("all");
+  const [contactsPage, setContactsPage] = useState(1);
   const [openSections, setOpenSections] = useState(
     createContactSectionOpenState(),
   );
@@ -1430,6 +1436,134 @@ function ContactsPage({ auth, theme }) {
       field.label.toLowerCase().includes(query),
     );
   }, [fieldSearchTerm, hiddenOptionalFields]);
+
+  const filteredContacts = useMemo(() => {
+    const query = contactSearchTerm.trim().toLowerCase();
+    const activeAddressBookId =
+      contactAddressBookFilter === "all"
+        ? null
+        : Number(contactAddressBookFilter);
+
+    const searchValueIncludesQuery = (value) =>
+      String(value ?? "")
+        .toLowerCase()
+        .includes(query);
+    const rowValueIncludesQuery = (rows) =>
+      Array.isArray(rows)
+        ? rows.some(
+            (row) =>
+              searchValueIncludesQuery(row?.value) ||
+              searchValueIncludesQuery(row?.custom_label),
+          )
+        : false;
+
+    return contacts.filter((contact) => {
+      if (activeAddressBookId !== null) {
+        const assignedBookIds = Array.isArray(contact.address_book_ids)
+          ? contact.address_book_ids
+          : [];
+
+        if (!assignedBookIds.some((id) => Number(id) === activeAddressBookId)) {
+          return false;
+        }
+      }
+
+      if (!query) {
+        return true;
+      }
+
+      if (
+        [
+          contact.display_name,
+          contact.first_name,
+          contact.middle_name,
+          contact.last_name,
+          contact.nickname,
+          contact.company,
+          contact.job_title,
+          contact.department,
+          contact.profile,
+        ].some(searchValueIncludesQuery)
+      ) {
+        return true;
+      }
+
+      if (
+        Array.isArray(contact.address_books) &&
+        contact.address_books.some(
+          (book) =>
+            searchValueIncludesQuery(book?.display_name) ||
+            searchValueIncludesQuery(book?.uri),
+        )
+      ) {
+        return true;
+      }
+
+      if (
+        rowValueIncludesQuery(contact.phones) ||
+        rowValueIncludesQuery(contact.emails) ||
+        rowValueIncludesQuery(contact.urls) ||
+        rowValueIncludesQuery(contact.related_names) ||
+        rowValueIncludesQuery(contact.instant_messages)
+      ) {
+        return true;
+      }
+
+      return Array.isArray(contact.addresses)
+        ? contact.addresses.some((address) =>
+            [
+              address?.street,
+              address?.city,
+              address?.state,
+              address?.postal_code,
+              address?.country,
+              address?.custom_label,
+            ].some(searchValueIncludesQuery),
+          )
+        : false;
+    });
+  }, [contactAddressBookFilter, contactSearchTerm, contacts]);
+
+  const totalContactPages = Math.max(
+    1,
+    Math.ceil(filteredContacts.length / CONTACTS_PAGE_SIZE),
+  );
+  const currentContactPage = Math.min(contactsPage, totalContactPages);
+  const firstContactIndex = (currentContactPage - 1) * CONTACTS_PAGE_SIZE;
+  const paginatedContacts = filteredContacts.slice(
+    firstContactIndex,
+    firstContactIndex + CONTACTS_PAGE_SIZE,
+  );
+  const lastContactIndex =
+    filteredContacts.length === 0
+      ? 0
+      : firstContactIndex + paginatedContacts.length;
+  const hasContactFilters =
+    hasTextValue(contactSearchTerm) || contactAddressBookFilter !== "all";
+
+  useEffect(() => {
+    setContactsPage(1);
+  }, [contactAddressBookFilter, contactSearchTerm]);
+
+  useEffect(() => {
+    if (contactAddressBookFilter === "all") {
+      return;
+    }
+
+    const filterExists = addressBooks.some(
+      (book) => String(book.id) === contactAddressBookFilter,
+    );
+
+    if (!filterExists) {
+      setContactAddressBookFilter("all");
+    }
+  }, [addressBooks, contactAddressBookFilter]);
+
+  useEffect(() => {
+    setContactsPage((prevPage) =>
+      prevPage > totalContactPages ? totalContactPages : prevPage,
+    );
+  }, [totalContactPages]);
 
   useEffect(() => {
     if (hiddenOptionalFields.length === 0) {
@@ -1747,10 +1881,55 @@ function ContactsPage({ auth, theme }) {
               </button>
             </div>
             <div className="mt-3 space-y-2">
+              <input
+                className="input"
+                type="search"
+                placeholder="Search contacts..."
+                value={contactSearchTerm}
+                onChange={(event) => setContactSearchTerm(event.target.value)}
+              />
+              <select
+                className="input"
+                value={contactAddressBookFilter}
+                onChange={(event) =>
+                  setContactAddressBookFilter(event.target.value)
+                }
+              >
+                <option value="all">All address books</option>
+                {addressBooks.map((book) => (
+                  <option key={book.id} value={String(book.id)}>
+                    {book.display_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-2 text-xs text-app-faint">
+              <span>
+                {filteredContacts.length} match
+                {filteredContacts.length === 1 ? "" : "es"}
+              </span>
+              {hasContactFilters ? (
+                <button
+                  className="text-xs font-semibold text-app-accent hover:text-app-accent-strong"
+                  type="button"
+                  onClick={() => {
+                    setContactSearchTerm("");
+                    setContactAddressBookFilter("all");
+                  }}
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
+            <div className="mt-3 space-y-2">
               {contacts.length === 0 ? (
                 <p className="text-sm text-app-faint">No contacts yet.</p>
+              ) : filteredContacts.length === 0 ? (
+                <p className="text-sm text-app-faint">
+                  No contacts match this filter.
+                </p>
               ) : (
-                contacts.map((contact) => (
+                paginatedContacts.map((contact) => (
                   <button
                     key={contact.id}
                     type="button"
@@ -1773,6 +1952,43 @@ function ContactsPage({ auth, theme }) {
                 ))
               )}
             </div>
+            {filteredContacts.length > CONTACTS_PAGE_SIZE ? (
+              <div className="mt-3 rounded-xl border border-app-edge px-2 py-2">
+                <div className="flex items-center justify-between gap-2 text-[11px] text-app-faint">
+                  <span>
+                    {firstContactIndex + 1}-{lastContactIndex} of{" "}
+                    {filteredContacts.length}
+                  </span>
+                  <span>
+                    Page {currentContactPage} / {totalContactPages}
+                  </span>
+                </div>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <button
+                    className="btn-outline btn-outline-sm w-full"
+                    type="button"
+                    onClick={() =>
+                      setContactsPage((prevPage) => Math.max(1, prevPage - 1))
+                    }
+                    disabled={currentContactPage === 1}
+                  >
+                    Prev
+                  </button>
+                  <button
+                    className="btn-outline btn-outline-sm w-full"
+                    type="button"
+                    onClick={() =>
+                      setContactsPage((prevPage) =>
+                        Math.min(totalContactPages, prevPage + 1),
+                      )
+                    }
+                    disabled={currentContactPage >= totalContactPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </aside>
 
           <section className="surface rounded-3xl p-6">
