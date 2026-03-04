@@ -3259,7 +3259,7 @@ function AddressBookMilestoneControls({ item, onSave }) {
       (nameDrafts[type] ?? "").trim() !== currentCustom.trim() && !isSaving;
 
     return (
-      <div className="py-0.5" key={type}>
+      <div className="py-0.5 pl-2" key={type}>
         <div className="flex items-center gap-2">
           <label className="inline-flex shrink-0 items-center gap-2 text-xs font-semibold text-app-base">
             <input
