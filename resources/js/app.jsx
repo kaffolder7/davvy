@@ -661,6 +661,8 @@ function DashboardPage({ auth, theme }) {
     shareForm.resource_type === "calendar"
       ? data.owned.calendars.filter((item) => item.is_sharable)
       : data.owned.address_books.filter((item) => item.is_sharable);
+  const canSelectAppleCompatSources =
+    !!data.apple_compat.target_address_book_id && appleCompatForm.enabled;
 
   return (
     <AppShell auth={auth} theme={theme}>
@@ -927,7 +929,12 @@ function DashboardPage({ auth, theme }) {
                   return (
                     <label
                       key={option.id}
-                      className="flex items-start gap-2 rounded-xl border border-app-edge bg-app-surface px-3 py-2 text-sm"
+                      className={`flex items-start gap-2 rounded-xl border border-app-edge bg-app-surface px-3 py-2 text-sm ${
+                        canSelectAppleCompatSources
+                          ? ""
+                          : "cursor-not-allowed opacity-60"
+                      }`}
+                      aria-disabled={!canSelectAppleCompatSources}
                     >
                       <input
                         type="checkbox"
@@ -951,7 +958,7 @@ function DashboardPage({ auth, theme }) {
                             ),
                           });
                         }}
-                        disabled={!data.apple_compat.target_address_book_id}
+                        disabled={!canSelectAppleCompatSources}
                       />
                       <span className="min-w-0">
                         <span className="block font-medium text-app-strong">
