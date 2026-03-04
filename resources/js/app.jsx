@@ -3225,58 +3225,71 @@ function AddressBookMilestoneControls({ item, onSave }) {
             />
             {label}
           </label>
-          <button
-            type="button"
-            className="min-w-0 flex-1 truncate text-left text-xs text-app-faint transition hover:text-app-base"
-            title="Click to rename"
-            onClick={() => setEditingKey(type)}
-            disabled={isSaving || saveInProgress}
-          >
-            {currentName}
-          </button>
+          {isEditing ? (
+            <div className="min-w-0 flex flex-1 items-center gap-1.5">
+              <input
+                className="input h-8 min-w-[9rem] flex-1 px-2 py-1 text-sm"
+                value={nameDrafts[type] ?? ""}
+                onChange={(event) =>
+                  setNameDrafts((prev) => ({
+                    ...prev,
+                    [type]: event.target.value,
+                  }))
+                }
+                placeholder={settings.default_name ?? fallbackName}
+                disabled={isSaving}
+              />
+              <button
+                className="btn-outline btn-outline-sm inline-flex h-8 w-8 items-center justify-center px-0 text-app-accent"
+                type="button"
+                aria-label={`Save ${label} calendar name`}
+                title={`Save ${label} calendar name`}
+                onClick={() => saveName(type)}
+                disabled={!canSaveName}
+              >
+                <CheckIcon className="h-3.5 w-3.5" />
+              </button>
+              <button
+                className="btn-outline btn-outline-sm inline-flex h-8 w-8 items-center justify-center px-0 text-app-faint"
+                type="button"
+                aria-label={`Cancel editing ${label} calendar name`}
+                title={`Cancel editing ${label} calendar name`}
+                onClick={() => {
+                  setEditingKey(null);
+                  setNameDrafts((prev) => ({
+                    ...prev,
+                    [type]: currentCustom,
+                  }));
+                }}
+                disabled={isSaving}
+              >
+                <TimesIcon className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="min-w-0 flex flex-1 items-center gap-1.5">
+              <span
+                className="min-w-0 flex-1 truncate text-xs text-app-faint"
+                title={currentName}
+              >
+                {currentName}
+              </span>
+              <button
+                type="button"
+                className="btn-outline btn-outline-sm inline-flex h-7 w-7 items-center justify-center px-0"
+                aria-label={`Rename ${label} calendar`}
+                title={`Rename ${label} calendar`}
+                onClick={() => setEditingKey(type)}
+                disabled={isSaving || saveInProgress}
+              >
+                <PencilIcon className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
           {isSaving ? (
             <span className="shrink-0 text-[11px] text-app-faint">Saving...</span>
           ) : null}
         </div>
-
-        {isEditing ? (
-          <div className="mt-1.5 flex flex-wrap items-center gap-1.5 pl-6">
-            <input
-              className="input h-8 min-w-[11rem] flex-1 px-2 py-1 text-sm"
-              value={nameDrafts[type] ?? ""}
-              onChange={(event) =>
-                setNameDrafts((prev) => ({
-                  ...prev,
-                  [type]: event.target.value,
-                }))
-              }
-              placeholder={settings.default_name ?? fallbackName}
-              disabled={isSaving}
-            />
-            <button
-              className="btn-outline btn-outline-sm"
-              type="button"
-              onClick={() => saveName(type)}
-              disabled={!canSaveName}
-            >
-              Save
-            </button>
-            <button
-              className="btn-outline btn-outline-sm"
-              type="button"
-              onClick={() => {
-                setEditingKey(null);
-                setNameDrafts((prev) => ({
-                  ...prev,
-                  [type]: currentCustom,
-                }));
-              }}
-              disabled={isSaving}
-            >
-              Cancel
-            </button>
-          </div>
-        ) : null}
       </div>
     );
   };
@@ -4373,6 +4386,41 @@ function PencilIcon({ className }) {
     >
       <path d="M12 20h9" />
       <path d="m16.5 3.5 4 4L8 20H4v-4L16.5 3.5Z" />
+    </svg>
+  );
+}
+
+function CheckIcon({ className }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m5 13 4 4L19 7" />
+    </svg>
+  );
+}
+
+function TimesIcon({ className }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m18 6-12 12" />
+      <path d="m6 6 12 12" />
     </svg>
   );
 }
