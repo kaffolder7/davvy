@@ -1323,6 +1323,8 @@ function ContactsPage({ auth, theme }) {
   const [form, setForm] = useState(createEmptyContactForm());
   const [visibleOptionalFields, setVisibleOptionalFields] = useState([]);
   const [fieldToAdd, setFieldToAdd] = useState(OPTIONAL_CONTACT_FIELDS[0]?.id ?? "");
+  const [fieldSearchTerm, setFieldSearchTerm] = useState("");
+  const [fieldPickerOpen, setFieldPickerOpen] = useState(false);
   const [pendingHideFieldId, setPendingHideFieldId] = useState(null);
 
   const defaultAddressBookIds = useMemo(
@@ -1338,16 +1340,34 @@ function ContactsPage({ auth, theme }) {
     [visibleOptionalFields],
   );
 
+  const filteredHiddenOptionalFields = useMemo(() => {
+    const query = fieldSearchTerm.trim().toLowerCase();
+    if (!query) {
+      return hiddenOptionalFields;
+    }
+
+    return hiddenOptionalFields.filter((field) =>
+      field.label.toLowerCase().includes(query),
+    );
+  }, [fieldSearchTerm, hiddenOptionalFields]);
+
   useEffect(() => {
     if (hiddenOptionalFields.length === 0) {
+      setFieldToAdd("");
+      setFieldSearchTerm("");
+      setFieldPickerOpen(false);
+      return;
+    }
+
+    if (filteredHiddenOptionalFields.length === 0) {
       setFieldToAdd("");
       return;
     }
 
-    if (!hiddenOptionalFields.some((field) => field.id === fieldToAdd)) {
-      setFieldToAdd(hiddenOptionalFields[0].id);
+    if (!filteredHiddenOptionalFields.some((field) => field.id === fieldToAdd)) {
+      setFieldToAdd(filteredHiddenOptionalFields[0].id);
     }
-  }, [fieldToAdd, hiddenOptionalFields]);
+  }, [fieldToAdd, filteredHiddenOptionalFields, hiddenOptionalFields]);
 
   const applyFormState = (nextForm) => {
     setForm(nextForm);
@@ -1535,6 +1555,16 @@ function ContactsPage({ auth, theme }) {
 
   const cancelHideOptionalField = () => {
     setPendingHideFieldId(null);
+  };
+
+  const addSelectedOptionalField = () => {
+    if (!fieldToAdd) {
+      return;
+    }
+
+    showOptionalField(fieldToAdd);
+    setFieldSearchTerm("");
+    setFieldPickerOpen(false);
   };
 
   const isOptionalFieldVisible = (fieldId) =>
@@ -1975,26 +2005,84 @@ function ContactsPage({ auth, theme }) {
                   </span>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <select
-                    className="input w-full max-w-xs"
-                    value={fieldToAdd}
-                    onChange={(event) => setFieldToAdd(event.target.value)}
-                    disabled={hiddenOptionalFields.length === 0}
-                  >
-                    {hiddenOptionalFields.length === 0 ? (
-                      <option value="">All optional fields added</option>
-                    ) : (
-                      hiddenOptionalFields.map((field) => (
-                        <option key={field.id} value={field.id}>
-                          {field.label}
-                        </option>
-                      ))
-                    )}
-                  </select>
+                  <div className="relative w-full max-w-xs">
+                    <input
+                      className="input"
+                      value={fieldSearchTerm}
+                      onFocus={() => {
+                        if (hiddenOptionalFields.length > 0) {
+                          setFieldPickerOpen(true);
+                        }
+                      }}
+                      onChange={(event) => {
+                        setFieldSearchTerm(event.target.value);
+                        setFieldPickerOpen(true);
+                      }}
+                      onBlur={() => {
+                        window.setTimeout(() => setFieldPickerOpen(false), 80);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          addSelectedOptionalField();
+                        }
+
+                        if (event.key === "Escape") {
+                          setFieldPickerOpen(false);
+                        }
+                      }}
+                      placeholder={
+                        hiddenOptionalFields.length === 0
+                          ? "All optional fields added"
+                          : "Search optional fields..."
+                      }
+                      disabled={hiddenOptionalFields.length === 0}
+                      role="combobox"
+                      aria-autocomplete="list"
+                      aria-expanded={fieldPickerOpen}
+                      aria-controls="optional-field-combobox-list"
+                    />
+                    {fieldPickerOpen && hiddenOptionalFields.length > 0 ? (
+                      <div
+                        id="optional-field-combobox-list"
+                        className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-app-edge bg-app-surface p-1 shadow-lg backdrop-blur"
+                      >
+                        {filteredHiddenOptionalFields.length === 0 ? (
+                          <p className="px-2 py-2 text-sm text-app-faint">
+                            No matching optional fields.
+                          </p>
+                        ) : (
+                          filteredHiddenOptionalFields.map((field) => {
+                            const isSelected = field.id === fieldToAdd;
+
+                            return (
+                              <button
+                                key={field.id}
+                                className={`mb-1 block w-full rounded-lg border px-2.5 py-2 text-left text-sm transition last:mb-0 ${
+                                  isSelected
+                                    ? "border-app-accent-edge bg-app-surface text-app-strong ring-1 ring-teal-500/30"
+                                    : "border-transparent text-app-base hover:border-app-edge hover:bg-app-surface"
+                                }`}
+                                type="button"
+                                onMouseDown={(event) => {
+                                  event.preventDefault();
+                                  setFieldToAdd(field.id);
+                                  setFieldSearchTerm(field.label);
+                                  setFieldPickerOpen(false);
+                                }}
+                              >
+                                {field.label}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
                   <button
                     className="btn-outline btn-outline-sm"
                     type="button"
-                    onClick={() => showOptionalField(fieldToAdd)}
+                    onClick={addSelectedOptionalField}
                     disabled={!fieldToAdd}
                   >
                     Add Field
