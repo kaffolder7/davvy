@@ -3132,6 +3132,7 @@ function AddressBookMilestoneControls({ item, onSave }) {
   const anniversarySettings = item?.milestone_calendars?.anniversaries ?? {};
   const [savingKey, setSavingKey] = useState(null);
   const [editingKey, setEditingKey] = useState(null);
+  const [collapsed, setCollapsed] = useState(true);
   const [nameDrafts, setNameDrafts] = useState({
     birthdays: birthdaySettings.custom_name ?? "",
     anniversaries: anniversarySettings.custom_name ?? "",
@@ -3328,23 +3329,52 @@ function AddressBookMilestoneControls({ item, onSave }) {
 
   return (
     <div className="px-0.5 pt-0.5">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-app-dim">
-        Milestone Calendars
-      </p>
-      <div className="mt-1.5 divide-y divide-app-edge">
-        {renderRow(
-          "birthdays",
-          "Birthdays",
-          birthdaySettings,
-          `${item.display_name} Birthdays`,
-        )}
-        {renderRow(
-          "anniversaries",
-          "Anniversaries",
-          anniversarySettings,
-          `${item.display_name} Anniversaries`,
-        )}
-      </div>
+      <button
+        type="button"
+        className="inline-flex items-center gap-1 rounded pr-1 text-app-dim transition hover:text-app-base focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+        aria-label={
+          collapsed
+            ? "Expand milestone calendars"
+            : "Collapse milestone calendars"
+        }
+        title={
+          collapsed
+            ? "Expand milestone calendars"
+            : "Collapse milestone calendars"
+        }
+        aria-expanded={!collapsed}
+        onClick={() => {
+          setCollapsed((prev) => !prev);
+          if (!collapsed) {
+            setEditingKey(null);
+          }
+        }}
+      >
+        <span className="text-[10px] font-semibold uppercase tracking-[0.16em]">
+          Milestone Calendars
+        </span>
+        <span className="inline-flex h-6 w-6 items-center justify-center">
+          <ChevronRightIcon
+            className={`h-3.5 w-3.5 transition-transform ${collapsed ? "" : "rotate-90"}`}
+          />
+        </span>
+      </button>
+      {!collapsed ? (
+        <div className="mt-1.5 divide-y divide-app-edge">
+          {renderRow(
+            "birthdays",
+            "Birthdays",
+            birthdaySettings,
+            `${item.display_name} Birthdays`,
+          )}
+          {renderRow(
+            "anniversaries",
+            "Anniversaries",
+            anniversarySettings,
+            `${item.display_name} Anniversaries`,
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -4530,6 +4560,23 @@ function ResetIcon({ className }) {
     >
       <circle cx="12" cy="12" r="8.5" />
       <path d="m8.5 15.5 7-7" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon({ className }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m9 6 6 6-6 6" />
     </svg>
   );
 }
