@@ -1108,6 +1108,67 @@ function hasDateRowContent(rows) {
     : false;
 }
 
+function hasAddressRowContent(rows) {
+  return Array.isArray(rows)
+    ? rows.some(
+        (row) =>
+          hasTextValue(row?.street) ||
+          hasTextValue(row?.city) ||
+          hasTextValue(row?.state) ||
+          hasTextValue(row?.postal_code) ||
+          hasTextValue(row?.country) ||
+          hasTextValue(row?.custom_label),
+      )
+    : false;
+}
+
+function createContactSectionOpenState() {
+  return {
+    name: true,
+    work: false,
+    personal: false,
+    communication: false,
+    addressBooks: true,
+  };
+}
+
+function deriveContactSectionOpenState(form) {
+  const defaults = createContactSectionOpenState();
+
+  const workHasValue =
+    hasTextValue(form.company) ||
+    hasTextValue(form.job_title) ||
+    hasTextValue(form.phonetic_company) ||
+    hasTextValue(form.department);
+
+  const personalHasValue =
+    hasTextValue(form.pronouns) ||
+    hasTextValue(form.pronouns_custom) ||
+    hasTextValue(form.ringtone) ||
+    hasTextValue(form.text_tone) ||
+    hasTextValue(form.verification_code) ||
+    hasTextValue(form.profile) ||
+    hasTextValue(form.birthday?.month) ||
+    hasTextValue(form.birthday?.day) ||
+    hasTextValue(form.birthday?.year) ||
+    hasDateRowContent(form.dates);
+
+  const communicationHasValue =
+    hasValueRowContent(form.phones) ||
+    hasValueRowContent(form.emails) ||
+    hasValueRowContent(form.urls) ||
+    hasValueRowContent(form.instant_messages) ||
+    hasValueRowContent(form.related_names) ||
+    hasAddressRowContent(form.addresses);
+
+  return {
+    ...defaults,
+    work: defaults.work || workHasValue,
+    personal: defaults.personal || personalHasValue,
+    communication: defaults.communication || communicationHasValue,
+  };
+}
+
 function deriveOptionalFieldVisibility(form) {
   return OPTIONAL_CONTACT_FIELDS.filter((field) => {
     if (field.id === "instant_messages") {
@@ -1326,6 +1387,7 @@ function ContactsPage({ auth, theme }) {
   const [fieldSearchTerm, setFieldSearchTerm] = useState("");
   const [fieldPickerOpen, setFieldPickerOpen] = useState(false);
   const [pendingHideFieldId, setPendingHideFieldId] = useState(null);
+  const [openSections, setOpenSections] = useState(createContactSectionOpenState());
 
   const defaultAddressBookIds = useMemo(
     () => (addressBooks[0] ? [addressBooks[0].id] : []),
@@ -1372,6 +1434,7 @@ function ContactsPage({ auth, theme }) {
   const applyFormState = (nextForm) => {
     setForm(nextForm);
     setVisibleOptionalFields(deriveOptionalFieldVisibility(nextForm));
+    setOpenSections(deriveContactSectionOpenState(nextForm));
   };
 
   const loadContacts = async ({ preserveSelection = true, selectId = null } = {}) => {
@@ -1567,6 +1630,10 @@ function ContactsPage({ auth, theme }) {
     setFieldPickerOpen(false);
   };
 
+  const toggleSection = (sectionId) => {
+    setOpenSections((prev) => ({ ...prev, [sectionId]: !prev[sectionId] }));
+  };
+
   const isOptionalFieldVisible = (fieldId) =>
     visibleOptionalFields.includes(fieldId);
   const selectedAddressBookCount = Array.isArray(form.address_book_ids)
@@ -1679,7 +1746,29 @@ function ContactsPage({ auth, theme }) {
             ) : null}
 
             <form id="contact-editor" className="mt-5 space-y-6" onSubmit={saveContact}>
-              <div className="grid gap-3 md:grid-cols-3">
+              <section className="rounded-2xl border border-app-edge bg-app-surface p-3">
+                <button
+                  className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-1 text-left"
+                  type="button"
+                  onClick={() => toggleSection("name")}
+                  aria-expanded={openSections.name}
+                >
+                  <span>
+                    <span className="block text-sm font-semibold uppercase tracking-wide text-app-base">
+                      Name
+                    </span>
+                    <span className="block text-xs text-app-faint">
+                      Basic identity and phonetic naming fields.
+                    </span>
+                  </span>
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-app-edge text-xs text-app-faint">
+                    {openSections.name ? "-" : "+"}
+                  </span>
+                </button>
+
+                {openSections.name ? (
+                  <div className="mt-3 px-1 pb-1">
+                    <div className="grid gap-3 md:grid-cols-3">
                 {isOptionalFieldVisible("prefix") ? (
                   <Field label="Prefix">
                     <input
@@ -1773,9 +1862,34 @@ function ContactsPage({ auth, theme }) {
                     />
                   </Field>
                 ) : null}
-              </div>
+                    </div>
+                  </div>
+                ) : null}
+              </section>
 
-              <div className="grid gap-3 md:grid-cols-2">
+              <section className="rounded-2xl border border-app-edge bg-app-surface p-3">
+                <button
+                  className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-1 text-left"
+                  type="button"
+                  onClick={() => toggleSection("work")}
+                  aria-expanded={openSections.work}
+                >
+                  <span>
+                    <span className="block text-sm font-semibold uppercase tracking-wide text-app-base">
+                      Work
+                    </span>
+                    <span className="block text-xs text-app-faint">
+                      Company and role details.
+                    </span>
+                  </span>
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-app-edge text-xs text-app-faint">
+                    {openSections.work ? "-" : "+"}
+                  </span>
+                </button>
+
+                {openSections.work ? (
+                  <div className="mt-3 px-1 pb-1">
+                    <div className="grid gap-3 md:grid-cols-2">
                 <Field label="Company">
                   <input
                     className="input"
@@ -1814,9 +1928,34 @@ function ContactsPage({ auth, theme }) {
                     />
                   </Field>
                 ) : null}
-              </div>
+                    </div>
+                  </div>
+                ) : null}
+              </section>
 
-              <div className="grid gap-3 md:grid-cols-2">
+              <section className="rounded-2xl border border-app-edge bg-app-surface p-3">
+                <button
+                  className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-1 text-left"
+                  type="button"
+                  onClick={() => toggleSection("personal")}
+                  aria-expanded={openSections.personal}
+                >
+                  <span>
+                    <span className="block text-sm font-semibold uppercase tracking-wide text-app-base">
+                      Personal
+                    </span>
+                    <span className="block text-xs text-app-faint">
+                      Pronouns, birthday, and personal metadata.
+                    </span>
+                  </span>
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-app-edge text-xs text-app-faint">
+                    {openSections.personal ? "-" : "+"}
+                  </span>
+                </button>
+
+                {openSections.personal ? (
+                  <div className="mt-3 space-y-4 px-1 pb-1">
+                    <div className="grid gap-3 md:grid-cols-2">
                 <Field label="Pronouns">
                   <select
                     className="input"
@@ -1894,9 +2033,9 @@ function ContactsPage({ auth, theme }) {
                     />
                   </Field>
                 ) : null}
-              </div>
+                    </div>
 
-              <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
+                    <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
                   Birthday
                 </h3>
@@ -1938,9 +2077,41 @@ function ContactsPage({ auth, theme }) {
                     />
                   </Field>
                 </div>
+                    </section>
+
+                    {isOptionalFieldVisible("dates") ? (
+                      <DateEditor
+                        rows={form.dates}
+                        setRows={(rows) => updateFormField("dates", rows)}
+                      />
+                    ) : null}
+                  </div>
+                ) : null}
               </section>
 
-              <LabeledValueEditor
+              <section className="rounded-2xl border border-app-edge bg-app-surface p-3">
+                <button
+                  className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-1 text-left"
+                  type="button"
+                  onClick={() => toggleSection("communication")}
+                  aria-expanded={openSections.communication}
+                >
+                  <span>
+                    <span className="block text-sm font-semibold uppercase tracking-wide text-app-base">
+                      Communication
+                    </span>
+                    <span className="block text-xs text-app-faint">
+                      Contact methods, relationships, and addresses.
+                    </span>
+                  </span>
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-app-edge text-xs text-app-faint">
+                    {openSections.communication ? "-" : "+"}
+                  </span>
+                </button>
+
+                {openSections.communication ? (
+                  <div className="mt-3 space-y-4 px-1 pb-1">
+                    <LabeledValueEditor
                 title="Phone"
                 rows={form.phones}
                 setRows={(rows) => updateFormField("phones", rows)}
@@ -1948,7 +2119,7 @@ function ContactsPage({ auth, theme }) {
                 valuePlaceholder="Phone number"
                 addLabel="Add phone"
               />
-              <LabeledValueEditor
+                    <LabeledValueEditor
                 title="Email"
                 rows={form.emails}
                 setRows={(rows) => updateFormField("emails", rows)}
@@ -1956,7 +2127,7 @@ function ContactsPage({ auth, theme }) {
                 valuePlaceholder="Email address"
                 addLabel="Add email"
               />
-              <LabeledValueEditor
+                    <LabeledValueEditor
                 title="URL"
                 rows={form.urls}
                 setRows={(rows) => updateFormField("urls", rows)}
@@ -1964,17 +2135,17 @@ function ContactsPage({ auth, theme }) {
                 valuePlaceholder="https://example.com"
                 addLabel="Add URL"
               />
-              {isOptionalFieldVisible("instant_messages") ? (
-                <LabeledValueEditor
-                  title="Instant Message"
-                  rows={form.instant_messages}
-                  setRows={(rows) => updateFormField("instant_messages", rows)}
-                  labelOptions={IM_LABEL_OPTIONS}
-                  valuePlaceholder="im:username@example.com"
-                  addLabel="Add IM"
-                />
-              ) : null}
-              <LabeledValueEditor
+                    {isOptionalFieldVisible("instant_messages") ? (
+                      <LabeledValueEditor
+                        title="Instant Message"
+                        rows={form.instant_messages}
+                        setRows={(rows) => updateFormField("instant_messages", rows)}
+                        labelOptions={IM_LABEL_OPTIONS}
+                        valuePlaceholder="im:username@example.com"
+                        addLabel="Add IM"
+                      />
+                    ) : null}
+                    <LabeledValueEditor
                 title="Related Name"
                 rows={form.related_names}
                 setRows={(rows) => updateFormField("related_names", rows)}
@@ -1983,19 +2154,45 @@ function ContactsPage({ auth, theme }) {
                 addLabel="Add related name"
               />
 
-              <AddressEditor
-                rows={form.addresses}
-                setRows={(rows) => updateFormField("addresses", rows)}
-              />
+                    <AddressEditor
+                      rows={form.addresses}
+                      setRows={(rows) => updateFormField("addresses", rows)}
+                    />
+                  </div>
+                ) : null}
+              </section>
 
-              {isOptionalFieldVisible("dates") ? (
-                <DateEditor
-                  rows={form.dates}
-                  setRows={(rows) => updateFormField("dates", rows)}
-                />
-              ) : null}
+              <section className="rounded-2xl border border-app-edge bg-app-surface p-3">
+                <button
+                  className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-1 text-left"
+                  type="button"
+                  onClick={() => toggleSection("addressBooks")}
+                  aria-expanded={openSections.addressBooks}
+                >
+                  <span>
+                    <span className="block text-sm font-semibold uppercase tracking-wide text-app-base">
+                      Address Books
+                    </span>
+                    <span className="block text-xs text-app-faint">
+                      Choose where this contact will be stored.
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="rounded-full border border-app-warn-edge bg-app-warn-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-app-base">
+                      Required
+                    </span>
+                    <span className="rounded-full border border-app-edge bg-app-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-app-faint">
+                      {selectedAddressBookCount} selected
+                    </span>
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-app-edge text-xs text-app-faint">
+                      {openSections.addressBooks ? "-" : "+"}
+                    </span>
+                  </span>
+                </button>
 
-              <section className="rounded-2xl border border-dashed border-app-accent-edge bg-app-surface p-4">
+                {openSections.addressBooks ? (
+                  <div className="mt-3 space-y-4 px-1 pb-1">
+                    <section className="rounded-2xl border border-dashed border-app-accent-edge bg-app-surface p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-sm font-semibold uppercase tracking-wide text-app-accent">
                     Add Optional Field
@@ -2112,9 +2309,9 @@ function ContactsPage({ auth, theme }) {
                     })
                   )}
                 </div>
-              </section>
+                    </section>
 
-              <section className="rounded-2xl border-2 border-app-accent-edge bg-app-surface p-4">
+                    <section className="rounded-2xl border-2 border-app-accent-edge bg-app-surface p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
                     Assign Address Books
@@ -2175,6 +2372,9 @@ function ContactsPage({ auth, theme }) {
                     })
                   )}
                 </div>
+                    </section>
+                  </div>
+                ) : null}
               </section>
 
               <section className="sticky bottom-3 z-20">
