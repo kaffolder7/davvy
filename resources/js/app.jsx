@@ -1581,62 +1581,6 @@ function ContactsPage({ auth, theme }) {
             ) : null}
 
             <form id="contact-editor" className="mt-5 space-y-6" onSubmit={saveContact}>
-              <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
-                  Add Optional Field
-                </h3>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <select
-                    className="input w-full max-w-xs"
-                    value={fieldToAdd}
-                    onChange={(event) => setFieldToAdd(event.target.value)}
-                    disabled={hiddenOptionalFields.length === 0}
-                  >
-                    {hiddenOptionalFields.length === 0 ? (
-                      <option value="">All optional fields added</option>
-                    ) : (
-                      hiddenOptionalFields.map((field) => (
-                        <option key={field.id} value={field.id}>
-                          {field.label}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                  <button
-                    className="btn-outline btn-outline-sm"
-                    type="button"
-                    onClick={() => showOptionalField(fieldToAdd)}
-                    disabled={!fieldToAdd}
-                  >
-                    Add Field
-                  </button>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {visibleOptionalFields.length === 0 ? (
-                    <p className="text-sm text-app-faint">
-                      Optional fields are hidden by default.
-                    </p>
-                  ) : (
-                    visibleOptionalFields.map((fieldId) => {
-                      const fieldMeta = OPTIONAL_CONTACT_FIELDS.find(
-                        (field) => field.id === fieldId,
-                      );
-
-                      return (
-                        <button
-                          key={fieldId}
-                          className="btn-outline btn-outline-sm"
-                          type="button"
-                          onClick={() => hideOptionalField(fieldId)}
-                        >
-                          Hide {fieldMeta?.label ?? fieldId}
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              </section>
-
               <div className="grid gap-3 md:grid-cols-3">
                 {isOptionalFieldVisible("prefix") ? (
                   <Field label="Prefix">
@@ -1952,6 +1896,67 @@ function ContactsPage({ auth, theme }) {
                   setRows={(rows) => updateFormField("dates", rows)}
                 />
               ) : null}
+
+              <section className="rounded-2xl border border-dashed border-app-accent-edge bg-app-surface p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-app-accent">
+                    Add Optional Field
+                  </h3>
+                  <span className="text-xs text-app-faint">
+                    Customize this form as needed
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <select
+                    className="input w-full max-w-xs"
+                    value={fieldToAdd}
+                    onChange={(event) => setFieldToAdd(event.target.value)}
+                    disabled={hiddenOptionalFields.length === 0}
+                  >
+                    {hiddenOptionalFields.length === 0 ? (
+                      <option value="">All optional fields added</option>
+                    ) : (
+                      hiddenOptionalFields.map((field) => (
+                        <option key={field.id} value={field.id}>
+                          {field.label}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                  <button
+                    className="btn-outline btn-outline-sm"
+                    type="button"
+                    onClick={() => showOptionalField(fieldToAdd)}
+                    disabled={!fieldToAdd}
+                  >
+                    Add Field
+                  </button>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {visibleOptionalFields.length === 0 ? (
+                    <p className="text-sm text-app-faint">
+                      Optional fields are hidden by default.
+                    </p>
+                  ) : (
+                    visibleOptionalFields.map((fieldId) => {
+                      const fieldMeta = OPTIONAL_CONTACT_FIELDS.find(
+                        (field) => field.id === fieldId,
+                      );
+
+                      return (
+                        <button
+                          key={fieldId}
+                          className="btn-outline btn-outline-sm"
+                          type="button"
+                          onClick={() => hideOptionalField(fieldId)}
+                        >
+                          Hide {fieldMeta?.label ?? fieldId}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </section>
 
               <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
