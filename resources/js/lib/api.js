@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+const token =
+  typeof document !== 'undefined'
+    ? document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+    : null;
 
 export const api = axios.create({
   headers: {
