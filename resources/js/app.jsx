@@ -3130,186 +3130,177 @@ function DateEditor({ rows, setRows }) {
 function AddressBookMilestoneControls({ item, onSave }) {
   const birthdaySettings = item?.milestone_calendars?.birthdays ?? {};
   const anniversarySettings = item?.milestone_calendars?.anniversaries ?? {};
-  const [saving, setSaving] = useState(false);
-  const [expanded, setExpanded] = useState(false);
-  const [form, setForm] = useState({
-    birthdaysEnabled: !!birthdaySettings.enabled,
-    anniversariesEnabled: !!anniversarySettings.enabled,
-    birthdayCalendarName: birthdaySettings.custom_name ?? "",
-    anniversaryCalendarName: anniversarySettings.custom_name ?? "",
+  const [savingKey, setSavingKey] = useState(null);
+  const [editingKey, setEditingKey] = useState(null);
+  const [nameDrafts, setNameDrafts] = useState({
+    birthdays: birthdaySettings.custom_name ?? "",
+    anniversaries: anniversarySettings.custom_name ?? "",
   });
 
   useEffect(() => {
-    setForm({
-      birthdaysEnabled: !!birthdaySettings.enabled,
-      anniversariesEnabled: !!anniversarySettings.enabled,
-      birthdayCalendarName: birthdaySettings.custom_name ?? "",
-      anniversaryCalendarName: anniversarySettings.custom_name ?? "",
+    setNameDrafts({
+      birthdays: birthdaySettings.custom_name ?? "",
+      anniversaries: anniversarySettings.custom_name ?? "",
     });
   }, [
     item?.id,
-    birthdaySettings.enabled,
     birthdaySettings.custom_name,
-    anniversarySettings.enabled,
     anniversarySettings.custom_name,
   ]);
 
-  const isDirty =
-    form.birthdaysEnabled !== !!birthdaySettings.enabled ||
-    form.anniversariesEnabled !== !!anniversarySettings.enabled ||
-    form.birthdayCalendarName !== (birthdaySettings.custom_name ?? "") ||
-    form.anniversaryCalendarName !== (anniversarySettings.custom_name ?? "");
-
-  useEffect(() => {
-    if (isDirty) {
-      setExpanded(true);
-    }
-  }, [isDirty]);
-
-  const submit = async (event) => {
-    event.preventDefault();
-    if (!isDirty || saving) {
-      return;
+  const saveMilestone = async (type, payload) => {
+    if (savingKey) {
+      return false;
     }
 
-    setSaving(true);
+    setSavingKey(type);
 
     try {
-      await onSave(item.id, {
-        birthdays_enabled: form.birthdaysEnabled,
-        anniversaries_enabled: form.anniversariesEnabled,
-        birthday_calendar_name: form.birthdayCalendarName.trim() || null,
-        anniversary_calendar_name: form.anniversaryCalendarName.trim() || null,
-      });
+      await onSave(item.id, payload);
+      return true;
     } catch {
-      // Errors are surfaced by DashboardPage.
+      return false;
     } finally {
-      setSaving(false);
+      setSavingKey(null);
     }
   };
 
-  return (
-    <form onSubmit={submit}>
-      <div className="rounded-xl border border-app-edge bg-app-surface p-2.5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-app-base">
-              Milestone Calendars
-            </p>
-            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
-              <span
-                className={`rounded-full border px-2 py-0.5 font-semibold ${
-                  form.birthdaysEnabled
-                    ? "border-app-accent-edge text-app-accent"
-                    : "border-app-edge text-app-faint"
-                }`}
-              >
-                Birthdays {form.birthdaysEnabled ? "On" : "Off"}
-              </span>
-              <span
-                className={`rounded-full border px-2 py-0.5 font-semibold ${
-                  form.anniversariesEnabled
-                    ? "border-app-accent-edge text-app-accent"
-                    : "border-app-edge text-app-faint"
-                }`}
-              >
-                Anniversaries {form.anniversariesEnabled ? "On" : "Off"}
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
+  const toggleEnabled = async (type, enabled) => {
+    if (type === "birthdays") {
+      await saveMilestone(type, {
+        birthdays_enabled: enabled,
+      });
+      return;
+    }
+
+    await saveMilestone(type, {
+      anniversaries_enabled: enabled,
+    });
+  };
+
+  const saveName = async (type) => {
+    const settings =
+      type === "birthdays" ? birthdaySettings : anniversarySettings;
+    const value = (nameDrafts[type] ?? "").trim();
+    const existing = (settings.custom_name ?? "").trim();
+
+    if (value === existing) {
+      setEditingKey(null);
+      return;
+    }
+
+    const payload =
+      type === "birthdays"
+        ? { birthday_calendar_name: value || null }
+        : { anniversary_calendar_name: value || null };
+    const didSave = await saveMilestone(type, payload);
+
+    if (didSave) {
+      setEditingKey(null);
+    }
+  };
+
+  const renderRow = (type, label, settings, fallbackName) => {
+    const isSaving = savingKey === type;
+    const saveInProgress = !!savingKey && !isSaving;
+    const isEditing = editingKey === type;
+    const currentCustom = settings.custom_name ?? "";
+    const currentName =
+      settings.custom_name ??
+      settings.calendar_name ??
+      settings.default_name ??
+      fallbackName;
+    const canSaveName =
+      (nameDrafts[type] ?? "").trim() !== currentCustom.trim() && !isSaving;
+
+    return (
+      <div className="rounded-lg border border-app-edge px-2 py-1.5" key={type}>
+        <div className="flex items-center gap-2">
+          <label className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-app-base">
+            <input
+              type="checkbox"
+              checked={!!settings.enabled}
+              disabled={isSaving || saveInProgress}
+              onChange={(event) => toggleEnabled(type, event.target.checked)}
+            />
+            {label}
+          </label>
+          <button
+            type="button"
+            className="min-w-0 flex-1 truncate text-left text-xs text-app-faint transition hover:text-app-base"
+            title="Click to rename"
+            onClick={() => setEditingKey(type)}
+            disabled={isSaving || saveInProgress}
+          >
+            {currentName}
+          </button>
+          {isSaving ? (
+            <span className="shrink-0 text-[11px] text-app-faint">Saving...</span>
+          ) : null}
+        </div>
+
+        {isEditing ? (
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5 pl-6">
+            <input
+              className="input h-8 min-w-[11rem] flex-1 px-2 py-1 text-sm"
+              value={nameDrafts[type] ?? ""}
+              onChange={(event) =>
+                setNameDrafts((prev) => ({
+                  ...prev,
+                  [type]: event.target.value,
+                }))
+              }
+              placeholder={settings.default_name ?? fallbackName}
+              disabled={isSaving}
+            />
             <button
               className="btn-outline btn-outline-sm"
               type="button"
-              onClick={() => setExpanded((prev) => !prev)}
+              onClick={() => saveName(type)}
+              disabled={!canSaveName}
             >
-              {expanded ? "Hide" : "Configure"}
+              Save
             </button>
             <button
               className="btn-outline btn-outline-sm"
-              type="submit"
-              disabled={!isDirty || saving}
+              type="button"
+              onClick={() => {
+                setEditingKey(null);
+                setNameDrafts((prev) => ({
+                  ...prev,
+                  [type]: currentCustom,
+                }));
+              }}
+              disabled={isSaving}
             >
-              {saving ? "Saving..." : "Save"}
+              Cancel
             </button>
-          </div>
-        </div>
-
-        {expanded ? (
-          <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
-            <div className="rounded-lg border border-app-edge p-2">
-              <label className="inline-flex items-center gap-2 text-xs font-semibold text-app-base">
-                <input
-                  type="checkbox"
-                  checked={form.birthdaysEnabled}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      birthdaysEnabled: event.target.checked,
-                    }))
-                  }
-                />
-                Birthdays
-              </label>
-              <input
-                className="input mt-1.5 h-8 px-2 py-1 text-sm"
-                value={form.birthdayCalendarName}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    birthdayCalendarName: event.target.value,
-                  }))
-                }
-                placeholder={
-                  birthdaySettings.default_name ??
-                  `${item.display_name} Birthdays`
-                }
-              />
-              <p className="mt-1 text-[11px] text-app-faint">
-                {birthdaySettings.calendar_id
-                  ? birthdaySettings.calendar_name
-                  : "Created on enable"}
-              </p>
-            </div>
-
-            <div className="rounded-lg border border-app-edge p-2">
-              <label className="inline-flex items-center gap-2 text-xs font-semibold text-app-base">
-                <input
-                  type="checkbox"
-                  checked={form.anniversariesEnabled}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      anniversariesEnabled: event.target.checked,
-                    }))
-                  }
-                />
-                Anniversaries
-              </label>
-              <input
-                className="input mt-1.5 h-8 px-2 py-1 text-sm"
-                value={form.anniversaryCalendarName}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    anniversaryCalendarName: event.target.value,
-                  }))
-                }
-                placeholder={
-                  anniversarySettings.default_name ??
-                  `${item.display_name} Anniversaries`
-                }
-              />
-              <p className="mt-1 text-[11px] text-app-faint">
-                {anniversarySettings.calendar_id
-                  ? anniversarySettings.calendar_name
-                  : "Created on enable"}
-              </p>
-            </div>
           </div>
         ) : null}
       </div>
-    </form>
+    );
+  };
+
+  return (
+    <div className="rounded-xl border border-app-edge bg-app-surface p-2.5">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-app-base">
+        Milestone Calendars
+      </p>
+      <div className="mt-2 space-y-1.5">
+        {renderRow(
+          "birthdays",
+          "Birthdays",
+          birthdaySettings,
+          `${item.display_name} Birthdays`,
+        )}
+        {renderRow(
+          "anniversaries",
+          "Anniversaries",
+          anniversarySettings,
+          `${item.display_name} Anniversaries`,
+        )}
+      </div>
+    </div>
   );
 }
 
