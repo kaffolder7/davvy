@@ -3,6 +3,13 @@ name: Release Image
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      dry_run_tag:
+        description: "Tag used for dry-run image metadata (e.g. v1.0.0)"
+        required: true
+        default: "v0.0.0"
+        type: string
 
 permissions:
   contents: read
@@ -12,7 +19,7 @@ permissions:
   artifact-metadata: write
 
 concurrency:
-  group: release-image-${{ github.event.release.tag_name }}
+  group: release-image-${{ github.event.release.tag_name || github.ref_name || github.run_id }}
   cancel-in-progress: false
 
 env:
@@ -20,73 +27,12 @@ env:
 
 jobs:
   php-quality-gate:
-    name: Release Gate - PHP quality
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.4"
-          tools: composer:v2
-
-      - name: Get Composer cache directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
-
-      - name: Cache Composer downloads
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-composer-
-
-      - name: Install PHP dependencies (no scripts)
-        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts
-
-      - name: Lint PHP files
-        run: |
-          find app bootstrap config database routes tests -type f -name '*.php' -print0 | xargs -0 -r -n1 -P4 php -l
-
-      - name: Run Pint in test mode
-        run: ./vendor/bin/pint --test
+    name: Release Gate - Lint & format
+    uses: ./.github/workflows/lint-checks.yml
 
   dockerized-tests-gate:
     name: Release Gate - Dockerized tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 35
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Cache Composer downloads
-        uses: actions/cache@v4
-        with:
-          path: ~/.composer/cache/files
-          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-composer-
-
-      - name: Ensure Composer cache directory exists
-        run: mkdir -p "$HOME/.composer/cache/files"
-
-      - name: Run Dockerized test suite
-        run: |
-          docker compose run --build --rm \
-            --user root \
-            -e COMPOSER_CACHE_DIR=/tmp/composer-cache \
-            -v "$HOME/.composer/cache/files:/tmp/composer-cache" \
-            --entrypoint sh app -lc "cp .env.example .env && composer install --prefer-dist --no-interaction && APP_ENV=testing APP_KEY='base64:MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=' DB_CONNECTION=sqlite DB_DATABASE=':memory:' CACHE_STORE=array SESSION_DRIVER=array QUEUE_CONNECTION=sync MAIL_MAILER=array php artisan test"
-
-      - name: Tear down Docker services
-        if: always()
-        run: docker compose down --volumes --remove-orphans
+    uses: ./.github/workflows/pr-tests.yml
 
   container-build-gate:
     name: Release Gate - Container build smoke test
@@ -115,6 +61,7 @@ jobs:
 
   publish:
     name: Build and Publish GHCR Image
+    if: ${{ github.event_name == 'release' }}
     needs:
       - php-quality-gate
       - dockerized-tests-gate
@@ -228,4 +175,74 @@ jobs:
             else
               echo "Coolify webhook: skipped (set \`COOLIFY_WEBHOOK_URL\` secret to enable)"
             fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  dry-run:
+    name: Release Dry Run - Validate publish stage
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    needs:
+      - php-quality-gate
+      - dockerized-tests-gate
+      - container-build-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Normalize image name
+        id: image
+        run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract Docker metadata (dry run)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}
+          tags: |
+            type=raw,value=${{ inputs.dry_run_tag }}
+            type=semver,pattern={{version}},value=${{ inputs.dry_run_tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.dry_run_tag }}
+            type=semver,pattern={{major}},value=${{ inputs.dry_run_tag }}
+            type=sha,prefix=sha-
+
+      - name: Build image (dry run, no push)
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: false
+          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Dry-run workflow summary
+        env:
+          DRY_RUN_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          {
+            echo "## Release dry run passed"
+            echo ""
+            echo "Image: \`${{ env.REGISTRY }}/${{ steps.image.outputs.name }}\`"
+            echo ""
+            echo "Resolved tags:"
+            while IFS= read -r line; do
+              [ -n "$line" ] && echo "- \`$line\`"
+            done <<< "$DRY_RUN_TAGS"
+            echo ""
+            echo "Push: skipped"
+            echo "Attestation: skipped"
+            echo "Coolify webhook: skipped"
+            echo ""
+            echo "Dry-run input tag: \`${{ inputs.dry_run_tag }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
