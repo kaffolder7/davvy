@@ -22,6 +22,8 @@ Set these in the **app service** Variables tab.
 | `SESSION_SECURE_COOKIE` | `true` | Required in production |
 | `SESSION_HTTP_ONLY` | `true` | Recommended |
 | `SESSION_SAME_SITE` | `lax` | Recommended |
+| `CORS_ALLOWED_ORIGINS` | *(empty)* | Recommended for same-origin-only deployment; set explicit origins only when required |
+| `CORS_SUPPORTS_CREDENTIALS` | `false` | Recommended; if `true`, do not use wildcard origins |
 | `CACHE_STORE` | `database` | Recommended |
 | `QUEUE_CONNECTION` | `database` | Recommended |
 | `TRUSTED_PROXIES` | `*` | Recommended behind Railway proxy |

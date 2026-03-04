@@ -21,6 +21,12 @@ When an `app_settings` key exists, it overrides env defaults.
 | `APP_KEY` | _(empty)_ | Required for production |
 | `APP_URL` | `http://localhost` | Must be HTTPS in production |
 | `TRUSTED_PROXIES` | _(empty)_ | Use `*` or explicit list behind reverse proxy |
+| `CORS_ALLOWED_ORIGINS` | _(empty)_ | Comma-separated allowed browser origins for cross-origin API access; empty means same-origin only |
+| `CORS_ALLOWED_ORIGIN_PATTERNS` | _(empty)_ | Comma-separated regex origin patterns for CORS matching |
+| `CORS_ALLOWED_METHODS` | `GET,POST,PUT,PATCH,DELETE,OPTIONS` | Comma-separated methods accepted for CORS preflight |
+| `CORS_ALLOWED_HEADERS` | `Content-Type, X-Requested-With, X-CSRF-TOKEN, Accept, Authorization` | Comma-separated allowed request headers for CORS |
+| `CORS_MAX_AGE` | `0` | CORS preflight cache lifetime (seconds) |
+| `CORS_SUPPORTS_CREDENTIALS` | `false` | Must remain `false` unless cross-origin cookie auth is intentionally enabled |
 
 ### Database and Session
 

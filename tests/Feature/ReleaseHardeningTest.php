@@ -34,6 +34,41 @@ class ReleaseHardeningTest extends TestCase
         });
     }
 
+    public function test_preflight_fails_when_cors_credentials_are_enabled_with_wildcard_origins(): void
+    {
+        $this->withTemporaryEnv([
+            'SESSION_SECURE_COOKIE' => 'true',
+        ], function (): void {
+            $original = [
+                'app.env' => config('app.env'),
+                'app.debug' => config('app.debug'),
+                'app.url' => config('app.url'),
+                'app.key' => config('app.key'),
+                'database.default' => config('database.default'),
+                'cors.allowed_origins' => config('cors.allowed_origins'),
+                'cors.supports_credentials' => config('cors.supports_credentials'),
+            ];
+
+            try {
+                config()->set('app.env', 'production');
+                config()->set('app.debug', false);
+                config()->set('app.url', 'https://example.com');
+                config()->set('app.key', 'base64:MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=');
+                config()->set('database.default', 'pgsql');
+                config()->set('cors.allowed_origins', ['*']);
+                config()->set('cors.supports_credentials', true);
+
+                $this->artisan('app:preflight')
+                    ->expectsOutputToContain('CORS_ALLOWED_ORIGINS must not include "*" when CORS_SUPPORTS_CREDENTIALS=true.')
+                    ->assertExitCode(1);
+            } finally {
+                foreach ($original as $key => $value) {
+                    config()->set($key, $value);
+                }
+            }
+        });
+    }
+
     public function test_login_endpoint_is_rate_limited(): void
     {
         User::factory()->create([
@@ -73,6 +108,36 @@ class ReleaseHardeningTest extends TestCase
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
         ])->assertStatus(429);
+    }
+
+    public function test_public_api_does_not_reflect_untrusted_cors_origin_by_default(): void
+    {
+        config()->set('cors.allowed_origins', []);
+        config()->set('cors.allowed_origins_patterns', []);
+        config()->set('cors.supports_credentials', false);
+
+        $response = $this->withHeaders([
+            'Origin' => 'https://evil.example',
+        ])->getJson('/api/public/config');
+
+        $response->assertOk();
+        $this->assertNull($response->headers->get('Access-Control-Allow-Origin'));
+        $this->assertNull($response->headers->get('Access-Control-Allow-Credentials'));
+    }
+
+    public function test_public_api_allows_explicit_configured_cors_origin_with_credentials(): void
+    {
+        config()->set('cors.allowed_origins', ['https://app.example']);
+        config()->set('cors.allowed_origins_patterns', []);
+        config()->set('cors.supports_credentials', true);
+
+        $response = $this->withHeaders([
+            'Origin' => 'https://app.example',
+        ])->getJson('/api/public/config');
+
+        $response->assertOk();
+        $this->assertSame('https://app.example', $response->headers->get('Access-Control-Allow-Origin'));
+        $this->assertSame('true', $response->headers->get('Access-Control-Allow-Credentials'));
     }
 
     public function test_dav_endpoint_is_rate_limited_for_failed_basic_auth_attempts(): void
