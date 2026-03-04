@@ -13,7 +13,7 @@ Container entrypoint performs:
 1. `php artisan app:preflight`
 2. Optional DB bootstrap (`migrate` and optional `db:seed`)
 3. Laravel caches (`config`, `route`, `view`)
-4. PHP built-in server on `PORT` (default `8080`)
+4. Starts `php-fpm` plus `nginx` on `PORT` (default `8080`)
 
 For PostgreSQL, DB bootstrap is serialized with a PG advisory lock so multi-replica startup does not race.
 
