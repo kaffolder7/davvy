@@ -1,159 +1,141 @@
-# Davvy 🚀
+# Davvy
 
 <!--[![Lint & Format Checks](https://img.shields.io/github/actions/workflow/status/kaffolder7/davvy/lint-checks.yml?label=Lint%20%26%20Format)](https://github.com/kaffolder7/davvy/actions/workflows/lint-checks.yml) [![Release Image](https://img.shields.io/github/actions/workflow/status/kaffolder7/davvy/release-image.yml?label=Release%20Image)](https://github.com/kaffolder7/davvy/actions/workflows/release-image.yml) [![Latest Release](https://img.shields.io/github/v/release/kaffolder7/davvy?label=Latest%20Release)](https://github.com/kaffolder7/davvy/releases) [![License](https://img.shields.io/github/license/kaffolder7/davvy)](https://github.com/kaffolder7/davvy/blob/main/LICENSE)-->
-[![Lint & Format Checks](https://github.com/kaffolder7/davvy/actions/workflows/lint-checks.yml/badge.svg?branch=main)](https://github.com/kaffolder7/davvy/actions/workflows/lint-checks.yml) [![Release Image](https://github.com/kaffolder7/davvy/actions/workflows/release-image.yml/badge.svg)](https://github.com/kaffolder7/davvy/actions/workflows/release-image.yml) ![Latest Release](https://img.shields.io/badge/Latest_Release-8A2BE2?link=https%3A%2F%2Fgithub.com%2Fkaffolder7%2Fdavvy%2Freleases) ![License](https://img.shields.io/badge/License-gray?link=https%3A%2F%2Fgithub.com%2Fkaffolder7%2Fdavvy%2Fblob%2Fmain%2FLICENSE)
+[![Lint & Format Checks](https://github.com/kaffolder7/davvy/actions/workflows/lint-checks.yml/badge.svg?branch=main)](https://github.com/kaffolder7/davvy/actions/workflows/lint-checks.yml)
+[![Release Image](https://github.com/kaffolder7/davvy/actions/workflows/release-image.yml/badge.svg)](https://github.com/kaffolder7/davvy/actions/workflows/release-image.yml)
 
-[![PHP](https://img.shields.io/badge/PHP-8.4-777BB4?logo=php&logoColor=white)](https://www.php.net/releases/8.4/en.php) [![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?logo=laravel&logoColor=white)](https://laravel.com/docs/12.x) [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=000000)](https://react.dev/) [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+Davvy is a Laravel + React app that combines a web admin/dashboard experience with a built-in SabreDAV CalDAV/CardDAV server.
 
-Davvy is an MVP Laravel + React + Tailwind web app for managing users, calendars, and address books backed by a SabreDAV (`sabre/dav`) CalDAV/CardDAV server.
+It is designed for:
+- Multi-user calendar and address-book hosting
+- Share-based collaboration (`read_only`, `editor`, `admin`)
+- Browser-based administration and operational controls
+- DAV client interoperability with strict validation plus compatibility mode when needed
 
-## Why SabreDAV? 🧩
+## Core Capabilities
 
-This MVP uses `sabre/dav` because:
-- It embeds directly into Laravel/PHP app logic.
-- CalDAV + CardDAV storage is fully customizable with your own DB models.
-- User/role/sharing workflows stay in one codebase.
+### Identity and Access
+- Session-based web auth (`/api/auth/*`)
+- DAV basic auth at `/dav`
+- Roles: `admin`, `regular`
+- Feature flags controlled by admins (public registration, owner sharing, contact management, DAV compatibility mode)
 
-## MVP Features ✨
+### Calendars and Address Books
+- Default `Personal Calendar` and `Contacts` resources provisioned for each new user
+- Owned + shared resource visibility in web dashboard
+- Create, rename, mark sharable, and export resources
+- Per-resource permission enforcement for web and DAV access
 
-- Laravel `12.x` backend + React/Tailwind frontend
-- PHP `8.4` runtime target
-- Admin + regular users
-- Public registration toggle (default OFF)
-- Owner-sharing toggle (admin-controlled, default ON)
-- DAV compatibility mode toggle (admin-controlled, default OFF/strict mode)
-- Admin-created users
-- Automatic default calendar + address book per new user
-- Dashboard views for:
-  - Owned calendars/address books
-  - Shared-with-you calendars/address books
-  - Permission badges (`Read-only`, `Full Edit`)
-- Owner and admin share assignment/revocation flows
-- SabreDAV CalDAV/CardDAV endpoint at `/dav`
-- Autodiscovery redirects for `/.well-known/caldav` and `/.well-known/carddav`
-- ICS/vCard validation and normalization for stronger client interoperability
-- DAV sync token change tracking with `added`, `modified`, and `deleted` deltas
-- Docker packaging + deployment docs for Railway or Coolify (single replica or scaled replicas)
-- PHPUnit tests for key workflows
+### Sharing
+- Share permissions:
+  - `read_only`: view only
+  - `editor`: write/update, no collection delete
+  - `admin`: full write + collection delete
+- Owner-managed sharing can be globally disabled by admin
+- Admin global sharing controls across all users/resources
 
-## Quick Start (Docker) 🐳
+### Contacts and Advanced Workflows
+- Managed contact UI (feature-gated)
+- Contact writes synchronized to vCards in assigned address books
+- CardDAV writes synchronized back into managed contacts
+- Contact change moderation queue for cross-owner edits
+- Birthday/anniversary generated milestone calendars per address book
+- Apple compatibility mirror mode (selected sources mirrored into user's default `contacts` book)
 
-1. Build and run:
+### DAV and Interoperability
+- CalDAV/CardDAV endpoint: `/dav`
+- Autodiscovery redirects:
+  - `/.well-known/caldav`
+  - `/.well-known/carddav`
+- Sync-token incremental change tracking (`added`, `modified`, `deleted`)
+- Strict payload validation by default (toggle compatibility mode for legacy clients)
+
+### Runtime and Deployment
+- Docker-first runtime with preflight checks (`php artisan app:preflight`)
+- Railway and Coolify deployment support
+- PostgreSQL advisory-lock startup bootstrap for multi-replica safety
+
+## Documentation Map
+
+- [User Guide](docs/user-guide.md)
+- [API Reference](docs/api.md)
+- [DAV Client Setup](docs/clients.md)
+- [Architecture](docs/architecture.md)
+- [Configuration Reference](docs/configuration.md)
+- [Deployment Guide](docs/deployment.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Release Checklist (Railway)](docs/release-checklist.md)
+- [Release Checklist (Coolify)](docs/release-checklist-coolify.md)
+
+## Quick Start (Docker)
+
+1. Start app + database:
 
 ```bash
 docker compose up --build
 ```
 
-2. Open app:
-
-- UI: `http://localhost:8080`
+2. Open:
+- App UI: `http://localhost:8080`
 - Health: `http://localhost:8080/up`
-- DAV endpoint: `http://localhost:8080/dav`
+- DAV: `http://localhost:8080/dav`
 
-3. Default admin credentials (from `compose.yml` defaults):
-
+3. Default admin credentials from `compose.yml`:
 - Email: `admin@davvy.local`
 - Password: `ChangeMe123!`
 
-> [!NOTE]
-> If `RUN_DB_SEED=false` or either `DEFAULT_ADMIN_EMAIL`/`DEFAULT_ADMIN_PASSWORD` is empty, this user will not be created.
+Notes:
+- The default compose setup enables seed-on-start (`RUN_DB_SEED=true`).
+- If `DEFAULT_ADMIN_EMAIL` or `DEFAULT_ADMIN_PASSWORD` is empty, no bootstrap admin is created.
 
-Configurable envs:
-- `DEFAULT_ADMIN_EMAIL`
-- `DEFAULT_ADMIN_PASSWORD`
-- `ENABLE_PUBLIC_REGISTRATION`
-- `ENABLE_OWNER_SHARE_MANAGEMENT`
-- `ENABLE_DAV_COMPATIBILITY_MODE`
-- `ENABLE_CONTACT_MANAGEMENT`
-- `CONTACT_CHANGE_REQUEST_RETENTION_DAYS`
-- `RUN_DB_MIGRATIONS` (set `false` only when you run migrations out-of-band)
-- `RUN_DB_SEED` (set `true` to run `db:seed` at container start)
-- `SESSION_SECURE_COOKIE`
-- `TRUSTED_PROXIES`
-
-## Local Development with DDEV 🧰
-
-This repo includes a `.ddev/` setup for local development convenience and does not replace the existing Docker workflows used for deployment/CI.
-
-1. Start DDEV:
+## Local Development (DDEV)
 
 ```bash
 ddev start
-```
-
-2. Install dependencies:
-
-```bash
 ddev composer install
 ddev npm install
-```
-
-3. Use DDEV-oriented environment config:
-
-```bash
 cp .env.ddev.example .env
 ddev artisan key:generate
 ddev artisan migrate --seed
 ```
 
-4. Bootstrap a local admin user (recommended when public registration is disabled):
+Create a local admin if needed:
 
 ```bash
 ddev exec sh -lc "DEFAULT_ADMIN_EMAIL='admin@davvy.local' DEFAULT_ADMIN_PASSWORD='ChangeMe123!' php artisan db:seed --force --no-interaction"
 ```
 
-> [!NOTE]
-> Your `.env.ddev.example` intentionally leaves `DEFAULT_ADMIN_EMAIL` and `DEFAULT_ADMIN_PASSWORD` empty, so no default admin exists until you seed one.
-
-5. Start frontend assets (required before opening the app URL):
+Run assets:
 
 ```bash
 ddev vite
 ```
 
-Keep `ddev vite` running in its own terminal for hot reload.  
-If you prefer not to run Vite in watch mode, build assets once with:
+Access:
+- App: `https://davvy.ddev.site`
+- DAV: `https://davvy.ddev.site/dav`
 
-```bash
-ddev npm run build
-```
+## Testing
 
-6. Access services:
-- App URL: `https://davvy.ddev.site`
-- DAV endpoint: `https://davvy.ddev.site/dav`
-- Vite dev server: `https://davvy.ddev.site:5173` (from `ddev vite`)
-
-Auth troubleshooting:
-- `401` on `GET /api/auth/me` before sign-in is expected.
-- `422` on `POST /api/auth/login` means the submitted credentials do not match a seeded user.
-
-7. Run tests:
+Run test suite:
 
 ```bash
 ddev artisan test
 ```
 
-## Running Tests 🧪
+Or via Docker:
 
 ```bash
 docker compose run --build --rm --user root --entrypoint sh app -lc "cp .env.example .env && composer install --prefer-dist --no-interaction && APP_ENV=testing APP_KEY='base64:MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=' DB_CONNECTION=sqlite DB_DATABASE=':memory:' CACHE_STORE=array SESSION_DRIVER=array QUEUE_CONNECTION=sync MAIL_MAILER=array php artisan test"
 ```
 
-## Deployment ☁️
+## Deployment
 
-Davvy is packaged as a Dockerized app and can be deployed on Railway or Coolify.
-
-Railway is configured via [`railway.toml`](railway.toml).  
-Coolify can deploy the same [`Dockerfile`](Dockerfile) without code changes.
-
-Production startup runs `php artisan app:preflight` before DB bootstrap so insecure configuration fails fast.
-
-When deployed with PostgreSQL on Railway or Coolify, startup DB bootstrap (`migrate` and optional `db:seed`) is guarded by a PostgreSQL advisory lock, so the app can safely run with one or more replicas.
-
-See docs:
-- [Architecture](docs/architecture.md)
-- [API Reference](docs/api.md)
-- [DAV Client Setup](docs/clients.md)
-- [Deployment](docs/deployment.md) (Railway, Coolify, etc.)
+Davvy is deployed as a Docker image. See:
+- [Deployment](docs/deployment.md)
 - [Release Checklist (Railway)](docs/release-checklist.md)
 - [Release Checklist (Coolify)](docs/release-checklist-coolify.md)
+
+## License
+
+MIT ([LICENSE](LICENSE))

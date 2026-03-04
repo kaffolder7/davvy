@@ -32,10 +32,12 @@ Set these in the **Application > Environment Variables** area.
 | `CACHE_STORE` | `database` | Recommended |
 | `QUEUE_CONNECTION` | `database` | Recommended |
 | `TRUSTED_PROXIES` | `*` | Recommended behind Coolify proxy |
-| `ENABLE_PUBLIC_REGISTRATION` | `false` | Secure default |
+| `ENABLE_PUBLIC_REGISTRATION` | `false` | Env default only; public registration is primarily managed by app settings/admin toggle |
 | `ENABLE_OWNER_SHARE_MANAGEMENT` | `true` | Product default |
 | `ENABLE_DAV_COMPATIBILITY_MODE` | `false` | Secure default (strict mode) |
 | `ENABLE_CONTACT_MANAGEMENT` | `false` | Secure default for gated contact UI/API |
+| `CONTACT_CHANGE_REQUEST_RETENTION_DAYS` | `90` | Queue history purge horizon for applied/denied requests |
+| `DAV_LOG_CLIENT_TRAFFIC` | `false` | Optional targeted DAV traffic debug logging |
 | `RUN_DB_MIGRATIONS` | `true` | Recommended; set `false` only if migrations run out-of-band |
 | `RUN_DB_SEED` | `false` | Secure default; opt-in only for bootstrap |
 | `DEFAULT_ADMIN_EMAIL` | *(empty)* | Set only when `RUN_DB_SEED=true` |

@@ -1,59 +1,96 @@
-# CalDAV/CardDAV Client Setup 📱💻
+# CalDAV/CardDAV Client Setup
 
-Use these account values:
+Use this guide to connect Apple, Android, Thunderbird, and other DAV clients.
+
+## Connection Values
 
 - Server URL: `https://your-domain.tld/dav`
-- Username: user email (example: `alice@example.com`)
+- Username: account email (for example: `alice@example.com`)
 - Password: account password
-- Principal URI (if manual): `principals/{user_id}`
+- Principal URI (manual only): `principals/{user_id}`
 
-Autodiscovery endpoints:
+Autodiscovery URLs:
+- `https://your-domain.tld/.well-known/caldav`
+- `https://your-domain.tld/.well-known/carddav`
 
-- `https://your-domain.tld/.well-known/caldav` -> `/dav`
-- `https://your-domain.tld/.well-known/carddav` -> `/dav`
+## Manual DAV Paths (When Client Needs Explicit Paths)
 
-## macOS / iOS 🍎
+Given user ID `{id}`:
 
-### Calendar (CalDAV)
+- Principal: `/dav/principals/{id}/`
+- Calendar home: `/dav/calendars/{id}/`
+- Address-book home: `/dav/addressbooks/{id}/`
+- Calendar collection: `/dav/calendars/{id}/{calendar-uri}/`
+- Address-book collection: `/dav/addressbooks/{id}/{address-book-uri}/`
 
-1. Open System Settings -> Internet Accounts.
-2. Add Account -> Other Account -> Add CalDAV Account.
-3. Choose `Manual`.
-4. Enter server URL, username, password.
+Tip: The dashboard shows your principal and collection URI snippets.
 
-### Contacts (CardDAV)
+## Platform Setup
 
-1. Open System Settings -> Internet Accounts.
-2. Add Account -> Other Account -> Add CardDAV Account.
-3. Choose `Manual`.
-4. Enter server URL, username, password.
+### macOS / iOS
 
-## Android 🤖
+Calendar (CalDAV):
+1. System Settings -> Internet Accounts
+2. Add Account -> Other -> Add CalDAV Account
+3. Choose `Manual`
+4. Enter server URL, username, password
 
-Recommended app: DAVx5.
+Contacts (CardDAV):
+1. System Settings -> Internet Accounts
+2. Add Account -> Other -> Add CardDAV Account
+3. Choose `Manual`
+4. Enter server URL, username, password
 
-1. Add account in DAVx5.
-2. Use URL + username sign-in.
-3. Base URL: `https://your-domain.tld/dav`.
-4. Enter email/password.
-5. Select calendars/address books to sync.
+### Android
 
-## Thunderbird ✉️
+Recommended app: DAVx5
+1. Add account in DAVx5
+2. Use URL + username sign-in
+3. Base URL: `https://your-domain.tld/dav`
+4. Enter email/password
+5. Select calendars/address books to sync
 
-1. Install TbSync + provider addon(s) if needed.
-2. Add CalDAV/CardDAV account.
-3. DAV URL: `https://your-domain.tld/dav`.
-4. Use same credentials.
+### Thunderbird
 
-## Sharing Behavior 🤝
+1. Install TbSync and DAV/CardDAV provider add-ons if required
+2. Add CalDAV/CardDAV account
+3. DAV URL: `https://your-domain.tld/dav`
+4. Use account email/password
 
-- Shared resources appear in client discovery and in the web dashboard.
-- `read_only` shares block write operations.
-- `admin` shares allow full edits.
+## Sharing and Permissions Behavior
 
-## Troubleshooting 🛠️
+Shared resources appear in:
+- DAV collection discovery
+- Web dashboard
 
-- `401 Unauthorized`: verify email/password.
-- `403 Forbidden`: likely read-only share or owner sharing disabled.
-- Missing resources: ensure resource is sharable and share assignment exists.
-- Legacy client payload errors: admins can enable DAV compatibility mode in the web admin UI.
+Permission impact:
+- `read_only`: no write/delete
+- `editor`: write/update allowed, collection delete denied
+- `admin`: write/update/delete allowed
+
+## Compatibility Mode
+
+By default, Davvy runs in strict validation mode for iCalendar/vCard payloads.
+
+Admins can enable **DAV compatibility mode** when legacy clients send non-strict payloads.
+
+## Troubleshooting
+
+- `401 Unauthorized`
+  - Verify email/password
+  - Confirm client is using basic auth with correct account
+
+- `403 Forbidden`
+  - Common causes: read-only share, non-deletable permission, or disabled owner sharing for web actions
+
+- `409 Conflict` on shared contact edit/delete
+  - Change may have been queued for owner/admin approval (contact moderation flow)
+
+- Missing shared collections
+  - Verify share exists and target resource is marked sharable
+
+- Sync token errors (`InvalidSyncToken`)
+  - Re-sync from scratch in client (drop and re-add account if necessary)
+
+- Legacy payload errors
+  - Ask admin to temporarily enable DAV compatibility mode

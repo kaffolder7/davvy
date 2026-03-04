@@ -1,69 +1,124 @@
-# Architecture 🏗️
+# Architecture
 
-## Stack
+## System Overview
+
+Davvy is a single Laravel application that serves:
+- React web UI (same origin)
+- JSON web API under `/api/*`
+- SabreDAV CalDAV/CardDAV server under `/dav/*`
+
+This keeps auth, permissions, data models, and DAV behavior in one codebase.
+
+## Technology Stack
 
 - Backend: Laravel 12 (PHP 8.4 target)
-- DAV protocol: SabreDAV (`sabre/dav`) CalDAV + CardDAV plugins
-- Frontend: React 18 + TailwindCSS + Vite
-- Database: PostgreSQL (default via Docker)
+- DAV engine: `sabre/dav`
+- Frontend: React 18 + Vite + Tailwind CSS
+- Database: PostgreSQL by default (SQLite used in tests)
 
-## Data Model 🗂️
+## Request Surfaces
 
-- `users`: login + role (`admin` or `regular`)
-- `calendars`: user-owned calendars
-- `calendar_objects`: iCalendar resources (`.ics`)
-- `address_books`: user-owned address books
-- `cards`: vCard resources (`.vcf`)
-- `contacts`: managed contact payload records linked to address books
-- `contact_address_book_assignments`: mapping between managed contacts and cards/address books
-- `contact_change_requests`: queued editor changes awaiting owner/admin approval
-- `resource_shares`: per-resource permissions (`read_only`, `editor`, `admin`)
-- `app_settings`: global toggles (`public_registration_enabled`, `owner_share_management_enabled`, `dav_compatibility_mode_enabled`)
-- `dav_resource_sync_states`: per-resource DAV sync tokens
-- `dav_resource_sync_changes`: sync change feed (`added`, `modified`, `deleted`)
+- Web app shell: `/`
+- Health endpoint: `/up`
+- API endpoints: `/api/*`
+- DAV endpoint: `/dav/*`
+- Autodiscovery:
+  - `/.well-known/caldav` -> `/dav`
+  - `/.well-known/carddav` -> `/dav`
 
-## Permissions 🔐
+## Core Domain Model
 
-- Owners always have full edit.
-- Shared users can be:
-  - `read_only`
-  - `admin` (full edit)
-- Admin users can manage users and all shares globally.
-- Non-admin owners can manage shares for their own resources when owner-share-management is enabled.
+### Identity and Settings
+- `users`: auth principals and role (`admin` / `regular`)
+- `app_settings`: runtime feature toggles and operational settings
 
-## Release Hardening 🛡️
+### Calendar and Address Book Storage
+- `calendars`
+- `calendar_objects` (`.ics` resources)
+- `address_books`
+- `cards` (`.vcf` resources)
+- `resource_shares`: grants between owner and recipient users
 
-- Auth endpoints are rate-limited (`/api/auth/login`, `/api/auth/register`).
-- Container startup runs `app:preflight` before migrations.
-- Default admin seeding is opt-in via `RUN_DB_SEED=true` and explicit admin credentials.
+### DAV Sync Tracking
+- `dav_resource_sync_states`: per-collection sync token
+- `dav_resource_sync_changes`: delta feed (`added`, `modified`, `deleted`)
 
-## DAV Layer 🌐
+### Managed Contacts Subsystem
+- `contacts`: normalized contact payloads (web-managed records)
+- `contact_address_book_assignments`: contact-to-address-book and linked card mapping
+- `contact_change_requests`: moderation queue for cross-owner edits
+- `address_book_contact_milestone_calendars`: birthday/anniversary calendar settings
 
-Custom SabreDAV backends:
+### Apple Compatibility Mirror Subsystem
+- `address_book_mirror_configs`
+- `address_book_mirror_sources`
+- `address_book_mirror_links`
 
-- `LaravelAuthBackend`: basic auth via Laravel password hashes
-- `LaravelPrincipalBackend`: principals from `users`
-- `LaravelCalendarBackend`: CalDAV storage from `calendars` + `calendar_objects`
-- `LaravelCardDavBackend`: CardDAV storage from `address_books` + `cards`
+## Permissions Model
 
-Endpoint:
+- Owners have full control over their resources.
+- Share permissions:
+  - `read_only`: read only
+  - `editor`: read/write, no collection delete
+  - `admin`: read/write/delete
+- Admin users can manage users/settings and global share assignments.
+- Non-admin owner share management is controlled by feature flag.
 
-- `/dav/*`
+## Feature Flags
 
-Autodiscovery redirects:
+Runtime toggles are read from `app_settings` (with env defaults if unset):
+- `public_registration_enabled`
+- `owner_share_management_enabled`
+- `dav_compatibility_mode_enabled`
+- `contact_management_enabled`
+- `contact_change_request_retention_days`
 
-- `/.well-known/caldav` -> `/dav`
-- `/.well-known/carddav` -> `/dav`
+## Key Workflows
 
-## Validation + Sync Improvements ✅
+### User Provisioning
+- User creation (register or admin-created) triggers default resource provisioning:
+  - default calendar (`personal-calendar` URI)
+  - default address book (`contacts` URI)
 
-- Calendar payloads are validated and normalized as VCALENDAR content.
-- Card payloads are validated and normalized as VCARD content.
-- Strict RFC-oriented validation is the default, with an admin-controlled DAV compatibility mode for legacy clients.
-- DAV incremental sync now tracks added/modified/deleted resources with per-collection sync tokens.
+### DAV Writes and Validation
+- Calendar data is validated/normalized by `IcsValidator`.
+- Card data is validated/normalized by `VCardValidator`.
+- Strict mode is default.
+- Compatibility mode loosens strict RFC requirements for legacy clients.
 
-## Default Resources 🎯
+### Contact <-> Card Sync
+- Web contact writes generate/update/delete underlying cards.
+- CardDAV writes can hydrate/update managed contact payloads.
+- Assignments keep card/contact linkage stable across address books.
 
-On user creation, Davvy auto-provisions:
-- `Personal Calendar` (`/personal-calendar`)
-- `Contacts` (`/contacts`)
+### Contact Change Moderation
+- Cross-owner updates/deletes are queued in `contact_change_requests`.
+- Queue groups by request + impacted owners.
+- Reviewers can approve/deny, or resolve manual merge conflicts.
+- Applied/denied history is purged based on retention setting.
+
+### Milestone Calendar Generation
+- Optional per-address-book birthday/anniversary calendars.
+- Generated events are managed resources with stable URI patterns.
+- Contacts can opt out via `exclude_milestone_calendars`.
+
+### Apple Compatibility Mirroring
+- Selected source address books are mirrored into user's default contacts book.
+- Mirrored cards include internal metadata properties for round-trip sync.
+- Edits to mirrored cards can propagate back to source when permitted.
+
+## Operational Hardening
+
+- Auth endpoint rate limits:
+  - login
+  - registration
+  - password change
+- Preflight command (`app:preflight`) enforces production safety checks.
+- Startup DB bootstrap on PostgreSQL uses advisory lock for replica-safe migrations/seeding.
+
+## Notable Design Choices
+
+- Single-process PHP app (`php -S`) for container runtime simplicity.
+- Session-based web auth + basic-auth DAV under same user identity model.
+- Stable principal URIs based on numeric user IDs (`principals/{id}`).
+- DAV sync token support implemented for both calendar and address-book collections.

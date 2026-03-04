@@ -1,114 +1,106 @@
-# Deployment ☁️
+# Deployment
+
+Davvy is deployed as a Dockerized Laravel application.
+
+Supported/common targets:
+- Railway
+- Coolify
+- Generic Docker hosts
+
+## Runtime Behavior at Startup
+
+Container entrypoint performs:
+1. `php artisan app:preflight`
+2. Optional DB bootstrap (`migrate` and optional `db:seed`)
+3. Laravel caches (`config`, `route`, `view`)
+4. PHP built-in server on `PORT` (default `8080`)
+
+For PostgreSQL, DB bootstrap is serialized with a PG advisory lock so multi-replica startup does not race.
+
+## Environment Variables
+
+See full reference: [Configuration Reference](./configuration.md)
+
+Minimum production variables:
+- `APP_ENV=production`
+- `APP_DEBUG=false`
+- `APP_KEY`
+- `APP_URL`
+- `DB_CONNECTION=pgsql`
+- `DB_HOST`
+- `DB_PORT`
+- `DB_DATABASE`
+- `DB_USERNAME`
+- `DB_PASSWORD`
+- `SESSION_SECURE_COOKIE=true`
+
+Common Davvy feature/runtime vars:
+- `ENABLE_PUBLIC_REGISTRATION`
+- `ENABLE_OWNER_SHARE_MANAGEMENT`
+- `ENABLE_DAV_COMPATIBILITY_MODE`
+- `ENABLE_CONTACT_MANAGEMENT`
+- `CONTACT_CHANGE_REQUEST_RETENTION_DAYS`
+- `DAV_LOG_CLIENT_TRAFFIC`
+- `RUN_DB_MIGRATIONS`
+- `RUN_DB_SEED`
+- `DEFAULT_ADMIN_EMAIL`
+- `DEFAULT_ADMIN_PASSWORD`
+- `TRUSTED_PROXIES`
+
+Note on `ENABLE_PUBLIC_REGISTRATION`:
+- Public registration is ultimately controlled by `app_settings` and admin toggles.
+- If seeding runs, public registration is initialized to disabled.
 
 ## Railway
 
-This repo includes [`railway.toml`](../railway.toml) and a production `Dockerfile`.
+This repository includes `railway.toml` and production `Dockerfile` support.
 
-### Required environment variables
-
-- `APP_KEY` (required in production; do not auto-generate per restart)
-- `APP_URL`
-- `DB_CONNECTION=pgsql`
-- `DB_HOST`
-- `DB_PORT`
-- `DB_DATABASE`
-- `DB_USERNAME`
-- `DB_PASSWORD`
-- `SESSION_SECURE_COOKIE=true`
-- `ENABLE_PUBLIC_REGISTRATION` (optional)
-- `ENABLE_OWNER_SHARE_MANAGEMENT` (optional)
-- `ENABLE_DAV_COMPATIBILITY_MODE` (optional)
-- `ENABLE_CONTACT_MANAGEMENT` (optional)
-- `RUN_DB_MIGRATIONS` (optional, default `true`)
-- `TRUSTED_PROXIES` (recommended, e.g. `*` behind managed reverse proxy)
-
-### Optional bootstrap admin seeding
-
-- `RUN_DB_MIGRATIONS=true` runs `php artisan migrate` on startup (default).
-- `RUN_DB_SEED=true` to execute `php artisan db:seed` on startup.
-- If `RUN_DB_SEED=true`, set both:
-  - `DEFAULT_ADMIN_EMAIL`
-  - `DEFAULT_ADMIN_PASSWORD`
-- In production, avoid the default demo password and use a strong secret.
-
-### Replica behavior (Railway)
-
-- Davvy supports deployment with one or more app replicas on Railway.
-- On PostgreSQL, startup DB bootstrap is serialized by a PostgreSQL advisory lock to avoid race conditions across replicas.
-- With replicas, each instance may run `migrate` sequentially under the lock (subsequent runs are typically no-op), while optional `db:seed` runs only on the lock leader.
-- Keep `SESSION_DRIVER=database` to avoid sticky-session requirements when requests are load-balanced across replicas.
-- If you prefer running migrations out-of-band, set `RUN_DB_MIGRATIONS=false` and execute migrations as a separate one-off deploy task.
-
-### Deploy flow
-
-1. Create Railway project linked to this repo.
+Recommended flow:
+1. Create Railway project and connect repo.
 2. Provision PostgreSQL.
-3. Set env vars.
+3. Set environment variables.
 4. Deploy.
-5. (Optional) Increase app replicas in Railway service settings for horizontal scaling.
-6. Verify health at `/up`.
-7. Verify startup preflight logs report success.
+5. Optionally scale replicas.
+6. Verify:
+   - `/up` returns 200
+   - logs include `Preflight checks passed.`
+   - `/dav` is reachable
 
-See also:
-- [Production Release Checklist (Railway)](./release-checklist.md)
+See checklist: [Release Checklist (Railway)](./release-checklist.md)
 
-## Coolify (Self-Hosted or Coolify Cloud)
+## Coolify
 
-Davvy deploys on Coolify using the same production `Dockerfile`; no code changes are required.
+Davvy deploys to Coolify using the same production Dockerfile.
 
-### Required environment variables
-
-- `APP_KEY` (required in production; do not auto-generate per restart)
-- `APP_URL`
-- `DB_CONNECTION=pgsql`
-- `DB_HOST`
-- `DB_PORT`
-- `DB_DATABASE`
-- `DB_USERNAME`
-- `DB_PASSWORD`
-- `SESSION_SECURE_COOKIE=true`
-- `ENABLE_PUBLIC_REGISTRATION` (optional)
-- `ENABLE_OWNER_SHARE_MANAGEMENT` (optional)
-- `ENABLE_DAV_COMPATIBILITY_MODE` (optional)
-- `ENABLE_CONTACT_MANAGEMENT` (optional)
-- `RUN_DB_MIGRATIONS` (optional, default `true`)
-- `TRUSTED_PROXIES` (recommended, e.g. `*` behind managed reverse proxy)
-
-### Optional bootstrap admin seeding
-
-- `RUN_DB_MIGRATIONS=true` runs `php artisan migrate` on startup (default).
-- `RUN_DB_SEED=true` to execute `php artisan db:seed` on startup.
-- If `RUN_DB_SEED=true`, set both:
-  - `DEFAULT_ADMIN_EMAIL`
-  - `DEFAULT_ADMIN_PASSWORD`
-- In production, avoid the default demo password and use a strong secret.
-
-### Replica behavior (Coolify)
-
-- Davvy supports deployment with one or more app replicas on Coolify.
-- On PostgreSQL, startup DB bootstrap is serialized by a PostgreSQL advisory lock to avoid race conditions across replicas.
-- With replicas, each instance may run `migrate` sequentially under the lock (subsequent runs are typically no-op), while optional `db:seed` runs only on the lock leader.
-- Keep `SESSION_DRIVER=database` to avoid sticky-session requirements when requests are load-balanced across replicas.
-- If you prefer running migrations out-of-band, set `RUN_DB_MIGRATIONS=false` and execute migrations as a separate one-off deploy task.
-
-### Deploy flow
-
-1. Create a new **Application** in Coolify from this repo and select the repository `Dockerfile`.
-2. Provision PostgreSQL in Coolify (or connect an external PostgreSQL service).
-3. Set env vars.
-4. Configure health check path to `/up`.
+Recommended flow:
+1. Create Application from repository Dockerfile.
+2. Provision or connect PostgreSQL.
+3. Set environment variables.
+4. Configure health check path `/up`.
 5. Deploy.
-6. (Optional) Increase app replicas in Coolify service settings for horizontal scaling.
-7. Verify startup preflight logs report success.
+6. Optionally scale replicas.
+7. Verify logs and endpoints as above.
 
-See also:
-- [Production Release Checklist (Coolify)](./release-checklist-coolify.md)
+See checklist: [Release Checklist (Coolify)](./release-checklist-coolify.md)
 
-## Generic Docker Host 🐳
+## Generic Docker Host
 
 ```bash
 docker build -t davvy .
 docker run -p 8080:8080 --env-file .env davvy
 ```
 
-Ensure DB connectivity before app startup.
+Ensure DB connectivity is available before container startup.
+
+## Production Recommendations
+
+- Keep `SESSION_DRIVER=database` when running multiple replicas.
+- Set `TRUSTED_PROXIES=*` (or explicit proxy IPs) behind managed reverse proxies.
+- Keep `RUN_DB_SEED=false` after initial bootstrap.
+- Use HTTPS and stable `APP_KEY`.
+
+## Next References
+
+- [Release Checklist (Railway)](./release-checklist.md)
+- [Release Checklist (Coolify)](./release-checklist-coolify.md)
+- [Troubleshooting](./troubleshooting.md)
