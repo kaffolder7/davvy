@@ -2432,11 +2432,11 @@ function ContactsPage({ auth, theme }) {
                       />
                     ) : null}
 
-                    <section className="rounded-2xl border border-app-accent-edge bg-app-surface p-4 ring-1 ring-teal-500/10">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-app-accent">
+                    <section className="rounded-2xl border border-app-accent-edge bg-app-surface p-3 ring-1 ring-teal-500/10">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-app-accent">
                         Calendar Behavior
                       </p>
-                      <label className="inline-flex items-center gap-2 text-sm font-semibold text-app-base">
+                      <label className="inline-flex items-center gap-2 text-[13px] font-semibold leading-5 text-app-base">
                         <input
                           type="checkbox"
                           checked={!!form.exclude_milestone_calendars}
@@ -2449,7 +2449,7 @@ function ContactsPage({ auth, theme }) {
                         />
                         Exclude From Milestone Calendars
                       </label>
-                      <p className="mt-2 text-xs text-app-faint">
+                      <p className="mt-1.5 text-[11px] text-app-faint">
                         Skip Birthday and Anniversary events for this contact in
                         generated milestone calendars.
                       </p>
