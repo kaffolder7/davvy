@@ -3655,6 +3655,9 @@ function AdminPage({ auth, theme }) {
     shared_with_id: "",
     permission: "read_only",
   });
+  const [milestonePurgeSubmitting, setMilestonePurgeSubmitting] =
+    useState(false);
+  const [milestonePurgeSummary, setMilestonePurgeSummary] = useState("");
 
   const load = async () => {
     setState((prev) => ({ ...prev, loading: true, error: "" }));
@@ -3835,6 +3838,43 @@ function AdminPage({ auth, theme }) {
     }
   };
 
+  const purgeGeneratedMilestoneCalendars = async () => {
+    if (milestonePurgeSubmitting) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "This will delete all generated Birthday/Anniversary calendars and disable milestone sync across address books. Continue?",
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setMilestonePurgeSubmitting(true);
+    setMilestonePurgeSummary("");
+    setState((prev) => ({ ...prev, error: "" }));
+
+    try {
+      const response = await api.post(
+        "/api/admin/contact-milestones/purge-generated-calendars",
+      );
+      const purgedCalendars = Number(response.data?.purged_calendar_count ?? 0);
+      const purgedEvents = Number(response.data?.purged_event_count ?? 0);
+      const disabledSettings = Number(response.data?.disabled_setting_count ?? 0);
+      setMilestonePurgeSummary(
+        `Purged ${purgedCalendars} generated calendar(s), removed ${purgedEvents} event(s), and disabled ${disabledSettings} setting(s).`,
+      );
+      await load();
+    } catch (err) {
+      setState((prev) => ({
+        ...prev,
+        error: extractError(err, "Unable to purge generated milestone calendars."),
+      }));
+    } finally {
+      setMilestonePurgeSubmitting(false);
+    }
+  };
+
   const resourceOptions =
     shareForm.resource_type === "calendar"
       ? state.resources.calendars
@@ -3868,6 +3908,25 @@ function AdminPage({ auth, theme }) {
             onClick={toggleContactManagement}
           />
         </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            className="btn-outline btn-outline-sm text-app-danger"
+            type="button"
+            onClick={purgeGeneratedMilestoneCalendars}
+            disabled={milestonePurgeSubmitting}
+          >
+            {milestonePurgeSubmitting
+              ? "Purging milestone calendars..."
+              : "Purge Generated Milestone Calendars"}
+          </button>
+          <p className="text-xs text-app-faint">
+            Deletes generated Birthday/Anniversary calendars and disables
+            milestone sync settings.
+          </p>
+        </div>
+        {milestonePurgeSummary ? (
+          <p className="mt-2 text-sm text-app-accent">{milestonePurgeSummary}</p>
+        ) : null}
         {state.error ? (
           <p className="mt-3 text-sm text-app-danger">{state.error}</p>
         ) : null}
