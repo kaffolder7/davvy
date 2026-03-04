@@ -14,7 +14,10 @@
 - `calendar_objects`: iCalendar resources (`.ics`)
 - `address_books`: user-owned address books
 - `cards`: vCard resources (`.vcf`)
-- `resource_shares`: per-resource permissions (`read_only`, `admin`)
+- `contacts`: managed contact payload records linked to address books
+- `contact_address_book_assignments`: mapping between managed contacts and cards/address books
+- `contact_change_requests`: queued editor changes awaiting owner/admin approval
+- `resource_shares`: per-resource permissions (`read_only`, `editor`, `admin`)
 - `app_settings`: global toggles (`public_registration_enabled`, `owner_share_management_enabled`, `dav_compatibility_mode_enabled`)
 - `dav_resource_sync_states`: per-resource DAV sync tokens
 - `dav_resource_sync_changes`: sync change feed (`added`, `modified`, `deleted`)

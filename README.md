@@ -65,6 +65,7 @@ Configurable envs:
 - `ENABLE_OWNER_SHARE_MANAGEMENT`
 - `ENABLE_DAV_COMPATIBILITY_MODE`
 - `ENABLE_CONTACT_MANAGEMENT`
+- `CONTACT_CHANGE_REQUEST_RETENTION_DAYS`
 - `RUN_DB_MIGRATIONS` (set `false` only when you run migrations out-of-band)
 - `RUN_DB_SEED` (set `true` to run `db:seed` at container start)
 - `SESSION_SECURE_COOKIE`

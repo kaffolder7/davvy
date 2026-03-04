@@ -143,6 +143,29 @@ class AdminController extends Controller
         ]);
     }
 
+    public function contactChangeRequestRetentionSetting(): JsonResponse
+    {
+        return response()->json([
+            'days' => $this->registrationSettings->contactChangeRequestRetentionDays(),
+        ]);
+    }
+
+    public function setContactChangeRequestRetentionSetting(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'days' => ['required', 'integer', 'min:1', 'max:3650'],
+        ]);
+
+        $this->registrationSettings->setContactChangeRequestRetentionDays(
+            days: (int) $data['days'],
+            actor: $request->user(),
+        );
+
+        return response()->json([
+            'days' => $this->registrationSettings->contactChangeRequestRetentionDays(),
+        ]);
+    }
+
     public function purgeGeneratedMilestoneCalendars(): JsonResponse
     {
         $summary = $this->milestoneCalendarService->purgeGeneratedCalendarsAndDisableSettings();

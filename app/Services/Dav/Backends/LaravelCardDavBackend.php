@@ -8,6 +8,7 @@ use App\Models\AddressBook;
 use App\Models\Card;
 use App\Models\ResourceShare;
 use App\Services\AddressBookMirrorService;
+use App\Services\Contacts\ContactChangeRequestService;
 use App\Services\Contacts\ContactMilestoneCalendarService;
 use App\Services\Contacts\ManagedContactSyncService;
 use App\Services\Dav\DavSyncService;
@@ -36,6 +37,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
         private readonly AddressBookMirrorService $mirrorService,
         private readonly ManagedContactSyncService $managedContactSync,
         private readonly ContactMilestoneCalendarService $milestoneCalendarService,
+        private readonly ContactChangeRequestService $changeRequestService,
     ) {}
 
     public function getAddressBooksForUser($principalUri): array
@@ -244,6 +246,20 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
         }
 
         $normalized = $this->vCardValidator->validateAndNormalize((string) $cardData);
+
+        if ($user) {
+            $queued = $this->changeRequestService->enqueueCardDavUpdateIfNeeded(
+                actor: $user,
+                addressBook: $addressBook,
+                card: $card,
+                normalizedCardData: $normalized['data'],
+            );
+
+            if ($queued !== null) {
+                throw new Conflict('Change submitted for owner/admin approval.');
+            }
+        }
+
         $resourceUid = $normalized['uid'] ?? $this->fallbackUidForLegacyPayload((string) $cardUri);
 
         if ($this->uidConflictExists($addressBook->id, $resourceUid, exceptCardId: $card->id)) {
@@ -294,6 +310,14 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
         $user = $this->davContext->getAuthenticatedUser();
         if ($this->mirrorService->deleteSourceFromMirroredCard($user, $card)) {
             return;
+        }
+
+        if ($user) {
+            $queued = $this->changeRequestService->enqueueCardDavDeleteIfNeeded($user, $addressBook, $card);
+
+            if ($queued !== null) {
+                throw new Conflict('Delete submitted for owner/admin approval.');
+            }
         }
 
         $this->syncManagedContactDelete($card);
