@@ -1769,7 +1769,7 @@ function ContactsPage({ auth, theme }) {
                     addressBooks.map((book) => (
                       <label
                         key={book.id}
-                        className="flex items-start gap-2 rounded-xl border border-app-edge bg-white px-3 py-2 text-sm"
+                        className="flex items-start gap-2 rounded-xl border border-app-edge bg-app-surface px-3 py-2 text-sm"
                       >
                         <input
                           type="checkbox"
