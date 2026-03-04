@@ -1185,6 +1185,7 @@ function deriveContactSectionOpenState(form) {
     hasTextValue(form.text_tone) ||
     hasTextValue(form.verification_code) ||
     hasTextValue(form.profile) ||
+    form.exclude_milestone_calendars === true ||
     hasTextValue(form.birthday?.month) ||
     hasTextValue(form.birthday?.day) ||
     hasTextValue(form.birthday?.year) ||
@@ -1299,6 +1300,7 @@ function createEmptyContactForm(defaultAddressBookIds = []) {
     maiden_name: "",
     verification_code: "",
     profile: "",
+    exclude_milestone_calendars: false,
     birthday: { year: "", month: "", day: "" },
     phones: [createEmptyLabeledValue("mobile")],
     emails: [createEmptyLabeledValue("home")],
@@ -1396,6 +1398,7 @@ function hydrateContactForm(contact, defaultAddressBookIds = []) {
     maiden_name: contact.maiden_name ?? "",
     verification_code: contact.verification_code ?? "",
     profile: contact.profile ?? "",
+    exclude_milestone_calendars: !!contact.exclude_milestone_calendars,
     birthday: datePartsToFormValue(contact.birthday),
     phones: nonEmptyRows(contact.phones, () =>
       createEmptyLabeledValue("mobile"),
@@ -2420,6 +2423,26 @@ function ContactsPage({ auth, theme }) {
                           />
                         </Field>
                       </div>
+                    </section>
+
+                    <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
+                      <label className="inline-flex items-center gap-2 text-sm font-semibold text-app-base">
+                        <input
+                          type="checkbox"
+                          checked={!!form.exclude_milestone_calendars}
+                          onChange={(event) =>
+                            updateFormField(
+                              "exclude_milestone_calendars",
+                              event.target.checked,
+                            )
+                          }
+                        />
+                        Exclude From Milestone Calendars
+                      </label>
+                      <p className="mt-2 text-xs text-app-faint">
+                        Skip Birthday and Anniversary events for this contact in
+                        generated milestone calendars.
+                      </p>
                     </section>
 
                     {isOptionalFieldVisible("dates") ? (
