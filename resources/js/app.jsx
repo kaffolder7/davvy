@@ -269,6 +269,14 @@ function App() {
         }
       />
       <Route
+        path="/contacts"
+        element={
+          <ProtectedRoute auth={value}>
+            <ContactsPage auth={value} theme={theme} />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin"
         element={
           <ProtectedRoute auth={value} adminOnly>
@@ -988,6 +996,1101 @@ function DashboardPage({ auth, theme }) {
         </section>
       ) : null}
     </AppShell>
+  );
+}
+
+const PHONE_LABEL_OPTIONS = [
+  { value: "mobile", label: "Mobile" },
+  { value: "iphone", label: "iPhone" },
+  { value: "apple_watch", label: "Apple Watch" },
+  { value: "home", label: "Home" },
+  { value: "work", label: "Work" },
+  { value: "main", label: "Main" },
+  { value: "home_fax", label: "Home Fax" },
+  { value: "work_fax", label: "Work Fax" },
+  { value: "other_fax", label: "Other Fax" },
+  { value: "pager", label: "Pager" },
+  { value: "other", label: "Other" },
+  { value: "custom", label: "Custom..." },
+];
+
+const EMAIL_LABEL_OPTIONS = [
+  { value: "home", label: "Home" },
+  { value: "work", label: "Work" },
+  { value: "other", label: "Other" },
+  { value: "custom", label: "Custom..." },
+];
+
+const URL_LABEL_OPTIONS = [
+  { value: "homepage", label: "Home Page" },
+  { value: "home", label: "Home" },
+  { value: "work", label: "Work" },
+  { value: "other", label: "Other" },
+  { value: "custom", label: "Custom..." },
+];
+
+const ADDRESS_LABEL_OPTIONS = [
+  { value: "home", label: "Home" },
+  { value: "work", label: "Work" },
+  { value: "school", label: "School" },
+  { value: "other", label: "Other" },
+  { value: "custom", label: "Custom..." },
+];
+
+const DATE_LABEL_OPTIONS = [
+  { value: "anniversary", label: "Anniversary" },
+  { value: "other", label: "Other" },
+  { value: "custom", label: "Custom..." },
+];
+
+const RELATED_LABEL_OPTIONS = [
+  { value: "spouse", label: "Spouse" },
+  { value: "partner", label: "Partner" },
+  { value: "parent", label: "Parent" },
+  { value: "child", label: "Child" },
+  { value: "sibling", label: "Sibling" },
+  { value: "assistant", label: "Assistant" },
+  { value: "friend", label: "Friend" },
+  { value: "other", label: "Other" },
+  { value: "custom", label: "Custom..." },
+];
+
+const IM_LABEL_OPTIONS = [
+  { value: "home", label: "Home" },
+  { value: "work", label: "Work" },
+  { value: "other", label: "Other" },
+  { value: "custom", label: "Custom..." },
+];
+
+const PRONOUN_OPTIONS = [
+  { value: "", label: "Not set" },
+  { value: "she/her", label: "she/her" },
+  { value: "he/him", label: "he/him" },
+  { value: "they/them", label: "they/them" },
+  { value: "xe/xem", label: "xe/xem" },
+  { value: "custom", label: "Custom..." },
+];
+
+function createEmptyLabeledValue(label = "other") {
+  return { label, custom_label: "", value: "" };
+}
+
+function createEmptyAddress(label = "home") {
+  return {
+    label,
+    custom_label: "",
+    street: "",
+    city: "",
+    state: "",
+    postal_code: "",
+    country: "",
+  };
+}
+
+function createEmptyDate(label = "other") {
+  return { label, custom_label: "", year: "", month: "", day: "" };
+}
+
+function createEmptyContactForm(defaultAddressBookIds = []) {
+  return {
+    id: null,
+    prefix: "",
+    first_name: "",
+    middle_name: "",
+    last_name: "",
+    suffix: "",
+    nickname: "",
+    company: "",
+    job_title: "",
+    department: "",
+    pronouns: "",
+    pronouns_custom: "",
+    ringtone: "",
+    text_tone: "",
+    phonetic_first_name: "",
+    phonetic_last_name: "",
+    phonetic_company: "",
+    maiden_name: "",
+    verification_code: "",
+    profile: "",
+    birthday: { year: "", month: "", day: "" },
+    phones: [createEmptyLabeledValue("mobile")],
+    emails: [createEmptyLabeledValue("home")],
+    urls: [createEmptyLabeledValue("homepage")],
+    addresses: [createEmptyAddress("home")],
+    dates: [createEmptyDate("anniversary")],
+    related_names: [createEmptyLabeledValue("other")],
+    instant_messages: [createEmptyLabeledValue("other")],
+    address_book_ids: defaultAddressBookIds,
+  };
+}
+
+function datePartsToFormValue(parts) {
+  return {
+    year: parts?.year != null ? String(parts.year) : "",
+    month: parts?.month != null ? String(parts.month) : "",
+    day: parts?.day != null ? String(parts.day) : "",
+  };
+}
+
+function hydrateContactForm(contact, defaultAddressBookIds = []) {
+  const fallback = createEmptyContactForm(defaultAddressBookIds);
+
+  if (!contact) {
+    return fallback;
+  }
+
+  const nonEmptyRows = (rows, makeDefault) => {
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return [makeDefault()];
+    }
+
+    return rows.map((row) => ({
+      label: row?.label ?? "other",
+      custom_label: row?.custom_label ?? "",
+      value: row?.value ?? "",
+    }));
+  };
+
+  const nonEmptyAddresses = (rows) => {
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return [createEmptyAddress("home")];
+    }
+
+    return rows.map((row) => ({
+      label: row?.label ?? "home",
+      custom_label: row?.custom_label ?? "",
+      street: row?.street ?? "",
+      city: row?.city ?? "",
+      state: row?.state ?? "",
+      postal_code: row?.postal_code ?? "",
+      country: row?.country ?? "",
+    }));
+  };
+
+  const nonEmptyDates = (rows) => {
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return [createEmptyDate("anniversary")];
+    }
+
+    return rows.map((row) => ({
+      label: row?.label ?? "other",
+      custom_label: row?.custom_label ?? "",
+      year: row?.year != null ? String(row.year) : "",
+      month: row?.month != null ? String(row.month) : "",
+      day: row?.day != null ? String(row.day) : "",
+    }));
+  };
+
+  const addressBookIds =
+    Array.isArray(contact.address_book_ids) && contact.address_book_ids.length > 0
+      ? contact.address_book_ids
+      : defaultAddressBookIds;
+
+  return {
+    ...fallback,
+    id: contact.id ?? null,
+    prefix: contact.prefix ?? "",
+    first_name: contact.first_name ?? "",
+    middle_name: contact.middle_name ?? "",
+    last_name: contact.last_name ?? "",
+    suffix: contact.suffix ?? "",
+    nickname: contact.nickname ?? "",
+    company: contact.company ?? "",
+    job_title: contact.job_title ?? "",
+    department: contact.department ?? "",
+    pronouns: contact.pronouns ?? "",
+    pronouns_custom: contact.pronouns_custom ?? "",
+    ringtone: contact.ringtone ?? "",
+    text_tone: contact.text_tone ?? "",
+    phonetic_first_name: contact.phonetic_first_name ?? "",
+    phonetic_last_name: contact.phonetic_last_name ?? "",
+    phonetic_company: contact.phonetic_company ?? "",
+    maiden_name: contact.maiden_name ?? "",
+    verification_code: contact.verification_code ?? "",
+    profile: contact.profile ?? "",
+    birthday: datePartsToFormValue(contact.birthday),
+    phones: nonEmptyRows(contact.phones, () => createEmptyLabeledValue("mobile")),
+    emails: nonEmptyRows(contact.emails, () => createEmptyLabeledValue("home")),
+    urls: nonEmptyRows(contact.urls, () => createEmptyLabeledValue("homepage")),
+    addresses: nonEmptyAddresses(contact.addresses),
+    dates: nonEmptyDates(contact.dates),
+    related_names: nonEmptyRows(contact.related_names, () =>
+      createEmptyLabeledValue("other"),
+    ),
+    instant_messages: nonEmptyRows(contact.instant_messages, () =>
+      createEmptyLabeledValue("other"),
+    ),
+    address_book_ids: addressBookIds,
+  };
+}
+
+function ContactsPage({ auth, theme }) {
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [contacts, setContacts] = useState([]);
+  const [addressBooks, setAddressBooks] = useState([]);
+  const [selectedContactId, setSelectedContactId] = useState(null);
+  const [form, setForm] = useState(createEmptyContactForm());
+
+  const defaultAddressBookIds = useMemo(
+    () => (addressBooks[0] ? [addressBooks[0].id] : []),
+    [addressBooks],
+  );
+
+  const loadContacts = async ({ preserveSelection = true, selectId = null } = {}) => {
+    setError("");
+    setLoading(true);
+
+    try {
+      const response = await api.get("/api/contacts");
+      const nextContacts = Array.isArray(response.data?.contacts)
+        ? response.data.contacts
+        : [];
+      const nextAddressBooks = Array.isArray(response.data?.address_books)
+        ? response.data.address_books
+        : [];
+
+      setContacts(nextContacts);
+      setAddressBooks(nextAddressBooks);
+
+      const fallbackIds = nextAddressBooks[0] ? [nextAddressBooks[0].id] : [];
+      const activeId =
+        selectId ??
+        (preserveSelection &&
+        selectedContactId &&
+        nextContacts.some((contact) => contact.id === selectedContactId)
+          ? selectedContactId
+          : nextContacts[0]?.id ?? null);
+
+      setSelectedContactId(activeId);
+
+      const activeContact = nextContacts.find((contact) => contact.id === activeId);
+      setForm(hydrateContactForm(activeContact, fallbackIds));
+    } catch (err) {
+      setError(extractError(err, "Unable to load contacts."));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadContacts({ preserveSelection: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const startNewContact = () => {
+    setSelectedContactId(null);
+    setError("");
+    setForm(createEmptyContactForm(defaultAddressBookIds));
+  };
+
+  const selectContact = (contact) => {
+    setSelectedContactId(contact.id);
+    setError("");
+    setForm(hydrateContactForm(contact, defaultAddressBookIds));
+  };
+
+  const updateFormField = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateBirthdayField = (field, value) => {
+    setForm((prev) => ({
+      ...prev,
+      birthday: {
+        ...prev.birthday,
+        [field]: value,
+      },
+    }));
+  };
+
+  const saveContact = async (event) => {
+    event.preventDefault();
+
+    if (!Array.isArray(form.address_book_ids) || form.address_book_ids.length === 0) {
+      setError("Select at least one address book.");
+      return;
+    }
+
+    setSubmitting(true);
+    setError("");
+
+    const payload = {
+      ...form,
+      address_book_ids: form.address_book_ids.map((id) => Number(id)),
+    };
+    delete payload.id;
+
+    try {
+      const response = form.id
+        ? await api.patch(`/api/contacts/${form.id}`, payload)
+        : await api.post("/api/contacts", payload);
+
+      await loadContacts({
+        preserveSelection: false,
+        selectId: response.data?.id ?? null,
+      });
+    } catch (err) {
+      setError(extractError(err, "Unable to save contact."));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const removeContact = async () => {
+    if (!form.id) {
+      return;
+    }
+
+    if (!window.confirm("Delete this contact from all assigned address books?")) {
+      return;
+    }
+
+    setSubmitting(true);
+    setError("");
+
+    try {
+      await api.delete(`/api/contacts/${form.id}`);
+      await loadContacts({ preserveSelection: false, selectId: null });
+    } catch (err) {
+      setError(extractError(err, "Unable to delete contact."));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const toggleAssignedAddressBook = (addressBookId, checked) => {
+    setForm((prev) => {
+      const current = Array.isArray(prev.address_book_ids)
+        ? [...prev.address_book_ids]
+        : [];
+
+      if (checked) {
+        if (!current.includes(addressBookId)) {
+          current.push(addressBookId);
+        }
+      } else {
+        const next = current.filter((id) => id !== addressBookId);
+        return { ...prev, address_book_ids: next };
+      }
+
+      return { ...prev, address_book_ids: current };
+    });
+  };
+
+  return (
+    <AppShell auth={auth} theme={theme}>
+      <section className="fade-up grid gap-4 md:grid-cols-3">
+        <InfoCard
+          title="Contacts"
+          value={String(contacts.length)}
+          helper="Managed contacts in this web UI."
+        />
+        <InfoCard
+          title="Writable Books"
+          value={String(addressBooks.length)}
+          helper="Address books where you can add or edit contacts."
+        />
+        <InfoCard
+          title="User"
+          value={auth.user.name}
+          helper="Contact ownership is scoped to your account."
+        />
+      </section>
+
+      {error ? (
+        <div className="surface mt-4 rounded-2xl p-3 text-sm text-app-danger">
+          {error}
+        </div>
+      ) : null}
+
+      {loading ? (
+        <FullPageState label="Loading contacts..." compact />
+      ) : (
+        <div className="mt-6 grid gap-6 lg:grid-cols-[18rem_1fr]">
+          <aside className="surface h-fit rounded-3xl p-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-app-base">
+                Contacts
+              </h2>
+              <button className="btn-outline btn-outline-sm" onClick={startNewContact}>
+                New
+              </button>
+            </div>
+            <div className="mt-3 space-y-2">
+              {contacts.length === 0 ? (
+                <p className="text-sm text-app-faint">No contacts yet.</p>
+              ) : (
+                contacts.map((contact) => (
+                  <button
+                    key={contact.id}
+                    type="button"
+                    className={`w-full rounded-xl border px-3 py-2 text-left transition ${
+                      selectedContactId === contact.id
+                        ? "border-teal-500 bg-teal-50 text-slate-900"
+                        : "border-app-edge bg-app-surface text-app-base hover:border-slate-400"
+                    }`}
+                    onClick={() => selectContact(contact)}
+                  >
+                    <p className="truncate text-sm font-semibold">
+                      {contact.display_name}
+                    </p>
+                    <p className="mt-1 text-xs text-app-faint">
+                      {Array.isArray(contact.address_books)
+                        ? `${contact.address_books.length} address book(s)`
+                        : "0 address books"}
+                    </p>
+                  </button>
+                ))
+              )}
+            </div>
+          </aside>
+
+          <section className="surface rounded-3xl p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-semibold text-app-strong">
+                  {form.id ? "Edit Contact" : "New Contact"}
+                </h2>
+                <p className="mt-1 text-sm text-app-muted">
+                  All fields are optional. Address book assignment supports one
+                  or more selections.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {form.id ? (
+                  <button
+                    className="btn-outline btn-outline-sm text-app-danger"
+                    type="button"
+                    onClick={removeContact}
+                    disabled={submitting}
+                  >
+                    Delete
+                  </button>
+                ) : null}
+                <button className="btn" type="submit" form="contact-editor" disabled={submitting || addressBooks.length === 0}>
+                  {submitting ? "Saving..." : "Save Contact"}
+                </button>
+              </div>
+            </div>
+
+            {addressBooks.length === 0 ? (
+              <p className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                You do not currently have write access to any address books.
+              </p>
+            ) : null}
+
+            <form id="contact-editor" className="mt-5 space-y-6" onSubmit={saveContact}>
+              <div className="grid gap-3 md:grid-cols-3">
+                <Field label="Prefix">
+                  <input
+                    className="input"
+                    value={form.prefix}
+                    onChange={(event) => updateFormField("prefix", event.target.value)}
+                  />
+                </Field>
+                <Field label="First Name">
+                  <input
+                    className="input"
+                    value={form.first_name}
+                    onChange={(event) =>
+                      updateFormField("first_name", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field label="Middle Name">
+                  <input
+                    className="input"
+                    value={form.middle_name}
+                    onChange={(event) =>
+                      updateFormField("middle_name", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field label="Last Name">
+                  <input
+                    className="input"
+                    value={form.last_name}
+                    onChange={(event) => updateFormField("last_name", event.target.value)}
+                  />
+                </Field>
+                <Field label="Suffix">
+                  <input
+                    className="input"
+                    value={form.suffix}
+                    onChange={(event) => updateFormField("suffix", event.target.value)}
+                  />
+                </Field>
+                <Field label="Nickname">
+                  <input
+                    className="input"
+                    value={form.nickname}
+                    onChange={(event) =>
+                      updateFormField("nickname", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field label="Maiden Name">
+                  <input
+                    className="input"
+                    value={form.maiden_name}
+                    onChange={(event) =>
+                      updateFormField("maiden_name", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field label="Phonetic First Name">
+                  <input
+                    className="input"
+                    value={form.phonetic_first_name}
+                    onChange={(event) =>
+                      updateFormField("phonetic_first_name", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field label="Phonetic Last Name">
+                  <input
+                    className="input"
+                    value={form.phonetic_last_name}
+                    onChange={(event) =>
+                      updateFormField("phonetic_last_name", event.target.value)
+                    }
+                  />
+                </Field>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <Field label="Company">
+                  <input
+                    className="input"
+                    value={form.company}
+                    onChange={(event) => updateFormField("company", event.target.value)}
+                  />
+                </Field>
+                <Field label="Phonetic Company">
+                  <input
+                    className="input"
+                    value={form.phonetic_company}
+                    onChange={(event) =>
+                      updateFormField("phonetic_company", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field label="Job Title">
+                  <input
+                    className="input"
+                    value={form.job_title}
+                    onChange={(event) =>
+                      updateFormField("job_title", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field label="Department">
+                  <input
+                    className="input"
+                    value={form.department}
+                    onChange={(event) =>
+                      updateFormField("department", event.target.value)
+                    }
+                  />
+                </Field>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <Field label="Pronouns">
+                  <select
+                    className="input"
+                    value={form.pronouns}
+                    onChange={(event) =>
+                      updateFormField("pronouns", event.target.value)
+                    }
+                  >
+                    {PRONOUN_OPTIONS.map((option) => (
+                      <option key={option.value || "none"} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Custom Pronouns">
+                  <input
+                    className="input"
+                    value={form.pronouns_custom}
+                    onChange={(event) =>
+                      updateFormField("pronouns_custom", event.target.value)
+                    }
+                    placeholder="Optional custom value"
+                    disabled={form.pronouns !== "custom" && !form.pronouns_custom}
+                  />
+                </Field>
+                <Field label="Ringtone">
+                  <input
+                    className="input"
+                    value={form.ringtone}
+                    onChange={(event) =>
+                      updateFormField("ringtone", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field label="Text Tone">
+                  <input
+                    className="input"
+                    value={form.text_tone}
+                    onChange={(event) =>
+                      updateFormField("text_tone", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field label="Verification Code">
+                  <input
+                    className="input"
+                    value={form.verification_code}
+                    onChange={(event) =>
+                      updateFormField("verification_code", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field label="Profile">
+                  <input
+                    className="input"
+                    value={form.profile}
+                    onChange={(event) =>
+                      updateFormField("profile", event.target.value)
+                    }
+                  />
+                </Field>
+              </div>
+
+              <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
+                  Birthday
+                </h3>
+                <div className="mt-3 grid gap-3 md:grid-cols-3">
+                  <Field label="Month">
+                    <input
+                      className="input"
+                      type="number"
+                      min="1"
+                      max="12"
+                      value={form.birthday.month}
+                      onChange={(event) =>
+                        updateBirthdayField("month", event.target.value)
+                      }
+                    />
+                  </Field>
+                  <Field label="Day">
+                    <input
+                      className="input"
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={form.birthday.day}
+                      onChange={(event) =>
+                        updateBirthdayField("day", event.target.value)
+                      }
+                    />
+                  </Field>
+                  <Field label="Year">
+                    <input
+                      className="input"
+                      type="number"
+                      min="1"
+                      max="9999"
+                      value={form.birthday.year}
+                      onChange={(event) =>
+                        updateBirthdayField("year", event.target.value)
+                      }
+                    />
+                  </Field>
+                </div>
+              </section>
+
+              <LabeledValueEditor
+                title="Phone"
+                rows={form.phones}
+                setRows={(rows) => updateFormField("phones", rows)}
+                labelOptions={PHONE_LABEL_OPTIONS}
+                valuePlaceholder="Phone number"
+                addLabel="Add phone"
+              />
+              <LabeledValueEditor
+                title="Email"
+                rows={form.emails}
+                setRows={(rows) => updateFormField("emails", rows)}
+                labelOptions={EMAIL_LABEL_OPTIONS}
+                valuePlaceholder="Email address"
+                addLabel="Add email"
+              />
+              <LabeledValueEditor
+                title="URL"
+                rows={form.urls}
+                setRows={(rows) => updateFormField("urls", rows)}
+                labelOptions={URL_LABEL_OPTIONS}
+                valuePlaceholder="https://example.com"
+                addLabel="Add URL"
+              />
+              <LabeledValueEditor
+                title="Instant Message"
+                rows={form.instant_messages}
+                setRows={(rows) => updateFormField("instant_messages", rows)}
+                labelOptions={IM_LABEL_OPTIONS}
+                valuePlaceholder="im:username@example.com"
+                addLabel="Add IM"
+              />
+              <LabeledValueEditor
+                title="Related Name"
+                rows={form.related_names}
+                setRows={(rows) => updateFormField("related_names", rows)}
+                labelOptions={RELATED_LABEL_OPTIONS}
+                valuePlaceholder="Name"
+                addLabel="Add related name"
+              />
+
+              <AddressEditor
+                rows={form.addresses}
+                setRows={(rows) => updateFormField("addresses", rows)}
+              />
+
+              <DateEditor
+                rows={form.dates}
+                setRows={(rows) => updateFormField("dates", rows)}
+              />
+
+              <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
+                  Assign Address Books
+                </h3>
+                <div className="mt-3 space-y-2">
+                  {addressBooks.length === 0 ? (
+                    <p className="text-sm text-app-faint">No writable address books.</p>
+                  ) : (
+                    addressBooks.map((book) => (
+                      <label
+                        key={book.id}
+                        className="flex items-start gap-2 rounded-xl border border-app-edge bg-white px-3 py-2 text-sm"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={form.address_book_ids.includes(book.id)}
+                          onChange={(event) =>
+                            toggleAssignedAddressBook(book.id, event.target.checked)
+                          }
+                        />
+                        <span className="min-w-0">
+                          <span className="block font-medium text-app-strong">
+                            {book.display_name}
+                          </span>
+                          <span className="block text-xs text-app-faint">
+                            /{book.uri} • {book.scope === "owned" ? "Owned" : "Shared"}
+                            {book.owner_name ? ` • ${book.owner_name}` : ""}
+                          </span>
+                        </span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </section>
+            </form>
+          </section>
+        </div>
+      )}
+    </AppShell>
+  );
+}
+
+function LabeledValueEditor({
+  title,
+  rows,
+  setRows,
+  labelOptions,
+  valuePlaceholder,
+  addLabel,
+}) {
+  const safeRows = Array.isArray(rows) ? rows : [];
+
+  const updateRow = (index, field, value) => {
+    const nextRows = safeRows.map((row, rowIndex) =>
+      rowIndex === index ? { ...row, [field]: value } : row,
+    );
+    setRows(nextRows);
+  };
+
+  const addRow = () => {
+    setRows([...safeRows, createEmptyLabeledValue(labelOptions[0]?.value || "other")]);
+  };
+
+  const removeRow = (index) => {
+    setRows(safeRows.filter((_, rowIndex) => rowIndex !== index));
+  };
+
+  return (
+    <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
+          {title}
+        </h3>
+        <button className="btn-outline btn-outline-sm" type="button" onClick={addRow}>
+          {addLabel}
+        </button>
+      </div>
+      <div className="mt-3 space-y-3">
+        {safeRows.length === 0 ? (
+          <p className="text-sm text-app-faint">No entries.</p>
+        ) : (
+          safeRows.map((row, index) => (
+            <div key={`${title}-${index}`} className="rounded-xl border border-app-edge p-3">
+              <div className="grid gap-3 md:grid-cols-[12rem_1fr_auto]">
+                <select
+                  className="input"
+                  value={row.label ?? "other"}
+                  onChange={(event) => updateRow(index, "label", event.target.value)}
+                >
+                  {labelOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  className="input"
+                  value={row.value ?? ""}
+                  onChange={(event) => updateRow(index, "value", event.target.value)}
+                  placeholder={valuePlaceholder}
+                />
+                <button
+                  className="btn-outline btn-outline-sm"
+                  type="button"
+                  onClick={() => removeRow(index)}
+                >
+                  Remove
+                </button>
+              </div>
+              {row.label === "custom" ? (
+                <input
+                  className="input mt-2"
+                  value={row.custom_label ?? ""}
+                  onChange={(event) =>
+                    updateRow(index, "custom_label", event.target.value)
+                  }
+                  placeholder="Custom label"
+                />
+              ) : null}
+            </div>
+          ))
+        )}
+      </div>
+    </section>
+  );
+}
+
+function AddressEditor({ rows, setRows }) {
+  const safeRows = Array.isArray(rows) ? rows : [];
+
+  const updateRow = (index, field, value) => {
+    setRows(
+      safeRows.map((row, rowIndex) =>
+        rowIndex === index ? { ...row, [field]: value } : row,
+      ),
+    );
+  };
+
+  const addRow = () => {
+    setRows([...safeRows, createEmptyAddress("home")]);
+  };
+
+  const removeRow = (index) => {
+    setRows(safeRows.filter((_, rowIndex) => rowIndex !== index));
+  };
+
+  return (
+    <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
+          Address
+        </h3>
+        <button className="btn-outline btn-outline-sm" type="button" onClick={addRow}>
+          Add address
+        </button>
+      </div>
+      <div className="mt-3 space-y-3">
+        {safeRows.length === 0 ? (
+          <p className="text-sm text-app-faint">No addresses.</p>
+        ) : (
+          safeRows.map((row, index) => (
+            <div key={`address-${index}`} className="rounded-xl border border-app-edge p-3">
+              <div className="grid gap-3 md:grid-cols-[12rem_1fr_auto]">
+                <select
+                  className="input"
+                  value={row.label ?? "home"}
+                  onChange={(event) => updateRow(index, "label", event.target.value)}
+                >
+                  {ADDRESS_LABEL_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  className="input"
+                  value={row.street ?? ""}
+                  onChange={(event) => updateRow(index, "street", event.target.value)}
+                  placeholder="Street"
+                />
+                <button
+                  className="btn-outline btn-outline-sm"
+                  type="button"
+                  onClick={() => removeRow(index)}
+                >
+                  Remove
+                </button>
+              </div>
+              {row.label === "custom" ? (
+                <input
+                  className="input mt-2"
+                  value={row.custom_label ?? ""}
+                  onChange={(event) =>
+                    updateRow(index, "custom_label", event.target.value)
+                  }
+                  placeholder="Custom label"
+                />
+              ) : null}
+              <div className="mt-2 grid gap-3 md:grid-cols-2">
+                <input
+                  className="input"
+                  value={row.city ?? ""}
+                  onChange={(event) => updateRow(index, "city", event.target.value)}
+                  placeholder="City"
+                />
+                <input
+                  className="input"
+                  value={row.state ?? ""}
+                  onChange={(event) => updateRow(index, "state", event.target.value)}
+                  placeholder="State / Region"
+                />
+                <input
+                  className="input"
+                  value={row.postal_code ?? ""}
+                  onChange={(event) =>
+                    updateRow(index, "postal_code", event.target.value)
+                  }
+                  placeholder="Postal code"
+                />
+                <input
+                  className="input"
+                  value={row.country ?? ""}
+                  onChange={(event) => updateRow(index, "country", event.target.value)}
+                  placeholder="Country"
+                />
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </section>
+  );
+}
+
+function DateEditor({ rows, setRows }) {
+  const safeRows = Array.isArray(rows) ? rows : [];
+
+  const updateRow = (index, field, value) => {
+    setRows(
+      safeRows.map((row, rowIndex) =>
+        rowIndex === index ? { ...row, [field]: value } : row,
+      ),
+    );
+  };
+
+  const addRow = () => {
+    setRows([...safeRows, createEmptyDate("other")]);
+  };
+
+  const removeRow = (index) => {
+    setRows(safeRows.filter((_, rowIndex) => rowIndex !== index));
+  };
+
+  return (
+    <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
+          Date
+        </h3>
+        <button className="btn-outline btn-outline-sm" type="button" onClick={addRow}>
+          Add date
+        </button>
+      </div>
+      <div className="mt-3 space-y-3">
+        {safeRows.length === 0 ? (
+          <p className="text-sm text-app-faint">No dates.</p>
+        ) : (
+          safeRows.map((row, index) => (
+            <div key={`date-${index}`} className="rounded-xl border border-app-edge p-3">
+              <div className="grid gap-3 md:grid-cols-[12rem_1fr_auto]">
+                <select
+                  className="input"
+                  value={row.label ?? "other"}
+                  onChange={(event) => updateRow(index, "label", event.target.value)}
+                >
+                  {DATE_LABEL_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <input
+                    className="input"
+                    type="number"
+                    min="1"
+                    max="12"
+                    value={row.month ?? ""}
+                    placeholder="MM"
+                    onChange={(event) => updateRow(index, "month", event.target.value)}
+                  />
+                  <input
+                    className="input"
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={row.day ?? ""}
+                    placeholder="DD"
+                    onChange={(event) => updateRow(index, "day", event.target.value)}
+                  />
+                  <input
+                    className="input"
+                    type="number"
+                    min="1"
+                    max="9999"
+                    value={row.year ?? ""}
+                    placeholder="YYYY"
+                    onChange={(event) => updateRow(index, "year", event.target.value)}
+                  />
+                </div>
+                <button
+                  className="btn-outline btn-outline-sm"
+                  type="button"
+                  onClick={() => removeRow(index)}
+                >
+                  Remove
+                </button>
+              </div>
+              {row.label === "custom" ? (
+                <input
+                  className="input mt-2"
+                  value={row.custom_label ?? ""}
+                  onChange={(event) =>
+                    updateRow(index, "custom_label", event.target.value)
+                  }
+                  placeholder="Custom label"
+                />
+              ) : null}
+            </div>
+          ))
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -1823,6 +2926,12 @@ function AppShell({ auth, theme, children }) {
                 to="/"
               >
                 Dashboard
+              </Link>
+              <Link
+                className={location.pathname === "/contacts" ? "tab tab-active" : "tab"}
+                to="/contacts"
+              >
+                Contacts
               </Link>
               <Link
                 className={`${location.pathname === "/profile" ? "tab tab-active" : "tab"} inline-flex items-center gap-1.5`}

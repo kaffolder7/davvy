@@ -24,6 +24,10 @@ All UI endpoints are defined in `routes/web.php`. Most return JSON; export endpo
 - `POST /api/address-books`
 - `PATCH /api/address-books/{addressBook}`
 - `DELETE /api/address-books/{addressBook}`
+- `GET /api/contacts`
+- `POST /api/contacts`
+- `PATCH /api/contacts/{contact}`
+- `DELETE /api/contacts/{contact}`
 - `GET /api/shares`
 - `POST /api/shares`
 - `DELETE /api/shares/{share}`
