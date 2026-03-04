@@ -2432,7 +2432,10 @@ function ContactsPage({ auth, theme }) {
                       />
                     ) : null}
 
-                    <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
+                    <section className="rounded-2xl border border-app-accent-edge bg-app-surface p-4 ring-1 ring-teal-500/10">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-app-accent">
+                        Calendar Behavior
+                      </p>
                       <label className="inline-flex items-center gap-2 text-sm font-semibold text-app-base">
                         <input
                           type="checkbox"
