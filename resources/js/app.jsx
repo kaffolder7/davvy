@@ -1126,6 +1126,39 @@ function deriveOptionalFieldVisibility(form) {
   }).map((field) => field.id);
 }
 
+function optionalFieldHasValue(form, fieldId) {
+  if (fieldId === "instant_messages") {
+    return hasValueRowContent(form.instant_messages);
+  }
+
+  if (fieldId === "dates") {
+    return hasDateRowContent(form.dates);
+  }
+
+  if (fieldId === "pronouns_custom") {
+    return hasTextValue(form.pronouns_custom);
+  }
+
+  return hasTextValue(form[fieldId]);
+}
+
+function clearOptionalFieldValue(form, fieldId) {
+  switch (fieldId) {
+    case "instant_messages":
+      return { ...form, instant_messages: [createEmptyLabeledValue("other")] };
+    case "dates":
+      return { ...form, dates: [createEmptyDate("anniversary")] };
+    case "pronouns_custom":
+      return {
+        ...form,
+        pronouns_custom: "",
+        pronouns: form.pronouns === "custom" ? "" : form.pronouns,
+      };
+    default:
+      return { ...form, [fieldId]: "" };
+  }
+}
+
 function createEmptyLabeledValue(label = "other") {
   return { label, custom_label: "", value: "" };
 }
@@ -1290,6 +1323,7 @@ function ContactsPage({ auth, theme }) {
   const [form, setForm] = useState(createEmptyContactForm());
   const [visibleOptionalFields, setVisibleOptionalFields] = useState([]);
   const [fieldToAdd, setFieldToAdd] = useState(OPTIONAL_CONTACT_FIELDS[0]?.id ?? "");
+  const [pendingHideFieldId, setPendingHideFieldId] = useState(null);
 
   const defaultAddressBookIds = useMemo(
     () => (addressBooks[0] ? [addressBooks[0].id] : []),
@@ -1472,7 +1506,35 @@ function ContactsPage({ auth, theme }) {
   };
 
   const hideOptionalField = (fieldId) => {
+    if (!fieldId) {
+      return;
+    }
+
+    if (optionalFieldHasValue(form, fieldId)) {
+      setPendingHideFieldId(fieldId);
+      return;
+    }
+
     setVisibleOptionalFields((prev) => prev.filter((id) => id !== fieldId));
+  };
+
+  const resolveHideOptionalField = (clearValue) => {
+    if (!pendingHideFieldId) {
+      return;
+    }
+
+    const hideFieldId = pendingHideFieldId;
+
+    if (clearValue) {
+      setForm((prev) => clearOptionalFieldValue(prev, hideFieldId));
+    }
+
+    setVisibleOptionalFields((prev) => prev.filter((id) => id !== hideFieldId));
+    setPendingHideFieldId(null);
+  };
+
+  const cancelHideOptionalField = () => {
+    setPendingHideFieldId(null);
   };
 
   const isOptionalFieldVisible = (fieldId) =>
@@ -1480,6 +1542,9 @@ function ContactsPage({ auth, theme }) {
   const selectedAddressBookCount = Array.isArray(form.address_book_ids)
     ? form.address_book_ids.length
     : 0;
+  const pendingHideFieldLabel =
+    OPTIONAL_CONTACT_FIELDS.find((field) => field.id === pendingHideFieldId)?.label ??
+    pendingHideFieldId;
 
   return (
     <AppShell auth={auth} theme={theme}>
@@ -1530,8 +1595,8 @@ function ContactsPage({ auth, theme }) {
                     type="button"
                     className={`w-full rounded-xl border px-3 py-2 text-left transition ${
                       selectedContactId === contact.id
-                        ? "border-teal-500 bg-teal-50 text-slate-900"
-                        : "border-app-edge bg-app-surface text-app-base hover:border-slate-400"
+                        ? "border-app-accent-edge bg-app-surface text-app-strong ring-1 ring-teal-500/30"
+                        : "border-app-edge bg-app-surface text-app-base hover:border-app-accent-edge"
                     }`}
                     onClick={() => selectContact(contact)}
                   >
@@ -2023,10 +2088,65 @@ function ContactsPage({ auth, theme }) {
                   )}
                 </div>
               </section>
+
+              <section className="sticky bottom-3 z-20">
+                <div className="surface flex items-center justify-end gap-2 rounded-2xl px-3 py-2 shadow-lg shadow-black/10">
+                  {form.id ? (
+                    <button
+                      className="btn-outline btn-outline-sm text-app-danger"
+                      type="button"
+                      onClick={removeContact}
+                      disabled={submitting}
+                    >
+                      Delete
+                    </button>
+                  ) : null}
+                  <button
+                    className="btn"
+                    type="submit"
+                    disabled={submitting || addressBooks.length === 0}
+                  >
+                    {submitting ? "Saving..." : "Save Contact"}
+                  </button>
+                </div>
+              </section>
             </form>
           </section>
         </div>
       )}
+
+      {pendingHideFieldId ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="surface w-full max-w-md rounded-2xl p-5">
+            <h3 className="text-base font-semibold text-app-strong">
+              Hide {pendingHideFieldLabel}?
+            </h3>
+            <p className="mt-2 text-sm text-app-muted">
+              This field currently has data. Keep the value hidden or clear it before
+              hiding the field.
+            </p>
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
+              <button
+                className="btn-outline btn-outline-sm"
+                type="button"
+                onClick={cancelHideOptionalField}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-outline btn-outline-sm"
+                type="button"
+                onClick={() => resolveHideOptionalField(false)}
+              >
+                Keep Hidden Value
+              </button>
+              <button className="btn" type="button" onClick={() => resolveHideOptionalField(true)}>
+                Clear and Hide
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </AppShell>
   );
 }
