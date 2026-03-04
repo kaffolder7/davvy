@@ -47,6 +47,8 @@ When an `app_settings` key exists, it overrides env defaults.
 | `ENABLE_CONTACT_MANAGEMENT` | `false` | Enables managed contacts UI/API |
 | `CONTACT_CHANGE_REQUEST_RETENTION_DAYS` | `90` | Purge horizon for applied/denied queue history |
 | `DAV_LOG_CLIENT_TRAFFIC` | `false` | Debug logging for targeted DAV traffic patterns |
+| `DAV_AUTH_THROTTLE_MAX_ATTEMPTS` | `20` | Failed DAV auth attempts allowed per source key (`username + IP`) before temporary lockout |
+| `DAV_AUTH_THROTTLE_DECAY_SECONDS` | `60` | Lockout window (seconds) for DAV failed-auth throttling |
 
 ### Startup Bootstrap Controls
 
