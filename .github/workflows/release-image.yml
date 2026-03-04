@@ -19,8 +19,106 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  php-quality-gate:
+    name: Release Gate - PHP quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          tools: composer:v2
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer downloads
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install PHP dependencies (no scripts)
+        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts
+
+      - name: Lint PHP files
+        run: |
+          find app bootstrap config database routes tests -type f -name '*.php' -print0 | xargs -0 -r -n1 -P4 php -l
+
+      - name: Run Pint in test mode
+        run: ./vendor/bin/pint --test
+
+  dockerized-tests-gate:
+    name: Release Gate - Dockerized tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Cache Composer downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache/files
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Ensure Composer cache directory exists
+        run: mkdir -p "$HOME/.composer/cache/files"
+
+      - name: Run Dockerized test suite
+        run: |
+          docker compose run --build --rm \
+            --user root \
+            -e COMPOSER_CACHE_DIR=/tmp/composer-cache \
+            -v "$HOME/.composer/cache/files:/tmp/composer-cache" \
+            --entrypoint sh app -lc "cp .env.example .env && composer install --prefer-dist --no-interaction && APP_ENV=testing APP_KEY='base64:MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=' DB_CONNECTION=sqlite DB_DATABASE=':memory:' CACHE_STORE=array SESSION_DRIVER=array QUEUE_CONNECTION=sync MAIL_MAILER=array php artisan test"
+
+      - name: Tear down Docker services
+        if: always()
+        run: docker compose down --volumes --remove-orphans
+
+  container-build-gate:
+    name: Release Gate - Container build smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image smoke test (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   publish:
     name: Build and Publish GHCR Image
+    needs:
+      - php-quality-gate
+      - dockerized-tests-gate
+      - container-build-gate
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
