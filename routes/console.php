@@ -16,6 +16,11 @@ Artisan::command('app:preflight', function (): int {
     $secureCookieEnabled = filter_var(env('SESSION_SECURE_COOKIE', false), FILTER_VALIDATE_BOOL);
     $defaultAdminEmail = trim((string) env('DEFAULT_ADMIN_EMAIL', ''));
     $defaultAdminPassword = (string) env('DEFAULT_ADMIN_PASSWORD', '');
+    $corsAllowedOrigins = array_values(array_filter(
+        (array) config('cors.allowed_origins', []),
+        fn (mixed $origin): bool => is_string($origin) && trim($origin) !== ''
+    ));
+    $corsSupportsCredentials = (bool) config('cors.supports_credentials', false);
 
     $errors = [];
     $warnings = [];
@@ -43,6 +48,10 @@ Artisan::command('app:preflight', function (): int {
 
         if ($dbConnection === 'sqlite') {
             $errors[] = 'DB_CONNECTION=sqlite is not recommended for production.';
+        }
+
+        if ($corsSupportsCredentials && in_array('*', $corsAllowedOrigins, true)) {
+            $errors[] = 'CORS_ALLOWED_ORIGINS must not include "*" when CORS_SUPPORTS_CREDENTIALS=true.';
         }
 
         if ($runDbSeed) {

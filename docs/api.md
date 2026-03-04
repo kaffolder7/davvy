@@ -8,7 +8,8 @@ Davvy's web API is served from Laravel web routes (`routes/web.php`) and primari
 - Request/response format: JSON (except export and DAV endpoints)
 - Auth for `/api/*`:
   - Browser session cookie (`withCredentials`)
-  - CSRF token header for state-changing web requests
+  - CSRF token header for state-changing web requests (`X-CSRF-TOKEN`)
+  - CORS is same-origin by default; configure explicit origins when cross-origin access is required
 - Auth for `/dav/*`:
   - HTTP Basic auth (email + password)
 - Common response codes:
