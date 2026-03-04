@@ -14,6 +14,7 @@ class ManagedContactSyncService
 {
     public function __construct(
         private readonly ContactVCardService $vCardService,
+        private readonly ContactMilestoneCalendarService $milestoneCalendarService,
     ) {}
 
     public function syncCardUpsert(AddressBook $addressBook, Card $card, ?User $actor = null): void
@@ -161,6 +162,8 @@ class ManagedContactSyncService
                 $this->deleteContactIfOrphaned($oldContactId);
             }
         });
+
+        $this->syncMilestoneCalendarsForAddressBooks([$addressBook->id]);
     }
 
     public function syncCardDeleted(Card $card): void
@@ -169,7 +172,9 @@ class ManagedContactSyncService
             return;
         }
 
-        DB::transaction(function () use ($card): void {
+        $affectedAddressBookId = null;
+
+        DB::transaction(function () use ($card, &$affectedAddressBookId): void {
             $assignment = ContactAddressBookAssignment::query()
                 ->where('card_id', $card->id)
                 ->first();
@@ -178,10 +183,15 @@ class ManagedContactSyncService
                 return;
             }
 
+            $affectedAddressBookId = (int) $assignment->address_book_id;
             $contactId = (int) $assignment->contact_id;
             $assignment->delete();
             $this->deleteContactIfOrphaned($contactId);
         });
+
+        if ($affectedAddressBookId !== null) {
+            $this->syncMilestoneCalendarsForAddressBooks([$affectedAddressBookId]);
+        }
     }
 
     private function deleteContactIfOrphaned(int $contactId): void
@@ -226,5 +236,17 @@ class ManagedContactSyncService
         $normalized = trim((string) ($value ?? ''));
 
         return $normalized === '' ? null : $normalized;
+    }
+
+    /**
+     * @param  array<int, int>  $addressBookIds
+     */
+    private function syncMilestoneCalendarsForAddressBooks(array $addressBookIds): void
+    {
+        try {
+            $this->milestoneCalendarService->syncAddressBooksByIds($addressBookIds);
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
     }
 }

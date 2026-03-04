@@ -675,6 +675,25 @@ function DashboardPage({ auth, theme }) {
     }
   };
 
+  const saveAddressBookMilestones = async (addressBookId, payload) => {
+    try {
+      setError("");
+      await api.patch(
+        `/api/address-books/${addressBookId}/milestone-calendars`,
+        payload,
+      );
+      await loadDashboard({ withLoading: false });
+    } catch (err) {
+      setError(
+        extractError(
+          err,
+          "Unable to update birthday/anniversary calendar settings.",
+        ),
+      );
+      throw err;
+    }
+  };
+
   const shareableResourceOptions =
     shareForm.resource_type === "calendar"
       ? data.owned.calendars.filter((item) => item.is_sharable)
@@ -782,6 +801,12 @@ function DashboardPage({ auth, theme }) {
             onRename={(id, displayName) =>
               renameOwnedResource("address-book", id, displayName)
             }
+            renderOwnedItemExtra={(item) => (
+              <AddressBookMilestoneControls
+                item={item}
+                onSave={saveAddressBookMilestones}
+              />
+            )}
           />
         </div>
       ) : null}
@@ -3102,6 +3127,160 @@ function DateEditor({ rows, setRows }) {
   );
 }
 
+function AddressBookMilestoneControls({ item, onSave }) {
+  const birthdaySettings = item?.milestone_calendars?.birthdays ?? {};
+  const anniversarySettings = item?.milestone_calendars?.anniversaries ?? {};
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    birthdaysEnabled: !!birthdaySettings.enabled,
+    anniversariesEnabled: !!anniversarySettings.enabled,
+    birthdayCalendarName: birthdaySettings.custom_name ?? "",
+    anniversaryCalendarName: anniversarySettings.custom_name ?? "",
+  });
+
+  useEffect(() => {
+    setForm({
+      birthdaysEnabled: !!birthdaySettings.enabled,
+      anniversariesEnabled: !!anniversarySettings.enabled,
+      birthdayCalendarName: birthdaySettings.custom_name ?? "",
+      anniversaryCalendarName: anniversarySettings.custom_name ?? "",
+    });
+  }, [
+    item?.id,
+    birthdaySettings.enabled,
+    birthdaySettings.custom_name,
+    anniversarySettings.enabled,
+    anniversarySettings.custom_name,
+  ]);
+
+  const isDirty =
+    form.birthdaysEnabled !== !!birthdaySettings.enabled ||
+    form.anniversariesEnabled !== !!anniversarySettings.enabled ||
+    form.birthdayCalendarName !== (birthdaySettings.custom_name ?? "") ||
+    form.anniversaryCalendarName !== (anniversarySettings.custom_name ?? "");
+
+  const submit = async (event) => {
+    event.preventDefault();
+    if (!isDirty || saving) {
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      await onSave(item.id, {
+        birthdays_enabled: form.birthdaysEnabled,
+        anniversaries_enabled: form.anniversariesEnabled,
+        birthday_calendar_name: form.birthdayCalendarName.trim() || null,
+        anniversary_calendar_name: form.anniversaryCalendarName.trim() || null,
+      });
+    } catch {
+      // Errors are surfaced by DashboardPage.
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form className="space-y-3" onSubmit={submit}>
+      <div className="rounded-xl border border-app-edge bg-app-surface p-3">
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-app-base">
+          Contact Milestone Calendars
+        </h4>
+        <p className="mt-1 text-[11px] text-app-faint">
+          Enable per-address-book Birthday and Anniversary calendar syncing.
+        </p>
+
+        <div className="mt-3 space-y-3">
+          <div className="space-y-1.5">
+            <div className="grid gap-2 sm:grid-cols-[auto_1fr] sm:items-center">
+              <label className="inline-flex items-center gap-2 text-xs font-semibold text-app-base">
+                <input
+                  type="checkbox"
+                  checked={form.birthdaysEnabled}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      birthdaysEnabled: event.target.checked,
+                    }))
+                  }
+                />
+                Birthdays
+              </label>
+              <input
+                className="input h-8 px-2 py-1 text-sm"
+                value={form.birthdayCalendarName}
+                onChange={(event) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    birthdayCalendarName: event.target.value,
+                  }))
+                }
+                placeholder={
+                  birthdaySettings.default_name ??
+                  `${item.display_name} Birthdays`
+                }
+              />
+            </div>
+            <p className="text-[11px] text-app-faint">
+              {birthdaySettings.calendar_id
+                ? `Calendar: ${birthdaySettings.calendar_name}`
+                : "Calendar will be created when enabled."}
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="grid gap-2 sm:grid-cols-[auto_1fr] sm:items-center">
+              <label className="inline-flex items-center gap-2 text-xs font-semibold text-app-base">
+                <input
+                  type="checkbox"
+                  checked={form.anniversariesEnabled}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      anniversariesEnabled: event.target.checked,
+                    }))
+                  }
+                />
+                Anniversaries
+              </label>
+              <input
+                className="input h-8 px-2 py-1 text-sm"
+                value={form.anniversaryCalendarName}
+                onChange={(event) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    anniversaryCalendarName: event.target.value,
+                  }))
+                }
+                placeholder={
+                  anniversarySettings.default_name ??
+                  `${item.display_name} Anniversaries`
+                }
+              />
+            </div>
+            <p className="text-[11px] text-app-faint">
+              {anniversarySettings.calendar_id
+                ? `Calendar: ${anniversarySettings.calendar_name}`
+                : "Calendar will be created when enabled."}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-3 flex justify-end">
+          <button
+            className="btn-outline btn-outline-sm"
+            type="submit"
+            disabled={!isDirty || saving}
+          >
+            {saving ? "Saving..." : "Save Milestones"}
+          </button>
+        </div>
+      </div>
+    </form>
+  );
+}
+
 function ResourcePanel({
   title,
   createLabel,
@@ -3117,6 +3296,7 @@ function ResourcePanel({
   onExportItem,
   onToggle,
   onRename,
+  renderOwnedItemExtra = null,
 }) {
   const [editingItemId, setEditingItemId] = useState(null);
   const [nameDraft, setNameDraft] = useState("");
@@ -3290,6 +3470,11 @@ function ResourcePanel({
                   </label>
                 </div>
               </div>
+              {renderOwnedItemExtra ? (
+                <div className="mt-3 border-t border-app-edge pt-3">
+                  {renderOwnedItemExtra(item)}
+                </div>
+              ) : null}
             </div>
           ))
         )}

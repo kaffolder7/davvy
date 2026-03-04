@@ -44,6 +44,11 @@ class AddressBook extends Model
         return $this->hasMany(ContactAddressBookAssignment::class);
     }
 
+    public function milestoneCalendars(): HasMany
+    {
+        return $this->hasMany(AddressBookContactMilestoneCalendar::class);
+    }
+
     public function contacts(): HasManyThrough
     {
         return $this->hasManyThrough(
