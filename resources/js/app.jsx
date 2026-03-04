@@ -2413,8 +2413,8 @@ function ContactsPage({ auth, theme }) {
                 ) : null}
               </section>
 
-              <section className="sticky bottom-3 z-20">
-                <div className="surface flex items-center justify-end gap-2 rounded-2xl px-3 py-2 shadow-lg shadow-black/10">
+              <section className="sticky bottom-2 z-20 sm:bottom-3">
+                <div className="surface flex items-center justify-end gap-1.5 rounded-xl px-2.5 py-1.5 shadow-lg shadow-black/10 sm:gap-2 sm:rounded-2xl sm:px-3 sm:py-2">
                   {form.id ? (
                     <button
                       className="btn-outline btn-outline-sm text-app-danger"
@@ -2426,7 +2426,7 @@ function ContactsPage({ auth, theme }) {
                     </button>
                   ) : null}
                   <button
-                    className="btn"
+                    className="btn !px-3 !py-1.5 sm:!px-4 sm:!py-2"
                     type="submit"
                     disabled={
                       submitting ||
