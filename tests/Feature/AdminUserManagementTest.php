@@ -2,6 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\AddressBook;
+use App\Models\AddressBookContactMilestoneCalendar;
+use App\Models\Calendar;
+use App\Models\CalendarObject;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -108,5 +112,105 @@ class AdminUserManagementTest extends TestCase
             'message',
             'Contact management schema is not available. Run migrations before enabling.',
         );
+    }
+
+    public function test_admin_can_purge_generated_milestone_calendars(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $owner = User::factory()->create();
+        $addressBook = AddressBook::factory()->create([
+            'owner_id' => $owner->id,
+            'display_name' => 'Contacts',
+            'uri' => 'milestone-purge-test-book',
+        ]);
+
+        $birthdayCalendar = Calendar::factory()->create([
+            'owner_id' => $owner->id,
+            'display_name' => 'Contacts Birthdays',
+        ]);
+        $anniversaryCalendar = Calendar::factory()->create([
+            'owner_id' => $owner->id,
+            'display_name' => 'Contacts Anniversaries',
+        ]);
+
+        $birthdaySetting = AddressBookContactMilestoneCalendar::query()->create([
+            'address_book_id' => $addressBook->id,
+            'milestone_type' => AddressBookContactMilestoneCalendar::TYPE_BIRTHDAY,
+            'enabled' => true,
+            'calendar_id' => $birthdayCalendar->id,
+            'custom_display_name' => null,
+        ]);
+        $anniversarySetting = AddressBookContactMilestoneCalendar::query()->create([
+            'address_book_id' => $addressBook->id,
+            'milestone_type' => AddressBookContactMilestoneCalendar::TYPE_ANNIVERSARY,
+            'enabled' => true,
+            'calendar_id' => $anniversaryCalendar->id,
+            'custom_display_name' => 'Marriage Milestones',
+        ]);
+
+        CalendarObject::query()->create([
+            'calendar_id' => $birthdayCalendar->id,
+            'uri' => 'davvy-milestone-birthday-contact-1.ics',
+            'etag' => md5('birthday-1'),
+            'size' => 10,
+            'component_type' => 'VEVENT',
+            'data' => 'BEGIN:VCALENDAR',
+        ]);
+        CalendarObject::query()->create([
+            'calendar_id' => $anniversaryCalendar->id,
+            'uri' => 'davvy-milestone-anniversary-contact-1-1.ics',
+            'etag' => md5('anniversary-1'),
+            'size' => 11,
+            'component_type' => 'VEVENT',
+            'data' => 'BEGIN:VCALENDAR',
+        ]);
+
+        $response = $this
+            ->actingAs($admin)
+            ->postJson('/api/admin/contact-milestones/purge-generated-calendars')
+            ->assertOk();
+
+        $response->assertJsonPath('purged_calendar_count', 2);
+        $response->assertJsonPath('purged_event_count', 2);
+        $response->assertJsonPath('disabled_setting_count', 2);
+
+        $this->assertDatabaseMissing('calendars', ['id' => $birthdayCalendar->id]);
+        $this->assertDatabaseMissing('calendars', ['id' => $anniversaryCalendar->id]);
+        $this->assertDatabaseMissing('calendar_objects', ['calendar_id' => $birthdayCalendar->id]);
+        $this->assertDatabaseMissing('calendar_objects', ['calendar_id' => $anniversaryCalendar->id]);
+        $this->assertDatabaseHas('address_book_contact_milestone_calendars', [
+            'id' => $birthdaySetting->id,
+            'enabled' => false,
+            'calendar_id' => null,
+        ]);
+        $this->assertDatabaseHas('address_book_contact_milestone_calendars', [
+            'id' => $anniversarySetting->id,
+            'enabled' => false,
+            'calendar_id' => null,
+            'custom_display_name' => 'Marriage Milestones',
+        ]);
+    }
+
+    public function test_regular_user_cannot_purge_generated_milestone_calendars(): void
+    {
+        $regular = User::factory()->create();
+
+        $this->actingAs($regular)
+            ->postJson('/api/admin/contact-milestones/purge-generated-calendars')
+            ->assertForbidden();
+    }
+
+    public function test_purging_generated_milestone_calendars_requires_schema_tables(): void
+    {
+        $admin = User::factory()->admin()->create();
+        Schema::dropIfExists('address_book_contact_milestone_calendars');
+
+        $this->actingAs($admin)
+            ->postJson('/api/admin/contact-milestones/purge-generated-calendars')
+            ->assertStatus(422)
+            ->assertJsonPath(
+                'message',
+                'Milestone calendar schema is not available. Run migrations before purging milestone calendars.',
+            );
     }
 }

@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\Dav\DavSyncService;
 use App\Services\Dav\IcsValidator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Throwable;
@@ -171,6 +172,71 @@ class ContactMilestoneCalendarService
         AddressBookContactMilestoneCalendar::query()
             ->where('address_book_id', $addressBook->id)
             ->delete();
+    }
+
+    /**
+     * @return array{purged_calendar_count:int,purged_event_count:int,disabled_setting_count:int}
+     */
+    public function purgeGeneratedCalendarsAndDisableSettings(): array
+    {
+        if (! Schema::hasTable('address_book_contact_milestone_calendars')) {
+            abort(422, 'Milestone calendar schema is not available. Run migrations before purging milestone calendars.');
+        }
+
+        return DB::transaction(function (): array {
+            $calendarIds = AddressBookContactMilestoneCalendar::query()
+                ->whereNotNull('calendar_id')
+                ->pluck('calendar_id')
+                ->map(fn (mixed $id): int => (int) $id)
+                ->filter(fn (int $id): bool => $id > 0)
+                ->unique()
+                ->values()
+                ->all();
+
+            $purgedEventCount = $calendarIds === []
+                ? 0
+                : CalendarObject::query()
+                    ->whereIn('calendar_id', $calendarIds)
+                    ->count();
+
+            $purgedCalendarCount = count($calendarIds);
+
+            if ($calendarIds !== []) {
+                Calendar::query()
+                    ->whereIn('id', $calendarIds)
+                    ->get()
+                    ->each(function (Calendar $calendar): void {
+                        $calendar->delete();
+                    });
+
+                DB::table('dav_resource_sync_changes')
+                    ->where('resource_type', ShareResourceType::Calendar->value)
+                    ->whereIn('resource_id', $calendarIds)
+                    ->delete();
+
+                DB::table('dav_resource_sync_states')
+                    ->where('resource_type', ShareResourceType::Calendar->value)
+                    ->whereIn('resource_id', $calendarIds)
+                    ->delete();
+            }
+
+            $disabledSettingCount = AddressBookContactMilestoneCalendar::query()
+                ->where(function ($query): void {
+                    $query->where('enabled', true)
+                        ->orWhereNotNull('calendar_id');
+                })
+                ->update([
+                    'enabled' => false,
+                    'calendar_id' => null,
+                    'updated_at' => now(),
+                ]);
+
+            return [
+                'purged_calendar_count' => $purgedCalendarCount,
+                'purged_event_count' => $purgedEventCount,
+                'disabled_setting_count' => $disabledSettingCount,
+            ];
+        });
     }
 
     /**

@@ -86,6 +86,7 @@ Route::middleware('auth')->group(function (): void {
         Route::patch('/api/admin/settings/owner-share-management', [AdminController::class, 'setOwnerShareManagementSetting']);
         Route::patch('/api/admin/settings/dav-compatibility-mode', [AdminController::class, 'setDavCompatibilityModeSetting']);
         Route::patch('/api/admin/settings/contact-management', [AdminController::class, 'setContactManagementSetting']);
+        Route::post('/api/admin/contact-milestones/purge-generated-calendars', [AdminController::class, 'purgeGeneratedMilestoneCalendars']);
 
         Route::get('/api/admin/shares', [ShareController::class, 'index']);
         Route::post('/api/admin/shares', [ShareController::class, 'upsert']);

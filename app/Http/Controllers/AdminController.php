@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\Role;
 use App\Models\AddressBook;
 use App\Models\Calendar;
+use App\Services\Contacts\ContactMilestoneCalendarService;
 use App\Models\User;
 use App\Services\RegistrationSettingsService;
 use Illuminate\Http\JsonResponse;
@@ -14,7 +15,10 @@ use Illuminate\Validation\Rules\Password;
 
 class AdminController extends Controller
 {
-    public function __construct(private readonly RegistrationSettingsService $registrationSettings) {}
+    public function __construct(
+        private readonly RegistrationSettingsService $registrationSettings,
+        private readonly ContactMilestoneCalendarService $milestoneCalendarService,
+    ) {}
 
     public function users(): JsonResponse
     {
@@ -137,5 +141,12 @@ class AdminController extends Controller
         return response()->json([
             'enabled' => $this->registrationSettings->isContactManagementEnabled(),
         ]);
+    }
+
+    public function purgeGeneratedMilestoneCalendars(): JsonResponse
+    {
+        $summary = $this->milestoneCalendarService->purgeGeneratedCalendarsAndDisableSettings();
+
+        return response()->json($summary);
     }
 }
