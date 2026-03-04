@@ -3214,7 +3214,7 @@ function AddressBookMilestoneControls({ item, onSave }) {
       (nameDrafts[type] ?? "").trim() !== currentCustom.trim() && !isSaving;
 
     return (
-      <div className="rounded-lg border border-app-edge px-2 py-1.5" key={type}>
+      <div className="py-1.5" key={type}>
         <div className="flex items-center gap-2">
           <label className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-app-base">
             <input
@@ -3299,7 +3299,7 @@ function AddressBookMilestoneControls({ item, onSave }) {
       <p className="text-[11px] font-semibold uppercase tracking-wide text-app-base">
         Milestone Calendars
       </p>
-      <div className="mt-2 space-y-1.5">
+      <div className="mt-2 divide-y divide-app-edge">
         {renderRow(
           "birthdays",
           "Birthdays",
