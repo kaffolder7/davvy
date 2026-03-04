@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Calendar extends Model
 {
@@ -44,5 +45,10 @@ class Calendar extends Model
     {
         return $this->hasMany(ResourceShare::class, 'resource_id')
             ->where('resource_type', 'calendar');
+    }
+
+    public function milestoneSetting(): HasOne
+    {
+        return $this->hasOne(AddressBookContactMilestoneCalendar::class, 'calendar_id');
     }
 }

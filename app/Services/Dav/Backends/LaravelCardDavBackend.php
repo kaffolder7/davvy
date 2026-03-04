@@ -8,6 +8,7 @@ use App\Models\AddressBook;
 use App\Models\Card;
 use App\Models\ResourceShare;
 use App\Services\AddressBookMirrorService;
+use App\Services\Contacts\ContactMilestoneCalendarService;
 use App\Services\Contacts\ManagedContactSyncService;
 use App\Services\Dav\DavSyncService;
 use App\Services\Dav\VCardValidator;
@@ -34,6 +35,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
         private readonly DavSyncService $syncService,
         private readonly AddressBookMirrorService $mirrorService,
         private readonly ManagedContactSyncService $managedContactSync,
+        private readonly ContactMilestoneCalendarService $milestoneCalendarService,
     ) {}
 
     public function getAddressBooksForUser($principalUri): array
@@ -87,6 +89,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
             }
 
             $addressBook->save();
+            $this->milestoneCalendarService->handleAddressBookRenamed($addressBook->fresh());
 
             return true;
         });
@@ -122,6 +125,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
 
         $this->assertDeletableAddressBook($addressBook);
 
+        $this->milestoneCalendarService->handleAddressBookDeleted($addressBook);
         $this->mirrorService->handleSourceAddressBookDeleted($addressBook->id);
         $addressBook->delete();
     }

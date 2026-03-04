@@ -8,6 +8,7 @@ use App\Models\Calendar;
 use App\Models\ResourceShare;
 use App\Models\User;
 use App\Services\AddressBookMirrorService;
+use App\Services\Contacts\ContactMilestoneCalendarService;
 use App\Services\RegistrationSettingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ class DashboardController extends Controller
     public function __construct(
         private readonly RegistrationSettingsService $settings,
         private readonly AddressBookMirrorService $mirrorService,
+        private readonly ContactMilestoneCalendarService $milestoneCalendarService,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -40,10 +42,15 @@ class DashboardController extends Controller
             ])
             ->all();
 
-        $ownedAddressBooks = AddressBook::query()
+        $ownedAddressBookModels = AddressBook::query()
             ->where('owner_id', $user->id)
             ->orderBy('display_name')
-            ->get()
+            ->get();
+
+        $milestoneCalendarSettings = $this->milestoneCalendarService
+            ->settingsIndexForAddressBooks($ownedAddressBookModels);
+
+        $ownedAddressBooks = $ownedAddressBookModels
             ->map(fn (AddressBook $addressBook): array => [
                 'id' => $addressBook->id,
                 'uri' => $addressBook->uri,
@@ -51,6 +58,24 @@ class DashboardController extends Controller
                 'description' => $addressBook->description,
                 'is_sharable' => $addressBook->is_sharable,
                 'is_default' => $addressBook->is_default,
+                'milestone_calendars' => $milestoneCalendarSettings[$addressBook->id] ?? [
+                    'birthdays' => [
+                        'enabled' => false,
+                        'calendar_id' => null,
+                        'calendar_uri' => null,
+                        'calendar_name' => $addressBook->display_name.' Birthdays',
+                        'default_name' => $addressBook->display_name.' Birthdays',
+                        'custom_name' => null,
+                    ],
+                    'anniversaries' => [
+                        'enabled' => false,
+                        'calendar_id' => null,
+                        'calendar_uri' => null,
+                        'calendar_name' => $addressBook->display_name.' Anniversaries',
+                        'default_name' => $addressBook->display_name.' Anniversaries',
+                        'custom_name' => null,
+                    ],
+                ],
             ])
             ->all();
 
