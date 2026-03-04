@@ -3200,6 +3200,30 @@ function AddressBookMilestoneControls({ item, onSave }) {
     }
   };
 
+  const resetName = async (type) => {
+    const settings =
+      type === "birthdays" ? birthdaySettings : anniversarySettings;
+    const hasCustomName = (settings.custom_name ?? "").trim().length > 0;
+
+    if (!hasCustomName) {
+      return;
+    }
+
+    const payload =
+      type === "birthdays"
+        ? { birthday_calendar_name: null }
+        : { anniversary_calendar_name: null };
+    const didSave = await saveMilestone(type, payload);
+
+    if (didSave) {
+      setNameDrafts((prev) => ({
+        ...prev,
+        [type]: "",
+      }));
+      setEditingKey((prev) => (prev === type ? null : prev));
+    }
+  };
+
   const renderRow = (type, label, settings, fallbackName) => {
     const isSaving = savingKey === type;
     const saveInProgress = !!savingKey && !isSaving;
@@ -3263,14 +3287,26 @@ function AddressBookMilestoneControls({ item, onSave }) {
               </button>
             </div>
           ) : (
-            <div className="min-w-0 flex items-center gap-1.5">
+            <div className="min-w-0 flex items-center gap-0">
               {hasCustomName ? (
-                <span
-                  className="max-w-[14rem] truncate text-xs text-app-faint sm:max-w-[20rem]"
-                  title={currentCustom}
-                >
-                  {currentCustom}
-                </span>
+                <>
+                  <span
+                    className="max-w-[14rem] truncate text-xs text-app-faint sm:max-w-[20rem]"
+                    title={currentCustom}
+                  >
+                    {currentCustom}
+                  </span>
+                  <button
+                    type="button"
+                    className="inline-flex h-6 w-6 items-center justify-center rounded text-app-dim transition hover:text-app-base focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                    aria-label={`Reset ${label} calendar name to default`}
+                    title={`Reset ${label} calendar name to default`}
+                    onClick={() => resetName(type)}
+                    disabled={isSaving || saveInProgress}
+                  >
+                    <ResetIcon className="h-3.5 w-3.5" />
+                  </button>
+                </>
               ) : null}
               <button
                 type="button"
@@ -4419,6 +4455,24 @@ function TimesIcon({ className }) {
     >
       <path d="m18 6-12 12" />
       <path d="m6 6 12 12" />
+    </svg>
+  );
+}
+
+function ResetIcon({ className }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="m8.5 15.5 7-7" />
     </svg>
   );
 }
