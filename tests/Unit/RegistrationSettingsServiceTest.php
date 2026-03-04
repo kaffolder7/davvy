@@ -53,4 +53,17 @@ class RegistrationSettingsServiceTest extends TestCase
 
         $this->assertTrue($service->isContactManagementEnabled());
     }
+
+    public function test_contact_change_request_retention_days_setting_can_be_updated(): void
+    {
+        $service = app(RegistrationSettingsService::class);
+
+        $this->assertSame(90, $service->contactChangeRequestRetentionDays());
+
+        $service->setContactChangeRequestRetentionDays(120);
+        $this->assertSame(120, $service->contactChangeRequestRetentionDays());
+
+        $service->setContactChangeRequestRetentionDays(99999);
+        $this->assertSame(3650, $service->contactChangeRequestRetentionDays());
+    }
 }

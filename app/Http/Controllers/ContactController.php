@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Contact;
+use App\Services\Contacts\ContactChangeRequestService;
 use App\Services\Contacts\ContactService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -10,7 +11,10 @@ use Illuminate\Validation\ValidationException;
 
 class ContactController extends Controller
 {
-    public function __construct(private readonly ContactService $contactService) {}
+    public function __construct(
+        private readonly ContactService $contactService,
+        private readonly ContactChangeRequestService $changeRequestService,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -45,6 +49,22 @@ class ContactController extends Controller
         [$payload, $addressBookIds] = $this->validatedInput($request);
         $model = Contact::query()->findOrFail($contact);
 
+        $queued = $this->changeRequestService->enqueueWebUpdateIfNeeded(
+            actor: $request->user(),
+            contact: $model,
+            payload: $payload,
+            addressBookIds: $addressBookIds,
+        );
+
+        if ($queued !== null) {
+            return response()->json([
+                'queued' => true,
+                'message' => 'This change was submitted for owner/admin approval.',
+                'group_uuid' => $queued['group_uuid'],
+                'request_ids' => $queued['request_ids'],
+            ], 202);
+        }
+
         $updated = $this->contactService->update(
             actor: $request->user(),
             contact: $model,
@@ -58,6 +78,20 @@ class ContactController extends Controller
     public function destroy(Request $request, int $contact): JsonResponse
     {
         $model = Contact::query()->findOrFail($contact);
+
+        $queued = $this->changeRequestService->enqueueWebDeleteIfNeeded(
+            actor: $request->user(),
+            contact: $model,
+        );
+
+        if ($queued !== null) {
+            return response()->json([
+                'queued' => true,
+                'message' => 'This delete request was submitted for owner/admin approval.',
+                'group_uuid' => $queued['group_uuid'],
+                'request_ids' => $queued['request_ids'],
+            ], 202);
+        }
 
         $this->contactService->delete($request->user(), $model);
 
