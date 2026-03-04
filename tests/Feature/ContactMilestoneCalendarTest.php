@@ -90,6 +90,72 @@ class ContactMilestoneCalendarTest extends TestCase
         $this->assertStringContainsString('SUMMARY:Alex Rivera Anniversary', $anniversaryObjects->first()->data);
     }
 
+    public function test_contacts_marked_to_exclude_milestones_are_skipped_from_generated_events(): void
+    {
+        $user = User::factory()->create();
+        $addressBook = AddressBook::factory()->create([
+            'owner_id' => $user->id,
+            'display_name' => 'Family',
+            'uri' => 'family',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/api/contacts', $this->contactPayload([
+                'first_name' => 'Alex',
+                'last_name' => 'Rivera',
+                'exclude_milestone_calendars' => false,
+                'address_book_ids' => [$addressBook->id],
+            ]))
+            ->assertCreated();
+
+        $this->actingAs($user)
+            ->postJson('/api/contacts', $this->contactPayload([
+                'first_name' => 'Sam',
+                'last_name' => 'Taylor',
+                'exclude_milestone_calendars' => true,
+                'birthday' => [
+                    'year' => 1988,
+                    'month' => 5,
+                    'day' => 20,
+                ],
+                'dates' => [
+                    [
+                        'label' => 'anniversary',
+                        'custom_label' => null,
+                        'year' => 2012,
+                        'month' => 8,
+                        'day' => 4,
+                    ],
+                ],
+                'address_book_ids' => [$addressBook->id],
+            ]))
+            ->assertCreated();
+
+        $response = $this->actingAs($user)
+            ->patchJson('/api/address-books/'.$addressBook->id.'/milestone-calendars', [
+                'birthdays_enabled' => true,
+                'anniversaries_enabled' => true,
+            ])
+            ->assertOk();
+
+        $birthdayCalendarId = (int) $response->json('milestone_calendars.birthdays.calendar_id');
+        $anniversaryCalendarId = (int) $response->json('milestone_calendars.anniversaries.calendar_id');
+
+        $birthdayObjects = CalendarObject::query()
+            ->where('calendar_id', $birthdayCalendarId)
+            ->get();
+        $anniversaryObjects = CalendarObject::query()
+            ->where('calendar_id', $anniversaryCalendarId)
+            ->get();
+
+        $this->assertCount(1, $birthdayObjects);
+        $this->assertCount(1, $anniversaryObjects);
+        $this->assertStringContainsString('SUMMARY:Alex Rivera\'s Birthday', $birthdayObjects->first()->data);
+        $this->assertStringNotContainsString('Sam Taylor', $birthdayObjects->first()->data);
+        $this->assertStringContainsString('SUMMARY:Alex Rivera Anniversary', $anniversaryObjects->first()->data);
+        $this->assertStringNotContainsString('Sam Taylor', $anniversaryObjects->first()->data);
+    }
+
     public function test_disabling_birthdays_stops_future_sync_updates(): void
     {
         $user = User::factory()->create();
@@ -259,6 +325,7 @@ class ContactMilestoneCalendarTest extends TestCase
             'first_name' => 'Alex',
             'last_name' => 'Rivera',
             'company' => '',
+            'exclude_milestone_calendars' => false,
             'birthday' => [
                 'year' => 1990,
                 'month' => 6,

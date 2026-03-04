@@ -108,6 +108,28 @@ class ContactManagementTest extends TestCase
         $this->assertSame([$bookB->id, $bookC->id], $assignedBookIds);
     }
 
+    public function test_contact_can_opt_out_of_milestone_calendar_generation(): void
+    {
+        $user = User::factory()->create();
+        $book = AddressBook::factory()->create(['owner_id' => $user->id, 'uri' => 'opt-out-book']);
+
+        $response = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'exclude_milestone_calendars' => true,
+            'address_book_ids' => [$book->id],
+        ]));
+
+        $response->assertCreated();
+        $response->assertJsonPath('exclude_milestone_calendars', true);
+
+        $uid = (string) $response->json('uid');
+        $card = Card::query()
+            ->where('address_book_id', $book->id)
+            ->where('uid', $uid)
+            ->firstOrFail();
+
+        $this->assertStringContainsString('X-DAVVY-EXCLUDE-MILESTONES:1', $card->data);
+    }
+
     public function test_create_contact_requires_write_access_to_selected_address_books(): void
     {
         $owner = User::factory()->create();
@@ -255,6 +277,7 @@ class ContactManagementTest extends TestCase
             'maiden_name' => 'Taylor',
             'verification_code' => '123456',
             'profile' => 'https://example.com/profile/alex',
+            'exclude_milestone_calendars' => false,
             'birthday' => [
                 'year' => 1990,
                 'month' => 6,

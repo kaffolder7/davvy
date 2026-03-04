@@ -264,6 +264,11 @@ class ContactVCardService
         $this->addSimpleProperty($vCard, 'X-DAVVY-TEXT-TONE', $payload['text_tone'] ?? null);
         $this->addSimpleProperty($vCard, 'X-DAVVY-VERIFICATION-CODE', $payload['verification_code'] ?? null);
         $this->addSimpleProperty($vCard, 'X-DAVVY-PROFILE', $payload['profile'] ?? null);
+        $this->addSimpleProperty(
+            $vCard,
+            'X-DAVVY-EXCLUDE-MILESTONES',
+            ! empty($payload['exclude_milestone_calendars']) ? '1' : null,
+        );
         $this->addSimpleProperty($vCard, 'X-DAVVY-CONTACT-ID', (string) $contact->id);
         $this->addSimpleProperty($vCard, 'X-DAVVY-CONTACT-OWNER', (string) $contact->owner_id);
 
@@ -316,6 +321,9 @@ class ContactVCardService
         $payload['text_tone'] = $this->firstPropertyValue($component, 'X-DAVVY-TEXT-TONE');
         $payload['verification_code'] = $this->firstPropertyValue($component, 'X-DAVVY-VERIFICATION-CODE');
         $payload['profile'] = $this->firstPropertyValue($component, 'X-DAVVY-PROFILE');
+        $payload['exclude_milestone_calendars'] = $this->toBoolean(
+            $this->firstPropertyValue($component, 'X-DAVVY-EXCLUDE-MILESTONES'),
+        );
 
         $organization = $this->firstProperty($component, 'ORG');
         if ($organization !== null) {
@@ -520,6 +528,7 @@ class ContactVCardService
             'maiden_name' => null,
             'verification_code' => null,
             'profile' => null,
+            'exclude_milestone_calendars' => false,
             'birthday' => [],
             'phones' => [],
             'emails' => [],
@@ -876,5 +885,22 @@ class ContactVCardService
         }
 
         return null;
+    }
+
+    private function toBoolean(mixed $value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_int($value)) {
+            return $value !== 0;
+        }
+
+        if (is_string($value)) {
+            return in_array(strtolower(trim($value)), ['1', 'true', 'yes', 'on'], true);
+        }
+
+        return false;
     }
 }

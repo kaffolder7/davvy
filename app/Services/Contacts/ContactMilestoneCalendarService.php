@@ -481,6 +481,9 @@ class ContactMilestoneCalendarService
 
         foreach ($this->contactsForAddressBook($addressBook->id) as $contact) {
             $payload = is_array($contact->payload) ? $contact->payload : [];
+            if ($this->contactExcludedFromMilestones($payload)) {
+                continue;
+            }
             $dateParts = $this->normalizeDateParts($payload['birthday'] ?? null);
             if (! $dateParts) {
                 continue;
@@ -517,6 +520,9 @@ class ContactMilestoneCalendarService
 
         foreach ($this->contactsForAddressBook($addressBook->id) as $contact) {
             $payload = is_array($contact->payload) ? $contact->payload : [];
+            if ($this->contactExcludedFromMilestones($payload)) {
+                continue;
+            }
             $anniversaries = $this->anniversaryDates($payload);
 
             foreach ($anniversaries as $anniversary) {
@@ -791,6 +797,28 @@ class ContactMilestoneCalendarService
         $normalized = trim((string) ($value ?? ''));
 
         return $normalized === '' ? null : $normalized;
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function contactExcludedFromMilestones(array $payload): bool
+    {
+        $value = $payload['exclude_milestone_calendars'] ?? false;
+
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_int($value)) {
+            return $value !== 0;
+        }
+
+        if (is_string($value)) {
+            return in_array(strtolower(trim($value)), ['1', 'true', 'yes', 'on'], true);
+        }
+
+        return false;
     }
 
     private function toInteger(mixed $value): ?int
