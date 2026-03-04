@@ -3142,11 +3142,7 @@ function AddressBookMilestoneControls({ item, onSave }) {
       birthdays: birthdaySettings.custom_name ?? "",
       anniversaries: anniversarySettings.custom_name ?? "",
     });
-  }, [
-    item?.id,
-    birthdaySettings.custom_name,
-    anniversarySettings.custom_name,
-  ]);
+  }, [item?.id, birthdaySettings.custom_name, anniversarySettings.custom_name]);
 
   const saveMilestone = async (type, payload) => {
     if (savingKey) {
@@ -3298,7 +3294,7 @@ function AddressBookMilestoneControls({ item, onSave }) {
                   </span>
                   <button
                     type="button"
-                    className="inline-flex h-6 w-6 items-center justify-center rounded text-app-dim transition hover:text-app-base focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                    className="inline-flex h-6 w-6 -mr-[0.25rem] items-center justify-center rounded text-app-dim transition hover:text-app-base focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
                     aria-label={`Reset ${label} calendar name to default`}
                     title={`Reset ${label} calendar name to default`}
                     onClick={() => resetName(type)}
@@ -3321,7 +3317,9 @@ function AddressBookMilestoneControls({ item, onSave }) {
             </div>
           )}
           {isSaving ? (
-            <span className="shrink-0 text-[11px] text-app-faint">Saving...</span>
+            <span className="shrink-0 text-[11px] text-app-faint">
+              Saving...
+            </span>
           ) : null}
         </div>
       </div>
