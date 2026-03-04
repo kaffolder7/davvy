@@ -1507,6 +1507,11 @@ function ContactsPage({ auth, theme }) {
   const saveContact = async (event) => {
     event.preventDefault();
 
+    if (!hasRequiredContactIdentity) {
+      setError("Enter at least a First Name, Last Name, or Company.");
+      return;
+    }
+
     if (!Array.isArray(form.address_book_ids) || form.address_book_ids.length === 0) {
       setError("Select at least one address book.");
       return;
@@ -1636,6 +1641,10 @@ function ContactsPage({ auth, theme }) {
 
   const isOptionalFieldVisible = (fieldId) =>
     visibleOptionalFields.includes(fieldId);
+  const hasRequiredContactIdentity =
+    hasTextValue(form.first_name) ||
+    hasTextValue(form.last_name) ||
+    hasTextValue(form.company);
   const selectedAddressBookCount = Array.isArray(form.address_book_ids)
     ? form.address_book_ids.length
     : 0;
@@ -1718,8 +1727,8 @@ function ContactsPage({ auth, theme }) {
                   {form.id ? "Edit Contact" : "New Contact"}
                 </h2>
                 <p className="mt-1 text-sm text-app-muted">
-                  All fields are optional. Address book assignment supports one
-                  or more selections.
+                  Enter at least a First Name, Last Name, or Company. Address book
+                  assignment supports one or more selections.
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -1733,7 +1742,16 @@ function ContactsPage({ auth, theme }) {
                     Delete
                   </button>
                 ) : null}
-                <button className="btn" type="submit" form="contact-editor" disabled={submitting || addressBooks.length === 0}>
+                <button
+                  className="btn"
+                  type="submit"
+                  form="contact-editor"
+                  disabled={
+                    submitting ||
+                    addressBooks.length === 0 ||
+                    !hasRequiredContactIdentity
+                  }
+                >
                   {submitting ? "Saving..." : "Save Contact"}
                 </button>
               </div>
@@ -2392,7 +2410,11 @@ function ContactsPage({ auth, theme }) {
                   <button
                     className="btn"
                     type="submit"
-                    disabled={submitting || addressBooks.length === 0}
+                    disabled={
+                      submitting ||
+                      addressBooks.length === 0 ||
+                      !hasRequiredContactIdentity
+                    }
                   >
                     {submitting ? "Saving..." : "Save Contact"}
                   </button>

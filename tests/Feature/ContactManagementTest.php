@@ -160,6 +160,45 @@ class ContactManagementTest extends TestCase
         $this->assertSame(0, ContactAddressBookAssignment::query()->where('contact_id', $contactId)->count());
     }
 
+    public function test_create_contact_requires_first_name_last_name_or_company(): void
+    {
+        $user = User::factory()->create();
+        $book = AddressBook::factory()->create(['owner_id' => $user->id]);
+
+        $this->actingAs($user)
+            ->postJson('/api/contacts', $this->payload([
+                'first_name' => '   ',
+                'last_name' => '',
+                'company' => null,
+                'address_book_ids' => [$book->id],
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['first_name']);
+    }
+
+    public function test_update_contact_requires_first_name_last_name_or_company(): void
+    {
+        $user = User::factory()->create();
+        $book = AddressBook::factory()->create(['owner_id' => $user->id]);
+
+        $created = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'address_book_ids' => [$book->id],
+        ]));
+        $created->assertCreated();
+
+        $contactId = (int) $created->json('id');
+
+        $this->actingAs($user)
+            ->patchJson('/api/contacts/'.$contactId, $this->payload([
+                'first_name' => '',
+                'last_name' => '   ',
+                'company' => null,
+                'address_book_ids' => [$book->id],
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['first_name']);
+    }
+
     /**
      * @return array<string, mixed>
      */
