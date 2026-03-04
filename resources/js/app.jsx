@@ -2425,6 +2425,13 @@ function ContactsPage({ auth, theme }) {
                       </div>
                     </section>
 
+                    {isOptionalFieldVisible("dates") ? (
+                      <DateEditor
+                        rows={form.dates}
+                        setRows={(rows) => updateFormField("dates", rows)}
+                      />
+                    ) : null}
+
                     <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
                       <label className="inline-flex items-center gap-2 text-sm font-semibold text-app-base">
                         <input
@@ -2444,13 +2451,6 @@ function ContactsPage({ auth, theme }) {
                         generated milestone calendars.
                       </p>
                     </section>
-
-                    {isOptionalFieldVisible("dates") ? (
-                      <DateEditor
-                        rows={form.dates}
-                        setRows={(rows) => updateFormField("dates", rows)}
-                      />
-                    ) : null}
                   </div>
                 ) : null}
               </section>
