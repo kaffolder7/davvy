@@ -1477,6 +1477,9 @@ function ContactsPage({ auth, theme }) {
 
   const isOptionalFieldVisible = (fieldId) =>
     visibleOptionalFields.includes(fieldId);
+  const selectedAddressBookCount = Array.isArray(form.address_book_ids)
+    ? form.address_book_ids.length
+    : 0;
 
   return (
     <AppShell auth={auth} theme={theme}>
@@ -1958,37 +1961,65 @@ function ContactsPage({ auth, theme }) {
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
-                  Assign Address Books
-                </h3>
+              <section className="rounded-2xl border-2 border-app-accent-edge bg-app-surface p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
+                    Assign Address Books
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full border border-app-warn-edge bg-app-warn-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-app-base">
+                      Required
+                    </span>
+                    <span className="rounded-full border border-app-edge bg-app-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-app-faint">
+                      {selectedAddressBookCount} selected
+                    </span>
+                  </div>
+                </div>
+                <p className="mt-1 text-xs text-app-faint">
+                  Choose one or more address books for this contact.
+                </p>
                 <div className="mt-3 space-y-2">
                   {addressBooks.length === 0 ? (
                     <p className="text-sm text-app-faint">No writable address books.</p>
                   ) : (
-                    addressBooks.map((book) => (
-                      <label
-                        key={book.id}
-                        className="flex items-start gap-2 rounded-xl border border-app-edge bg-app-surface px-3 py-2 text-sm"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={form.address_book_ids.includes(book.id)}
-                          onChange={(event) =>
-                            toggleAssignedAddressBook(book.id, event.target.checked)
-                          }
-                        />
-                        <span className="min-w-0">
-                          <span className="block font-medium text-app-strong">
-                            {book.display_name}
+                    addressBooks.map((book) => {
+                      const isAssigned = form.address_book_ids.includes(book.id);
+
+                      return (
+                        <label
+                          key={book.id}
+                          className={`flex items-start gap-2 rounded-xl border px-3 py-2 text-sm ${
+                            isAssigned
+                              ? "border-app-accent-edge bg-app-surface ring-1 ring-teal-500/30"
+                              : "border-app-edge bg-app-surface"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isAssigned}
+                            onChange={(event) =>
+                              toggleAssignedAddressBook(book.id, event.target.checked)
+                            }
+                          />
+                          <span className="min-w-0">
+                            <span className="flex items-center gap-2">
+                              <span className="block font-medium text-app-strong">
+                                {book.display_name}
+                              </span>
+                              {isAssigned ? (
+                                <span className="rounded-full border border-app-accent-edge px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-app-accent">
+                                  Selected
+                                </span>
+                              ) : null}
+                            </span>
+                            <span className="block text-xs text-app-faint">
+                              /{book.uri} • {book.scope === "owned" ? "Owned" : "Shared"}
+                              {book.owner_name ? ` • ${book.owner_name}` : ""}
+                            </span>
                           </span>
-                          <span className="block text-xs text-app-faint">
-                            /{book.uri} • {book.scope === "owned" ? "Owned" : "Shared"}
-                            {book.owner_name ? ` • ${book.owner_name}` : ""}
-                          </span>
-                        </span>
-                      </label>
-                    ))
+                        </label>
+                      );
+                    })
                   )}
                 </div>
               </section>
