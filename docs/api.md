@@ -31,6 +31,11 @@ All UI endpoints are defined in `routes/web.php`. Most return JSON; export endpo
 - `GET /api/shares`
 - `POST /api/shares`
 - `DELETE /api/shares/{share}`
+- `GET /api/contact-change-requests`
+- `GET /api/contact-change-requests/summary`
+- `POST /api/contact-change-requests/bulk`
+- `PATCH /api/contact-change-requests/{contactChangeRequest}/approve`
+- `PATCH /api/contact-change-requests/{contactChangeRequest}/deny`
 
 ## Admin-only
 
@@ -40,6 +45,8 @@ All UI endpoints are defined in `routes/web.php`. Most return JSON; export endpo
 - `PATCH /api/admin/settings/registration`
 - `PATCH /api/admin/settings/owner-share-management`
 - `PATCH /api/admin/settings/dav-compatibility-mode`
+- `GET /api/admin/settings/contact-change-retention`
+- `PATCH /api/admin/settings/contact-change-retention`
 - `GET /api/admin/shares`
 - `POST /api/admin/shares`
 - `DELETE /api/admin/shares/{share}`

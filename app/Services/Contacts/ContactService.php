@@ -35,18 +35,23 @@ class ContactService
      */
     public function contactsFor(User $actor): Collection
     {
-        $contacts = Contact::query()
-            ->where('owner_id', $actor->id)
+        $writableAddressBookIds = $this->writableAddressBookIdsFor($actor);
+
+        if ($writableAddressBookIds === []) {
+            return collect();
+        }
+
+        return Contact::query()
             ->with(['assignments.addressBook'])
+            ->whereHas('assignments', function ($query) use ($writableAddressBookIds): void {
+                $query->whereIn('address_book_id', $writableAddressBookIds);
+            })
+            ->whereDoesntHave('assignments', function ($query) use ($writableAddressBookIds): void {
+                $query->whereNotIn('address_book_id', $writableAddressBookIds);
+            })
             ->orderBy('full_name')
             ->orderBy('id')
             ->get();
-
-        foreach ($contacts as $contact) {
-            $this->pruneInaccessibleAssignments($actor, $contact);
-        }
-
-        return $contacts->map(fn (Contact $contact): Contact => $contact->fresh(['assignments.addressBook']));
     }
 
     /**
@@ -91,6 +96,48 @@ class ContactService
     }
 
     /**
+     * @return array<int, int>
+     */
+    public function writableAddressBookIdsFor(User $actor): array
+    {
+        return $this->writableAddressBooksFor($actor)
+            ->pluck('id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    public function addressBookIdsForContact(Contact $contact): array
+    {
+        return $contact->assignments()
+            ->pluck('address_book_id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->values()
+            ->all();
+    }
+
+    public function canUserWriteContact(User $actor, Contact $contact): bool
+    {
+        $assignments = $contact->assignments()->with('addressBook')->get();
+
+        if ($assignments->isEmpty()) {
+            return false;
+        }
+
+        foreach ($assignments as $assignment) {
+            $addressBook = $assignment->addressBook;
+            if (! $addressBook || ! $this->accessService->userCanWriteAddressBook($actor, $addressBook)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * @param  array<string, mixed>  $payload
      * @param  array<int, int>  $addressBookIds
      */
@@ -124,61 +171,39 @@ class ContactService
      */
     public function update(User $actor, Contact $contact, array $payload, array $addressBookIds): Contact
     {
-        $this->assertOwnership($actor, $contact);
-        $this->pruneInaccessibleAssignments($actor, $contact);
+        $this->assertCanMutateContact($actor, $contact);
 
-        $currentAddressBookIds = $contact->assignments()
-            ->pluck('address_book_id')
-            ->map(fn (mixed $id): int => (int) $id)
-            ->all();
         $addressBooks = $this->writableAddressBookModels($actor, $addressBookIds);
 
-        $updated = DB::transaction(function () use ($contact, $payload, $addressBooks): Contact {
-            $contact->update([
-                'full_name' => $this->vCardService->displayName($payload),
-                'payload' => $payload,
-            ]);
-
-            $this->syncAssignments($contact, $addressBooks);
-
-            return $contact->fresh(['assignments.addressBook']);
-        });
-
-        $this->syncMilestoneCalendarsForAddressBooks([
-            ...$currentAddressBookIds,
-            ...$addressBooks->pluck('id')->map(fn (mixed $id): int => (int) $id)->all(),
-        ]);
-
-        return $updated;
+        return $this->persistContactUpdate($contact, $payload, $addressBooks);
     }
 
     public function delete(User $actor, Contact $contact): void
     {
-        $this->assertOwnership($actor, $contact);
-        $this->pruneInaccessibleAssignments($actor, $contact);
+        $this->assertCanMutateContact($actor, $contact);
 
-        $assignedAddressBookIds = $contact->assignments()
-            ->pluck('address_book_id')
-            ->map(fn (mixed $id): int => (int) $id)
-            ->all();
-
-        DB::transaction(function () use ($contact): void {
-            $assignments = $contact->assignments()->with(['card', 'addressBook'])->get();
-
-            foreach ($assignments as $assignment) {
-                $this->deleteAssignmentCard($assignment);
-                $assignment->delete();
-            }
-
-            $contact->delete();
-        });
-
-        $this->syncMilestoneCalendarsForAddressBooks($assignedAddressBookIds);
+        $this->destroyContact($contact);
     }
 
-    private function assertOwnership(User $actor, Contact $contact): void
+    /**
+     * @param  array<string, mixed>  $payload
+     * @param  array<int, int>  $addressBookIds
+     */
+    public function applyApprovedUpdate(Contact $contact, array $payload, array $addressBookIds): Contact
     {
-        if ($contact->owner_id !== $actor->id) {
+        $addressBooks = $this->addressBookModelsByIds($addressBookIds);
+
+        return $this->persistContactUpdate($contact, $payload, $addressBooks);
+    }
+
+    public function applyApprovedDelete(Contact $contact): void
+    {
+        $this->destroyContact($contact);
+    }
+
+    private function assertCanMutateContact(User $actor, Contact $contact): void
+    {
+        if (! $this->canUserWriteContact($actor, $contact)) {
             abort(403, 'You cannot modify this contact.');
         }
     }
@@ -225,6 +250,86 @@ class ContactService
         }
 
         return collect($ids)->map(fn (int $id): AddressBook => $books->get($id));
+    }
+
+    /**
+     * @param  array<int, int>  $addressBookIds
+     * @return Collection<int, AddressBook>
+     */
+    private function addressBookModelsByIds(array $addressBookIds): Collection
+    {
+        $ids = collect($addressBookIds)
+            ->map(fn (mixed $id): int => (int) $id)
+            ->filter(fn (int $id): bool => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($ids === []) {
+            throw ValidationException::withMessages([
+                'address_book_ids' => ['Select at least one address book.'],
+            ]);
+        }
+
+        $books = AddressBook::query()
+            ->whereIn('id', $ids)
+            ->get()
+            ->keyBy('id');
+
+        foreach ($ids as $id) {
+            if (! $books->has($id)) {
+                throw ValidationException::withMessages([
+                    'address_book_ids' => ['One or more selected address books could not be found.'],
+                ]);
+            }
+        }
+
+        return collect($ids)->map(fn (int $id): AddressBook => $books->get($id));
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @param  Collection<int, AddressBook>  $addressBooks
+     */
+    private function persistContactUpdate(Contact $contact, array $payload, Collection $addressBooks): Contact
+    {
+        $currentAddressBookIds = $this->addressBookIdsForContact($contact);
+
+        $updated = DB::transaction(function () use ($contact, $payload, $addressBooks): Contact {
+            $contact->update([
+                'full_name' => $this->vCardService->displayName($payload),
+                'payload' => $payload,
+            ]);
+
+            $this->syncAssignments($contact, $addressBooks);
+
+            return $contact->fresh(['assignments.addressBook']);
+        });
+
+        $this->syncMilestoneCalendarsForAddressBooks([
+            ...$currentAddressBookIds,
+            ...$addressBooks->pluck('id')->map(fn (mixed $id): int => (int) $id)->all(),
+        ]);
+
+        return $updated;
+    }
+
+    private function destroyContact(Contact $contact): void
+    {
+        $assignedAddressBookIds = $this->addressBookIdsForContact($contact);
+
+        DB::transaction(function () use ($contact): void {
+            $assignments = $contact->assignments()->with(['card', 'addressBook'])->get();
+
+            foreach ($assignments as $assignment) {
+                $this->deleteAssignmentCard($assignment);
+                $assignment->delete();
+            }
+
+            $contact->delete();
+        });
+
+        $this->syncMilestoneCalendarsForAddressBooks($assignedAddressBookIds);
     }
 
     /**
@@ -453,18 +558,6 @@ class ContactService
             $this->milestoneCalendarService->syncAddressBooksByIds($addressBookIds);
         } catch (\Throwable $exception) {
             report($exception);
-        }
-    }
-
-    private function pruneInaccessibleAssignments(User $actor, Contact $contact): void
-    {
-        $assignments = $contact->assignments()->with('addressBook')->get();
-
-        foreach ($assignments as $assignment) {
-            $addressBook = $assignment->addressBook;
-            if (! $addressBook || ! $this->accessService->userCanWriteAddressBook($actor, $addressBook)) {
-                $assignment->delete();
-            }
         }
     }
 }

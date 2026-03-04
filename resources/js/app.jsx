@@ -285,6 +285,14 @@ function App() {
         }
       />
       <Route
+        path="/review-queue"
+        element={
+          <ProtectedRoute auth={value}>
+            <ContactChangeQueuePage auth={value} theme={theme} />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin"
         element={
           <ProtectedRoute auth={value} adminOnly>
@@ -1422,6 +1430,7 @@ function ContactsPage({ auth, theme }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [queueStatusNotice, setQueueStatusNotice] = useState("");
   const [contacts, setContacts] = useState([]);
   const [addressBooks, setAddressBooks] = useState([]);
   const [selectedContactId, setSelectedContactId] = useState(null);
@@ -1681,6 +1690,15 @@ function ContactsPage({ auth, theme }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!queueStatusNotice) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => setQueueStatusNotice(""), 2600);
+    return () => window.clearTimeout(timer);
+  }, [queueStatusNotice]);
+
   const startNewContact = () => {
     setSelectedContactId(null);
     setError("");
@@ -1737,6 +1755,16 @@ function ContactsPage({ auth, theme }) {
         ? await api.patch(`/api/contacts/${form.id}`, payload)
         : await api.post("/api/contacts", payload);
 
+      if (response?.data?.queued) {
+        setQueueStatusNotice(
+          response.data?.message || "Change submitted for owner/admin approval.",
+        );
+        await loadContacts({
+          preserveSelection: true,
+        });
+        return;
+      }
+
       await loadContacts({
         preserveSelection: false,
         selectId: response.data?.id ?? null,
@@ -1766,7 +1794,17 @@ function ContactsPage({ auth, theme }) {
     setError("");
 
     try {
-      await api.delete(`/api/contacts/${form.id}`);
+      const response = await api.delete(`/api/contacts/${form.id}`);
+
+      if (response?.data?.queued) {
+        setQueueStatusNotice(
+          response.data?.message ||
+            "Delete request submitted for owner/admin approval.",
+        );
+        await loadContacts({ preserveSelection: true });
+        return;
+      }
+
       await loadContacts({ preserveSelection: false, selectId: null });
     } catch (err) {
       if (await redirectIfFeatureDisabled(err)) {
@@ -1868,6 +1906,13 @@ function ContactsPage({ auth, theme }) {
 
   return (
     <AppShell auth={auth} theme={theme}>
+      {queueStatusNotice ? (
+        <div className="pointer-events-none fixed inset-x-0 top-4 z-50 flex justify-center px-4">
+          <p className="rounded-xl border border-app-accent-edge bg-teal-700/95 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-teal-900/20 backdrop-blur">
+            {queueStatusNotice}
+          </p>
+        </div>
+      ) : null}
       <section className="fade-up grid gap-4 md:grid-cols-3">
         <InfoCard
           title="Contacts"
@@ -3697,6 +3742,483 @@ function AdminFeatureToggle({ label, enabled, onClick }) {
   );
 }
 
+function formatQueueTimestamp(value) {
+  if (!value) {
+    return "n/a";
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "n/a";
+  }
+
+  return parsed.toLocaleString();
+}
+
+function queueStatusLabel(status) {
+  switch (status) {
+    case "pending":
+      return "Pending";
+    case "approved":
+      return "Approved (awaiting others)";
+    case "manual_merge_needed":
+      return "Manual Merge Needed";
+    case "applied":
+      return "Applied";
+    case "denied":
+      return "Denied";
+    default:
+      return status || "Unknown";
+  }
+}
+
+function queueOperationLabel(operation) {
+  return operation === "delete" ? "Delete" : "Update";
+}
+
+function ContactChangeQueuePage({ auth, theme }) {
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [rows, setRows] = useState([]);
+  const [statusFilter, setStatusFilter] = useState("open");
+  const [operationFilter, setOperationFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [editingRow, setEditingRow] = useState(null);
+  const [editPayloadText, setEditPayloadText] = useState("");
+  const [editAddressBookIdsText, setEditAddressBookIdsText] = useState("");
+
+  const loadQueue = async ({ withLoading = true } = {}) => {
+    if (withLoading) {
+      setLoading(true);
+    }
+
+    setError("");
+
+    try {
+      const response = await api.get("/api/contact-change-requests", {
+        params: {
+          status: statusFilter,
+          operation: operationFilter,
+          search,
+          limit: 300,
+        },
+      });
+
+      setRows(Array.isArray(response.data?.data) ? response.data.data : []);
+    } catch (err) {
+      setError(extractError(err, "Unable to load change requests."));
+    } finally {
+      if (withLoading) {
+        setLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    loadQueue();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    loadQueue({ withLoading: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, operationFilter]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadQueue({ withLoading: false });
+    }, 260);
+
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
+
+  useEffect(() => {
+    if (!notice) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => setNotice(""), 2600);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+
+  const actionableRows = rows.filter(
+    (row) => row.status === "pending" || row.status === "manual_merge_needed",
+  );
+
+  const approveRow = async (row, resolvedPayload = null, resolvedAddressIds = null) => {
+    setSubmitting(true);
+    setError("");
+
+    try {
+      const payload = {};
+      if (resolvedPayload !== null) {
+        payload.resolved_payload = resolvedPayload;
+      }
+      if (resolvedAddressIds !== null) {
+        payload.resolved_address_book_ids = resolvedAddressIds;
+      }
+
+      await api.patch(`/api/contact-change-requests/${row.id}/approve`, payload);
+      setNotice("Request approved.");
+      await loadQueue({ withLoading: false });
+      window.dispatchEvent(new Event("review-queue-updated"));
+    } catch (err) {
+      setError(extractError(err, "Unable to approve request."));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const denyRow = async (row) => {
+    setSubmitting(true);
+    setError("");
+
+    try {
+      await api.patch(`/api/contact-change-requests/${row.id}/deny`);
+      setNotice("Request denied.");
+      await loadQueue({ withLoading: false });
+      window.dispatchEvent(new Event("review-queue-updated"));
+    } catch (err) {
+      setError(extractError(err, "Unable to deny request."));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const runBulkAction = async (action) => {
+    const ids = actionableRows.map((row) => Number(row.id)).filter((id) => id > 0);
+    if (ids.length === 0) {
+      return;
+    }
+
+    const verb = action === "approve" ? "approve" : "deny";
+    const confirmed = window.confirm(
+      `This will ${verb} ${ids.length} queued request(s) in the current filtered view. Continue?`,
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setSubmitting(true);
+    setError("");
+
+    try {
+      const response = await api.post("/api/contact-change-requests/bulk", {
+        action,
+        request_ids: ids,
+      });
+
+      const processed = Number(response.data?.processed ?? 0);
+      const skipped = Number(response.data?.skipped ?? 0);
+      setNotice(`${processed} request group(s) processed. ${skipped} skipped.`);
+      await loadQueue({ withLoading: false });
+      window.dispatchEvent(new Event("review-queue-updated"));
+    } catch (err) {
+      setError(extractError(err, "Unable to process bulk action."));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const openEditDialog = (row) => {
+    const payload = row.resolved_payload ?? row.proposed_payload ?? {};
+    const addressBookIds =
+      row.resolved_address_book_ids ?? row.proposed_address_book_ids ?? [];
+
+    setEditingRow(row);
+    setEditPayloadText(JSON.stringify(payload, null, 2));
+    setEditAddressBookIdsText(JSON.stringify(addressBookIds, null, 2));
+  };
+
+  const closeEditDialog = () => {
+    setEditingRow(null);
+    setEditPayloadText("");
+    setEditAddressBookIdsText("");
+  };
+
+  const submitEditAndApprove = async () => {
+    if (!editingRow) {
+      return;
+    }
+
+    let resolvedPayload;
+    let resolvedAddressBookIds;
+
+    try {
+      resolvedPayload = JSON.parse(editPayloadText || "{}");
+    } catch {
+      setError("Resolved payload must be valid JSON.");
+      return;
+    }
+
+    try {
+      resolvedAddressBookIds = JSON.parse(editAddressBookIdsText || "[]");
+    } catch {
+      setError("Resolved address book IDs must be valid JSON.");
+      return;
+    }
+
+    if (
+      !Array.isArray(resolvedAddressBookIds) ||
+      resolvedAddressBookIds.some((value) => Number(value) <= 0)
+    ) {
+      setError("Resolved address book IDs must be an array of positive integers.");
+      return;
+    }
+
+    await approveRow(
+      editingRow,
+      resolvedPayload,
+      resolvedAddressBookIds.map((value) => Number(value)),
+    );
+
+    closeEditDialog();
+  };
+
+  return (
+    <AppShell auth={auth} theme={theme}>
+      {notice ? (
+        <div className="pointer-events-none fixed inset-x-0 top-4 z-50 flex justify-center px-4">
+          <p className="rounded-xl border border-app-accent-edge bg-teal-700/95 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-teal-900/20 backdrop-blur">
+            {notice}
+          </p>
+        </div>
+      ) : null}
+
+      <section className="surface fade-up rounded-3xl p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-2xl font-bold text-app-strong">
+              Contact Change Review Queue
+            </h2>
+            <p className="mt-1 text-sm text-app-muted">
+              Review queued editor changes for contacts before they are applied.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              className="btn-outline btn-outline-sm"
+              type="button"
+              disabled={submitting || actionableRows.length === 0}
+              onClick={() => runBulkAction("approve")}
+            >
+              Approve All ({actionableRows.length})
+            </button>
+            <button
+              className="btn-outline btn-outline-sm text-app-danger"
+              type="button"
+              disabled={submitting || actionableRows.length === 0}
+              onClick={() => runBulkAction("deny")}
+            >
+              Deny All ({actionableRows.length})
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-[12rem_12rem_1fr_auto]">
+          <select
+            className="input"
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+          >
+            <option value="open">Open</option>
+            <option value="pending">Pending</option>
+            <option value="manual_merge_needed">Manual Merge Needed</option>
+            <option value="history">History</option>
+            <option value="all">All</option>
+          </select>
+          <select
+            className="input"
+            value={operationFilter}
+            onChange={(event) => setOperationFilter(event.target.value)}
+          >
+            <option value="all">All operations</option>
+            <option value="update">Updates</option>
+            <option value="delete">Deletes</option>
+          </select>
+          <input
+            className="input"
+            type="search"
+            placeholder="Search by contact/requester..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                void loadQueue({ withLoading: false });
+              }
+            }}
+          />
+          <button
+            className="btn-outline btn-outline-sm"
+            type="button"
+            disabled={submitting}
+            onClick={() => loadQueue({ withLoading: false })}
+          >
+            Refresh
+          </button>
+        </div>
+
+        {error ? (
+          <p className="mt-3 text-sm text-app-danger">{error}</p>
+        ) : null}
+      </section>
+
+      {loading ? (
+        <FullPageState label="Loading review queue..." compact />
+      ) : (
+        <section className="mt-6 space-y-3">
+          {rows.length === 0 ? (
+            <div className="surface rounded-2xl p-4 text-sm text-app-faint">
+              No queued requests for this filter.
+            </div>
+          ) : (
+            rows.map((row) => (
+              <article
+                key={row.id}
+                className={`surface rounded-2xl p-4 ${
+                  row.status === "manual_merge_needed"
+                    ? "border border-app-warn-edge bg-app-warn-surface"
+                    : ""
+                }`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-app-faint">
+                      #{row.id} • Group {row.group_uuid}
+                    </p>
+                    <h3 className="text-lg font-semibold text-app-strong">
+                      {row.contact?.display_name || "Unnamed Contact"} (
+                      {queueOperationLabel(row.operation)})
+                    </h3>
+                    <p className="mt-1 text-xs text-app-muted">
+                      Status: {queueStatusLabel(row.status)} • Requested{" "}
+                      {formatQueueTimestamp(row.created_at)}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {(row.status === "pending" ||
+                      row.status === "manual_merge_needed") && (
+                      <>
+                        {row.operation === "update" ? (
+                          <button
+                            className="btn-outline btn-outline-sm"
+                            type="button"
+                            disabled={submitting}
+                            onClick={() => openEditDialog(row)}
+                          >
+                            Edit & Approve
+                          </button>
+                        ) : null}
+                        <button
+                          className="btn-outline btn-outline-sm"
+                          type="button"
+                          disabled={submitting}
+                          onClick={() => approveRow(row)}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          className="btn-outline btn-outline-sm text-app-danger"
+                          type="button"
+                          disabled={submitting}
+                          onClick={() => denyRow(row)}
+                        >
+                          Deny
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-3 grid gap-2 text-sm text-app-base md:grid-cols-2">
+                  <p>
+                    Requester: {row.requester?.name} ({row.requester?.email})
+                  </p>
+                  <p>
+                    Approval Owner: {row.approval_owner?.name} (
+                    {row.approval_owner?.email})
+                  </p>
+                  <p>Source: {row.source}</p>
+                  <p>
+                    Reviewer:{" "}
+                    {row.reviewer
+                      ? `${row.reviewer.name} (${row.reviewer.email})`
+                      : "Not reviewed yet"}
+                  </p>
+                </div>
+
+                {Array.isArray(row.changed_fields) && row.changed_fields.length > 0 ? (
+                  <p className="mt-2 text-xs text-app-muted">
+                    Changed fields: {row.changed_fields.join(", ")}
+                  </p>
+                ) : null}
+
+                {row.status_reason ? (
+                  <p className="mt-2 text-sm text-app-danger">{row.status_reason}</p>
+                ) : null}
+              </article>
+            ))
+          )}
+        </section>
+      )}
+
+      {editingRow ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="surface w-full max-w-3xl rounded-2xl p-5">
+            <h3 className="text-lg font-semibold text-app-strong">
+              Edit Request #{editingRow.id} Before Approve
+            </h3>
+            <p className="mt-1 text-sm text-app-muted">
+              Adjust payload/address book IDs, then approve this queued request.
+            </p>
+
+            <div className="mt-4 grid gap-3">
+              <Field label="Resolved Payload JSON">
+                <textarea
+                  className="input min-h-[14rem] font-mono text-xs"
+                  value={editPayloadText}
+                  onChange={(event) => setEditPayloadText(event.target.value)}
+                />
+              </Field>
+              <Field label="Resolved Address Book IDs JSON Array">
+                <textarea
+                  className="input min-h-[6rem] font-mono text-xs"
+                  value={editAddressBookIdsText}
+                  onChange={(event) =>
+                    setEditAddressBookIdsText(event.target.value)
+                  }
+                />
+              </Field>
+            </div>
+
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
+              <button
+                className="btn-outline btn-outline-sm"
+                type="button"
+                onClick={closeEditDialog}
+                disabled={submitting}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn"
+                type="button"
+                onClick={submitEditAndApprove}
+                disabled={submitting}
+              >
+                {submitting ? "Approving..." : "Save Edits & Approve"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </AppShell>
+  );
+}
+
 function AdminPage({ auth, theme }) {
   const [state, setState] = useState({
     loading: true,
@@ -3708,6 +4230,7 @@ function AdminPage({ auth, theme }) {
     ownerShareManagementEnabled: auth.ownerShareManagementEnabled,
     davCompatibilityModeEnabled: auth.davCompatibilityModeEnabled,
     contactManagementEnabled: auth.contactManagementEnabled,
+    contactChangeRetentionDays: 90,
   });
   const [userForm, setUserForm] = useState({
     name: "",
@@ -3724,15 +4247,17 @@ function AdminPage({ auth, theme }) {
   const [milestonePurgeSubmitting, setMilestonePurgeSubmitting] =
     useState(false);
   const [milestonePurgeSummary, setMilestonePurgeSummary] = useState("");
+  const [retentionSubmitting, setRetentionSubmitting] = useState(false);
 
   const load = async () => {
     setState((prev) => ({ ...prev, loading: true, error: "" }));
 
     try {
-      const [users, resources, shares] = await Promise.all([
+      const [users, resources, shares, retention] = await Promise.all([
         api.get("/api/admin/users"),
         api.get("/api/admin/resources"),
         api.get("/api/admin/shares"),
+        api.get("/api/admin/settings/contact-change-retention"),
       ]);
 
       setState((prev) => ({
@@ -3741,6 +4266,7 @@ function AdminPage({ auth, theme }) {
         users: users.data.data,
         resources: resources.data,
         shares: shares.data.data,
+        contactChangeRetentionDays: Number(retention.data?.days || 90),
       }));
     } catch (err) {
       setState((prev) => ({
@@ -3941,6 +4467,41 @@ function AdminPage({ auth, theme }) {
     }
   };
 
+  const saveContactChangeRetention = async () => {
+    const days = Number(state.contactChangeRetentionDays);
+    if (!Number.isFinite(days) || days < 1 || days > 3650) {
+      setState((prev) => ({
+        ...prev,
+        error: "Retention days must be between 1 and 3650.",
+      }));
+      return;
+    }
+
+    setRetentionSubmitting(true);
+    setState((prev) => ({ ...prev, error: "" }));
+
+    try {
+      const response = await api.patch(
+        "/api/admin/settings/contact-change-retention",
+        {
+          days,
+        },
+      );
+
+      setState((prev) => ({
+        ...prev,
+        contactChangeRetentionDays: Number(response.data?.days || days),
+      }));
+    } catch (err) {
+      setState((prev) => ({
+        ...prev,
+        error: extractError(err, "Unable to update retention setting."),
+      }));
+    } finally {
+      setRetentionSubmitting(false);
+    }
+  };
+
   const resourceOptions =
     shareForm.resource_type === "calendar"
       ? state.resources.calendars
@@ -3988,6 +4549,34 @@ function AdminPage({ auth, theme }) {
           <p className="text-xs text-app-faint">
             Deletes generated Birthday/Anniversary calendars and disables
             milestone sync settings.
+          </p>
+        </div>
+        <div className="mt-3 flex flex-wrap items-end gap-2">
+          <Field label="Queue retention (days)">
+            <input
+              className="input w-40"
+              type="number"
+              min="1"
+              max="3650"
+              value={state.contactChangeRetentionDays}
+              onChange={(event) =>
+                setState((prev) => ({
+                  ...prev,
+                  contactChangeRetentionDays: event.target.value,
+                }))
+              }
+            />
+          </Field>
+          <button
+            className="btn-outline btn-outline-sm"
+            type="button"
+            onClick={saveContactChangeRetention}
+            disabled={retentionSubmitting}
+          >
+            {retentionSubmitting ? "Saving..." : "Save Retention"}
+          </button>
+          <p className="text-xs text-app-faint">
+            Applied/denied queue history older than this is purged automatically.
           </p>
         </div>
         {milestonePurgeSummary ? (
@@ -4297,6 +4886,8 @@ function AppShell({ auth, theme, children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const onAdminPage = location.pathname === "/admin";
+  const onReviewQueuePage = location.pathname === "/review-queue";
+  const [reviewQueueCount, setReviewQueueCount] = useState(0);
 
   const logout = async () => {
     await api.post("/api/auth/logout");
@@ -4310,6 +4901,52 @@ function AppShell({ auth, theme, children }) {
     });
     navigate("/login");
   };
+
+  useEffect(() => {
+    if (!auth.user) {
+      setReviewQueueCount(0);
+      return undefined;
+    }
+
+    let active = true;
+
+    const refreshReviewQueueCount = async () => {
+      try {
+        const response = await api.get("/api/contact-change-requests/summary");
+        if (!active) {
+          return;
+        }
+
+        setReviewQueueCount(Number(response.data?.needs_review_count || 0));
+      } catch {
+        if (!active) {
+          return;
+        }
+
+        setReviewQueueCount(0);
+      }
+    };
+
+    void refreshReviewQueueCount();
+
+    const onQueueUpdated = () => {
+      void refreshReviewQueueCount();
+    };
+
+    window.addEventListener("review-queue-updated", onQueueUpdated);
+    const timer = window.setInterval(() => {
+      void refreshReviewQueueCount();
+    }, 30000);
+
+    return () => {
+      active = false;
+      window.removeEventListener("review-queue-updated", onQueueUpdated);
+      window.clearInterval(timer);
+    };
+  }, [auth.user, location.pathname]);
+
+  const reviewQueueCountLabel =
+    reviewQueueCount > 99 ? "99+" : String(reviewQueueCount);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -4392,6 +5029,17 @@ function AppShell({ auth, theme, children }) {
                   Contacts
                 </Link>
               ) : null}
+              <Link
+                className={`${onReviewQueuePage ? "tab tab-active" : "tab"} inline-flex items-center gap-1.5`}
+                to="/review-queue"
+              >
+                <span>Review Queue</span>
+                {reviewQueueCount > 0 ? (
+                  <span className="rounded-full border border-app-accent-edge bg-app-surface px-2 py-0.5 text-[10px] font-semibold leading-none text-app-accent">
+                    {reviewQueueCountLabel}
+                  </span>
+                ) : null}
+              </Link>
               <Link
                 className={`${location.pathname === "/profile" ? "tab tab-active" : "tab"} inline-flex items-center gap-1.5`}
                 to="/profile"

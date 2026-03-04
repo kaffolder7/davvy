@@ -687,7 +687,7 @@ class ContactMilestoneCalendarService
 
     private function birthdaySummary(Contact $contact): string
     {
-        return $this->contactDisplayName($contact)."'s Birthday";
+        return $this->contactDisplayName($contact).'\'s Birthday';
     }
 
     private function anniversarySummary(Contact $contact): string

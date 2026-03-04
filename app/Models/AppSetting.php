@@ -50,6 +50,16 @@ class AppSetting extends Model
         );
     }
 
+    public static function contactChangeRequestRetentionDays(): int
+    {
+        return self::integerSetting(
+            key: 'contact_change_request_retention_days',
+            default: (int) config('services.contacts.change_request_retention_days', 90),
+            min: 1,
+            max: 3650,
+        );
+    }
+
     private static function booleanSetting(string $key, bool $default): bool
     {
         $setting = self::query()->find($key);
@@ -59,5 +69,20 @@ class AppSetting extends Model
         }
 
         return filter_var($setting->value, FILTER_VALIDATE_BOOL);
+    }
+
+    private static function integerSetting(string $key, int $default, int $min, int $max): int
+    {
+        $setting = self::query()->find($key);
+        if (! $setting) {
+            return $default;
+        }
+
+        $value = filter_var($setting->value, FILTER_VALIDATE_INT);
+        if ($value === false) {
+            return $default;
+        }
+
+        return max($min, min($max, $value));
     }
 }
