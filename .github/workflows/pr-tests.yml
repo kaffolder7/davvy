@@ -1,6 +1,7 @@
 name: PR Tests
 
 on:
+  workflow_call:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
@@ -29,13 +30,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: pr-tests-${{ github.event.pull_request.number }}
+  group: pr-tests-${{ github.event.pull_request.number || github.ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
   dockerized-tests:
     name: Dockerized Laravel Tests
-    if: github.event.pull_request.draft == false
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
