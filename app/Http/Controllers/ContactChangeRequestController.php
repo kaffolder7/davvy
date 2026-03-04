@@ -32,6 +32,13 @@ class ContactChangeRequestController extends Controller
         ]);
     }
 
+    public function summary(Request $request): JsonResponse
+    {
+        return response()->json([
+            'needs_review_count' => $this->changeRequestService->pendingReviewCount($request->user()),
+        ]);
+    }
+
     public function approve(Request $request, ContactChangeRequest $contactChangeRequest): JsonResponse
     {
         $data = $request->validate([
