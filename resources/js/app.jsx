@@ -3131,6 +3131,7 @@ function AddressBookMilestoneControls({ item, onSave }) {
   const birthdaySettings = item?.milestone_calendars?.birthdays ?? {};
   const anniversarySettings = item?.milestone_calendars?.anniversaries ?? {};
   const [saving, setSaving] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [form, setForm] = useState({
     birthdaysEnabled: !!birthdaySettings.enabled,
     anniversariesEnabled: !!anniversarySettings.enabled,
@@ -3159,6 +3160,12 @@ function AddressBookMilestoneControls({ item, onSave }) {
     form.birthdayCalendarName !== (birthdaySettings.custom_name ?? "") ||
     form.anniversaryCalendarName !== (anniversarySettings.custom_name ?? "");
 
+  useEffect(() => {
+    if (isDirty) {
+      setExpanded(true);
+    }
+  }, [isDirty]);
+
   const submit = async (event) => {
     event.preventDefault();
     if (!isDirty || saving) {
@@ -3182,18 +3189,55 @@ function AddressBookMilestoneControls({ item, onSave }) {
   };
 
   return (
-    <form className="space-y-3" onSubmit={submit}>
-      <div className="rounded-xl border border-app-edge bg-app-surface p-3">
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-app-base">
-          Contact Milestone Calendars
-        </h4>
-        <p className="mt-1 text-[11px] text-app-faint">
-          Enable per-address-book Birthday and Anniversary calendar syncing.
-        </p>
+    <form onSubmit={submit}>
+      <div className="rounded-xl border border-app-edge bg-app-surface p-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-app-base">
+              Milestone Calendars
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+              <span
+                className={`rounded-full border px-2 py-0.5 font-semibold ${
+                  form.birthdaysEnabled
+                    ? "border-app-accent-edge text-app-accent"
+                    : "border-app-edge text-app-faint"
+                }`}
+              >
+                Birthdays {form.birthdaysEnabled ? "On" : "Off"}
+              </span>
+              <span
+                className={`rounded-full border px-2 py-0.5 font-semibold ${
+                  form.anniversariesEnabled
+                    ? "border-app-accent-edge text-app-accent"
+                    : "border-app-edge text-app-faint"
+                }`}
+              >
+                Anniversaries {form.anniversariesEnabled ? "On" : "Off"}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              className="btn-outline btn-outline-sm"
+              type="button"
+              onClick={() => setExpanded((prev) => !prev)}
+            >
+              {expanded ? "Hide" : "Configure"}
+            </button>
+            <button
+              className="btn-outline btn-outline-sm"
+              type="submit"
+              disabled={!isDirty || saving}
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </div>
 
-        <div className="mt-3 space-y-3">
-          <div className="space-y-1.5">
-            <div className="grid gap-2 sm:grid-cols-[auto_1fr] sm:items-center">
+        {expanded ? (
+          <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
+            <div className="rounded-lg border border-app-edge p-2">
               <label className="inline-flex items-center gap-2 text-xs font-semibold text-app-base">
                 <input
                   type="checkbox"
@@ -3208,7 +3252,7 @@ function AddressBookMilestoneControls({ item, onSave }) {
                 Birthdays
               </label>
               <input
-                className="input h-8 px-2 py-1 text-sm"
+                className="input mt-1.5 h-8 px-2 py-1 text-sm"
                 value={form.birthdayCalendarName}
                 onChange={(event) =>
                   setForm((prev) => ({
@@ -3221,16 +3265,14 @@ function AddressBookMilestoneControls({ item, onSave }) {
                   `${item.display_name} Birthdays`
                 }
               />
+              <p className="mt-1 text-[11px] text-app-faint">
+                {birthdaySettings.calendar_id
+                  ? birthdaySettings.calendar_name
+                  : "Created on enable"}
+              </p>
             </div>
-            <p className="text-[11px] text-app-faint">
-              {birthdaySettings.calendar_id
-                ? `Calendar: ${birthdaySettings.calendar_name}`
-                : "Calendar will be created when enabled."}
-            </p>
-          </div>
 
-          <div className="space-y-1.5">
-            <div className="grid gap-2 sm:grid-cols-[auto_1fr] sm:items-center">
+            <div className="rounded-lg border border-app-edge p-2">
               <label className="inline-flex items-center gap-2 text-xs font-semibold text-app-base">
                 <input
                   type="checkbox"
@@ -3245,7 +3287,7 @@ function AddressBookMilestoneControls({ item, onSave }) {
                 Anniversaries
               </label>
               <input
-                className="input h-8 px-2 py-1 text-sm"
+                className="input mt-1.5 h-8 px-2 py-1 text-sm"
                 value={form.anniversaryCalendarName}
                 onChange={(event) =>
                   setForm((prev) => ({
@@ -3258,24 +3300,14 @@ function AddressBookMilestoneControls({ item, onSave }) {
                   `${item.display_name} Anniversaries`
                 }
               />
+              <p className="mt-1 text-[11px] text-app-faint">
+                {anniversarySettings.calendar_id
+                  ? anniversarySettings.calendar_name
+                  : "Created on enable"}
+              </p>
             </div>
-            <p className="text-[11px] text-app-faint">
-              {anniversarySettings.calendar_id
-                ? `Calendar: ${anniversarySettings.calendar_name}`
-                : "Calendar will be created when enabled."}
-            </p>
           </div>
-        </div>
-
-        <div className="mt-3 flex justify-end">
-          <button
-            className="btn-outline btn-outline-sm"
-            type="submit"
-            disabled={!isDirty || saving}
-          >
-            {saving ? "Saving..." : "Save Milestones"}
-          </button>
-        </div>
+        ) : null}
       </div>
     </form>
   );
