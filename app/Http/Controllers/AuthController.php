@@ -41,6 +41,7 @@ class AuthController extends Controller
             'registration_enabled' => $this->registrationSettings->isPublicRegistrationEnabled(),
             'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
             'dav_compatibility_mode_enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
+            'contact_management_enabled' => $this->registrationSettings->isContactManagementEnabled(),
         ], 201);
     }
 
@@ -50,6 +51,7 @@ class AuthController extends Controller
             'registration_enabled' => $this->registrationSettings->isPublicRegistrationEnabled(),
             'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
             'dav_compatibility_mode_enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
+            'contact_management_enabled' => $this->registrationSettings->isContactManagementEnabled(),
         ]);
     }
 
@@ -73,6 +75,7 @@ class AuthController extends Controller
             'registration_enabled' => $this->registrationSettings->isPublicRegistrationEnabled(),
             'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
             'dav_compatibility_mode_enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
+            'contact_management_enabled' => $this->registrationSettings->isContactManagementEnabled(),
         ]);
     }
 
@@ -93,6 +96,7 @@ class AuthController extends Controller
             'registration_enabled' => $this->registrationSettings->isPublicRegistrationEnabled(),
             'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
             'dav_compatibility_mode_enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
+            'contact_management_enabled' => $this->registrationSettings->isContactManagementEnabled(),
         ]);
     }
 

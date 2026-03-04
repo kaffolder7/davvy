@@ -35,6 +35,7 @@ Set these in the **Application > Environment Variables** area.
 | `ENABLE_PUBLIC_REGISTRATION` | `false` | Secure default |
 | `ENABLE_OWNER_SHARE_MANAGEMENT` | `true` | Product default |
 | `ENABLE_DAV_COMPATIBILITY_MODE` | `false` | Secure default (strict mode) |
+| `ENABLE_CONTACT_MANAGEMENT` | `false` | Secure default for gated contact UI/API |
 | `RUN_DB_MIGRATIONS` | `true` | Recommended; set `false` only if migrations run out-of-band |
 | `RUN_DB_SEED` | `false` | Secure default; opt-in only for bootstrap |
 | `DEFAULT_ADMIN_EMAIL` | *(empty)* | Set only when `RUN_DB_SEED=true` |

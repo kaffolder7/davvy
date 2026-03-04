@@ -42,4 +42,15 @@ class RegistrationSettingsServiceTest extends TestCase
 
         $this->assertTrue($service->isDavCompatibilityModeEnabled());
     }
+
+    public function test_contact_management_setting_can_be_toggled(): void
+    {
+        $service = app(RegistrationSettingsService::class);
+
+        $this->assertFalse($service->isContactManagementEnabled());
+
+        $service->setContactManagementEnabled(true);
+
+        $this->assertTrue($service->isContactManagementEnabled());
+    }
 }

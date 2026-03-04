@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class AdminUserManagementTest extends TestCase
@@ -73,5 +74,39 @@ class AdminUserManagementTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('enabled', true);
+    }
+
+    public function test_admin_can_toggle_contact_management_setting(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this
+            ->actingAs($admin)
+            ->patchJson('/api/admin/settings/contact-management', [
+                'enabled' => true,
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('enabled', true);
+    }
+
+    public function test_enabling_contact_management_requires_contact_schema_tables(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        Schema::dropIfExists('contact_address_book_assignments');
+        Schema::dropIfExists('contacts');
+
+        $response = $this
+            ->actingAs($admin)
+            ->patchJson('/api/admin/settings/contact-management', [
+                'enabled' => true,
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath(
+            'message',
+            'Contact management schema is not available. Run migrations before enabling.',
+        );
     }
 }

@@ -65,10 +65,12 @@ Route::middleware('auth')->group(function (): void {
     Route::patch('/api/address-books/{addressBook}', [AddressBookController::class, 'update']);
     Route::delete('/api/address-books/{addressBook}', [AddressBookController::class, 'destroy']);
 
-    Route::get('/api/contacts', [ContactController::class, 'index']);
-    Route::post('/api/contacts', [ContactController::class, 'store']);
-    Route::patch('/api/contacts/{contact}', [ContactController::class, 'update']);
-    Route::delete('/api/contacts/{contact}', [ContactController::class, 'destroy']);
+    Route::middleware('contact-management')->group(function (): void {
+        Route::get('/api/contacts', [ContactController::class, 'index']);
+        Route::post('/api/contacts', [ContactController::class, 'store']);
+        Route::patch('/api/contacts/{contact}', [ContactController::class, 'update']);
+        Route::delete('/api/contacts/{contact}', [ContactController::class, 'destroy']);
+    });
 
     Route::get('/api/shares', [ShareController::class, 'index']);
     Route::post('/api/shares', [ShareController::class, 'upsert']);
@@ -81,6 +83,7 @@ Route::middleware('auth')->group(function (): void {
         Route::patch('/api/admin/settings/registration', [AdminController::class, 'setRegistrationSetting']);
         Route::patch('/api/admin/settings/owner-share-management', [AdminController::class, 'setOwnerShareManagementSetting']);
         Route::patch('/api/admin/settings/dav-compatibility-mode', [AdminController::class, 'setDavCompatibilityModeSetting']);
+        Route::patch('/api/admin/settings/contact-management', [AdminController::class, 'setContactManagementSetting']);
 
         Route::get('/api/admin/shares', [ShareController::class, 'index']);
         Route::post('/api/admin/shares', [ShareController::class, 'upsert']);
