@@ -3214,9 +3214,9 @@ function AddressBookMilestoneControls({ item, onSave }) {
       (nameDrafts[type] ?? "").trim() !== currentCustom.trim() && !isSaving;
 
     return (
-      <div className="py-1.5" key={type}>
+      <div className="py-1" key={type}>
         <div className="flex items-center gap-2">
-          <label className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-app-base">
+          <label className="inline-flex shrink-0 items-center gap-2 text-xs font-semibold text-app-base">
             <input
               type="checkbox"
               checked={!!settings.enabled}
@@ -3228,7 +3228,7 @@ function AddressBookMilestoneControls({ item, onSave }) {
           {isEditing ? (
             <div className="min-w-0 flex flex-1 items-center gap-1.5">
               <input
-                className="input h-8 min-w-[9rem] flex-1 px-2 py-1 text-sm"
+                className="input h-7 min-w-[9rem] flex-1 px-2 py-1 text-sm"
                 value={nameDrafts[type] ?? ""}
                 onChange={(event) =>
                   setNameDrafts((prev) => ({
@@ -3240,7 +3240,7 @@ function AddressBookMilestoneControls({ item, onSave }) {
                 disabled={isSaving}
               />
               <button
-                className="btn-outline btn-outline-sm inline-flex h-8 w-8 items-center justify-center px-0 text-app-accent"
+                className="inline-flex h-7 w-7 items-center justify-center rounded text-app-accent transition hover:text-app-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
                 type="button"
                 aria-label={`Save ${label} calendar name`}
                 title={`Save ${label} calendar name`}
@@ -3250,7 +3250,7 @@ function AddressBookMilestoneControls({ item, onSave }) {
                 <CheckIcon className="h-3.5 w-3.5" />
               </button>
               <button
-                className="btn-outline btn-outline-sm inline-flex h-8 w-8 items-center justify-center px-0 text-app-faint"
+                className="inline-flex h-7 w-7 items-center justify-center rounded text-app-faint transition hover:text-app-base focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
                 type="button"
                 aria-label={`Cancel editing ${label} calendar name`}
                 title={`Cancel editing ${label} calendar name`}
@@ -3276,7 +3276,7 @@ function AddressBookMilestoneControls({ item, onSave }) {
               </span>
               <button
                 type="button"
-                className="btn-outline btn-outline-sm inline-flex h-7 w-7 items-center justify-center px-0"
+                className="inline-flex h-6 w-6 items-center justify-center rounded text-app-dim transition hover:text-app-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
                 aria-label={`Rename ${label} calendar`}
                 title={`Rename ${label} calendar`}
                 onClick={() => setEditingKey(type)}
@@ -3295,11 +3295,11 @@ function AddressBookMilestoneControls({ item, onSave }) {
   };
 
   return (
-    <div className="rounded-xl border border-app-edge bg-app-surface p-2.5">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-app-base">
+    <div className="px-0.5 pt-0.5">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-app-dim">
         Milestone Calendars
       </p>
-      <div className="mt-2 divide-y divide-app-edge">
+      <div className="mt-1.5 divide-y divide-app-edge">
         {renderRow(
           "birthdays",
           "Birthdays",
@@ -3507,7 +3507,7 @@ function ResourcePanel({
                 </div>
               </div>
               {renderOwnedItemExtra ? (
-                <div className="mt-3 border-t border-app-edge pt-3">
+                <div className="mt-2 border-t border-app-edge pt-2">
                   {renderOwnedItemExtra(item)}
                 </div>
               ) : null}
