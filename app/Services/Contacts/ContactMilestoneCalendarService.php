@@ -687,7 +687,7 @@ class ContactMilestoneCalendarService
 
     private function birthdaySummary(Contact $contact): string
     {
-        return $this->contactDisplayName($contact)."'s Birthday";
+        return $this->contactDisplayName($contact).'\'s Birthday';
     }
 
     private function anniversarySummary(Contact $contact): string
@@ -841,8 +841,8 @@ class ContactMilestoneCalendarService
     private function escapeIcsText(string $value): string
     {
         return str_replace(
-            ["\\", ';', ',', "\r\n", "\r", "\n"],
-            ["\\\\", '\;', '\,', '\n', '\n', '\n'],
+            ['\\', ';', ',', "\r\n", "\r", "\n"],
+            ['\\\\', '\;', '\,', '\n', '\n', '\n'],
             $value,
         );
     }
