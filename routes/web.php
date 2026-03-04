@@ -121,6 +121,8 @@ Route::match([
     'REPORT',
     'MKCALENDAR',
     'ACL',
-], '/dav/{path?}', [DavController::class, 'handle'])->where('path', '.*');
+], '/dav/{path?}', [DavController::class, 'handle'])
+    ->middleware('dav-auth-throttle')
+    ->where('path', '.*');
 
 Route::view('/{any?}', 'app')->where('any', '^(?!api|dav).*$');

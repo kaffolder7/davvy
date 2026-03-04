@@ -75,6 +75,32 @@ class ReleaseHardeningTest extends TestCase
         ])->assertStatus(429);
     }
 
+    public function test_dav_endpoint_is_rate_limited_for_failed_basic_auth_attempts(): void
+    {
+        User::factory()->create([
+            'email' => 'dav-throttle@example.com',
+            'password' => 'Password123!',
+        ]);
+
+        config()->set('dav.auth_throttle.max_attempts', 3);
+        config()->set('dav.auth_throttle.decay_seconds', 60);
+
+        $server = [
+            'HTTP_AUTHORIZATION' => 'Basic '.base64_encode('dav-throttle@example.com:incorrect-password'),
+            'HTTP_DEPTH' => '0',
+            'REMOTE_ADDR' => '127.0.0.1',
+        ];
+
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            $this->call('PROPFIND', '/dav', server: $server)
+                ->assertStatus(401);
+        }
+
+        $limited = $this->call('PROPFIND', '/dav', server: $server);
+        $limited->assertStatus(429);
+        $this->assertNotNull($limited->headers->get('Retry-After'));
+    }
+
     private function withTemporaryEnv(array $values, callable $callback): void
     {
         $previous = [];
