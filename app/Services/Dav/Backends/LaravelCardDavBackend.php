@@ -8,6 +8,7 @@ use App\Models\AddressBook;
 use App\Models\Card;
 use App\Models\ResourceShare;
 use App\Services\AddressBookMirrorService;
+use App\Services\Contacts\ManagedContactSyncService;
 use App\Services\Dav\DavSyncService;
 use App\Services\Dav\VCardValidator;
 use App\Services\DavRequestContext;
@@ -21,6 +22,7 @@ use Sabre\DAV\Exception\Forbidden;
 use Sabre\DAV\Exception\InvalidSyncToken;
 use Sabre\DAV\Exception\NotFound;
 use Sabre\DAV\PropPatch;
+use Throwable;
 
 class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Backend\SyncSupport
 {
@@ -31,6 +33,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
         private readonly VCardValidator $vCardValidator,
         private readonly DavSyncService $syncService,
         private readonly AddressBookMirrorService $mirrorService,
+        private readonly ManagedContactSyncService $managedContactSync,
     ) {}
 
     public function getAddressBooksForUser($principalUri): array
@@ -202,6 +205,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
 
         $this->syncService->recordAdded(ShareResourceType::AddressBook, $addressBook->id, (string) $cardUri);
         $this->mirrorService->handleSourceCardUpsert($addressBook, $card);
+        $this->syncManagedContactUpsert($addressBook, $card);
 
         return '"'.$etag.'"';
     }
@@ -259,6 +263,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
             'data' => $normalized['data'],
         ]);
         $this->mirrorService->handleSourceCardUpsert($addressBook, $card);
+        $this->syncManagedContactUpsert($addressBook, $card);
 
         return '"'.$etag.'"';
     }
@@ -287,6 +292,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
             return;
         }
 
+        $this->syncManagedContactDelete($card);
         $card->delete();
 
         $this->syncService->recordDeleted(ShareResourceType::AddressBook, $addressBook->id, (string) $cardUri);
@@ -434,5 +440,27 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
     private function fallbackUidForLegacyPayload(string $cardUri): string
     {
         return 'legacy-card-'.sha1($cardUri);
+    }
+
+    private function syncManagedContactUpsert(AddressBook $addressBook, Card $card): void
+    {
+        try {
+            $this->managedContactSync->syncCardUpsert(
+                addressBook: $addressBook,
+                card: $card,
+                actor: $this->davContext->getAuthenticatedUser(),
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+    }
+
+    private function syncManagedContactDelete(Card $card): void
+    {
+        try {
+            $this->managedContactSync->syncCardDeleted($card);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
     }
 }
