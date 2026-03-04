@@ -5,6 +5,7 @@ use App\Http\Controllers\AddressBookMirrorController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DavController;
 use App\Http\Controllers\ExportController;
@@ -63,6 +64,11 @@ Route::middleware('auth')->group(function (): void {
     Route::patch('/api/address-books/apple-compat', [AddressBookMirrorController::class, 'update']);
     Route::patch('/api/address-books/{addressBook}', [AddressBookController::class, 'update']);
     Route::delete('/api/address-books/{addressBook}', [AddressBookController::class, 'destroy']);
+
+    Route::get('/api/contacts', [ContactController::class, 'index']);
+    Route::post('/api/contacts', [ContactController::class, 'store']);
+    Route::patch('/api/contacts/{contact}', [ContactController::class, 'update']);
+    Route::delete('/api/contacts/{contact}', [ContactController::class, 'destroy']);
 
     Route::get('/api/shares', [ShareController::class, 'index']);
     Route::post('/api/shares', [ShareController::class, 'upsert']);

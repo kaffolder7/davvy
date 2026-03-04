@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class AddressBook extends Model
 {
@@ -36,6 +37,23 @@ class AddressBook extends Model
     public function cards(): HasMany
     {
         return $this->hasMany(Card::class);
+    }
+
+    public function contactAssignments(): HasMany
+    {
+        return $this->hasMany(ContactAddressBookAssignment::class);
+    }
+
+    public function contacts(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Contact::class,
+            ContactAddressBookAssignment::class,
+            'address_book_id',
+            'id',
+            'id',
+            'contact_id',
+        );
     }
 
     public function shares(): HasMany

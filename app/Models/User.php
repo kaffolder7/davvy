@@ -53,6 +53,11 @@ class User extends Authenticatable
         return $this->hasMany(AddressBook::class, 'owner_id');
     }
 
+    public function contacts(): HasMany
+    {
+        return $this->hasMany(Contact::class, 'owner_id');
+    }
+
     public function incomingShares(): HasMany
     {
         return $this->hasMany(ResourceShare::class, 'shared_with_id');

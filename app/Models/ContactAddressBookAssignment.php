@@ -5,28 +5,30 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class Card extends Model
+class ContactAddressBookAssignment extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'contact_id',
         'address_book_id',
-        'uri',
-        'uid',
-        'etag',
-        'size',
-        'data',
+        'card_id',
+        'card_uri',
     ];
+
+    public function contact(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class);
+    }
 
     public function addressBook(): BelongsTo
     {
         return $this->belongsTo(AddressBook::class);
     }
 
-    public function contactAssignment(): HasOne
+    public function card(): BelongsTo
     {
-        return $this->hasOne(ContactAddressBookAssignment::class);
+        return $this->belongsTo(Card::class);
     }
 }
