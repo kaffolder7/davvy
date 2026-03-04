@@ -40,13 +40,14 @@ class ContactController extends Controller
         return response()->json($this->serializeContact($contact), 201);
     }
 
-    public function update(Request $request, Contact $contact): JsonResponse
+    public function update(Request $request, int $contact): JsonResponse
     {
         [$payload, $addressBookIds] = $this->validatedInput($request);
+        $model = Contact::query()->findOrFail($contact);
 
         $updated = $this->contactService->update(
             actor: $request->user(),
-            contact: $contact,
+            contact: $model,
             payload: $payload,
             addressBookIds: $addressBookIds,
         );
@@ -54,9 +55,11 @@ class ContactController extends Controller
         return response()->json($this->serializeContact($updated));
     }
 
-    public function destroy(Request $request, Contact $contact): JsonResponse
+    public function destroy(Request $request, int $contact): JsonResponse
     {
-        $this->contactService->delete($request->user(), $contact);
+        $model = Contact::query()->findOrFail($contact);
+
+        $this->contactService->delete($request->user(), $model);
 
         return response()->json(['ok' => true]);
     }

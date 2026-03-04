@@ -202,6 +202,7 @@ function App() {
     registrationEnabled: false,
     ownerShareManagementEnabled: false,
     davCompatibilityModeEnabled: false,
+    contactManagementEnabled: false,
   });
 
   const refreshAuth = async () => {
@@ -213,6 +214,7 @@ function App() {
         registrationEnabled: !!data.registration_enabled,
         ownerShareManagementEnabled: !!data.owner_share_management_enabled,
         davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
+        contactManagementEnabled: !!data.contact_management_enabled,
       });
     } catch {
       try {
@@ -223,6 +225,7 @@ function App() {
           registrationEnabled: !!data.registration_enabled,
           ownerShareManagementEnabled: !!data.owner_share_management_enabled,
           davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
+          contactManagementEnabled: !!data.contact_management_enabled,
         });
       } catch {
         setAuth({
@@ -231,6 +234,7 @@ function App() {
           registrationEnabled: false,
           ownerShareManagementEnabled: false,
           davCompatibilityModeEnabled: false,
+          contactManagementEnabled: false,
         });
       }
     }
@@ -272,7 +276,11 @@ function App() {
         path="/contacts"
         element={
           <ProtectedRoute auth={value}>
-            <ContactsPage auth={value} theme={theme} />
+            {value.contactManagementEnabled ? (
+              <ContactsPage auth={value} theme={theme} />
+            ) : (
+              <Navigate to="/" replace />
+            )}
           </ProtectedRoute>
         }
       />
@@ -335,6 +343,7 @@ function LoginPage({ auth, theme }) {
         registrationEnabled: !!data.registration_enabled,
         ownerShareManagementEnabled: !!data.owner_share_management_enabled,
         davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
+        contactManagementEnabled: !!data.contact_management_enabled,
       });
       navigate("/");
     } catch (err) {
@@ -421,6 +430,7 @@ function RegisterPage({ auth, theme }) {
         registrationEnabled: !!data.registration_enabled,
         ownerShareManagementEnabled: !!data.owner_share_management_enabled,
         davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
+        contactManagementEnabled: !!data.contact_management_enabled,
       });
       navigate("/");
     } catch (err) {
@@ -1375,6 +1385,7 @@ function hydrateContactForm(contact, defaultAddressBookIds = []) {
 }
 
 function ContactsPage({ auth, theme }) {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -1437,6 +1448,19 @@ function ContactsPage({ auth, theme }) {
     setOpenSections(deriveContactSectionOpenState(nextForm));
   };
 
+  const redirectIfFeatureDisabled = async (err) => {
+    const status = err?.response?.status;
+    const message = String(err?.response?.data?.message ?? "").toLowerCase();
+
+    if (status !== 403 || !message.includes("contact management")) {
+      return false;
+    }
+
+    await auth.refreshAuth();
+    navigate("/", { replace: true });
+    return true;
+  };
+
   const loadContacts = async ({ preserveSelection = true, selectId = null } = {}) => {
     setError("");
     setLoading(true);
@@ -1467,6 +1491,9 @@ function ContactsPage({ auth, theme }) {
       const activeContact = nextContacts.find((contact) => contact.id === activeId);
       applyFormState(hydrateContactForm(activeContact, fallbackIds));
     } catch (err) {
+      if (await redirectIfFeatureDisabled(err)) {
+        return;
+      }
       setError(extractError(err, "Unable to load contacts."));
     } finally {
       setLoading(false);
@@ -1536,6 +1563,9 @@ function ContactsPage({ auth, theme }) {
         selectId: response.data?.id ?? null,
       });
     } catch (err) {
+      if (await redirectIfFeatureDisabled(err)) {
+        return;
+      }
       setError(extractError(err, "Unable to save contact."));
     } finally {
       setSubmitting(false);
@@ -1558,6 +1588,9 @@ function ContactsPage({ auth, theme }) {
       await api.delete(`/api/contacts/${form.id}`);
       await loadContacts({ preserveSelection: false, selectId: null });
     } catch (err) {
+      if (await redirectIfFeatureDisabled(err)) {
+        return;
+      }
       setError(extractError(err, "Unable to delete contact."));
     } finally {
       setSubmitting(false);
@@ -3007,6 +3040,7 @@ function AdminPage({ auth, theme }) {
     registrationEnabled: auth.registrationEnabled,
     ownerShareManagementEnabled: auth.ownerShareManagementEnabled,
     davCompatibilityModeEnabled: auth.davCompatibilityModeEnabled,
+    contactManagementEnabled: auth.contactManagementEnabled,
   });
   const [userForm, setUserForm] = useState({
     name: "",
@@ -3171,6 +3205,32 @@ function AdminPage({ auth, theme }) {
     }
   };
 
+  const toggleContactManagement = async () => {
+    const next = !state.contactManagementEnabled;
+
+    try {
+      const response = await api.patch("/api/admin/settings/contact-management", {
+        enabled: next,
+      });
+      setState((prev) => ({
+        ...prev,
+        contactManagementEnabled: !!response.data.enabled,
+      }));
+      auth.setAuth((prev) => ({
+        ...prev,
+        contactManagementEnabled: !!response.data.enabled,
+      }));
+    } catch (err) {
+      setState((prev) => ({
+        ...prev,
+        error: extractError(
+          err,
+          "Unable to update contact management setting.",
+        ),
+      }));
+    }
+  };
+
   const resourceOptions =
     shareForm.resource_type === "calendar"
       ? state.resources.calendars
@@ -3197,6 +3257,9 @@ function AdminPage({ auth, theme }) {
             >
               DAV compatibility mode:{" "}
               {state.davCompatibilityModeEnabled ? "ON" : "OFF"}
+            </button>
+            <button className="btn-outline" onClick={toggleContactManagement}>
+              Contact management: {state.contactManagementEnabled ? "ON" : "OFF"}
             </button>
           </div>
         </div>
@@ -3513,6 +3576,7 @@ function AppShell({ auth, theme, children }) {
       registrationEnabled: auth.registrationEnabled,
       ownerShareManagementEnabled: auth.ownerShareManagementEnabled,
       davCompatibilityModeEnabled: auth.davCompatibilityModeEnabled,
+      contactManagementEnabled: auth.contactManagementEnabled,
     });
     navigate("/login");
   };
@@ -3588,12 +3652,14 @@ function AppShell({ auth, theme, children }) {
               >
                 Dashboard
               </Link>
-              <Link
-                className={location.pathname === "/contacts" ? "tab tab-active" : "tab"}
-                to="/contacts"
-              >
-                Contacts
-              </Link>
+              {auth.contactManagementEnabled ? (
+                <Link
+                  className={location.pathname === "/contacts" ? "tab tab-active" : "tab"}
+                  to="/contacts"
+                >
+                  Contacts
+                </Link>
+              ) : null}
               <Link
                 className={`${location.pathname === "/profile" ? "tab tab-active" : "tab"} inline-flex items-center gap-1.5`}
                 to="/profile"

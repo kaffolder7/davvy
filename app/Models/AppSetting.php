@@ -42,6 +42,14 @@ class AppSetting extends Model
         );
     }
 
+    public static function contactManagementEnabled(): bool
+    {
+        return self::booleanSetting(
+            key: 'contact_management_enabled',
+            default: (bool) config('services.contacts.management_enabled', false),
+        );
+    }
+
     private static function booleanSetting(string $key, bool $default): bool
     {
         $setting = self::query()->find($key);

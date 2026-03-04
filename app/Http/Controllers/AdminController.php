@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\RegistrationSettingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rules\Password;
 
 class AdminController extends Controller
@@ -109,6 +110,32 @@ class AdminController extends Controller
 
         return response()->json([
             'enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
+        ]);
+    }
+
+    public function setContactManagementSetting(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'enabled' => ['required', 'boolean'],
+        ]);
+
+        if (
+            (bool) $data['enabled']
+            && (
+                ! Schema::hasTable('contacts')
+                || ! Schema::hasTable('contact_address_book_assignments')
+            )
+        ) {
+            abort(422, 'Contact management schema is not available. Run migrations before enabling.');
+        }
+
+        $this->registrationSettings->setContactManagementEnabled(
+            enabled: (bool) $data['enabled'],
+            actor: $request->user()
+        );
+
+        return response()->json([
+            'enabled' => $this->registrationSettings->isContactManagementEnabled(),
         ]);
     }
 }

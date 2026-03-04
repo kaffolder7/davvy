@@ -45,4 +45,17 @@ class RegistrationSettingsService
             ['value' => $enabled ? 'true' : 'false', 'updated_by' => $actor?->id]
         );
     }
+
+    public function isContactManagementEnabled(): bool
+    {
+        return AppSetting::contactManagementEnabled();
+    }
+
+    public function setContactManagementEnabled(bool $enabled, ?User $actor = null): void
+    {
+        AppSetting::query()->updateOrCreate(
+            ['key' => 'contact_management_enabled'],
+            ['value' => $enabled ? 'true' : 'false', 'updated_by' => $actor?->id]
+        );
+    }
 }

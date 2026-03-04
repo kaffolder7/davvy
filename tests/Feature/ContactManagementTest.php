@@ -10,12 +10,20 @@ use App\Models\Contact;
 use App\Models\ContactAddressBookAssignment;
 use App\Models\ResourceShare;
 use App\Models\User;
+use App\Services\RegistrationSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ContactManagementTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        app(RegistrationSettingsService::class)->setContactManagementEnabled(true);
+    }
 
     public function test_user_can_create_contact_in_multiple_address_books(): void
     {
@@ -174,6 +182,29 @@ class ContactManagementTest extends TestCase
             ]))
             ->assertStatus(422)
             ->assertJsonValidationErrors(['first_name']);
+    }
+
+    public function test_contacts_api_is_forbidden_when_contact_management_is_disabled(): void
+    {
+        $user = User::factory()->create();
+        app(RegistrationSettingsService::class)->setContactManagementEnabled(false);
+
+        $this->actingAs($user)
+            ->getJson('/api/contacts')
+            ->assertForbidden()
+            ->assertJsonPath('message', 'Contact management is currently disabled by admins.');
+
+        $this->actingAs($user)
+            ->postJson('/api/contacts', $this->payload())
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->patchJson('/api/contacts/999', $this->payload())
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->deleteJson('/api/contacts/999')
+            ->assertForbidden();
     }
 
     public function test_update_contact_requires_first_name_last_name_or_company(): void

@@ -10,4 +10,7 @@ return [
     'dav' => [
         'compatibility_mode_enabled' => (bool) env('ENABLE_DAV_COMPATIBILITY_MODE', false),
     ],
+    'contacts' => [
+        'management_enabled' => (bool) env('ENABLE_CONTACT_MANAGEMENT', false),
+    ],
 ];

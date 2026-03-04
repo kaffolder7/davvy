@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use App\Services\RegistrationSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -57,5 +58,26 @@ class RegistrationSettingsTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('dav_compatibility_mode_enabled', true);
+    }
+
+    public function test_public_config_includes_contact_management_setting(): void
+    {
+        app(RegistrationSettingsService::class)->setContactManagementEnabled(true);
+
+        $response = $this->getJson('/api/public/config');
+
+        $response->assertOk();
+        $response->assertJsonPath('contact_management_enabled', true);
+    }
+
+    public function test_authenticated_me_payload_includes_contact_management_setting(): void
+    {
+        $user = User::factory()->create();
+        app(RegistrationSettingsService::class)->setContactManagementEnabled(true);
+
+        $response = $this->actingAs($user)->getJson('/api/auth/me');
+
+        $response->assertOk();
+        $response->assertJsonPath('contact_management_enabled', true);
     }
 }

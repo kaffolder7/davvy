@@ -18,6 +18,7 @@ This repo includes [`railway.toml`](../railway.toml) and a production `Dockerfil
 - `ENABLE_PUBLIC_REGISTRATION` (optional)
 - `ENABLE_OWNER_SHARE_MANAGEMENT` (optional)
 - `ENABLE_DAV_COMPATIBILITY_MODE` (optional)
+- `ENABLE_CONTACT_MANAGEMENT` (optional)
 - `RUN_DB_MIGRATIONS` (optional, default `true`)
 - `TRUSTED_PROXIES` (recommended, e.g. `*` behind managed reverse proxy)
 
@@ -69,6 +70,7 @@ Davvy deploys on Coolify using the same production `Dockerfile`; no code changes
 - `ENABLE_PUBLIC_REGISTRATION` (optional)
 - `ENABLE_OWNER_SHARE_MANAGEMENT` (optional)
 - `ENABLE_DAV_COMPATIBILITY_MODE` (optional)
+- `ENABLE_CONTACT_MANAGEMENT` (optional)
 - `RUN_DB_MIGRATIONS` (optional, default `true`)
 - `TRUSTED_PROXIES` (recommended, e.g. `*` behind managed reverse proxy)
 
