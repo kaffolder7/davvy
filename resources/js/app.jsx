@@ -1071,6 +1071,61 @@ const PRONOUN_OPTIONS = [
   { value: "custom", label: "Custom..." },
 ];
 
+const OPTIONAL_CONTACT_FIELDS = [
+  { id: "prefix", label: "Prefix" },
+  { id: "middle_name", label: "Middle Name" },
+  { id: "suffix", label: "Suffix" },
+  { id: "nickname", label: "Nickname" },
+  { id: "maiden_name", label: "Maiden Name" },
+  { id: "phonetic_first_name", label: "Phonetic First Name" },
+  { id: "phonetic_last_name", label: "Phonetic Last Name" },
+  { id: "phonetic_company", label: "Phonetic Company" },
+  { id: "department", label: "Department" },
+  { id: "pronouns_custom", label: "Custom Pronouns" },
+  { id: "ringtone", label: "Ringtone" },
+  { id: "text_tone", label: "Text Tone" },
+  { id: "verification_code", label: "Verification Code" },
+  { id: "profile", label: "Profile" },
+  { id: "instant_messages", label: "Instant Message" },
+  { id: "dates", label: "Date" },
+];
+
+function hasTextValue(value) {
+  return typeof value === "string" ? value.trim() !== "" : false;
+}
+
+function hasValueRowContent(rows) {
+  return Array.isArray(rows)
+    ? rows.some(
+        (row) => hasTextValue(row?.value) || hasTextValue(row?.custom_label),
+      )
+    : false;
+}
+
+function hasDateRowContent(rows) {
+  return Array.isArray(rows)
+    ? rows.some((row) => hasTextValue(row?.month) || hasTextValue(row?.day))
+    : false;
+}
+
+function deriveOptionalFieldVisibility(form) {
+  return OPTIONAL_CONTACT_FIELDS.filter((field) => {
+    if (field.id === "instant_messages") {
+      return hasValueRowContent(form.instant_messages);
+    }
+
+    if (field.id === "dates") {
+      return hasDateRowContent(form.dates);
+    }
+
+    if (field.id === "pronouns_custom") {
+      return hasTextValue(form.pronouns_custom) || form.pronouns === "custom";
+    }
+
+    return hasTextValue(form[field.id]);
+  }).map((field) => field.id);
+}
+
 function createEmptyLabeledValue(label = "other") {
   return { label, custom_label: "", value: "" };
 }
@@ -1233,11 +1288,37 @@ function ContactsPage({ auth, theme }) {
   const [addressBooks, setAddressBooks] = useState([]);
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [form, setForm] = useState(createEmptyContactForm());
+  const [visibleOptionalFields, setVisibleOptionalFields] = useState([]);
+  const [fieldToAdd, setFieldToAdd] = useState(OPTIONAL_CONTACT_FIELDS[0]?.id ?? "");
 
   const defaultAddressBookIds = useMemo(
     () => (addressBooks[0] ? [addressBooks[0].id] : []),
     [addressBooks],
   );
+
+  const hiddenOptionalFields = useMemo(
+    () =>
+      OPTIONAL_CONTACT_FIELDS.filter(
+        (field) => !visibleOptionalFields.includes(field.id),
+      ),
+    [visibleOptionalFields],
+  );
+
+  useEffect(() => {
+    if (hiddenOptionalFields.length === 0) {
+      setFieldToAdd("");
+      return;
+    }
+
+    if (!hiddenOptionalFields.some((field) => field.id === fieldToAdd)) {
+      setFieldToAdd(hiddenOptionalFields[0].id);
+    }
+  }, [fieldToAdd, hiddenOptionalFields]);
+
+  const applyFormState = (nextForm) => {
+    setForm(nextForm);
+    setVisibleOptionalFields(deriveOptionalFieldVisibility(nextForm));
+  };
 
   const loadContacts = async ({ preserveSelection = true, selectId = null } = {}) => {
     setError("");
@@ -1267,7 +1348,7 @@ function ContactsPage({ auth, theme }) {
       setSelectedContactId(activeId);
 
       const activeContact = nextContacts.find((contact) => contact.id === activeId);
-      setForm(hydrateContactForm(activeContact, fallbackIds));
+      applyFormState(hydrateContactForm(activeContact, fallbackIds));
     } catch (err) {
       setError(extractError(err, "Unable to load contacts."));
     } finally {
@@ -1283,13 +1364,13 @@ function ContactsPage({ auth, theme }) {
   const startNewContact = () => {
     setSelectedContactId(null);
     setError("");
-    setForm(createEmptyContactForm(defaultAddressBookIds));
+    applyFormState(createEmptyContactForm(defaultAddressBookIds));
   };
 
   const selectContact = (contact) => {
     setSelectedContactId(contact.id);
     setError("");
-    setForm(hydrateContactForm(contact, defaultAddressBookIds));
+    applyFormState(hydrateContactForm(contact, defaultAddressBookIds));
   };
 
   const updateFormField = (field, value) => {
@@ -1379,6 +1460,23 @@ function ContactsPage({ auth, theme }) {
       return { ...prev, address_book_ids: current };
     });
   };
+
+  const showOptionalField = (fieldId) => {
+    if (!fieldId) {
+      return;
+    }
+
+    setVisibleOptionalFields((prev) =>
+      prev.includes(fieldId) ? prev : [...prev, fieldId],
+    );
+  };
+
+  const hideOptionalField = (fieldId) => {
+    setVisibleOptionalFields((prev) => prev.filter((id) => id !== fieldId));
+  };
+
+  const isOptionalFieldVisible = (fieldId) =>
+    visibleOptionalFields.includes(fieldId);
 
   return (
     <AppShell auth={auth} theme={theme}>
@@ -1483,14 +1581,74 @@ function ContactsPage({ auth, theme }) {
             ) : null}
 
             <form id="contact-editor" className="mt-5 space-y-6" onSubmit={saveContact}>
+              <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
+                  Add Optional Field
+                </h3>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <select
+                    className="input w-full max-w-xs"
+                    value={fieldToAdd}
+                    onChange={(event) => setFieldToAdd(event.target.value)}
+                    disabled={hiddenOptionalFields.length === 0}
+                  >
+                    {hiddenOptionalFields.length === 0 ? (
+                      <option value="">All optional fields added</option>
+                    ) : (
+                      hiddenOptionalFields.map((field) => (
+                        <option key={field.id} value={field.id}>
+                          {field.label}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                  <button
+                    className="btn-outline btn-outline-sm"
+                    type="button"
+                    onClick={() => showOptionalField(fieldToAdd)}
+                    disabled={!fieldToAdd}
+                  >
+                    Add Field
+                  </button>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {visibleOptionalFields.length === 0 ? (
+                    <p className="text-sm text-app-faint">
+                      Optional fields are hidden by default.
+                    </p>
+                  ) : (
+                    visibleOptionalFields.map((fieldId) => {
+                      const fieldMeta = OPTIONAL_CONTACT_FIELDS.find(
+                        (field) => field.id === fieldId,
+                      );
+
+                      return (
+                        <button
+                          key={fieldId}
+                          className="btn-outline btn-outline-sm"
+                          type="button"
+                          onClick={() => hideOptionalField(fieldId)}
+                        >
+                          Hide {fieldMeta?.label ?? fieldId}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </section>
+
               <div className="grid gap-3 md:grid-cols-3">
-                <Field label="Prefix">
-                  <input
-                    className="input"
-                    value={form.prefix}
-                    onChange={(event) => updateFormField("prefix", event.target.value)}
-                  />
-                </Field>
+                {isOptionalFieldVisible("prefix") ? (
+                  <Field label="Prefix">
+                    <input
+                      className="input"
+                      value={form.prefix}
+                      onChange={(event) =>
+                        updateFormField("prefix", event.target.value)
+                      }
+                    />
+                  </Field>
+                ) : null}
                 <Field label="First Name">
                   <input
                     className="input"
@@ -1500,15 +1658,17 @@ function ContactsPage({ auth, theme }) {
                     }
                   />
                 </Field>
-                <Field label="Middle Name">
-                  <input
-                    className="input"
-                    value={form.middle_name}
-                    onChange={(event) =>
-                      updateFormField("middle_name", event.target.value)
-                    }
-                  />
-                </Field>
+                {isOptionalFieldVisible("middle_name") ? (
+                  <Field label="Middle Name">
+                    <input
+                      className="input"
+                      value={form.middle_name}
+                      onChange={(event) =>
+                        updateFormField("middle_name", event.target.value)
+                      }
+                    />
+                  </Field>
+                ) : null}
                 <Field label="Last Name">
                   <input
                     className="input"
@@ -1516,49 +1676,61 @@ function ContactsPage({ auth, theme }) {
                     onChange={(event) => updateFormField("last_name", event.target.value)}
                   />
                 </Field>
-                <Field label="Suffix">
-                  <input
-                    className="input"
-                    value={form.suffix}
-                    onChange={(event) => updateFormField("suffix", event.target.value)}
-                  />
-                </Field>
-                <Field label="Nickname">
-                  <input
-                    className="input"
-                    value={form.nickname}
-                    onChange={(event) =>
-                      updateFormField("nickname", event.target.value)
-                    }
-                  />
-                </Field>
-                <Field label="Maiden Name">
-                  <input
-                    className="input"
-                    value={form.maiden_name}
-                    onChange={(event) =>
-                      updateFormField("maiden_name", event.target.value)
-                    }
-                  />
-                </Field>
-                <Field label="Phonetic First Name">
-                  <input
-                    className="input"
-                    value={form.phonetic_first_name}
-                    onChange={(event) =>
-                      updateFormField("phonetic_first_name", event.target.value)
-                    }
-                  />
-                </Field>
-                <Field label="Phonetic Last Name">
-                  <input
-                    className="input"
-                    value={form.phonetic_last_name}
-                    onChange={(event) =>
-                      updateFormField("phonetic_last_name", event.target.value)
-                    }
-                  />
-                </Field>
+                {isOptionalFieldVisible("suffix") ? (
+                  <Field label="Suffix">
+                    <input
+                      className="input"
+                      value={form.suffix}
+                      onChange={(event) =>
+                        updateFormField("suffix", event.target.value)
+                      }
+                    />
+                  </Field>
+                ) : null}
+                {isOptionalFieldVisible("nickname") ? (
+                  <Field label="Nickname">
+                    <input
+                      className="input"
+                      value={form.nickname}
+                      onChange={(event) =>
+                        updateFormField("nickname", event.target.value)
+                      }
+                    />
+                  </Field>
+                ) : null}
+                {isOptionalFieldVisible("maiden_name") ? (
+                  <Field label="Maiden Name">
+                    <input
+                      className="input"
+                      value={form.maiden_name}
+                      onChange={(event) =>
+                        updateFormField("maiden_name", event.target.value)
+                      }
+                    />
+                  </Field>
+                ) : null}
+                {isOptionalFieldVisible("phonetic_first_name") ? (
+                  <Field label="Phonetic First Name">
+                    <input
+                      className="input"
+                      value={form.phonetic_first_name}
+                      onChange={(event) =>
+                        updateFormField("phonetic_first_name", event.target.value)
+                      }
+                    />
+                  </Field>
+                ) : null}
+                {isOptionalFieldVisible("phonetic_last_name") ? (
+                  <Field label="Phonetic Last Name">
+                    <input
+                      className="input"
+                      value={form.phonetic_last_name}
+                      onChange={(event) =>
+                        updateFormField("phonetic_last_name", event.target.value)
+                      }
+                    />
+                  </Field>
+                ) : null}
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
@@ -1569,15 +1741,17 @@ function ContactsPage({ auth, theme }) {
                     onChange={(event) => updateFormField("company", event.target.value)}
                   />
                 </Field>
-                <Field label="Phonetic Company">
-                  <input
-                    className="input"
-                    value={form.phonetic_company}
-                    onChange={(event) =>
-                      updateFormField("phonetic_company", event.target.value)
-                    }
-                  />
-                </Field>
+                {isOptionalFieldVisible("phonetic_company") ? (
+                  <Field label="Phonetic Company">
+                    <input
+                      className="input"
+                      value={form.phonetic_company}
+                      onChange={(event) =>
+                        updateFormField("phonetic_company", event.target.value)
+                      }
+                    />
+                  </Field>
+                ) : null}
                 <Field label="Job Title">
                   <input
                     className="input"
@@ -1587,15 +1761,17 @@ function ContactsPage({ auth, theme }) {
                     }
                   />
                 </Field>
-                <Field label="Department">
-                  <input
-                    className="input"
-                    value={form.department}
-                    onChange={(event) =>
-                      updateFormField("department", event.target.value)
-                    }
-                  />
-                </Field>
+                {isOptionalFieldVisible("department") ? (
+                  <Field label="Department">
+                    <input
+                      className="input"
+                      value={form.department}
+                      onChange={(event) =>
+                        updateFormField("department", event.target.value)
+                      }
+                    />
+                  </Field>
+                ) : null}
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
@@ -1603,9 +1779,14 @@ function ContactsPage({ auth, theme }) {
                   <select
                     className="input"
                     value={form.pronouns}
-                    onChange={(event) =>
-                      updateFormField("pronouns", event.target.value)
-                    }
+                    onChange={(event) => {
+                      const nextValue = event.target.value;
+                      updateFormField("pronouns", nextValue);
+
+                      if (nextValue === "custom") {
+                        showOptionalField("pronouns_custom");
+                      }
+                    }}
                   >
                     {PRONOUN_OPTIONS.map((option) => (
                       <option key={option.value || "none"} value={option.value}>
@@ -1614,53 +1795,63 @@ function ContactsPage({ auth, theme }) {
                     ))}
                   </select>
                 </Field>
-                <Field label="Custom Pronouns">
-                  <input
-                    className="input"
-                    value={form.pronouns_custom}
-                    onChange={(event) =>
-                      updateFormField("pronouns_custom", event.target.value)
-                    }
-                    placeholder="Optional custom value"
-                    disabled={form.pronouns !== "custom" && !form.pronouns_custom}
-                  />
-                </Field>
-                <Field label="Ringtone">
-                  <input
-                    className="input"
-                    value={form.ringtone}
-                    onChange={(event) =>
-                      updateFormField("ringtone", event.target.value)
-                    }
-                  />
-                </Field>
-                <Field label="Text Tone">
-                  <input
-                    className="input"
-                    value={form.text_tone}
-                    onChange={(event) =>
-                      updateFormField("text_tone", event.target.value)
-                    }
-                  />
-                </Field>
-                <Field label="Verification Code">
-                  <input
-                    className="input"
-                    value={form.verification_code}
-                    onChange={(event) =>
-                      updateFormField("verification_code", event.target.value)
-                    }
-                  />
-                </Field>
-                <Field label="Profile">
-                  <input
-                    className="input"
-                    value={form.profile}
-                    onChange={(event) =>
-                      updateFormField("profile", event.target.value)
-                    }
-                  />
-                </Field>
+                {isOptionalFieldVisible("pronouns_custom") ? (
+                  <Field label="Custom Pronouns">
+                    <input
+                      className="input"
+                      value={form.pronouns_custom}
+                      onChange={(event) =>
+                        updateFormField("pronouns_custom", event.target.value)
+                      }
+                      placeholder="Optional custom value"
+                      disabled={form.pronouns !== "custom" && !form.pronouns_custom}
+                    />
+                  </Field>
+                ) : null}
+                {isOptionalFieldVisible("ringtone") ? (
+                  <Field label="Ringtone">
+                    <input
+                      className="input"
+                      value={form.ringtone}
+                      onChange={(event) =>
+                        updateFormField("ringtone", event.target.value)
+                      }
+                    />
+                  </Field>
+                ) : null}
+                {isOptionalFieldVisible("text_tone") ? (
+                  <Field label="Text Tone">
+                    <input
+                      className="input"
+                      value={form.text_tone}
+                      onChange={(event) =>
+                        updateFormField("text_tone", event.target.value)
+                      }
+                    />
+                  </Field>
+                ) : null}
+                {isOptionalFieldVisible("verification_code") ? (
+                  <Field label="Verification Code">
+                    <input
+                      className="input"
+                      value={form.verification_code}
+                      onChange={(event) =>
+                        updateFormField("verification_code", event.target.value)
+                      }
+                    />
+                  </Field>
+                ) : null}
+                {isOptionalFieldVisible("profile") ? (
+                  <Field label="Profile">
+                    <input
+                      className="input"
+                      value={form.profile}
+                      onChange={(event) =>
+                        updateFormField("profile", event.target.value)
+                      }
+                    />
+                  </Field>
+                ) : null}
               </div>
 
               <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
@@ -1731,14 +1922,16 @@ function ContactsPage({ auth, theme }) {
                 valuePlaceholder="https://example.com"
                 addLabel="Add URL"
               />
-              <LabeledValueEditor
-                title="Instant Message"
-                rows={form.instant_messages}
-                setRows={(rows) => updateFormField("instant_messages", rows)}
-                labelOptions={IM_LABEL_OPTIONS}
-                valuePlaceholder="im:username@example.com"
-                addLabel="Add IM"
-              />
+              {isOptionalFieldVisible("instant_messages") ? (
+                <LabeledValueEditor
+                  title="Instant Message"
+                  rows={form.instant_messages}
+                  setRows={(rows) => updateFormField("instant_messages", rows)}
+                  labelOptions={IM_LABEL_OPTIONS}
+                  valuePlaceholder="im:username@example.com"
+                  addLabel="Add IM"
+                />
+              ) : null}
               <LabeledValueEditor
                 title="Related Name"
                 rows={form.related_names}
@@ -1753,10 +1946,12 @@ function ContactsPage({ auth, theme }) {
                 setRows={(rows) => updateFormField("addresses", rows)}
               />
 
-              <DateEditor
-                rows={form.dates}
-                setRows={(rows) => updateFormField("dates", rows)}
-              />
+              {isOptionalFieldVisible("dates") ? (
+                <DateEditor
+                  rows={form.dates}
+                  setRows={(rows) => updateFormField("dates", rows)}
+                />
+              ) : null}
 
               <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
