@@ -3259,7 +3259,7 @@ function AddressBookMilestoneControls({ item, onSave }) {
       (nameDrafts[type] ?? "").trim() !== currentCustom.trim() && !isSaving;
 
     return (
-      <div className="py-1" key={type}>
+      <div className="py-0.5" key={type}>
         <div className="flex items-center gap-2">
           <label className="inline-flex shrink-0 items-center gap-2 text-xs font-semibold text-app-base">
             <input
@@ -3356,10 +3356,10 @@ function AddressBookMilestoneControls({ item, onSave }) {
   };
 
   return (
-    <div className="px-0.5 pt-0.5">
+    <div className="px-0.5">
       <button
         type="button"
-        className="flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left transition hover:bg-app-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+        className="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1 text-left transition hover:bg-app-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
         aria-label={
           collapsed
             ? "Expand milestone calendars"
@@ -3379,10 +3379,10 @@ function AddressBookMilestoneControls({ item, onSave }) {
         }}
       >
         <span>
-          <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-app-base">
+          <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] leading-tight text-app-base">
             Milestone Calendars
           </span>
-          <span className="block text-[11px] text-app-faint">
+          <span className="block text-[11px] leading-tight text-app-faint">
             {enabledCount === 0 ? "Off" : `${enabledCount}/2 enabled`}
           </span>
         </span>
@@ -3394,7 +3394,7 @@ function AddressBookMilestoneControls({ item, onSave }) {
         </span>
       </button>
       {!collapsed ? (
-        <div className="mt-1.5 divide-y divide-app-edge">
+        <div className="mt-1 divide-y divide-app-edge">
           {renderRow(
             "birthdays",
             "Birthdays",
@@ -3516,7 +3516,9 @@ function ResourcePanel({
           items.map((item) => (
             <div
               key={item.id}
-              className="rounded-xl border border-app-edge bg-app-surface p-3"
+              className={`rounded-xl border border-app-edge bg-app-surface ${
+                renderOwnedItemExtra ? "px-3 pb-2 pt-3" : "p-3"
+              }`}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
@@ -3603,7 +3605,7 @@ function ResourcePanel({
                 </div>
               </div>
               {renderOwnedItemExtra ? (
-                <div className="mt-2 border-t border-app-edge pt-2">
+                <div className="mt-1.5 border-t border-app-edge pt-1.5">
                   {renderOwnedItemExtra(item)}
                 </div>
               ) : null}
