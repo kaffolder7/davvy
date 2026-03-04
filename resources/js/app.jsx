@@ -2162,37 +2162,7 @@ function ContactsPage({ auth, theme }) {
                 ) : null}
               </section>
 
-              <section className="rounded-2xl border border-app-edge bg-app-surface p-3">
-                <button
-                  className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-1 text-left"
-                  type="button"
-                  onClick={() => toggleSection("addressBooks")}
-                  aria-expanded={openSections.addressBooks}
-                >
-                  <span>
-                    <span className="block text-sm font-semibold uppercase tracking-wide text-app-base">
-                      Address Books
-                    </span>
-                    <span className="block text-xs text-app-faint">
-                      Choose where this contact will be stored.
-                    </span>
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <span className="rounded-full border border-app-warn-edge bg-app-warn-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-app-base">
-                      Required
-                    </span>
-                    <span className="rounded-full border border-app-edge bg-app-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-app-faint">
-                      {selectedAddressBookCount} selected
-                    </span>
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-app-edge text-xs text-app-faint">
-                      {openSections.addressBooks ? "-" : "+"}
-                    </span>
-                  </span>
-                </button>
-
-                {openSections.addressBooks ? (
-                  <div className="mt-3 space-y-4 px-1 pb-1">
-                    <section className="rounded-2xl border border-dashed border-app-accent-edge bg-app-surface p-4">
+              <section className="rounded-2xl border border-dashed border-app-accent-edge bg-app-surface p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-sm font-semibold uppercase tracking-wide text-app-accent">
                     Add Optional Field
@@ -2309,8 +2279,38 @@ function ContactsPage({ auth, theme }) {
                     })
                   )}
                 </div>
-                    </section>
+              </section>
 
+              <section className="rounded-2xl border border-app-edge bg-app-surface p-3">
+                <button
+                  className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-1 text-left"
+                  type="button"
+                  onClick={() => toggleSection("addressBooks")}
+                  aria-expanded={openSections.addressBooks}
+                >
+                  <span>
+                    <span className="block text-sm font-semibold uppercase tracking-wide text-app-base">
+                      Address Books
+                    </span>
+                    <span className="block text-xs text-app-faint">
+                      Choose where this contact will be stored.
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="rounded-full border border-app-warn-edge bg-app-warn-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-app-base">
+                      Required
+                    </span>
+                    <span className="rounded-full border border-app-edge bg-app-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-app-faint">
+                      {selectedAddressBookCount} selected
+                    </span>
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-app-edge text-xs text-app-faint">
+                      {openSections.addressBooks ? "-" : "+"}
+                    </span>
+                  </span>
+                </button>
+
+                {openSections.addressBooks ? (
+                  <div className="mt-3 space-y-4 px-1 pb-1">
                     <section className="rounded-2xl border-2 border-app-accent-edge bg-app-surface p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
