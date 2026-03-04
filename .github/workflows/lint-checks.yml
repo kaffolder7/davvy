@@ -13,6 +13,8 @@ on:
       - "tests/**"
       - "composer.json"
       - "composer.lock"
+      - "package.json"
+      - "package-lock.json"
       - ".env.example"
       - "vite.config.js"
       - "tailwind.config.js"
@@ -32,6 +34,8 @@ on:
       - "tests/**"
       - "composer.json"
       - "composer.lock"
+      - "package.json"
+      - "package-lock.json"
       - ".env.example"
       - "vite.config.js"
       - "tailwind.config.js"
@@ -99,3 +103,25 @@ jobs:
       - name: Run Pint in test mode
         run: |
           ./vendor/bin/pint --test
+
+  frontend-tests:
+    name: Frontend Unit Tests (Vitest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run Vitest suite
+        run: npm test
