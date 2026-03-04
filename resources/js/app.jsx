@@ -3156,6 +3156,8 @@ function DateEditor({ rows, setRows }) {
 function AddressBookMilestoneControls({ item, onSave }) {
   const birthdaySettings = item?.milestone_calendars?.birthdays ?? {};
   const anniversarySettings = item?.milestone_calendars?.anniversaries ?? {};
+  const enabledCount =
+    (birthdaySettings.enabled ? 1 : 0) + (anniversarySettings.enabled ? 1 : 0);
   const [savingKey, setSavingKey] = useState(null);
   const [editingKey, setEditingKey] = useState(null);
   const [collapsed, setCollapsed] = useState(true);
@@ -3357,7 +3359,7 @@ function AddressBookMilestoneControls({ item, onSave }) {
     <div className="px-0.5 pt-0.5">
       <button
         type="button"
-        className="inline-flex items-center gap-1 rounded pr-1 text-app-dim transition hover:text-app-base focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+        className="flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left transition hover:bg-app-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
         aria-label={
           collapsed
             ? "Expand milestone calendars"
@@ -3376,10 +3378,16 @@ function AddressBookMilestoneControls({ item, onSave }) {
           }
         }}
       >
-        <span className="text-[10px] font-semibold uppercase tracking-[0.16em]">
-          Milestone Calendars
+        <span>
+          <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-app-base">
+            Milestone Calendars
+          </span>
+          <span className="block text-[11px] text-app-faint">
+            {enabledCount === 0 ? "Off" : `${enabledCount}/2 enabled`}
+          </span>
         </span>
-        <span className="inline-flex h-6 w-6 items-center justify-center">
+        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-app-accent">
+          {collapsed ? "Configure" : "Hide"}
           <ChevronRightIcon
             className={`h-3.5 w-3.5 transition-transform ${collapsed ? "" : "rotate-90"}`}
           />
