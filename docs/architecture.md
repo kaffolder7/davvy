@@ -118,7 +118,7 @@ Runtime toggles are read from `app_settings` (with env defaults if unset):
 
 ## Notable Design Choices
 
-- Single-process PHP app (`php -S`) for container runtime simplicity.
+- Nginx front-end with PHP-FPM worker pool in the production container runtime.
 - Session-based web auth + basic-auth DAV under same user identity model.
 - Stable principal URIs based on numeric user IDs (`principals/{id}`).
 - DAV sync token support implemented for both calendar and address-book collections.

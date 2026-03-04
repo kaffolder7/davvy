@@ -86,4 +86,53 @@ php artisan config:cache --no-interaction
 php artisan route:cache --no-interaction
 php artisan view:cache --no-interaction
 
-exec php -S "0.0.0.0:${PORT:-8080}" -t public
+PORT_VALUE="${PORT:-8080}"
+
+case "${PORT_VALUE}" in
+  ''|*[!0-9]*)
+    echo "Invalid PORT value: ${PORT_VALUE}" >&2
+    exit 1
+    ;;
+esac
+
+NGINX_CONFIG_FILE="/tmp/davvy-nginx.conf"
+sed "s/__PORT__/${PORT_VALUE}/g" /var/www/html/docker/nginx/nginx.conf.template > "${NGINX_CONFIG_FILE}"
+
+php-fpm -t
+nginx -t -c "${NGINX_CONFIG_FILE}" -g 'error_log /dev/stderr notice;'
+
+php-fpm -F &
+php_fpm_pid=$!
+
+nginx -c "${NGINX_CONFIG_FILE}" -g 'daemon off; error_log /dev/stderr warn;' &
+nginx_pid=$!
+
+shutdown() {
+  kill -TERM "${php_fpm_pid}" "${nginx_pid}" 2>/dev/null || true
+}
+
+trap 'shutdown' INT TERM
+
+while kill -0 "${php_fpm_pid}" 2>/dev/null && kill -0 "${nginx_pid}" 2>/dev/null; do
+  sleep 1
+done
+
+if ! kill -0 "${php_fpm_pid}" 2>/dev/null; then
+  if wait "${php_fpm_pid}"; then
+    exit_code=0
+  else
+    exit_code=$?
+  fi
+else
+  if wait "${nginx_pid}"; then
+    exit_code=0
+  else
+    exit_code=$?
+  fi
+fi
+
+shutdown
+wait "${php_fpm_pid}" 2>/dev/null || true
+wait "${nginx_pid}" 2>/dev/null || true
+
+exit "${exit_code}"
