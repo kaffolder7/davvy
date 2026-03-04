@@ -3205,11 +3205,7 @@ function AddressBookMilestoneControls({ item, onSave }) {
     const saveInProgress = !!savingKey && !isSaving;
     const isEditing = editingKey === type;
     const currentCustom = settings.custom_name ?? "";
-    const currentName =
-      settings.custom_name ??
-      settings.calendar_name ??
-      settings.default_name ??
-      fallbackName;
+    const hasCustomName = currentCustom.trim().length > 0;
     const canSaveName =
       (nameDrafts[type] ?? "").trim() !== currentCustom.trim() && !isSaving;
 
@@ -3240,16 +3236,6 @@ function AddressBookMilestoneControls({ item, onSave }) {
                 disabled={isSaving}
               />
               <button
-                className="inline-flex h-7 w-7 items-center justify-center rounded text-app-accent transition hover:text-app-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
-                type="button"
-                aria-label={`Save ${label} calendar name`}
-                title={`Save ${label} calendar name`}
-                onClick={() => saveName(type)}
-                disabled={!canSaveName}
-              >
-                <CheckIcon className="h-3.5 w-3.5" />
-              </button>
-              <button
                 className="inline-flex h-7 w-7 items-center justify-center rounded text-app-faint transition hover:text-app-base focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
                 type="button"
                 aria-label={`Cancel editing ${label} calendar name`}
@@ -3265,15 +3251,27 @@ function AddressBookMilestoneControls({ item, onSave }) {
               >
                 <TimesIcon className="h-3.5 w-3.5" />
               </button>
+              <button
+                className="inline-flex h-7 w-7 items-center justify-center rounded text-app-accent transition hover:text-app-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                type="button"
+                aria-label={`Save ${label} calendar name`}
+                title={`Save ${label} calendar name`}
+                onClick={() => saveName(type)}
+                disabled={!canSaveName}
+              >
+                <CheckIcon className="h-3.5 w-3.5" />
+              </button>
             </div>
           ) : (
-            <div className="min-w-0 flex flex-1 items-center gap-1.5">
-              <span
-                className="min-w-0 flex-1 truncate text-xs text-app-faint"
-                title={currentName}
-              >
-                {currentName}
-              </span>
+            <div className="min-w-0 flex items-center gap-1.5">
+              {hasCustomName ? (
+                <span
+                  className="max-w-[14rem] truncate text-xs text-app-faint sm:max-w-[20rem]"
+                  title={currentCustom}
+                >
+                  {currentCustom}
+                </span>
+              ) : null}
               <button
                 type="button"
                 className="inline-flex h-6 w-6 items-center justify-center rounded text-app-dim transition hover:text-app-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
