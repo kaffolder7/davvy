@@ -9,6 +9,7 @@ use App\Models\AddressBookMirrorLink;
 use App\Models\Card;
 use App\Models\ResourceShare;
 use App\Models\User;
+use App\Services\Contacts\ManagedContactSyncService;
 use App\Services\Dav\DavSyncService;
 use App\Services\Dav\VCardValidator;
 use Illuminate\Support\Collection;
@@ -30,6 +31,7 @@ class AddressBookMirrorService
         private readonly DavSyncService $syncService,
         private readonly ResourceAccessService $accessService,
         private readonly VCardValidator $vCardValidator,
+        private readonly ManagedContactSyncService $managedContactSync,
     ) {}
 
     public function dashboardDataFor(User $user): array
@@ -272,6 +274,15 @@ class AddressBookMirrorService
             'size' => strlen($normalized['data']),
             'data' => $normalized['data'],
         ]);
+        try {
+            $this->managedContactSync->syncCardUpsert(
+                addressBook: $sourceAddressBook,
+                card: $sourceCard,
+                actor: $actor,
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+        }
         $this->handleSourceCardUpsert($sourceAddressBook, $sourceCard);
 
         $refreshedMirroredCard = Card::query()->find($link->mirrored_card_id);
@@ -315,6 +326,11 @@ class AddressBookMirrorService
             return true;
         }
 
+        try {
+            $this->managedContactSync->syncCardDeleted($sourceCard);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
         $sourceCard->delete();
 
         $this->syncService->recordDeleted(

@@ -5,6 +5,8 @@ namespace App\Services\Contacts;
 use App\Models\Contact;
 use Illuminate\Support\Arr;
 use Sabre\VObject\Component\VCard;
+use Sabre\VObject\ParseException;
+use Sabre\VObject\Reader;
 
 class ContactVCardService
 {
@@ -28,6 +30,16 @@ class ContactVCardService
         'school' => ['SCHOOL'],
         'other' => ['OTHER'],
         'homepage' => ['HOME'],
+    ];
+
+    private const RELATED_LABELS = [
+        'spouse',
+        'partner',
+        'parent',
+        'child',
+        'sibling',
+        'assistant',
+        'friend',
     ];
 
     public function displayName(array $payload): string
@@ -262,6 +274,203 @@ class ContactVCardService
     }
 
     /**
+     * @return array{
+     *   uid:?string,
+     *   payload:array<string,mixed>,
+     *   managed_contact_id:?int,
+     *   managed_owner_id:?int
+     * }|null
+     */
+    public function parse(string $cardData): ?array
+    {
+        try {
+            $component = Reader::read($cardData);
+        } catch (ParseException|\Throwable) {
+            return null;
+        }
+
+        if (! $component instanceof VCard) {
+            return null;
+        }
+
+        $payload = $this->emptyPayload();
+
+        $name = $this->firstProperty($component, 'N');
+        if ($name !== null) {
+            $nameParts = $this->propertyParts($name, 5);
+            $payload['last_name'] = $this->cleanString($nameParts[0] ?? null);
+            $payload['first_name'] = $this->cleanString($nameParts[1] ?? null);
+            $payload['middle_name'] = $this->cleanString($nameParts[2] ?? null);
+            $payload['prefix'] = $this->cleanString($nameParts[3] ?? null);
+            $payload['suffix'] = $this->cleanString($nameParts[4] ?? null);
+        }
+
+        $payload['nickname'] = $this->firstPropertyValue($component, 'NICKNAME');
+        $payload['job_title'] = $this->firstPropertyValue($component, 'TITLE');
+        $payload['phonetic_first_name'] = $this->firstPropertyValue($component, 'X-PHONETIC-FIRST-NAME');
+        $payload['phonetic_last_name'] = $this->firstPropertyValue($component, 'X-PHONETIC-LAST-NAME');
+        $payload['phonetic_company'] = $this->firstPropertyValue($component, 'X-PHONETIC-COMPANY');
+        $payload['maiden_name'] = $this->firstPropertyValue($component, 'X-MAIDEN-NAME');
+        $payload['pronouns'] = $this->firstPropertyValue($component, 'X-DAVVY-PRONOUNS');
+        $payload['ringtone'] = $this->firstPropertyValue($component, 'X-DAVVY-RINGTONE');
+        $payload['text_tone'] = $this->firstPropertyValue($component, 'X-DAVVY-TEXT-TONE');
+        $payload['verification_code'] = $this->firstPropertyValue($component, 'X-DAVVY-VERIFICATION-CODE');
+        $payload['profile'] = $this->firstPropertyValue($component, 'X-DAVVY-PROFILE');
+
+        $organization = $this->firstProperty($component, 'ORG');
+        if ($organization !== null) {
+            $orgParts = $this->propertyParts($organization, 2);
+            $payload['company'] = $this->cleanString($orgParts[0] ?? null);
+            $payload['department'] = $this->cleanString($orgParts[1] ?? null);
+        }
+
+        $birthday = $this->parseDateParts($this->firstPropertyValue($component, 'BDAY'));
+        if ($birthday !== null) {
+            $payload['birthday'] = $birthday;
+        }
+
+        foreach ($component->select('TEL') as $property) {
+            $value = $this->cleanString((string) $property);
+            if ($value === null) {
+                continue;
+            }
+
+            [$label, $customLabel] = $this->phoneLabelForProperty($property);
+            $payload['phones'][] = [
+                'label' => $label,
+                'custom_label' => $customLabel,
+                'value' => $value,
+            ];
+        }
+
+        foreach ($component->select('EMAIL') as $property) {
+            $value = $this->cleanString((string) $property);
+            if ($value === null) {
+                continue;
+            }
+
+            [$label, $customLabel] = $this->simpleLabelForProperty($property, fallback: 'other');
+            $payload['emails'][] = [
+                'label' => $label,
+                'custom_label' => $customLabel,
+                'value' => $value,
+            ];
+        }
+
+        foreach ($component->select('URL') as $property) {
+            $value = $this->cleanString((string) $property);
+            if ($value === null) {
+                continue;
+            }
+
+            [$label, $customLabel] = $this->urlLabelForProperty($property);
+            $payload['urls'][] = [
+                'label' => $label,
+                'custom_label' => $customLabel,
+                'value' => $value,
+            ];
+        }
+
+        foreach ($component->select('ADR') as $property) {
+            $parts = $this->propertyParts($property, 7);
+            $street = $this->cleanString($parts[2] ?? null);
+            $city = $this->cleanString($parts[3] ?? null);
+            $state = $this->cleanString($parts[4] ?? null);
+            $postalCode = $this->cleanString($parts[5] ?? null);
+            $country = $this->cleanString($parts[6] ?? null);
+
+            if (
+                $street === null
+                && $city === null
+                && $state === null
+                && $postalCode === null
+                && $country === null
+            ) {
+                continue;
+            }
+
+            [$label, $customLabel] = $this->simpleLabelForProperty($property, fallback: 'other');
+
+            $payload['addresses'][] = [
+                'label' => $label,
+                'custom_label' => $customLabel,
+                'street' => $street,
+                'city' => $city,
+                'state' => $state,
+                'postal_code' => $postalCode,
+                'country' => $country,
+            ];
+        }
+
+        $anniversary = $this->parseDateParts($this->firstPropertyValue($component, 'ANNIVERSARY'));
+        if ($anniversary !== null) {
+            $payload['dates'][] = array_merge([
+                'label' => 'anniversary',
+                'custom_label' => null,
+            ], $anniversary);
+        }
+
+        foreach ($component->select('X-ABDATE') as $property) {
+            $parts = $this->parseDateParts((string) $property);
+            if ($parts === null) {
+                continue;
+            }
+
+            $rawLabel = strtolower($this->propertyParameterValue($property, 'X-ABLabel') ?? '');
+            if ($rawLabel === 'anniversary' || $rawLabel === 'other') {
+                $label = $rawLabel;
+                $customLabel = null;
+            } elseif ($rawLabel !== '') {
+                $label = 'custom';
+                $customLabel = $rawLabel;
+            } else {
+                $label = 'other';
+                $customLabel = null;
+            }
+
+            $payload['dates'][] = array_merge([
+                'label' => $label,
+                'custom_label' => $customLabel,
+            ], $parts);
+        }
+
+        foreach ($component->select('RELATED') as $property) {
+            $value = $this->cleanString((string) $property);
+            if ($value === null) {
+                continue;
+            }
+
+            [$label, $customLabel] = $this->relatedLabelForProperty($property);
+            $payload['related_names'][] = [
+                'label' => $label,
+                'custom_label' => $customLabel,
+                'value' => $value,
+            ];
+        }
+
+        foreach ($component->select('IMPP') as $property) {
+            $value = $this->cleanString((string) $property);
+            if ($value === null) {
+                continue;
+            }
+
+            [$label, $customLabel] = $this->simpleLabelForProperty($property, fallback: 'other');
+            $payload['instant_messages'][] = [
+                'label' => $label,
+                'custom_label' => $customLabel,
+                'value' => $value,
+            ];
+        }
+
+        return [
+            'uid' => $this->firstPropertyValue($component, 'UID'),
+            'payload' => $payload,
+            'managed_contact_id' => $this->toInteger($this->firstPropertyValue($component, 'X-DAVVY-CONTACT-ID')),
+            'managed_owner_id' => $this->toInteger($this->firstPropertyValue($component, 'X-DAVVY-CONTACT-OWNER')),
+        ];
+    }
+
+    /**
      * @param  array<int, mixed>  $rows
      */
     private function firstRowValue(array $rows): ?string
@@ -286,6 +495,285 @@ class ContactVCardService
         $vCard->add($property, $normalized);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function emptyPayload(): array
+    {
+        return [
+            'prefix' => null,
+            'first_name' => null,
+            'middle_name' => null,
+            'last_name' => null,
+            'suffix' => null,
+            'nickname' => null,
+            'company' => null,
+            'job_title' => null,
+            'department' => null,
+            'pronouns' => null,
+            'pronouns_custom' => null,
+            'ringtone' => null,
+            'text_tone' => null,
+            'phonetic_first_name' => null,
+            'phonetic_last_name' => null,
+            'phonetic_company' => null,
+            'maiden_name' => null,
+            'verification_code' => null,
+            'profile' => null,
+            'birthday' => [],
+            'phones' => [],
+            'emails' => [],
+            'urls' => [],
+            'addresses' => [],
+            'dates' => [],
+            'related_names' => [],
+            'instant_messages' => [],
+        ];
+    }
+
+    private function firstProperty(VCard $vCard, string $propertyName): mixed
+    {
+        $properties = $vCard->select($propertyName);
+
+        return $properties[0] ?? null;
+    }
+
+    private function firstPropertyValue(VCard $vCard, string $propertyName): ?string
+    {
+        $property = $this->firstProperty($vCard, $propertyName);
+
+        if (! $property) {
+            return null;
+        }
+
+        return $this->cleanString((string) $property);
+    }
+
+    /**
+     * @return array<int, mixed>
+     */
+    private function propertyParts(mixed $property, int $minimumCount = 0): array
+    {
+        if ($property === null) {
+            return array_fill(0, max(0, $minimumCount), null);
+        }
+
+        $parts = method_exists($property, 'getParts')
+            ? $property->getParts()
+            : explode(';', (string) $property);
+
+        if (! is_array($parts)) {
+            $parts = [];
+        }
+
+        $normalized = array_values($parts);
+        while (count($normalized) < $minimumCount) {
+            $normalized[] = null;
+        }
+
+        return $normalized;
+    }
+
+    private function propertyParameterValue(mixed $property, string $name): ?string
+    {
+        if (! isset($property[$name])) {
+            return null;
+        }
+
+        return $this->cleanString((string) $property[$name]);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function propertyTypes(mixed $property): array
+    {
+        $raw = strtoupper($this->propertyParameterValue($property, 'TYPE') ?? '');
+        if ($raw === '') {
+            return [];
+        }
+
+        return array_values(array_filter(
+            preg_split('/[\s,]+/', $raw) ?: [],
+            fn (mixed $value): bool => is_string($value) && $value !== ''
+        ));
+    }
+
+    /**
+     * @return array{0:string,1:?string}
+     */
+    private function phoneLabelForProperty(mixed $property): array
+    {
+        $customLabel = $this->propertyParameterValue($property, 'X-ABLabel');
+        $types = $this->propertyTypes($property);
+
+        if ($customLabel !== null) {
+            $base = $this->phoneLabelFromTypes($types);
+
+            return [$base === 'other' ? 'custom' : $base, $customLabel];
+        }
+
+        return [$this->phoneLabelFromTypes($types), null];
+    }
+
+    private function phoneLabelFromTypes(array $types): string
+    {
+        $set = collect($types)->map(fn (string $type): string => strtoupper($type))->all();
+        $has = fn (string $type): bool => in_array($type, $set, true);
+
+        if ($has('IPHONE')) {
+            return 'iphone';
+        }
+        if ($has('APPLEWATCH')) {
+            return 'apple_watch';
+        }
+        if ($has('CELL')) {
+            return 'mobile';
+        }
+        if ($has('PAGER')) {
+            return 'pager';
+        }
+        if ($has('FAX') && $has('HOME')) {
+            return 'home_fax';
+        }
+        if ($has('FAX') && $has('WORK')) {
+            return 'work_fax';
+        }
+        if ($has('FAX')) {
+            return 'other_fax';
+        }
+        if ($has('HOME')) {
+            return 'home';
+        }
+        if ($has('WORK')) {
+            return 'work';
+        }
+        if ($has('PREF')) {
+            return 'main';
+        }
+        if ($has('VOICE')) {
+            return 'other';
+        }
+
+        return 'other';
+    }
+
+    /**
+     * @return array{0:string,1:?string}
+     */
+    private function simpleLabelForProperty(mixed $property, string $fallback): array
+    {
+        $customLabel = $this->propertyParameterValue($property, 'X-ABLabel');
+        if ($customLabel !== null) {
+            return ['custom', $customLabel];
+        }
+
+        $types = $this->propertyTypes($property);
+        if (in_array('HOME', $types, true)) {
+            return ['home', null];
+        }
+        if (in_array('WORK', $types, true)) {
+            return ['work', null];
+        }
+        if (in_array('SCHOOL', $types, true)) {
+            return ['school', null];
+        }
+        if (in_array('OTHER', $types, true)) {
+            return ['other', null];
+        }
+
+        return [$fallback, null];
+    }
+
+    /**
+     * @return array{0:string,1:?string}
+     */
+    private function urlLabelForProperty(mixed $property): array
+    {
+        $customLabel = $this->propertyParameterValue($property, 'X-ABLabel');
+        if ($customLabel !== null) {
+            return ['custom', $customLabel];
+        }
+
+        $types = $this->propertyTypes($property);
+        if (in_array('WORK', $types, true)) {
+            return ['work', null];
+        }
+        if (in_array('HOME', $types, true)) {
+            return ['homepage', null];
+        }
+        if (in_array('OTHER', $types, true)) {
+            return ['other', null];
+        }
+
+        return ['homepage', null];
+    }
+
+    /**
+     * @return array{0:string,1:?string}
+     */
+    private function relatedLabelForProperty(mixed $property): array
+    {
+        $customLabel = $this->propertyParameterValue($property, 'X-ABLabel');
+        if ($customLabel !== null) {
+            return ['custom', $customLabel];
+        }
+
+        $types = $this->propertyTypes($property);
+        foreach (self::RELATED_LABELS as $candidate) {
+            if (in_array(strtoupper($candidate), $types, true)) {
+                return [$candidate, null];
+            }
+        }
+
+        return ['other', null];
+    }
+
+    /**
+     * @return array{year:?int,month:int,day:int}|null
+     */
+    private function parseDateParts(?string $value): ?array
+    {
+        $normalized = trim((string) ($value ?? ''));
+        if ($normalized === '') {
+            return null;
+        }
+
+        if (preg_match('/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/', $normalized, $matches) === 1) {
+            return [
+                'year' => (int) $matches['year'],
+                'month' => (int) $matches['month'],
+                'day' => (int) $matches['day'],
+            ];
+        }
+
+        if (preg_match('/^--(?<month>\d{2})-(?<day>\d{2})$/', $normalized, $matches) === 1) {
+            return [
+                'year' => null,
+                'month' => (int) $matches['month'],
+                'day' => (int) $matches['day'],
+            ];
+        }
+
+        if (preg_match('/^(?<year>\d{4})(?<month>\d{2})(?<day>\d{2})$/', $normalized, $matches) === 1) {
+            return [
+                'year' => (int) $matches['year'],
+                'month' => (int) $matches['month'],
+                'day' => (int) $matches['day'],
+            ];
+        }
+
+        if (preg_match('/^(?<year>\d{4})(?<month>\d{2})(?<day>\d{2})T/', $normalized, $matches) === 1) {
+            return [
+                'year' => (int) $matches['year'],
+                'month' => (int) $matches['month'],
+                'day' => (int) $matches['day'],
+            ];
+        }
+
+        return null;
+    }
+
     private function setSingletonProperty(VCard $vCard, string $propertyName, string|array $value): void
     {
         $properties = $vCard->select($propertyName);
@@ -304,7 +792,6 @@ class ContactVCardService
     }
 
     /**
-     * @param  mixed  $rows
      * @return array<int, array<string, mixed>>
      */
     private function rows(mixed $rows): array
@@ -317,7 +804,6 @@ class ContactVCardService
     }
 
     /**
-     * @param  mixed  $label
      * @return array<int, string>
      */
     private function phoneTypesForLabel(mixed $label): array
@@ -328,7 +814,6 @@ class ContactVCardService
     }
 
     /**
-     * @param  mixed  $label
      * @return array<int, string>
      */
     private function typesForSimpleLabel(mixed $label): array
