@@ -94,6 +94,38 @@ class AdminUserManagementTest extends TestCase
         $response->assertJsonPath('enabled', true);
     }
 
+    public function test_admin_resources_reports_milestone_purge_unavailable_without_enabled_or_generated_settings(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->getJson('/api/admin/resources')
+            ->assertOk()
+            ->assertJsonPath('milestone_purge_available', false);
+    }
+
+    public function test_admin_resources_reports_milestone_purge_available_when_milestone_sync_is_enabled(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $owner = User::factory()->create();
+        $addressBook = AddressBook::factory()->create([
+            'owner_id' => $owner->id,
+        ]);
+
+        AddressBookContactMilestoneCalendar::query()->create([
+            'address_book_id' => $addressBook->id,
+            'milestone_type' => AddressBookContactMilestoneCalendar::TYPE_BIRTHDAY,
+            'enabled' => true,
+            'calendar_id' => null,
+            'custom_display_name' => null,
+        ]);
+
+        $this->actingAs($admin)
+            ->getJson('/api/admin/resources')
+            ->assertOk()
+            ->assertJsonPath('milestone_purge_available', true);
+    }
+
     public function test_enabling_contact_management_requires_contact_schema_tables(): void
     {
         $admin = User::factory()->admin()->create();
