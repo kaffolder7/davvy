@@ -408,6 +408,10 @@ class ContactChangeRequestService
     ): ?array {
         $this->purgeExpiredTerminalRequests();
 
+        if (! $this->settingsService->isContactChangeModerationEnabled()) {
+            return null;
+        }
+
         $baseAddressBookIds = $this->normalizeAddressBookIds($this->contactService->addressBookIdsForContact($contact));
         $basePayload = is_array($contact->payload) ? $contact->payload : [];
         $requestedAddressBookIds = $operation === ContactChangeOperation::Update

@@ -59,6 +59,19 @@ class RegistrationSettingsService
         );
     }
 
+    public function isContactChangeModerationEnabled(): bool
+    {
+        return AppSetting::contactChangeModerationEnabled();
+    }
+
+    public function setContactChangeModerationEnabled(bool $enabled, ?User $actor = null): void
+    {
+        AppSetting::query()->updateOrCreate(
+            ['key' => 'contact_change_moderation_enabled'],
+            ['value' => $enabled ? 'true' : 'false', 'updated_by' => $actor?->id]
+        );
+    }
+
     public function contactChangeRequestRetentionDays(): int
     {
         return AppSetting::contactChangeRequestRetentionDays();

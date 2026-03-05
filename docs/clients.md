@@ -84,7 +84,7 @@ Admins can enable **DAV compatibility mode** when legacy clients send non-strict
   - Common causes: read-only share, non-deletable permission, or disabled owner sharing for web actions
 
 - `409 Conflict` on shared contact edit/delete
-  - Change may have been queued for owner/admin approval (contact moderation flow)
+  - If review queue moderation is enabled, change may have been queued for owner/admin approval
 
 - Missing shared collections
   - Verify share exists and target resource is marked sharable

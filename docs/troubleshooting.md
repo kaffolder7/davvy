@@ -50,12 +50,22 @@ This is expected for moderated cross-owner changes.
 Next step:
 - review and resolve in `Review Queue`
 
+If you prefer direct-apply behavior (personal use):
+- disable `Review queue` in admin settings
+
 ### Queue request stuck in `manual_merge_needed`
 A conflicting update happened after request creation.
 
 Fix:
 - use `Edit & Approve` in Review Queue
 - provide resolved payload/address-book IDs
+
+### `403` on `/api/contact-change-requests*`
+Review queue moderation is disabled.
+
+Fix:
+- enable `Review queue` in admin settings (family/team mode), or
+- keep disabled for personal mode where queue APIs are intentionally unavailable
 
 ## DAV Client and Sync
 

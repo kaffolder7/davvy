@@ -50,6 +50,14 @@ class AppSetting extends Model
         );
     }
 
+    public static function contactChangeModerationEnabled(): bool
+    {
+        return self::booleanSetting(
+            key: 'contact_change_moderation_enabled',
+            default: (bool) config('services.contacts.change_moderation_enabled', false),
+        );
+    }
+
     public static function contactChangeRequestRetentionDays(): int
     {
         return self::integerSetting(

@@ -26,6 +26,7 @@ class ContactChangeModerationTest extends TestCase
         parent::setUp();
 
         app(RegistrationSettingsService::class)->setContactManagementEnabled(true);
+        app(RegistrationSettingsService::class)->setContactChangeModerationEnabled(true);
     }
 
     public function test_editor_web_update_is_enqueued_and_owner_can_approve_it(): void
@@ -151,6 +152,49 @@ class ContactChangeModerationTest extends TestCase
             'source' => 'carddav',
             'status' => 'pending',
         ]);
+    }
+
+    public function test_editor_web_update_applies_immediately_when_moderation_is_disabled(): void
+    {
+        app(RegistrationSettingsService::class)->setContactChangeModerationEnabled(false);
+
+        [$owner, $editor, $book] = $this->ownerEditorAndSharedBook();
+
+        $created = $this->actingAs($owner)->postJson('/api/contacts', [
+            'first_name' => 'Alex',
+            'last_name' => 'Rivera',
+            'address_book_ids' => [$book->id],
+        ]);
+        $created->assertCreated();
+
+        $contactId = (int) $created->json('id');
+
+        $updated = $this->actingAs($editor)->patchJson('/api/contacts/'.$contactId, [
+            'first_name' => 'Jordan',
+            'last_name' => 'Rivera',
+            'address_book_ids' => [$book->id],
+        ]);
+
+        $updated->assertOk()->assertJsonMissingPath('queued');
+        $this->assertSame('Jordan', Contact::query()->findOrFail($contactId)->payload['first_name'] ?? null);
+        $this->assertDatabaseCount('contact_change_requests', 0);
+    }
+
+    public function test_review_queue_endpoints_return_forbidden_when_moderation_is_disabled(): void
+    {
+        app(RegistrationSettingsService::class)->setContactChangeModerationEnabled(false);
+
+        $reviewer = User::factory()->create();
+
+        $this->actingAs($reviewer)
+            ->getJson('/api/contact-change-requests')
+            ->assertForbidden()
+            ->assertJsonPath('message', 'Review queue is currently disabled by admins.');
+
+        $this->actingAs($reviewer)
+            ->getJson('/api/contact-change-requests/summary')
+            ->assertForbidden()
+            ->assertJsonPath('message', 'Review queue is currently disabled by admins.');
     }
 
     /**

@@ -7,9 +7,11 @@ use App\Models\AddressBookContactMilestoneCalendar;
 use App\Models\AppSetting;
 use App\Models\Calendar;
 use App\Models\CalendarObject;
+use App\Models\ContactChangeRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class AdminUserManagementTest extends TestCase
@@ -93,6 +95,58 @@ class AdminUserManagementTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('enabled', true);
+    }
+
+    public function test_admin_can_toggle_contact_change_moderation_setting(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this
+            ->actingAs($admin)
+            ->patchJson('/api/admin/settings/contact-change-moderation', [
+                'enabled' => true,
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('enabled', true);
+    }
+
+    public function test_disabling_contact_change_moderation_requires_resolved_queue_requests(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $requester = User::factory()->create();
+
+        ContactChangeRequest::query()->create([
+            'group_uuid' => (string) Str::uuid(),
+            'approval_owner_id' => $admin->id,
+            'requester_id' => $requester->id,
+            'contact_id' => null,
+            'contact_uid' => null,
+            'contact_display_name' => 'Pending Contact',
+            'operation' => 'update',
+            'status' => 'pending',
+            'scope_address_book_ids' => [],
+            'base_payload' => null,
+            'base_address_book_ids' => null,
+            'base_contact_updated_at' => null,
+            'proposed_payload' => ['first_name' => 'Taylor'],
+            'proposed_address_book_ids' => [],
+            'request_fingerprint' => hash('sha256', 'pending-request'),
+            'source' => 'web',
+            'meta' => null,
+        ]);
+
+        $response = $this
+            ->actingAs($admin)
+            ->patchJson('/api/admin/settings/contact-change-moderation', [
+                'enabled' => false,
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath(
+            'message',
+            'Resolve or deny 1 unresolved review queue request(s) before disabling moderation.',
+        );
     }
 
     public function test_admin_resources_reports_milestone_purge_unavailable_without_enabled_or_generated_settings(): void

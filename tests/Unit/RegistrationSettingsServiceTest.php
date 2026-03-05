@@ -54,6 +54,17 @@ class RegistrationSettingsServiceTest extends TestCase
         $this->assertTrue($service->isContactManagementEnabled());
     }
 
+    public function test_contact_change_moderation_setting_can_be_toggled(): void
+    {
+        $service = app(RegistrationSettingsService::class);
+
+        $this->assertFalse($service->isContactChangeModerationEnabled());
+
+        $service->setContactChangeModerationEnabled(true);
+
+        $this->assertTrue($service->isContactChangeModerationEnabled());
+    }
+
     public function test_contact_change_request_retention_days_setting_can_be_updated(): void
     {
         $service = app(RegistrationSettingsService::class);

@@ -42,6 +42,7 @@ class AuthController extends Controller
             'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
             'dav_compatibility_mode_enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
             'contact_management_enabled' => $this->registrationSettings->isContactManagementEnabled(),
+            'contact_change_moderation_enabled' => $this->registrationSettings->isContactChangeModerationEnabled(),
         ], 201);
     }
 
@@ -52,6 +53,7 @@ class AuthController extends Controller
             'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
             'dav_compatibility_mode_enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
             'contact_management_enabled' => $this->registrationSettings->isContactManagementEnabled(),
+            'contact_change_moderation_enabled' => $this->registrationSettings->isContactChangeModerationEnabled(),
         ]);
     }
 
@@ -76,6 +78,7 @@ class AuthController extends Controller
             'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
             'dav_compatibility_mode_enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
             'contact_management_enabled' => $this->registrationSettings->isContactManagementEnabled(),
+            'contact_change_moderation_enabled' => $this->registrationSettings->isContactChangeModerationEnabled(),
         ]);
     }
 
@@ -97,6 +100,7 @@ class AuthController extends Controller
             'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
             'dav_compatibility_mode_enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
             'contact_management_enabled' => $this->registrationSettings->isContactManagementEnabled(),
+            'contact_change_moderation_enabled' => $this->registrationSettings->isContactChangeModerationEnabled(),
         ]);
     }
 

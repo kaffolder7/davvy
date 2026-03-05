@@ -18,7 +18,7 @@ It is designed for:
 - Session-based web auth (`/api/auth/*`)
 - DAV basic auth at `/dav`
 - Roles: `admin`, `regular`
-- Feature flags controlled by admins (public registration, owner sharing, contact management, DAV compatibility mode)
+- Feature flags controlled by admins (public registration, owner sharing, contact management, review queue moderation, DAV compatibility mode)
 
 ### Calendars and Address Books
 - Default `Personal Calendar` and `Contacts` resources provisioned for each new user
@@ -38,7 +38,7 @@ It is designed for:
 - Managed contact UI (feature-gated)
 - Contact writes synchronized to vCards in assigned address books
 - CardDAV writes synchronized back into managed contacts
-- Contact change moderation queue for cross-owner edits
+- Optional contact change moderation queue for cross-owner edits (opt-in, default off for personal deployments)
 - Birthday/anniversary generated milestone calendars per address book
 - Apple compatibility mirror mode (selected sources mirrored into user's default `contacts` book)
 
