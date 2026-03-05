@@ -32,7 +32,6 @@ RUN set -eux; \
     docker-php-ext-install -j"$(nproc)" pdo pdo_pgsql intl mbstring zip; \
     apk del --no-network .build-deps
 
-COPY --from=vendor-prod /usr/bin/composer /usr/bin/composer
 COPY artisan composer.json composer.lock phpunit.xml .env.example ./
 COPY app ./app
 COPY bootstrap ./bootstrap
