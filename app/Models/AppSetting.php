@@ -60,6 +60,14 @@ class AppSetting extends Model
         );
     }
 
+    public static function milestonePurgeControlVisible(): bool
+    {
+        return self::booleanSetting(
+            key: 'milestone_purge_control_visible',
+            default: false,
+        );
+    }
+
     private static function booleanSetting(string $key, bool $default): bool
     {
         $setting = self::query()->find($key);

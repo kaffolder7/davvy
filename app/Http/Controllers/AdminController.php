@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\Role;
 use App\Models\AddressBook;
 use App\Models\AddressBookContactMilestoneCalendar;
+use App\Models\AppSetting;
 use App\Models\Calendar;
 use App\Models\User;
 use App\Services\Contacts\ContactMilestoneCalendarService;
@@ -64,9 +65,22 @@ class AdminController extends Controller
             ->orderBy('display_name')
             ->get();
 
+        $milestonePurgeVisible = AppSetting::milestonePurgeControlVisible();
         $milestonePurgeAvailable = false;
 
         if (Schema::hasTable('address_book_contact_milestone_calendars')) {
+            if (! $milestonePurgeVisible) {
+                $milestonePurgeVisible = AddressBookContactMilestoneCalendar::query()
+                    ->exists();
+
+                if ($milestonePurgeVisible) {
+                    AppSetting::query()->updateOrCreate(
+                        ['key' => 'milestone_purge_control_visible'],
+                        ['value' => 'true'],
+                    );
+                }
+            }
+
             $milestonePurgeAvailable = AddressBookContactMilestoneCalendar::query()
                 ->where(function ($query): void {
                     $query->where('enabled', true)
@@ -78,6 +92,7 @@ class AdminController extends Controller
         return response()->json([
             'calendars' => $calendars,
             'address_books' => $addressBooks,
+            'milestone_purge_visible' => $milestonePurgeVisible,
             'milestone_purge_available' => $milestonePurgeAvailable,
         ]);
     }

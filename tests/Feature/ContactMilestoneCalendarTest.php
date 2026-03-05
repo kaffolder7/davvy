@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AddressBook;
+use App\Models\AppSetting;
 use App\Models\Calendar;
 use App\Models\CalendarObject;
 use App\Models\User;
@@ -258,6 +259,27 @@ class ContactMilestoneCalendarTest extends TestCase
 
         $this->assertSame('Household Birthdays', $birthdayCalendar->display_name);
         $this->assertSame('Marriage Milestones', $anniversaryCalendar->display_name);
+    }
+
+    public function test_enabling_milestones_marks_admin_purge_control_as_visible(): void
+    {
+        $user = User::factory()->create();
+        $addressBook = AddressBook::factory()->create([
+            'owner_id' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->patchJson('/api/address-books/'.$addressBook->id.'/milestone-calendars', [
+                'birthdays_enabled' => true,
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('app_settings', [
+            'key' => 'milestone_purge_control_visible',
+            'value' => 'true',
+            'updated_by' => $user->id,
+        ]);
+        $this->assertTrue(AppSetting::milestonePurgeControlVisible());
     }
 
     public function test_non_owner_cannot_update_milestone_calendar_settings(): void
