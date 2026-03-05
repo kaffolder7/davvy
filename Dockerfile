@@ -1,16 +1,21 @@
 # syntax=docker/dockerfile:1.7
 
-FROM composer:2 AS vendor-prod
+# Keep tag+digest so the pinned image is both readable and immutable.
+ARG COMPOSER_IMAGE=composer:2@sha256:f0809732b2188154b3faa8e44ab900595acb0b09cd0aa6c34e798efe4ebc9021
+ARG NODE_IMAGE=node:20-alpine@sha256:09e2b3d9726018aecf269bd35325f46bf75046a643a66d28360ec71132750ec8
+ARG PHP_IMAGE=php:8.4-fpm-alpine@sha256:b7bad36533116d6360d00c3b12820be69bf7655af6057f6222b57befa5eee5c4
+
+FROM ${COMPOSER_IMAGE} AS vendor-prod
 WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --prefer-dist --no-interaction --ignore-platform-reqs
 
-FROM composer:2 AS vendor-dev
+FROM ${COMPOSER_IMAGE} AS vendor-dev
 WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-scripts --prefer-dist --no-interaction --ignore-platform-reqs
 
-FROM node:20-alpine AS frontend
+FROM ${NODE_IMAGE} AS frontend
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
@@ -18,7 +23,7 @@ COPY resources ./resources
 COPY vite.config.js tailwind.config.js postcss.config.js ./
 RUN npm run build
 
-FROM php:8.4-fpm-alpine AS runtime-base
+FROM ${PHP_IMAGE} AS runtime-base
 WORKDIR /var/www/html
 
 RUN set -eux; \
@@ -27,7 +32,7 @@ RUN set -eux; \
     docker-php-ext-install -j"$(nproc)" pdo pdo_pgsql intl mbstring zip; \
     apk del --no-network .build-deps
 
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=vendor-prod /usr/bin/composer /usr/bin/composer
 COPY artisan composer.json composer.lock phpunit.xml .env.example ./
 COPY app ./app
 COPY bootstrap ./bootstrap
