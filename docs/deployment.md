@@ -105,6 +105,17 @@ Ensure DB connectivity is available before container startup.
 - Keep `RUN_DB_SEED=false` after initial bootstrap.
 - Use HTTPS and stable `APP_KEY`.
 
+## Static Asset Caching and Compression
+
+The bundled Nginx config enables:
+- `gzip` compression for common text and font asset types.
+- Long-lived immutable caching for versioned frontend assets under `/build/assets/*`.
+- Revalidation for `/build/manifest.json` so new deploys pick up current asset hashes.
+
+Expected cache behavior:
+- `/build/assets/*`: `Cache-Control: public, immutable` with ~1 year TTL.
+- `/build/manifest.json`: `Cache-Control: no-cache, must-revalidate`.
+
 ## Next References
 
 - [Release Checklist (Railway)](./release-checklist.md)
