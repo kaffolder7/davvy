@@ -127,7 +127,8 @@ ddev artisan test
 Or via Docker:
 
 ```bash
-docker compose run --build --rm --user root --entrypoint sh app -lc "cp .env.example .env && composer install --prefer-dist --no-interaction && APP_ENV=testing APP_KEY='base64:MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=' DB_CONNECTION=sqlite DB_DATABASE=':memory:' CACHE_STORE=array SESSION_DRIVER=array QUEUE_CONNECTION=sync MAIL_MAILER=array php artisan test"
+docker build --target ci-test -t davvy-ci-test .
+docker run --rm davvy-ci-test
 ```
 
 ## Deployment 🚢

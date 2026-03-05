@@ -1,9 +1,14 @@
 # syntax=docker/dockerfile:1.7
 
-FROM composer:2 AS vendor
+FROM composer:2 AS vendor-prod
 WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --prefer-dist --no-interaction --ignore-platform-reqs
+
+FROM composer:2 AS vendor-dev
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-scripts --prefer-dist --no-interaction --ignore-platform-reqs
 
 FROM node:20-alpine AS frontend
 WORKDIR /app
@@ -13,13 +18,13 @@ COPY resources ./resources
 COPY vite.config.js tailwind.config.js postcss.config.js ./
 RUN npm run build
 
-FROM php:8.4-fpm-alpine AS runtime
+FROM php:8.4-fpm-alpine AS runtime-base
 WORKDIR /var/www/html
 
 RUN set -eux; \
-    apk add --no-cache nginx icu-libs libpq oniguruma; \
-    apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libpq-dev oniguruma-dev; \
-    docker-php-ext-install -j"$(nproc)" pdo pdo_pgsql intl mbstring; \
+    apk add --no-cache nginx icu-libs libpq oniguruma libzip; \
+    apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libpq-dev oniguruma-dev libzip-dev; \
+    docker-php-ext-install -j"$(nproc)" pdo pdo_pgsql intl mbstring zip; \
     apk del --no-network .build-deps
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -35,9 +40,7 @@ COPY public ./public
 COPY resources ./resources
 COPY routes ./routes
 COPY storage ./storage
-COPY tests ./tests
-COPY --from=vendor /app/vendor ./vendor
-COPY --from=frontend /app/public/build ./public/build
+COPY --from=vendor-prod /app/vendor ./vendor
 
 RUN addgroup -g 1000 app && adduser -D -G app -u 1000 app \
     && mkdir -p \
@@ -70,5 +73,29 @@ ENV RUN_DB_SEED=false
 ENV PORT=8080
 
 EXPOSE 8080
+
+FROM runtime-base AS ci-test
+USER root
+COPY tests ./tests
+COPY --from=vendor-dev /app/vendor ./vendor
+RUN cp .env.example .env \
+    && sed -i 's#^CORS_ALLOWED_HEADERS=.*#CORS_ALLOWED_HEADERS="Content-Type, X-Requested-With, X-CSRF-TOKEN, Accept, Authorization"#' .env \
+    && chown app:app .env
+USER app
+ENV APP_ENV=testing
+ENV APP_DEBUG=true
+ENV APP_KEY=base64:MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=
+ENV DB_CONNECTION=sqlite
+ENV DB_DATABASE=:memory:
+ENV CACHE_STORE=array
+ENV SESSION_DRIVER=array
+ENV QUEUE_CONNECTION=sync
+ENV MAIL_MAILER=array
+ENV RUN_DB_MIGRATIONS=false
+ENV RUN_DB_SEED=false
+CMD ["php", "artisan", "test"]
+
+FROM runtime-base AS runtime
+COPY --from=frontend /app/public/build ./public/build
 
 CMD ["sh", "/var/www/html/docker/entrypoint.sh"]
