@@ -1757,7 +1757,8 @@ function ContactsPage({ auth, theme }) {
 
       if (response?.data?.queued) {
         setQueueStatusNotice(
-          response.data?.message || "Change submitted for owner/admin approval.",
+          response.data?.message ||
+            "Change submitted for owner/admin approval.",
         );
         await loadContacts({
           preserveSelection: true,
@@ -3852,7 +3853,11 @@ function ContactChangeQueuePage({ auth, theme }) {
     (row) => row.status === "pending" || row.status === "manual_merge_needed",
   );
 
-  const approveRow = async (row, resolvedPayload = null, resolvedAddressIds = null) => {
+  const approveRow = async (
+    row,
+    resolvedPayload = null,
+    resolvedAddressIds = null,
+  ) => {
     setSubmitting(true);
     setError("");
 
@@ -3865,7 +3870,10 @@ function ContactChangeQueuePage({ auth, theme }) {
         payload.resolved_address_book_ids = resolvedAddressIds;
       }
 
-      await api.patch(`/api/contact-change-requests/${row.id}/approve`, payload);
+      await api.patch(
+        `/api/contact-change-requests/${row.id}/approve`,
+        payload,
+      );
       setNotice("Request approved.");
       await loadQueue({ withLoading: false });
       window.dispatchEvent(new Event("review-queue-updated"));
@@ -3893,7 +3901,9 @@ function ContactChangeQueuePage({ auth, theme }) {
   };
 
   const runBulkAction = async (action) => {
-    const ids = actionableRows.map((row) => Number(row.id)).filter((id) => id > 0);
+    const ids = actionableRows
+      .map((row) => Number(row.id))
+      .filter((id) => id > 0);
     if (ids.length === 0) {
       return;
     }
@@ -3969,7 +3979,9 @@ function ContactChangeQueuePage({ auth, theme }) {
       !Array.isArray(resolvedAddressBookIds) ||
       resolvedAddressBookIds.some((value) => Number(value) <= 0)
     ) {
-      setError("Resolved address book IDs must be an array of positive integers.");
+      setError(
+        "Resolved address book IDs must be an array of positive integers.",
+      );
       return;
     }
 
@@ -4065,9 +4077,7 @@ function ContactChangeQueuePage({ auth, theme }) {
           </button>
         </div>
 
-        {error ? (
-          <p className="mt-3 text-sm text-app-danger">{error}</p>
-        ) : null}
+        {error ? <p className="mt-3 text-sm text-app-danger">{error}</p> : null}
       </section>
 
       {loading ? (
@@ -4154,14 +4164,17 @@ function ContactChangeQueuePage({ auth, theme }) {
                   </p>
                 </div>
 
-                {Array.isArray(row.changed_fields) && row.changed_fields.length > 0 ? (
+                {Array.isArray(row.changed_fields) &&
+                row.changed_fields.length > 0 ? (
                   <p className="mt-2 text-xs text-app-muted">
                     Changed fields: {row.changed_fields.join(", ")}
                   </p>
                 ) : null}
 
                 {row.status_reason ? (
-                  <p className="mt-2 text-sm text-app-danger">{row.status_reason}</p>
+                  <p className="mt-2 text-sm text-app-danger">
+                    {row.status_reason}
+                  </p>
                 ) : null}
               </article>
             ))
@@ -4456,7 +4469,9 @@ function AdminPage({ auth, theme }) {
       );
       const purgedCalendars = Number(response.data?.purged_calendar_count ?? 0);
       const purgedEvents = Number(response.data?.purged_event_count ?? 0);
-      const disabledSettings = Number(response.data?.disabled_setting_count ?? 0);
+      const disabledSettings = Number(
+        response.data?.disabled_setting_count ?? 0,
+      );
       setMilestonePurgeSummary(
         `Purged ${purgedCalendars} generated calendar(s), removed ${purgedEvents} event(s), and disabled ${disabledSettings} setting(s).`,
       );
@@ -4464,7 +4479,10 @@ function AdminPage({ auth, theme }) {
     } catch (err) {
       setState((prev) => ({
         ...prev,
-        error: extractError(err, "Unable to purge generated milestone calendars."),
+        error: extractError(
+          err,
+          "Unable to purge generated milestone calendars.",
+        ),
       }));
     } finally {
       setMilestonePurgeSubmitting(false);
@@ -4539,23 +4557,7 @@ function AdminPage({ auth, theme }) {
             onClick={toggleContactManagement}
           />
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <button
-            className="btn-outline btn-outline-sm text-app-danger"
-            type="button"
-            onClick={purgeGeneratedMilestoneCalendars}
-            disabled={milestonePurgeSubmitting}
-          >
-            {milestonePurgeSubmitting
-              ? "Purging milestone calendars..."
-              : "Purge Generated Milestone Calendars"}
-          </button>
-          <p className="text-xs text-app-faint">
-            Deletes generated Birthday/Anniversary calendars and disables
-            milestone sync settings.
-          </p>
-        </div>
-        <div className="mt-3">
+        <div className="mt-4">
           <Field label="Queue retention (days)">
             <p className="mb-2 text-xs text-app-faint">
               Applied/denied queue history older than this is purged
@@ -4586,8 +4588,26 @@ function AdminPage({ auth, theme }) {
             </div>
           </Field>
         </div>
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          <button
+            className="btn-outline btn-outline-sm text-app-danger"
+            type="button"
+            onClick={purgeGeneratedMilestoneCalendars}
+            disabled={milestonePurgeSubmitting}
+          >
+            {milestonePurgeSubmitting
+              ? "Purging milestone calendars..."
+              : "Purge Generated Milestone Calendars"}
+          </button>
+          <p className="text-xs text-app-faint">
+            Deletes generated Birthday/Anniversary calendars and disables
+            milestone sync settings.
+          </p>
+        </div>
         {milestonePurgeSummary ? (
-          <p className="mt-2 text-sm text-app-accent">{milestonePurgeSummary}</p>
+          <p className="mt-2 text-sm text-app-accent">
+            {milestonePurgeSummary}
+          </p>
         ) : null}
         {state.error ? (
           <p className="mt-3 text-sm text-app-danger">{state.error}</p>
