@@ -2752,6 +2752,7 @@ function ContactsPage({ auth, theme }) {
                             >
                               <input
                                 type="checkbox"
+                                className="mt-0.5 h-4 w-4 shrink-0 self-start"
                                 checked={isAssigned}
                                 onChange={(event) =>
                                   toggleAssignedAddressBook(
@@ -2761,15 +2762,18 @@ function ContactsPage({ auth, theme }) {
                                 }
                               />
                               <span className="min-w-0">
-                                <span className="flex items-center gap-2">
+                                <span className="flex items-start gap-2">
                                   <span className="block font-medium text-app-strong">
                                     {book.display_name}
                                   </span>
-                                  {isAssigned ? (
-                                    <span className="rounded-full border border-app-accent-edge px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-app-accent">
-                                      Selected
-                                    </span>
-                                  ) : null}
+                                  <span
+                                    className={`mt-0.5 inline-flex h-4 shrink-0 items-center rounded-full border border-app-accent-edge px-1.5 text-[9px] font-semibold uppercase leading-none tracking-wide text-app-accent ${
+                                      isAssigned ? "" : "invisible"
+                                    }`}
+                                    aria-hidden={!isAssigned}
+                                  >
+                                    Selected
+                                  </span>
                                 </span>
                                 <span className="block text-xs text-app-faint">
                                   /{book.uri} •{" "}
