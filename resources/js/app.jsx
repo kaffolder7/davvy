@@ -947,8 +947,9 @@ function DashboardPage({ auth, theme }) {
             Apple Contacts Compatibility
           </h2>
           <p className="mt-1 text-sm text-app-muted">
-            Off by default. Mirror selected address books into your main{" "}
-            <code>/contacts</code> book so macOS and iOS clients can see them.
+            Off by default. Mirror selected address books into your main address
+            book (<code>{data.apple_compat.target_display_name}</code>) so macOS
+            and iOS clients can see them.
           </p>
 
           {data.apple_compat.target_address_book_id ? (
@@ -5113,9 +5114,7 @@ function AppShell({ auth, theme, children }) {
               <button
                 className="btn-outline w-full justify-between"
                 type="button"
-                onClick={() =>
-                  setMobileAccountMenuOpen((current) => !current)
-                }
+                onClick={() => setMobileAccountMenuOpen((current) => !current)}
                 aria-expanded={mobileAccountMenuOpen}
                 aria-label="Toggle account menu"
               >
