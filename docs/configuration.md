@@ -51,6 +51,7 @@ When an `app_settings` key exists, it overrides env defaults.
 | `ENABLE_OWNER_SHARE_MANAGEMENT` | `true` | Seeds/initial default for owner sharing |
 | `ENABLE_DAV_COMPATIBILITY_MODE` | `false` | Strict DAV validation is default |
 | `ENABLE_CONTACT_MANAGEMENT` | `false` | Enables managed contacts UI/API |
+| `ENABLE_CONTACT_CHANGE_MODERATION` | `false` | Enables Review Queue workflow for cross-owner contact edits (recommended for families/teams, optional for personal use) |
 | `CONTACT_CHANGE_REQUEST_RETENTION_DAYS` | `90` | Purge horizon for applied/denied queue history |
 | `DAV_LOG_CLIENT_TRAFFIC` | `false` | Debug logging for targeted DAV traffic patterns |
 | `DAV_AUTH_THROTTLE_MAX_ATTEMPTS` | `20` | Failed DAV auth attempts allowed per source key (`username + IP`) before temporary lockout |
@@ -73,6 +74,7 @@ When an `app_settings` key exists, it overrides env defaults.
   - public registration (disabled)
   - owner share management
   - DAV compatibility mode
+  - contact change moderation
 
 Because settings are persisted, environment defaults may no longer be authoritative after seeding/admin toggles.
 
@@ -83,7 +85,12 @@ Admin Control Center toggles map to these settings keys:
 - `owner_share_management_enabled`
 - `dav_compatibility_mode_enabled`
 - `contact_management_enabled`
+- `contact_change_moderation_enabled`
 - `contact_change_request_retention_days`
+
+Review Queue default strategy:
+- `contact_change_moderation_enabled` defaults to `false` (personal-first)
+- enable when collaborative review/approval is needed (families/teams)
 
 ## Production Baseline Recommendations
 

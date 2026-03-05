@@ -68,12 +68,19 @@ Validation rules:
 - At least one assigned writable address book
 
 Queue behavior:
-- Some changes (especially cross-owner contexts) may be queued for approval
+- If `Review Queue` is enabled by admin, some changes (especially cross-owner contexts) may be queued for approval
+- If `Review Queue` is disabled, cross-owner changes apply immediately (latest write wins)
 - UI shows queued notice when server returns `202`
 
 ## 4. Review Queue
 
-The `Review Queue` tab is for approving/denying queued contact changes.
+The `Review Queue` tab is optional and appears only when admins enable it.
+
+Recommended usage:
+- Personal/single-user deployments: keep disabled (default)
+- Family/team deployments: enable when you need owner/admin review before applying cross-owner contact changes
+
+When enabled, the tab is for approving/denying queued contact changes.
 
 Capabilities:
 - Filter by status/operation
@@ -105,10 +112,14 @@ Admins can:
   - owner sharing
   - DAV compatibility mode
   - contact management
+  - review queue moderation (off by default)
 - Create users with role selection
 - Manage cross-user share assignments globally
 - Set contact change queue history retention (days)
 - Purge generated milestone calendars (destructive maintenance action)
+
+Important guard:
+- Admins cannot disable review queue moderation while unresolved queue requests still exist; requests must be approved/denied first.
 
 ## 7. DAV Client Connection Quick Values
 

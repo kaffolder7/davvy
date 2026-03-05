@@ -70,6 +70,16 @@ class RegistrationSettingsTest extends TestCase
         $response->assertJsonPath('contact_management_enabled', true);
     }
 
+    public function test_public_config_includes_contact_change_moderation_setting(): void
+    {
+        app(RegistrationSettingsService::class)->setContactChangeModerationEnabled(true);
+
+        $response = $this->getJson('/api/public/config');
+
+        $response->assertOk();
+        $response->assertJsonPath('contact_change_moderation_enabled', true);
+    }
+
     public function test_authenticated_me_payload_includes_contact_management_setting(): void
     {
         $user = User::factory()->create();
@@ -79,5 +89,16 @@ class RegistrationSettingsTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('contact_management_enabled', true);
+    }
+
+    public function test_authenticated_me_payload_includes_contact_change_moderation_setting(): void
+    {
+        $user = User::factory()->create();
+        app(RegistrationSettingsService::class)->setContactChangeModerationEnabled(true);
+
+        $response = $this->actingAs($user)->getJson('/api/auth/me');
+
+        $response->assertOk();
+        $response->assertJsonPath('contact_change_moderation_enabled', true);
     }
 }

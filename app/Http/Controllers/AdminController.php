@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ContactChangeStatus;
 use App\Enums\Role;
 use App\Models\AddressBook;
 use App\Models\AddressBookContactMilestoneCalendar;
 use App\Models\AppSetting;
 use App\Models\Calendar;
+use App\Models\ContactChangeRequest;
 use App\Models\User;
 use App\Services\Contacts\ContactMilestoneCalendarService;
 use App\Services\RegistrationSettingsService;
@@ -168,6 +170,48 @@ class AdminController extends Controller
 
         return response()->json([
             'enabled' => $this->registrationSettings->isContactManagementEnabled(),
+        ]);
+    }
+
+    public function setContactChangeModerationSetting(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'enabled' => ['required', 'boolean'],
+        ]);
+
+        $enabled = (bool) $data['enabled'];
+
+        if (
+            $enabled
+            && ! Schema::hasTable('contact_change_requests')
+        ) {
+            abort(422, 'Contact change moderation schema is not available. Run migrations before enabling.');
+        }
+
+        if (! $enabled && Schema::hasTable('contact_change_requests')) {
+            $unresolvedCount = ContactChangeRequest::query()
+                ->whereIn('status', [
+                    ContactChangeStatus::Pending->value,
+                    ContactChangeStatus::Approved->value,
+                    ContactChangeStatus::ManualMergeNeeded->value,
+                ])
+                ->count();
+
+            if ($unresolvedCount > 0) {
+                abort(
+                    422,
+                    "Resolve or deny {$unresolvedCount} unresolved review queue request(s) before disabling moderation."
+                );
+            }
+        }
+
+        $this->registrationSettings->setContactChangeModerationEnabled(
+            enabled: $enabled,
+            actor: $request->user()
+        );
+
+        return response()->json([
+            'enabled' => $this->registrationSettings->isContactChangeModerationEnabled(),
         ]);
     }
 

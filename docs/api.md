@@ -37,6 +37,7 @@ Response:
   - `owner_share_management_enabled`
   - `dav_compatibility_mode_enabled`
   - `contact_management_enabled`
+  - `contact_change_moderation_enabled`
 
 ### `POST /api/auth/register`
 Create regular user account when public registration is enabled.
@@ -51,6 +52,13 @@ Returns `403` if registration is disabled.
 
 ### `GET /api/public/config`
 Return public feature flags.
+
+Response includes:
+- `registration_enabled`
+- `owner_share_management_enabled`
+- `dav_compatibility_mode_enabled`
+- `contact_management_enabled`
+- `contact_change_moderation_enabled`
 
 ## Authenticated Endpoints
 
@@ -218,6 +226,8 @@ Common top-level contact payload fields:
 
 ### Contact Change Queue Endpoints
 
+All endpoints below return `403` when review queue moderation is disabled.
+
 #### `GET /api/contact-change-requests`
 List queued/history requests visible to reviewer.
 
@@ -280,6 +290,12 @@ Toggle strict-vs-compatible DAV validation mode.
 
 #### `PATCH /api/admin/settings/contact-management`
 Toggle managed contacts feature.
+
+#### `PATCH /api/admin/settings/contact-change-moderation`
+Toggle review queue moderation for cross-owner contact changes.
+
+Disable guard:
+- returns `422` if unresolved queue requests still exist
 
 #### `GET /api/admin/settings/contact-change-retention`
 Get queue history retention days.

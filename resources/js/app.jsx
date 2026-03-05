@@ -204,6 +204,7 @@ function App() {
     ownerShareManagementEnabled: false,
     davCompatibilityModeEnabled: false,
     contactManagementEnabled: false,
+    contactChangeModerationEnabled: false,
   });
 
   const refreshAuth = async () => {
@@ -216,6 +217,8 @@ function App() {
         ownerShareManagementEnabled: !!data.owner_share_management_enabled,
         davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
         contactManagementEnabled: !!data.contact_management_enabled,
+        contactChangeModerationEnabled:
+          !!data.contact_change_moderation_enabled,
       });
     } catch {
       try {
@@ -227,6 +230,8 @@ function App() {
           ownerShareManagementEnabled: !!data.owner_share_management_enabled,
           davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
           contactManagementEnabled: !!data.contact_management_enabled,
+          contactChangeModerationEnabled:
+            !!data.contact_change_moderation_enabled,
         });
       } catch {
         setAuth({
@@ -236,6 +241,7 @@ function App() {
           ownerShareManagementEnabled: false,
           davCompatibilityModeEnabled: false,
           contactManagementEnabled: false,
+          contactChangeModerationEnabled: false,
         });
       }
     }
@@ -289,7 +295,11 @@ function App() {
         path="/review-queue"
         element={
           <ProtectedRoute auth={value}>
-            <ContactChangeQueuePage auth={value} theme={theme} />
+            {value.contactChangeModerationEnabled ? (
+              <ContactChangeQueuePage auth={value} theme={theme} />
+            ) : (
+              <Navigate to="/" replace />
+            )}
           </ProtectedRoute>
         }
       />
@@ -353,6 +363,8 @@ function LoginPage({ auth, theme }) {
         ownerShareManagementEnabled: !!data.owner_share_management_enabled,
         davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
         contactManagementEnabled: !!data.contact_management_enabled,
+        contactChangeModerationEnabled:
+          !!data.contact_change_moderation_enabled,
       });
       navigate("/");
     } catch (err) {
@@ -440,6 +452,8 @@ function RegisterPage({ auth, theme }) {
         ownerShareManagementEnabled: !!data.owner_share_management_enabled,
         davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
         contactManagementEnabled: !!data.contact_management_enabled,
+        contactChangeModerationEnabled:
+          !!data.contact_change_moderation_enabled,
       });
       navigate("/");
     } catch (err) {
@@ -4248,6 +4262,7 @@ function AdminPage({ auth, theme }) {
     ownerShareManagementEnabled: auth.ownerShareManagementEnabled,
     davCompatibilityModeEnabled: auth.davCompatibilityModeEnabled,
     contactManagementEnabled: auth.contactManagementEnabled,
+    contactChangeModerationEnabled: auth.contactChangeModerationEnabled,
     contactChangeRetentionDays: 90,
     milestonePurgeVisible: false,
     milestonePurgeAvailable: false,
@@ -4465,6 +4480,35 @@ function AdminPage({ auth, theme }) {
     }
   };
 
+  const toggleContactChangeModeration = async () => {
+    const next = !state.contactChangeModerationEnabled;
+
+    try {
+      const response = await api.patch(
+        "/api/admin/settings/contact-change-moderation",
+        {
+          enabled: next,
+        },
+      );
+      setState((prev) => ({
+        ...prev,
+        contactChangeModerationEnabled: !!response.data.enabled,
+      }));
+      auth.setAuth((prev) => ({
+        ...prev,
+        contactChangeModerationEnabled: !!response.data.enabled,
+      }));
+    } catch (err) {
+      setState((prev) => ({
+        ...prev,
+        error: extractError(
+          err,
+          "Unable to update contact change moderation setting.",
+        ),
+      }));
+    }
+  };
+
   const purgeGeneratedMilestoneCalendars = async () => {
     if (milestonePurgeSubmitting || !state.milestonePurgeAvailable) {
       return;
@@ -4573,6 +4617,11 @@ function AdminPage({ auth, theme }) {
             label="Contact management"
             enabled={state.contactManagementEnabled}
             onClick={toggleContactManagement}
+          />
+          <AdminFeatureToggle
+            label="Review queue"
+            enabled={state.contactChangeModerationEnabled}
+            onClick={toggleContactChangeModeration}
           />
         </div>
         <div className="mt-4">
@@ -4952,12 +5001,13 @@ function AppShell({ auth, theme, children }) {
       ownerShareManagementEnabled: auth.ownerShareManagementEnabled,
       davCompatibilityModeEnabled: auth.davCompatibilityModeEnabled,
       contactManagementEnabled: auth.contactManagementEnabled,
+      contactChangeModerationEnabled: auth.contactChangeModerationEnabled,
     });
     navigate("/login");
   };
 
   useEffect(() => {
-    if (!auth.user) {
+    if (!auth.user || !auth.contactChangeModerationEnabled) {
       setReviewQueueCount(0);
       return undefined;
     }
@@ -4997,7 +5047,7 @@ function AppShell({ auth, theme, children }) {
       window.removeEventListener("review-queue-updated", onQueueUpdated);
       window.clearInterval(timer);
     };
-  }, [auth.user, location.pathname]);
+  }, [auth.contactChangeModerationEnabled, auth.user, location.pathname]);
 
   const reviewQueueCountLabel =
     reviewQueueCount > 99 ? "99+" : String(reviewQueueCount);
@@ -5083,17 +5133,19 @@ function AppShell({ auth, theme, children }) {
                   Contacts
                 </Link>
               ) : null}
-              <Link
-                className={`${onReviewQueuePage ? "tab tab-active" : "tab"} inline-flex items-center gap-1.5`}
-                to="/review-queue"
-              >
-                <span>Review Queue</span>
-                {reviewQueueCount > 0 ? (
-                  <span className="rounded-full border border-app-accent-edge bg-app-surface px-2 py-0.5 text-[10px] font-semibold leading-none text-app-accent">
-                    {reviewQueueCountLabel}
-                  </span>
-                ) : null}
-              </Link>
+              {auth.contactChangeModerationEnabled ? (
+                <Link
+                  className={`${onReviewQueuePage ? "tab tab-active" : "tab"} inline-flex items-center gap-1.5`}
+                  to="/review-queue"
+                >
+                  <span>Review Queue</span>
+                  {reviewQueueCount > 0 ? (
+                    <span className="rounded-full border border-app-accent-edge bg-app-surface px-2 py-0.5 text-[10px] font-semibold leading-none text-app-accent">
+                      {reviewQueueCountLabel}
+                    </span>
+                  ) : null}
+                </Link>
+              ) : null}
               <Link
                 className={`${location.pathname === "/profile" ? "tab tab-active" : "tab"} inline-flex items-center gap-1.5`}
                 to="/profile"
