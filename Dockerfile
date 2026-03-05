@@ -101,4 +101,7 @@ CMD ["php", "artisan", "test"]
 FROM runtime-base AS runtime
 COPY --from=frontend /app/public/build ./public/build
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget -q -T 2 -O /dev/null "http://127.0.0.1:${PORT:-8080}/up" || exit 1
+
 CMD ["sh", "/var/www/html/docker/entrypoint.sh"]
