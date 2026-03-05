@@ -4555,33 +4555,36 @@ function AdminPage({ auth, theme }) {
             milestone sync settings.
           </p>
         </div>
-        <div className="mt-3 flex flex-wrap items-end gap-2">
+        <div className="mt-3">
           <Field label="Queue retention (days)">
-            <input
-              className="input w-40"
-              type="number"
-              min="1"
-              max="3650"
-              value={state.contactChangeRetentionDays}
-              onChange={(event) =>
-                setState((prev) => ({
-                  ...prev,
-                  contactChangeRetentionDays: event.target.value,
-                }))
-              }
-            />
+            <p className="mb-2 text-xs text-app-faint">
+              Applied/denied queue history older than this is purged
+              automatically.
+            </p>
+            <div className="flex flex-wrap items-end gap-2">
+              <input
+                className="input w-40"
+                type="number"
+                min="1"
+                max="3650"
+                value={state.contactChangeRetentionDays}
+                onChange={(event) =>
+                  setState((prev) => ({
+                    ...prev,
+                    contactChangeRetentionDays: event.target.value,
+                  }))
+                }
+              />
+              <button
+                className="btn-outline btn-outline-sm"
+                type="button"
+                onClick={saveContactChangeRetention}
+                disabled={retentionSubmitting}
+              >
+                {retentionSubmitting ? "Saving..." : "Save Retention"}
+              </button>
+            </div>
           </Field>
-          <button
-            className="btn-outline btn-outline-sm"
-            type="button"
-            onClick={saveContactChangeRetention}
-            disabled={retentionSubmitting}
-          >
-            {retentionSubmitting ? "Saving..." : "Save Retention"}
-          </button>
-          <p className="text-xs text-app-faint">
-            Applied/denied queue history older than this is purged automatically.
-          </p>
         </div>
         {milestonePurgeSummary ? (
           <p className="mt-2 text-sm text-app-accent">{milestonePurgeSummary}</p>
