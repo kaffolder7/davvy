@@ -79,7 +79,6 @@ USER root
 COPY tests ./tests
 COPY --from=vendor-dev /app/vendor ./vendor
 RUN cp .env.example .env \
-    && sed -i 's#^CORS_ALLOWED_HEADERS=.*#CORS_ALLOWED_HEADERS="Content-Type, X-Requested-With, X-CSRF-TOKEN, Accept, Authorization"#' .env \
     && chown app:app .env
 USER app
 ENV APP_ENV=testing
