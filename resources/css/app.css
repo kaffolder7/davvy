@@ -318,6 +318,15 @@ body {
   border-color: var(--edge-strong);
 }
 
+.divide-app-edge > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--edge-strong);
+}
+
+:root.dark .divide-app-edge > :not([hidden]) ~ :not([hidden]),
+:root[data-theme="dark"] .divide-app-edge > :not([hidden]) ~ :not([hidden]) {
+  border-color: #333;
+}
+
 .border-app-warn-edge {
   border-color: var(--warn-edge);
 }
