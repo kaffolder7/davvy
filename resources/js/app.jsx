@@ -933,7 +933,7 @@ function DashboardPage({ auth, theme }) {
             Apple Contacts Compatibility
           </h2>
           <p className="mt-1 text-sm text-app-muted">
-            Off by default. Mirror selected address books into your{" "}
+            Off by default. Mirror selected address books into your main{" "}
             <code>/contacts</code> book so macOS and iOS clients can see them.
           </p>
 
