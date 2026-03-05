@@ -3720,7 +3720,7 @@ function AdminFeatureToggle({ label, enabled, onClick }) {
       className={`btn-outline inline-flex items-center gap-1.5 rounded-lg !px-2.5 !py-1.5 !text-sm ${
         enabled
           ? "border-app-accent-edge bg-app-surface text-app-strong ring-1 ring-teal-500/25 hover:border-app-accent-edge"
-          : "border-app-edge bg-app-surface text-app-base hover:border-app-edge"
+          : "border-app-edge bg-app-surface text-app-muted hover:border-app-edge"
       }`}
       type="button"
       aria-pressed={enabled}
