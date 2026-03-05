@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AddressBook;
 use App\Models\AddressBookContactMilestoneCalendar;
+use App\Models\AppSetting;
 use App\Models\Calendar;
 use App\Models\CalendarObject;
 use App\Models\User;
@@ -101,6 +102,7 @@ class AdminUserManagementTest extends TestCase
         $this->actingAs($admin)
             ->getJson('/api/admin/resources')
             ->assertOk()
+            ->assertJsonPath('milestone_purge_visible', false)
             ->assertJsonPath('milestone_purge_available', false);
     }
 
@@ -123,7 +125,24 @@ class AdminUserManagementTest extends TestCase
         $this->actingAs($admin)
             ->getJson('/api/admin/resources')
             ->assertOk()
+            ->assertJsonPath('milestone_purge_visible', true)
             ->assertJsonPath('milestone_purge_available', true);
+    }
+
+    public function test_admin_resources_keeps_milestone_purge_visible_after_first_enable_even_when_unavailable(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        AppSetting::query()->updateOrCreate(
+            ['key' => 'milestone_purge_control_visible'],
+            ['value' => 'true'],
+        );
+
+        $this->actingAs($admin)
+            ->getJson('/api/admin/resources')
+            ->assertOk()
+            ->assertJsonPath('milestone_purge_visible', true)
+            ->assertJsonPath('milestone_purge_available', false);
     }
 
     public function test_enabling_contact_management_requires_contact_schema_tables(): void

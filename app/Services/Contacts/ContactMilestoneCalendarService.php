@@ -5,6 +5,7 @@ namespace App\Services\Contacts;
 use App\Enums\ShareResourceType;
 use App\Models\AddressBook;
 use App\Models\AddressBookContactMilestoneCalendar;
+use App\Models\AppSetting;
 use App\Models\Calendar;
 use App\Models\CalendarObject;
 use App\Models\Contact;
@@ -122,6 +123,7 @@ class ContactMilestoneCalendarService
 
             if ($setting->enabled) {
                 $shouldSyncAddressBook = true;
+                $this->markMilestonePurgeControlVisible($actor);
             }
         }
 
@@ -877,6 +879,14 @@ class ContactMilestoneCalendarService
         return $type === AddressBookContactMilestoneCalendar::TYPE_BIRTHDAY
             ? 'birthday_calendar_name'
             : 'anniversary_calendar_name';
+    }
+
+    private function markMilestonePurgeControlVisible(?User $actor = null): void
+    {
+        AppSetting::query()->updateOrCreate(
+            ['key' => 'milestone_purge_control_visible'],
+            ['value' => 'true', 'updated_by' => $actor?->id],
+        );
     }
 
     private function schemaAvailable(): bool
