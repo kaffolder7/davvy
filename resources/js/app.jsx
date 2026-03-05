@@ -4248,6 +4248,7 @@ function AdminPage({ auth, theme }) {
     davCompatibilityModeEnabled: auth.davCompatibilityModeEnabled,
     contactManagementEnabled: auth.contactManagementEnabled,
     contactChangeRetentionDays: 90,
+    milestonePurgeAvailable: false,
   });
   const [userForm, setUserForm] = useState({
     name: "",
@@ -4284,6 +4285,7 @@ function AdminPage({ auth, theme }) {
         resources: resources.data,
         shares: shares.data.data,
         contactChangeRetentionDays: Number(retention.data?.days || 90),
+        milestonePurgeAvailable: !!resources.data?.milestone_purge_available,
       }));
     } catch (err) {
       setState((prev) => ({
@@ -4448,7 +4450,7 @@ function AdminPage({ auth, theme }) {
   };
 
   const purgeGeneratedMilestoneCalendars = async () => {
-    if (milestonePurgeSubmitting) {
+    if (milestonePurgeSubmitting || !state.milestonePurgeAvailable) {
       return;
     }
 
@@ -4593,7 +4595,14 @@ function AdminPage({ auth, theme }) {
             className="btn-outline btn-outline-sm text-app-danger"
             type="button"
             onClick={purgeGeneratedMilestoneCalendars}
-            disabled={milestonePurgeSubmitting}
+            disabled={
+              milestonePurgeSubmitting || !state.milestonePurgeAvailable
+            }
+            title={
+              !state.milestonePurgeAvailable
+                ? "No enabled/generated milestone calendars to purge."
+                : undefined
+            }
           >
             {milestonePurgeSubmitting
               ? "Purging milestone calendars..."
