@@ -111,6 +111,7 @@ async function downloadExport(url, fallbackName) {
 
 const THEME_STORAGE_KEY = "davvy-theme";
 const VALID_THEMES = new Set(["system", "light", "dark"]);
+const MILESTONE_PURGE_SUMMARY_AUTO_HIDE_MS = 6000;
 
 function getSystemTheme() {
   if (typeof window === "undefined" || !window.matchMedia) {
@@ -4299,6 +4300,19 @@ function AdminPage({ auth, theme }) {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    if (!milestonePurgeSummary) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(
+      () => setMilestonePurgeSummary(""),
+      MILESTONE_PURGE_SUMMARY_AUTO_HIDE_MS,
+    );
+
+    return () => window.clearTimeout(timer);
+  }, [milestonePurgeSummary]);
 
   const createUser = async (event) => {
     event.preventDefault();
