@@ -4991,8 +4991,10 @@ function AppShell({ auth, theme, children }) {
   const onAdminPage = location.pathname === "/admin";
   const onReviewQueuePage = location.pathname === "/review-queue";
   const [reviewQueueCount, setReviewQueueCount] = useState(0);
+  const [mobileAccountMenuOpen, setMobileAccountMenuOpen] = useState(false);
 
   const logout = async () => {
+    setMobileAccountMenuOpen(false);
     await api.post("/api/auth/logout");
     auth.setAuth({
       loading: false,
@@ -5049,6 +5051,10 @@ function AppShell({ auth, theme, children }) {
     };
   }, [auth.contactChangeModerationEnabled, auth.user, location.pathname]);
 
+  useEffect(() => {
+    setMobileAccountMenuOpen(false);
+  }, [location.pathname]);
+
   const reviewQueueCountLabel =
     reviewQueueCount > 99 ? "99+" : String(reviewQueueCount);
 
@@ -5074,60 +5080,16 @@ function AppShell({ auth, theme, children }) {
             </div>
           </div>
           <nav className="flex w-full flex-col gap-3 md:w-auto md:items-end">
-            {auth.user.role === "admin" ? (
+            <div className="order-1 flex w-full items-center gap-2 overflow-x-auto pb-1 md:order-2 md:w-auto md:justify-end md:overflow-visible md:pb-0">
               <Link
-                className={
-                  onAdminPage
-                    ? "btn-outline btn-outline-sm admin-cta admin-cta-active group w-full justify-center md:w-auto"
-                    : "btn-outline btn-outline-sm admin-cta group w-full justify-center md:w-auto"
-                }
-                to="/admin"
-                aria-label="Open Admin Control Center"
-                title="Open Admin Control Center"
-              >
-                <svg
-                  aria-hidden="true"
-                  className="h-4 w-4 opacity-85 transition group-hover:opacity-100"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 3l7 3v6c0 4.4-2.8 8.2-7 9-4.2-.8-7-4.6-7-9V6l7-3z" />
-                  <path d="M9.5 12.5l1.7 1.7 3.3-3.6" />
-                </svg>
-                <span>Admin Control Center</span>
-                {onAdminPage ? null : (
-                  <svg
-                    aria-hidden="true"
-                    className="h-3.5 w-3.5 transition group-hover:translate-x-0.5"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M5 12h14" />
-                    <path d="M13 6l6 6-6 6" />
-                  </svg>
-                )}
-              </Link>
-            ) : null}
-            <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:justify-end">
-              <Link
-                className={location.pathname === "/" ? "tab tab-active" : "tab"}
+                className={`${location.pathname === "/" ? "tab tab-active" : "tab"} shrink-0`}
                 to="/"
               >
                 Dashboard
               </Link>
               {auth.contactManagementEnabled ? (
                 <Link
-                  className={
-                    location.pathname === "/contacts" ? "tab tab-active" : "tab"
-                  }
+                  className={`${location.pathname === "/contacts" ? "tab tab-active" : "tab"} shrink-0`}
                   to="/contacts"
                 >
                   Contacts
@@ -5135,7 +5097,7 @@ function AppShell({ auth, theme, children }) {
               ) : null}
               {auth.contactChangeModerationEnabled ? (
                 <Link
-                  className={`${onReviewQueuePage ? "tab tab-active" : "tab"} inline-flex items-center gap-1.5`}
+                  className={`${onReviewQueuePage ? "tab tab-active" : "tab"} inline-flex shrink-0 items-center gap-1.5`}
                   to="/review-queue"
                 >
                   <span>Review Queue</span>
@@ -5144,6 +5106,136 @@ function AppShell({ auth, theme, children }) {
                       {reviewQueueCountLabel}
                     </span>
                   ) : null}
+                </Link>
+              ) : null}
+            </div>
+            <div className="order-2 md:hidden">
+              <button
+                className="btn-outline w-full justify-between"
+                type="button"
+                onClick={() =>
+                  setMobileAccountMenuOpen((current) => !current)
+                }
+                aria-expanded={mobileAccountMenuOpen}
+                aria-label="Toggle account menu"
+              >
+                <span>Account</span>
+                <svg
+                  aria-hidden="true"
+                  className={`h-4 w-4 transition-transform ${
+                    mobileAccountMenuOpen ? "rotate-180" : ""
+                  }`}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+              {mobileAccountMenuOpen ? (
+                <div className="mt-2 grid gap-2 rounded-2xl border border-app-edge bg-app-surface p-2">
+                  <Link
+                    className={`${location.pathname === "/profile" ? "tab tab-active" : "tab"} inline-flex items-center justify-between gap-2`}
+                    to="/profile"
+                    onClick={() => setMobileAccountMenuOpen(false)}
+                  >
+                    <span className="truncate">{auth.user.name}</span>
+                    <svg
+                      aria-hidden="true"
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.75"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="8" r="4" />
+                      <path d="M5 20c1.6-3.3 4-5 7-5s5.4 1.7 7 5" />
+                    </svg>
+                  </Link>
+                  {auth.user.role === "admin" ? (
+                    <Link
+                      className={
+                        onAdminPage
+                          ? "btn-outline btn-outline-sm admin-cta admin-cta-active group justify-center"
+                          : "btn-outline btn-outline-sm admin-cta group justify-center"
+                      }
+                      to="/admin"
+                      onClick={() => setMobileAccountMenuOpen(false)}
+                      aria-label="Open Admin Control Center"
+                      title="Open Admin Control Center"
+                    >
+                      <svg
+                        aria-hidden="true"
+                        className="h-4 w-4 opacity-85 transition group-hover:opacity-100"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 3l7 3v6c0 4.4-2.8 8.2-7 9-4.2-.8-7-4.6-7-9V6l7-3z" />
+                        <path d="M9.5 12.5l1.7 1.7 3.3-3.6" />
+                      </svg>
+                      <span>Admin Control Center</span>
+                    </Link>
+                  ) : null}
+                  <button
+                    className="btn-outline w-full text-app-danger"
+                    type="button"
+                    onClick={logout}
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            <div className="order-3 hidden items-center gap-2 md:order-1 md:flex md:justify-end">
+              {auth.user.role === "admin" ? (
+                <Link
+                  className={
+                    onAdminPage
+                      ? "btn-outline btn-outline-sm admin-cta admin-cta-active group"
+                      : "btn-outline btn-outline-sm admin-cta group"
+                  }
+                  to="/admin"
+                  aria-label="Open Admin Control Center"
+                  title="Open Admin Control Center"
+                >
+                  <svg
+                    aria-hidden="true"
+                    className="h-4 w-4 opacity-85 transition group-hover:opacity-100"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 3l7 3v6c0 4.4-2.8 8.2-7 9-4.2-.8-7-4.6-7-9V6l7-3z" />
+                    <path d="M9.5 12.5l1.7 1.7 3.3-3.6" />
+                  </svg>
+                  <span>Admin Control Center</span>
+                  {onAdminPage ? null : (
+                    <svg
+                      aria-hidden="true"
+                      className="h-3.5 w-3.5 transition group-hover:translate-x-0.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M5 12h14" />
+                      <path d="M13 6l6 6-6 6" />
+                    </svg>
+                  )}
                 </Link>
               ) : null}
               <Link
@@ -5169,7 +5261,7 @@ function AppShell({ auth, theme, children }) {
                   <path d="M5 20c1.6-3.3 4-5 7-5s5.4 1.7 7 5" />
                 </svg>
               </Link>
-              <button className="btn-outline w-full sm:w-auto" onClick={logout}>
+              <button className="btn-outline" onClick={logout}>
                 Sign Out
               </button>
             </div>
