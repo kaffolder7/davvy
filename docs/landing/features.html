@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Davvy feature overview: identity and access, sharing, managed contacts, interoperability, and deployment controls."
+    />
+    <title>Davvy Features | CalDAV + CardDAV Manager</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script>
+      (function () {
+        const storageKey = "davvy-theme";
+        const allowed = new Set(["system", "light", "dark"]);
+
+        try {
+          const raw = window.localStorage.getItem(storageKey);
+          const preferred = allowed.has(raw) ? raw : "system";
+          const resolved =
+            preferred === "system"
+              ? window.matchMedia &&
+                window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light"
+              : preferred;
+
+          document.documentElement.classList.toggle("dark", resolved === "dark");
+          document.documentElement.dataset.theme = resolved;
+          document.documentElement.style.colorScheme = resolved;
+        } catch {
+          // Default to light theme when local storage fails.
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <main class="container">
+      <header class="surface header fade-up">
+        <div>
+          <p class="brand-kicker">Davvy</p>
+          <h1 class="brand-title">Feature Overview</h1>
+          <p class="brand-subtitle">
+            Everything included in the Davvy app and DAV server.
+          </p>
+        </div>
+        <div class="header-actions">
+          <a class="btn-outline" href="./index.html">Back to Landing</a>
+          <a
+            class="btn"
+            href="https://github.com/kaffolder7/davvy/tree/main/docs"
+            target="_blank"
+            rel="noreferrer"
+            >Full Docs</a
+          >
+          <div class="theme-control">
+            <button
+              id="theme-toggle"
+              type="button"
+              class="theme-control-toggle"
+              aria-label="Toggle theme"
+              title="Toggle theme"
+            >
+              <svg
+                id="theme-icon"
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                aria-hidden="true"
+                focusable="false"
+                class="theme-control-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <section class="surface hero fade-up">
+        <div class="hero-grid">
+          <div>
+            <p class="hero-badge">Capability Map</p>
+            <h2 class="hero-title">Davvy is built for day-2 operations, not demos.</h2>
+            <p class="hero-copy">
+              The platform combines web administration, permission-aware data
+              models, and a native SabreDAV server so deployment and ongoing
+              maintenance stay in one coherent system.
+            </p>
+            <div class="hero-cta">
+              <a
+                class="btn"
+                href="https://github.com/kaffolder7/davvy#quick-start-docker"
+                target="_blank"
+                rel="noreferrer"
+                >Start with Docker</a
+              >
+              <a
+                class="btn-outline"
+                href="https://github.com/kaffolder7/davvy/blob/main/docs/api.md"
+                target="_blank"
+                rel="noreferrer"
+                >API Reference</a
+              >
+            </div>
+          </div>
+
+          <aside class="side-panel">
+            <p class="side-kicker">Core surfaces</p>
+            <ul class="panel-list">
+              <li>
+                <strong>Web app shell:</strong> dashboard, contacts, review queue,
+                profile, and admin control center
+              </li>
+              <li>
+                <strong>JSON API:</strong> role-aware endpoints under
+                <strong>/api/*</strong>
+              </li>
+              <li>
+                <strong>DAV service:</strong> CalDAV/CardDAV under
+                <strong>/dav/*</strong> with autodiscovery redirects
+              </li>
+            </ul>
+            <div class="quickstart">
+              <p><strong>Autodiscovery:</strong> /.well-known/caldav and carddav</p>
+              <p>Both redirect to the main DAV endpoint for client setup.</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="feature-grid fade-up">
+        <article class="surface feature-card">
+          <p class="feature-label">Identity and Access</p>
+          <h3 class="feature-title">One account model, two auth channels</h3>
+          <p class="feature-copy">
+            Session-based web auth and DAV basic auth share the same principals,
+            roles, and app settings.
+          </p>
+        </article>
+        <article class="surface feature-card">
+          <p class="feature-label">Calendars and Address Books</p>
+          <h3 class="feature-title">Default provisioning and exports</h3>
+          <p class="feature-copy">
+            New users receive personal defaults, and all collections can be
+            exported individually or in bulk.
+          </p>
+        </article>
+        <article class="surface feature-card">
+          <p class="feature-label">Sharing Model</p>
+          <h3 class="feature-title">Granular permissions</h3>
+          <p class="feature-copy">
+            <code>read_only</code>, <code>editor</code>, and <code>admin</code> sharing roles are enforced across
+            web operations and DAV requests.
+          </p>
+        </article>
+        <article class="surface feature-card">
+          <p class="feature-label">Managed Contacts</p>
+          <h3 class="feature-title">Sync + moderation workflows</h3>
+          <p class="feature-copy">
+            Contact data syncs both directions with vCards and supports review
+            queues for cross-owner edits.
+          </p>
+        </article>
+        <article class="surface feature-card">
+          <p class="feature-label">Interoperability</p>
+          <h3 class="feature-title">Strict-first payload validation</h3>
+          <p class="feature-copy">
+            Calendar and card payloads are normalized and validated, with an
+            admin-controlled compatibility toggle for edge clients.
+          </p>
+        </article>
+        <article class="surface feature-card">
+          <p class="feature-label">Operations</p>
+          <h3 class="feature-title">Production guardrails</h3>
+          <p class="feature-copy">
+            Includes startup preflight checks, auth throttling, and deployment
+            guidance for Railway and Coolify.
+          </p>
+        </article>
+        <article class="surface feature-card">
+          <p class="feature-label">Milestone Calendars</p>
+          <h3 class="feature-title">Birthday and anniversary generation</h3>
+          <p class="feature-copy">
+            Address books can generate and maintain dedicated milestone calendars
+            based on managed contacts.
+          </p>
+        </article>
+        <article class="surface feature-card">
+          <p class="feature-label">Apple Compatibility</p>
+          <h3 class="feature-title">Optional source mirroring</h3>
+          <p class="feature-copy">
+            Selected address books can mirror into a default contacts collection
+            for improved Apple client visibility.
+          </p>
+        </article>
+      </section>
+
+      <section class="surface split-callout fade-up">
+        <div>
+          <p class="callout-kicker">Deploy where you need</p>
+          <p class="callout-title">Single app, full DAV stack</p>
+          <p class="callout-copy">
+            Davvy runs as one Laravel application serving web UI, API, and DAV.
+            Start with the Docker quick-start, then move to your preferred host.
+          </p>
+        </div>
+        <a
+          class="btn-outline"
+          href="https://github.com/kaffolder7/davvy/blob/main/docs/deployment.md"
+          target="_blank"
+          rel="noreferrer"
+          >Deployment Guide</a
+        >
+      </section>
+
+      <footer class="footer">
+        <a href="./index.html">Return to landing page</a>
+      </footer>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>

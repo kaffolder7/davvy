@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Davvy is a self-hosted CalDAV and CardDAV manager with a web dashboard, sharing controls, and compatibility tooling."
+    />
+    <title>Davvy | CalDAV + CardDAV Manager</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script>
+      (function () {
+        const storageKey = "davvy-theme";
+        const allowed = new Set(["system", "light", "dark"]);
+
+        try {
+          const raw = window.localStorage.getItem(storageKey);
+          const preferred = allowed.has(raw) ? raw : "system";
+          const resolved =
+            preferred === "system"
+              ? window.matchMedia &&
+                window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light"
+              : preferred;
+
+          document.documentElement.classList.toggle("dark", resolved === "dark");
+          document.documentElement.dataset.theme = resolved;
+          document.documentElement.style.colorScheme = resolved;
+        } catch {
+          // Default to light theme when local storage fails.
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <main class="container">
+      <header class="surface header fade-up">
+        <div>
+          <p class="brand-kicker">Davvy</p>
+          <h1 class="brand-title">CalDAV + CardDAV Manager</h1>
+          <p class="brand-subtitle">
+            Self-hosted collaboration for calendars and contacts.
+          </p>
+        </div>
+        <div class="header-actions">
+          <a class="btn-outline" href="./features.html">Explore Features</a>
+          <a
+            class="btn"
+            href="https://github.com/kaffolder7/davvy"
+            target="_blank"
+            rel="noreferrer"
+            >View on GitHub</a
+          >
+          <div class="theme-control">
+            <button
+              id="theme-toggle"
+              type="button"
+              class="theme-control-toggle"
+              aria-label="Toggle theme"
+              title="Toggle theme"
+            >
+              <svg
+                id="theme-icon"
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                aria-hidden="true"
+                focusable="false"
+                class="theme-control-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <section class="surface hero fade-up">
+        <div class="hero-grid">
+          <div>
+            <p class="hero-badge">Built for teams that run their own sync stack</p>
+            <h2 class="hero-title">
+              Manage CalDAV and CardDAV in one clean control center.
+            </h2>
+            <p class="hero-copy">
+              Davvy combines a modern web dashboard with a production-ready DAV
+              endpoint, so admins and users can manage calendars, address books,
+              sharing, and client compatibility from one place.
+            </p>
+            <div class="hero-cta">
+              <a
+                class="btn"
+                href="https://github.com/kaffolder7/davvy#quick-start-docker"
+                target="_blank"
+                rel="noreferrer"
+                >Run with Docker</a
+              >
+              <a
+                class="btn-outline"
+                href="https://github.com/kaffolder7/davvy/tree/main/docs"
+                target="_blank"
+                rel="noreferrer"
+                >Read Documentation</a
+              >
+              <a class="btn-outline" href="./features.html">See Full Capability Map</a>
+            </div>
+            <div class="stats">
+              <article class="stat-card">
+                <p class="stat-label">Endpoint</p>
+                <p class="stat-value">/dav + well-known autodiscovery</p>
+              </article>
+              <article class="stat-card">
+                <p class="stat-label">Permissions</p>
+                <p class="stat-value">General, Editor, Admin</p>
+              </article>
+              <article class="stat-card">
+                <p class="stat-label">Interoperability</p>
+                <p class="stat-value">Strict validation + compatibility mode</p>
+              </article>
+            </div>
+          </div>
+
+          <aside class="side-panel">
+            <p class="side-kicker">What ships by default</p>
+            <ul class="panel-list">
+              <li>
+                Default <strong>Personal Calendar</strong> and
+                <strong>Contacts</strong> resources per user
+              </li>
+              <li>
+                Export support for <strong>ICS</strong>, <strong>VCF</strong>, and
+                full ZIP bundles
+              </li>
+              <li>
+                Owner and admin sharing controls with per-resource permission
+                enforcement
+              </li>
+              <li>
+                Contact workflows: moderation queue, milestone calendars, and
+                Apple compatibility mirroring
+              </li>
+            </ul>
+            <div class="quickstart">
+              <p><strong>Connection URL:</strong> <code>https://your-host/dav</code></p>
+              <p>
+                Use your Davvy account credentials in any CalDAV/CardDAV client.
+              </p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="feature-grid fade-up">
+        <article class="surface feature-card">
+          <p class="feature-label">Unified Auth</p>
+          <h3 class="feature-title">Web + DAV identity model</h3>
+          <p class="feature-copy">
+            Session auth for dashboard users and basic auth for DAV clients under
+            the same account and role system.
+          </p>
+        </article>
+        <article class="surface feature-card">
+          <p class="feature-label">Controlled Sharing</p>
+          <h3 class="feature-title">Role-aware access</h3>
+          <p class="feature-copy">
+            Grant read-only, editor, or admin access to calendars and address
+            books while preserving owner controls.
+          </p>
+        </article>
+        <article class="surface feature-card">
+          <p class="feature-label">Client Compatibility</p>
+          <h3 class="feature-title">Strict first, flexible when needed</h3>
+          <p class="feature-copy">
+            Keep payload validation strict by default, then enable compatibility
+            mode for legacy clients.
+          </p>
+        </article>
+        <article class="surface feature-card">
+          <p class="feature-label">Operational Controls</p>
+          <h3 class="feature-title">Admin-first management</h3>
+          <p class="feature-copy">
+            Feature flags, user management, cross-user share controls, and queue
+            retention settings are all managed in one UI.
+          </p>
+        </article>
+      </section>
+
+      <section class="surface split-callout fade-up">
+        <div>
+          <p class="callout-kicker">GitHub Pages ready</p>
+          <p class="callout-title">Publish this landing site directly from docs/</p>
+          <p class="callout-copy">
+            This page is fully static and lives in
+            <code>docs/landing/index.html</code>. Enable GitHub Pages for your repo
+            and point it at that directory to host it without running Laravel.
+          </p>
+        </div>
+        <a
+          class="btn-outline"
+          href="https://github.com/kaffolder7/davvy/tree/main/docs/landing"
+          target="_blank"
+          rel="noreferrer"
+          >Open Source Files</a
+        >
+      </section>
+
+      <footer class="footer">Davvy is open-source software under the MIT license.</footer>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
