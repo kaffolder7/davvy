@@ -5055,7 +5055,7 @@ function AppShell({ auth, theme, children }) {
   return (
     <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <header className="surface fade-up rounded-3xl p-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <Link className="block" to="/">
               <p className="text-xs font-bold uppercase tracking-[0.24em] text-app-accent">
@@ -5073,13 +5073,13 @@ function AppShell({ auth, theme, children }) {
               </p>
             </div>
           </div>
-          <nav className="flex flex-col items-end gap-3">
+          <nav className="flex w-full flex-col gap-3 md:w-auto md:items-end">
             {auth.user.role === "admin" ? (
               <Link
                 className={
                   onAdminPage
-                    ? "btn-outline btn-outline-sm admin-cta admin-cta-active group"
-                    : "btn-outline btn-outline-sm admin-cta group"
+                    ? "btn-outline btn-outline-sm admin-cta admin-cta-active group w-full justify-center md:w-auto"
+                    : "btn-outline btn-outline-sm admin-cta group w-full justify-center md:w-auto"
                 }
                 to="/admin"
                 aria-label="Open Admin Control Center"
@@ -5116,7 +5116,7 @@ function AppShell({ auth, theme, children }) {
                 )}
               </Link>
             ) : null}
-            <div className="flex items-center gap-2">
+            <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:justify-end">
               <Link
                 className={location.pathname === "/" ? "tab tab-active" : "tab"}
                 to="/"
@@ -5147,12 +5147,14 @@ function AppShell({ auth, theme, children }) {
                 </Link>
               ) : null}
               <Link
-                className={`${location.pathname === "/profile" ? "tab tab-active" : "tab"} inline-flex items-center gap-1.5`}
+                className={`${location.pathname === "/profile" ? "tab tab-active" : "tab"} min-w-0 inline-flex items-center gap-1.5`}
                 to="/profile"
                 aria-label="Profile"
                 title="Profile"
               >
-                <span className="max-w-36 truncate">{auth.user.name}</span>
+                <span className="max-w-24 truncate sm:max-w-36">
+                  {auth.user.name}
+                </span>
                 <svg
                   aria-hidden="true"
                   className="h-4 w-4"
@@ -5167,7 +5169,7 @@ function AppShell({ auth, theme, children }) {
                   <path d="M5 20c1.6-3.3 4-5 7-5s5.4 1.7 7 5" />
                 </svg>
               </Link>
-              <button className="btn-outline" onClick={logout}>
+              <button className="btn-outline w-full sm:w-auto" onClick={logout}>
                 Sign Out
               </button>
             </div>
