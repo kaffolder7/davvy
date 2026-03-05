@@ -17,6 +17,7 @@ on:
       - "package.json"
       - "phpunit.xml"
       - "Dockerfile"
+      - "docker/**"
       - "compose.yml"
       - ".env.example"
       - "vite.config.js"
@@ -44,25 +45,8 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Cache Composer downloads
-        uses: actions/cache@v4
-        with:
-          path: ~/.composer/cache/files
-          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-composer-
-
-      - name: Ensure Composer cache directory exists
-        run: mkdir -p "$HOME/.composer/cache/files"
+      - name: Build CI test image
+        run: docker build --target ci-test -t davvy-ci-test .
 
       - name: Run Dockerized test suite
-        run: |
-          docker compose run --build --rm \
-            --user root \
-            -e COMPOSER_CACHE_DIR=/tmp/composer-cache \
-            -v "$HOME/.composer/cache/files:/tmp/composer-cache" \
-            --entrypoint sh app -lc "cp .env.example .env && composer install --prefer-dist --no-interaction && APP_ENV=testing APP_KEY='base64:MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=' DB_CONNECTION=sqlite DB_DATABASE=':memory:' CACHE_STORE=array SESSION_DRIVER=array QUEUE_CONNECTION=sync MAIL_MAILER=array php artisan test"
-
-      - name: Tear down Docker services
-        if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: docker run --rm davvy-ci-test
