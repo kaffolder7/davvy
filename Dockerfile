@@ -2,7 +2,7 @@
 
 # Keep tag+digest so the pinned image is both readable and immutable.
 ARG COMPOSER_IMAGE=composer:2@sha256:f0809732b2188154b3faa8e44ab900595acb0b09cd0aa6c34e798efe4ebc9021
-ARG NODE_IMAGE=node:20-alpine@sha256:09e2b3d9726018aecf269bd35325f46bf75046a643a66d28360ec71132750ec8
+ARG NODE_IMAGE=node:24-alpine@sha256:7fddd9ddeae8196abf4a3ef2de34e11f7b1a722119f91f28ddf1e99dcafdf114
 ARG PHP_IMAGE=php:8.4-fpm-alpine@sha256:b7bad36533116d6360d00c3b12820be69bf7655af6057f6222b57befa5eee5c4
 
 FROM ${COMPOSER_IMAGE} AS vendor-prod
