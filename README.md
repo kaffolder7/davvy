@@ -57,16 +57,17 @@ It is designed for:
 
 ## Documentation Map 📚
 
+- [Documentation Index](docs/README.md)
 - [User Guide](docs/user-guide.md)
 - [API Reference](docs/api.md)
 - [DAV Client Setup](docs/clients.md)
 - [Architecture](docs/architecture.md)
 - [Configuration Reference](docs/configuration.md)
 - [Deployment Guide](docs/deployment.md)
+- [Release Checklist (Core)](docs/release-checklist-core.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Release Checklist (Railway)](docs/release-checklist.md)
 - [Release Checklist (Coolify)](docs/release-checklist-coolify.md)
-- [Landing Site (GitHub Pages)](docs/landing/README.md)
 
 ## Quick Start (Docker) 🐳
 
@@ -137,6 +138,7 @@ docker run --rm davvy-ci-test
 
 Davvy is deployed as a Docker image. See:
 - [Deployment](docs/deployment.md)
+- [Release Checklist (Core)](docs/release-checklist-core.md)
 - [Release Checklist (Railway)](docs/release-checklist.md)
 - [Release Checklist (Coolify)](docs/release-checklist-coolify.md)
 

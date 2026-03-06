@@ -39,6 +39,7 @@ Common Davvy feature/runtime vars:
 - `ENABLE_OWNER_SHARE_MANAGEMENT`
 - `ENABLE_DAV_COMPATIBILITY_MODE`
 - `ENABLE_CONTACT_MANAGEMENT`
+- `ENABLE_CONTACT_CHANGE_MODERATION`
 - `CONTACT_CHANGE_REQUEST_RETENTION_DAYS`
 - `DAV_LOG_CLIENT_TRAFFIC`
 - `CORS_ALLOWED_ORIGINS`
@@ -72,7 +73,9 @@ Recommended flow:
    - logs include `Preflight checks passed.`
    - `/dav` is reachable
 
-See checklist: [Release Checklist (Railway)](./release-checklist.md)
+See checklists:
+- [Release Checklist (Core)](./release-checklist-core.md)
+- [Release Checklist (Railway)](./release-checklist.md)
 
 ## Coolify
 
@@ -87,7 +90,9 @@ Recommended flow:
 6. Optionally scale replicas.
 7. Verify logs and endpoints as above.
 
-See checklist: [Release Checklist (Coolify)](./release-checklist-coolify.md)
+See checklists:
+- [Release Checklist (Core)](./release-checklist-core.md)
+- [Release Checklist (Coolify)](./release-checklist-coolify.md)
 
 ## Generic Docker Host
 
@@ -120,6 +125,7 @@ Expected cache behavior:
 
 ## Next References
 
+- [Release Checklist (Core)](./release-checklist-core.md)
 - [Release Checklist (Railway)](./release-checklist.md)
 - [Release Checklist (Coolify)](./release-checklist-coolify.md)
 - [Troubleshooting](./troubleshooting.md)
