@@ -43,11 +43,11 @@ COPY docker/php-fpm/zz-davvy-pool.conf /usr/local/etc/php-fpm.d/zz-davvy-pool.co
 COPY public ./public
 COPY resources ./resources
 COPY routes ./routes
-COPY storage ./storage
 COPY --from=vendor-prod /app/vendor ./vendor
 
 RUN addgroup -g 1000 app && adduser -D -G app -u 1000 app \
     && mkdir -p \
+        storage/app/{private,public} \
         storage/framework/{cache,sessions,views,testing} \
         storage/logs \
         bootstrap/cache \
