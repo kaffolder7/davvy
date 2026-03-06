@@ -21,7 +21,7 @@ storage/framework/testing
 
 docs
 debug
-favicons.backup
+*.backup*
 README.md
 LICENSE
 compose.yml
