@@ -87,6 +87,8 @@ docker compose up --build
 
 Notes 💡:
 - The default compose setup enables seed-on-start (`RUN_DB_SEED=true`).
+- The default compose setup includes a fixed local development `APP_KEY` for deterministic startup.
+- Do not reuse that local development `APP_KEY` for internet-facing production deployments.
 - If `DEFAULT_ADMIN_EMAIL` or `DEFAULT_ADMIN_PASSWORD` is empty, no bootstrap admin is created.
 
 ## Local Development (DDEV) 💻

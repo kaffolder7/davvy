@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+APP_ENV_VALUE="${APP_ENV:-production}"
+LOCAL_DEV_APP_KEY='base64:MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI='
 RUN_DB_MIGRATIONS_VALUE="${RUN_DB_MIGRATIONS:-true}"
 RUN_DB_SEED_VALUE="${RUN_DB_SEED:-false}"
 
@@ -9,6 +11,12 @@ php artisan config:clear --no-interaction >/dev/null 2>&1 || true
 
 if [ -z "${APP_KEY:-}" ]; then
   echo "APP_KEY is required. Set APP_KEY via environment/secrets before startup." >&2
+  exit 1
+fi
+
+if [ "${APP_ENV_VALUE}" = "production" ] && [ "${APP_KEY}" = "${LOCAL_DEV_APP_KEY}" ]; then
+  echo "Refusing to start: APP_KEY matches the local development key while APP_ENV=production." >&2
+  echo "Set a unique production APP_KEY via platform secrets." >&2
   exit 1
 fi
 
