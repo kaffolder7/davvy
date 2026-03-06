@@ -100,6 +100,9 @@ jobs:
       - name: Install PHP dependencies (no scripts)
         run: composer install --no-interaction --no-progress --prefer-dist --no-scripts
 
+      - name: Verify PHP platform requirements
+        run: composer check-platform-reqs
+
       - name: Run Pint in test mode
         run: |
           ./vendor/bin/pint --test
