@@ -8,12 +8,14 @@ ARG PHP_IMAGE=php:8.4-fpm-alpine@sha256:b7bad36533116d6360d00c3b12820be69bf7655a
 FROM ${COMPOSER_IMAGE} AS vendor-prod
 WORKDIR /app
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --prefer-dist --no-interaction --ignore-platform-reqs
+RUN composer install --no-dev --no-scripts --prefer-dist --no-interaction \
+    && composer check-platform-reqs
 
 FROM ${COMPOSER_IMAGE} AS vendor-dev
 WORKDIR /app
 COPY composer.json composer.lock ./
-RUN composer install --no-scripts --prefer-dist --no-interaction --ignore-platform-reqs
+RUN composer install --no-scripts --prefer-dist --no-interaction \
+    && composer check-platform-reqs
 
 FROM ${NODE_IMAGE} AS frontend
 WORKDIR /app
