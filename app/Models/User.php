@@ -4,11 +4,13 @@ namespace App\Models;
 
 use App\Enums\Role;
 use App\Services\DefaultResourceProvisioner;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -34,6 +36,13 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => Role::class,
         ];
+    }
+
+    protected function email(): Attribute
+    {
+        return Attribute::make(
+            set: static fn (mixed $value): string => Str::lower(trim((string) $value)),
+        );
     }
 
     protected static function booted(): void

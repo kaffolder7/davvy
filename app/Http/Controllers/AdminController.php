@@ -15,6 +15,7 @@ use App\Services\RegistrationSettingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
 class AdminController extends Controller
@@ -36,6 +37,11 @@ class AdminController extends Controller
 
     public function createUser(Request $request): JsonResponse
     {
+        $email = Str::lower(trim((string) $request->input('email', '')));
+        if ($email !== '') {
+            $request->merge(['email' => $email]);
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],

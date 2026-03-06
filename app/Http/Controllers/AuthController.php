@@ -8,6 +8,7 @@ use App\Services\RegistrationSettingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
@@ -18,6 +19,11 @@ class AuthController extends Controller
     {
         if (! $this->registrationSettings->isPublicRegistrationEnabled()) {
             abort(403, 'Public registration is currently disabled.');
+        }
+
+        $email = Str::lower(trim((string) $request->input('email', '')));
+        if ($email !== '') {
+            $request->merge(['email' => $email]);
         }
 
         $data = $request->validate([
@@ -63,6 +69,7 @@ class AuthController extends Controller
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
         ]);
+        $credentials['email'] = Str::lower(trim((string) $credentials['email']));
 
         if (! Auth::attempt($credentials, (bool) $request->boolean('remember'))) {
             return response()->json([
