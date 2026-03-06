@@ -7,12 +7,13 @@ use App\Models\AppSetting;
 use App\Models\User;
 use App\Services\RegistrationSettingsService;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $adminEmail = trim((string) env('DEFAULT_ADMIN_EMAIL', ''));
+        $adminEmail = Str::lower(trim((string) env('DEFAULT_ADMIN_EMAIL', '')));
         $adminPassword = (string) env('DEFAULT_ADMIN_PASSWORD', '');
 
         if ($adminEmail !== '' && $adminPassword !== '') {
