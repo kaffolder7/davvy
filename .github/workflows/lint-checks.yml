@@ -4,6 +4,8 @@ on:
   workflow_call:
   push:
     paths:
+      - "*.md"
+      - "docs/**"
       - "app/**"
       - "bootstrap/**"
       - "config/**"
@@ -25,6 +27,8 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
+      - "*.md"
+      - "docs/**"
       - "app/**"
       - "bootstrap/**"
       - "config/**"
@@ -128,3 +132,58 @@ jobs:
 
       - name: Run Vitest suite
         run: npm test
+
+  docs-link-check:
+    name: Docs Link Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Validate local markdown links
+        run: |
+          python3 - <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          root = Path(".").resolve()
+          markdown_files = sorted(set(root.glob("*.md")) | set(root.glob("docs/**/*.md")))
+
+          pattern = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+          broken = []
+
+          for doc in markdown_files:
+              text = doc.read_text(encoding="utf-8")
+              for match in pattern.finditer(text):
+                  raw_link = match.group(1).strip()
+                  if raw_link.startswith("<") and raw_link.endswith(">"):
+                      raw_link = raw_link[1:-1].strip()
+
+                  if not raw_link:
+                      continue
+
+                  if re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", raw_link):
+                      continue
+
+                  if raw_link.startswith("#") or raw_link.startswith("/"):
+                      continue
+
+                  link_path = raw_link.split("#", 1)[0].split("?", 1)[0].strip()
+                  if not link_path:
+                      continue
+
+                  target = (doc.parent / link_path).resolve()
+                  if not target.exists():
+                      broken.append((doc.relative_to(root), raw_link, doc.parent / link_path))
+
+          if broken:
+              print("Broken local markdown links:")
+              for source, raw_link, missing_target in broken:
+                  print(f"- {source} -> {raw_link} (missing: {missing_target})")
+              sys.exit(1)
+
+          print(f"Validated {len(markdown_files)} markdown files. No broken local links.")
+          PY
