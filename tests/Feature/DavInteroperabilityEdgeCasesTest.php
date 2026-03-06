@@ -4,11 +4,14 @@ namespace Tests\Feature;
 
 use App\Models\AddressBook;
 use App\Models\Calendar;
+use App\Models\CalendarObject;
+use App\Models\Card;
 use App\Models\User;
 use App\Services\Dav\Backends\LaravelCalendarBackend;
 use App\Services\Dav\Backends\LaravelCardDavBackend;
 use App\Services\DavRequestContext;
 use App\Services\RegistrationSettingsService;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Sabre\DAV\Exception\BadRequest;
 use Sabre\DAV\Exception\Conflict;
@@ -155,6 +158,58 @@ class DavInteroperabilityEdgeCasesTest extends TestCase
             'safe-update.vcf',
             "BEGIN:VCARD\nVERSION:4.0\nFN:Now conflicting\nUID:shared-contact-uid\nEMAIL:safe@example.com\nEND:VCARD"
         );
+    }
+
+    public function test_database_enforces_calendar_uid_uniqueness_within_a_calendar(): void
+    {
+        $calendar = Calendar::factory()->create();
+
+        CalendarObject::query()->create([
+            'calendar_id' => $calendar->id,
+            'uri' => 'first-db-uid.ics',
+            'uid' => 'db-unique-calendar-uid',
+            'etag' => md5('first-db-uid'),
+            'size' => 10,
+            'component_type' => 'VEVENT',
+            'data' => 'BEGIN:VCALENDAR',
+        ]);
+
+        $this->expectException(QueryException::class);
+
+        CalendarObject::query()->create([
+            'calendar_id' => $calendar->id,
+            'uri' => 'second-db-uid.ics',
+            'uid' => 'db-unique-calendar-uid',
+            'etag' => md5('second-db-uid'),
+            'size' => 11,
+            'component_type' => 'VEVENT',
+            'data' => 'BEGIN:VCALENDAR',
+        ]);
+    }
+
+    public function test_database_enforces_card_uid_uniqueness_within_an_address_book(): void
+    {
+        $addressBook = AddressBook::factory()->create();
+
+        Card::query()->create([
+            'address_book_id' => $addressBook->id,
+            'uri' => 'first-db-uid.vcf',
+            'uid' => 'db-unique-card-uid',
+            'etag' => md5('first-db-card-uid'),
+            'size' => 12,
+            'data' => 'BEGIN:VCARD',
+        ]);
+
+        $this->expectException(QueryException::class);
+
+        Card::query()->create([
+            'address_book_id' => $addressBook->id,
+            'uri' => 'second-db-uid.vcf',
+            'uid' => 'db-unique-card-uid',
+            'etag' => md5('second-db-card-uid'),
+            'size' => 13,
+            'data' => 'BEGIN:VCARD',
+        ]);
     }
 
     public function test_invalid_sync_tokens_are_rejected(): void
