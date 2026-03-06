@@ -32,6 +32,9 @@ jobs:
 
   dockerized-tests-gate:
     name: Release Gate - Dockerized tests
+    permissions:
+      contents: read
+      actions: write
     uses: ./.github/workflows/pr-tests.yml
 
   container-build-gate:
