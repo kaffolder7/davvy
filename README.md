@@ -142,4 +142,11 @@ Davvy is deployed as a Docker image. See:
 
 ## License 📄
 
-MIT ([LICENSE](LICENSE))
+Davvy Source-Available License 1.0 (DSAL-1.0) ([LICENSE](LICENSE))
+
+Commercial internal use is allowed. Selling the software, or offering a
+competing hosted service, requires a separate written commercial agreement from
+the maintainer.
+
+Contributions are accepted under [CLA.md](CLA.md). See [CONTRIBUTING.md](CONTRIBUTING.md).
+Commercial terms can be requested via [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md).
