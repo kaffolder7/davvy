@@ -12,6 +12,7 @@ use App\Services\Dav\IcsValidator;
 use App\Services\DavRequestContext;
 use App\Services\PrincipalUriService;
 use App\Services\ResourceAccessService;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
 use Sabre\CalDAV\Backend\AbstractBackend;
 use Sabre\DAV\Exception\BadRequest;
@@ -200,17 +201,25 @@ class LaravelCalendarBackend extends AbstractBackend implements \Sabre\CalDAV\Ba
 
         $etag = md5($normalized['data']);
 
-        CalendarObject::query()->create([
-            'calendar_id' => $calendar->id,
-            'uri' => $objectUri,
-            'uid' => $resourceUid,
-            'etag' => $etag,
-            'size' => strlen($normalized['data']),
-            'component_type' => $normalized['component_type'],
-            'first_occurred_at' => $normalized['first_occurred_at'],
-            'last_occurred_at' => $normalized['last_occurred_at'],
-            'data' => $normalized['data'],
-        ]);
+        try {
+            CalendarObject::query()->create([
+                'calendar_id' => $calendar->id,
+                'uri' => $objectUri,
+                'uid' => $resourceUid,
+                'etag' => $etag,
+                'size' => strlen($normalized['data']),
+                'component_type' => $normalized['component_type'],
+                'first_occurred_at' => $normalized['first_occurred_at'],
+                'last_occurred_at' => $normalized['last_occurred_at'],
+                'data' => $normalized['data'],
+            ]);
+        } catch (QueryException $exception) {
+            if ($this->isUidUniqueConstraintViolation($exception)) {
+                throw new Conflict('A calendar object with the same UID already exists in this calendar.');
+            }
+
+            throw $exception;
+        }
 
         $this->syncService->recordAdded(ShareResourceType::Calendar, $calendar->id, (string) $objectUri);
 
@@ -245,15 +254,23 @@ class LaravelCalendarBackend extends AbstractBackend implements \Sabre\CalDAV\Ba
 
         $etag = md5($normalized['data']);
 
-        $object->update([
-            'uid' => $resourceUid,
-            'etag' => $etag,
-            'size' => strlen($normalized['data']),
-            'component_type' => $normalized['component_type'],
-            'first_occurred_at' => $normalized['first_occurred_at'],
-            'last_occurred_at' => $normalized['last_occurred_at'],
-            'data' => $normalized['data'],
-        ]);
+        try {
+            $object->update([
+                'uid' => $resourceUid,
+                'etag' => $etag,
+                'size' => strlen($normalized['data']),
+                'component_type' => $normalized['component_type'],
+                'first_occurred_at' => $normalized['first_occurred_at'],
+                'last_occurred_at' => $normalized['last_occurred_at'],
+                'data' => $normalized['data'],
+            ]);
+        } catch (QueryException $exception) {
+            if ($this->isUidUniqueConstraintViolation($exception)) {
+                throw new Conflict('A calendar object with the same UID already exists in this calendar.');
+            }
+
+            throw $exception;
+        }
 
         $this->syncService->recordModified(ShareResourceType::Calendar, $calendar->id, (string) $objectUri);
 
@@ -437,5 +454,13 @@ class LaravelCalendarBackend extends AbstractBackend implements \Sabre\CalDAV\Ba
     private function fallbackUidForLegacyPayload(string $objectUri): string
     {
         return 'legacy-calendar-'.sha1($objectUri);
+    }
+
+    private function isUidUniqueConstraintViolation(QueryException $exception): bool
+    {
+        $message = Str::lower($exception->getMessage());
+
+        return str_contains($message, 'calendar_objects_calendar_uid_unique')
+            || str_contains($message, 'unique constraint failed: calendar_objects.calendar_id, calendar_objects.uid');
     }
 }
