@@ -1,15 +1,15 @@
 #!/bin/sh
 set -eu
 
-APP_ENV_VALUE="${APP_ENV:-production}"
 RUN_DB_MIGRATIONS_VALUE="${RUN_DB_MIGRATIONS:-true}"
 RUN_DB_SEED_VALUE="${RUN_DB_SEED:-false}"
 
 # Ensure config reflects current runtime environment.
 php artisan config:clear --no-interaction >/dev/null 2>&1 || true
 
-if [ -z "${APP_KEY:-}" ] && [ "${APP_ENV_VALUE}" != "production" ]; then
-  php artisan key:generate --force --no-interaction
+if [ -z "${APP_KEY:-}" ]; then
+  echo "APP_KEY is required. Set APP_KEY via environment/secrets before startup." >&2
+  exit 1
 fi
 
 php artisan app:preflight --no-interaction
