@@ -55,6 +55,38 @@ class AdminUserManagementTest extends TestCase
         $response->assertForbidden();
     }
 
+    public function test_admin_user_creation_normalizes_email_and_rejects_case_variant_duplicates(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $first = $this
+            ->actingAs($admin)
+            ->postJson('/api/admin/users', [
+                'name' => 'Case Managed User',
+                'email' => 'Case.Managed@Example.com',
+                'password' => 'Password123!',
+                'role' => 'regular',
+            ]);
+
+        $first->assertCreated();
+        $first->assertJsonPath('email', 'case.managed@example.com');
+        $this->assertDatabaseHas('users', [
+            'email' => 'case.managed@example.com',
+        ]);
+
+        $duplicate = $this
+            ->actingAs($admin)
+            ->postJson('/api/admin/users', [
+                'name' => 'Case Duplicate User',
+                'email' => 'CASE.MANAGED@EXAMPLE.COM',
+                'password' => 'Password123!',
+                'role' => 'regular',
+            ]);
+
+        $duplicate->assertStatus(422);
+        $duplicate->assertJsonValidationErrors(['email']);
+    }
+
     public function test_admin_can_toggle_owner_share_management_setting(): void
     {
         $admin = User::factory()->admin()->create();

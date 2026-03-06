@@ -50,6 +50,50 @@ class RegistrationSettingsTest extends TestCase
         ]);
     }
 
+    public function test_registration_normalizes_email_and_rejects_case_variant_duplicates(): void
+    {
+        app(RegistrationSettingsService::class)->setPublicRegistrationEnabled(true);
+
+        $first = $this->postJson('/api/auth/register', [
+            'name' => 'Mixed Case',
+            'email' => 'Mixed.Case@Example.com',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+        ]);
+
+        $first->assertCreated();
+        $first->assertJsonPath('user.email', 'mixed.case@example.com');
+        $this->assertDatabaseHas('users', [
+            'email' => 'mixed.case@example.com',
+        ]);
+
+        $duplicate = $this->postJson('/api/auth/register', [
+            'name' => 'Duplicate Case',
+            'email' => 'MIXED.CASE@EXAMPLE.COM',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+        ]);
+
+        $duplicate->assertStatus(422);
+        $duplicate->assertJsonValidationErrors(['email']);
+    }
+
+    public function test_login_accepts_case_variant_email(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'login.case@example.com',
+            'password' => 'Password123!',
+        ]);
+
+        $response = $this->postJson('/api/auth/login', [
+            'email' => 'LOGIN.CASE@EXAMPLE.COM',
+            'password' => 'Password123!',
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('user.id', $user->id);
+    }
+
     public function test_public_config_includes_dav_compatibility_mode_setting(): void
     {
         app(RegistrationSettingsService::class)->setDavCompatibilityModeEnabled(true);
