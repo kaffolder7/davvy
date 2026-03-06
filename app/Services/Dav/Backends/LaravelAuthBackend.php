@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\DavRequestContext;
 use App\Services\PrincipalUriService;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Sabre\DAV\Auth\Backend\AbstractBasic;
 use Sabre\HTTP\Auth\Basic;
 use Sabre\HTTP\RequestInterface;
@@ -43,7 +44,8 @@ class LaravelAuthBackend extends AbstractBasic
 
     private function resolveUser(string $username, string $password): ?User
     {
-        $user = User::query()->where('email', $username)->first();
+        $normalizedUsername = Str::lower(trim($username));
+        $user = User::query()->where('email', $normalizedUsername)->first();
 
         if (! $user || ! Hash::check($password, $user->password)) {
             return null;
