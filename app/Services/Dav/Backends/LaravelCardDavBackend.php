@@ -16,6 +16,7 @@ use App\Services\Dav\VCardValidator;
 use App\Services\DavRequestContext;
 use App\Services\PrincipalUriService;
 use App\Services\ResourceAccessService;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
 use Sabre\CardDAV\Backend\AbstractBackend;
 use Sabre\DAV\Exception\BadRequest;
@@ -200,14 +201,22 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
 
         $etag = md5($normalized['data']);
 
-        $card = Card::query()->create([
-            'address_book_id' => $addressBook->id,
-            'uri' => $cardUri,
-            'uid' => $resourceUid,
-            'etag' => $etag,
-            'size' => strlen($normalized['data']),
-            'data' => $normalized['data'],
-        ]);
+        try {
+            $card = Card::query()->create([
+                'address_book_id' => $addressBook->id,
+                'uri' => $cardUri,
+                'uid' => $resourceUid,
+                'etag' => $etag,
+                'size' => strlen($normalized['data']),
+                'data' => $normalized['data'],
+            ]);
+        } catch (QueryException $exception) {
+            if ($this->isUidUniqueConstraintViolation($exception)) {
+                throw new Conflict('A contact with the same UID already exists in this address book.');
+            }
+
+            throw $exception;
+        }
 
         $this->syncService->recordAdded(ShareResourceType::AddressBook, $addressBook->id, (string) $cardUri);
         $this->mirrorService->handleSourceCardUpsert($addressBook, $card);
@@ -268,12 +277,20 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
 
         $etag = md5($normalized['data']);
 
-        $card->update([
-            'uid' => $resourceUid,
-            'etag' => $etag,
-            'size' => strlen($normalized['data']),
-            'data' => $normalized['data'],
-        ]);
+        try {
+            $card->update([
+                'uid' => $resourceUid,
+                'etag' => $etag,
+                'size' => strlen($normalized['data']),
+                'data' => $normalized['data'],
+            ]);
+        } catch (QueryException $exception) {
+            if ($this->isUidUniqueConstraintViolation($exception)) {
+                throw new Conflict('A contact with the same UID already exists in this address book.');
+            }
+
+            throw $exception;
+        }
 
         $this->syncService->recordModified(ShareResourceType::AddressBook, $addressBook->id, (string) $cardUri);
         $card->fill([
@@ -468,6 +485,14 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
     private function fallbackUidForLegacyPayload(string $cardUri): string
     {
         return 'legacy-card-'.sha1($cardUri);
+    }
+
+    private function isUidUniqueConstraintViolation(QueryException $exception): bool
+    {
+        $message = Str::lower($exception->getMessage());
+
+        return str_contains($message, 'cards_address_book_uid_unique')
+            || str_contains($message, 'unique constraint failed: cards.address_book_id, cards.uid');
     }
 
     private function syncManagedContactUpsert(AddressBook $addressBook, Card $card): void
