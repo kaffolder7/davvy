@@ -3,7 +3,7 @@
     "name": "davvy/app",
     "type": "project",
     "description": "Davvy MVP - Laravel + React interface for SabreDAV-backed CalDAV/CardDAV",
-    "license": "MIT",
+    "license": "proprietary",
     "require": {
         "php": "^8.4",
         "laravel/framework": "^12.0",
