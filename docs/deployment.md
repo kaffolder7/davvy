@@ -24,7 +24,7 @@ See full reference: [Configuration Reference](./configuration.md)
 Minimum production variables:
 - `APP_ENV=production`
 - `APP_DEBUG=false`
-- `APP_KEY`
+- `APP_KEY` (unique secret, not the local compose dev key)
 - `APP_URL`
 - `DB_CONNECTION=pgsql`
 - `DB_HOST`
@@ -104,6 +104,8 @@ Ensure DB connectivity is available before container startup.
 - Set `TRUSTED_PROXIES=*` (or explicit proxy IPs) behind managed reverse proxies.
 - Keep `RUN_DB_SEED=false` after initial bootstrap.
 - Use HTTPS and stable `APP_KEY`.
+- Set `APP_KEY` via platform secrets and keep it consistent across replicas.
+- Runtime startup will fail if `APP_ENV=production` and `APP_KEY` matches the local compose development key.
 
 ## Static Asset Caching and Compression
 

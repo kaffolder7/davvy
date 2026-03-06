@@ -128,6 +128,15 @@ Common failures:
 - `SESSION_SECURE_COOKIE=false` in production
 - insecure/default seed password in production
 
+### Startup fails before preflight with APP_KEY error
+Common startup guard failures:
+- `APP_KEY is required. Set APP_KEY via environment/secrets before startup.`
+- `Refusing to start: APP_KEY matches the local development key while APP_ENV=production.`
+
+Fix:
+- Set a valid `APP_KEY` in environment/secrets for every deployment.
+- In production, use a unique secret key and do not reuse the local compose development key.
+
 ### Migrations/seeding race in replicas
 With PostgreSQL, startup uses advisory lock to serialize bootstrap.
 

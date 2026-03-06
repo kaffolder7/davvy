@@ -18,7 +18,7 @@ When an `app_settings` key exists, it overrides env defaults.
 | --- | --- | --- |
 | `APP_ENV` | `local` | Must be `production` in production |
 | `APP_DEBUG` | `true` (local) | Must be `false` in production |
-| `APP_KEY` | _(empty)_ | Required for production |
+| `APP_KEY` | _(empty)_ | Required at runtime. In production it must be a unique secret and must not match the local compose development key. |
 | `APP_URL` | `http://localhost` | Must be HTTPS in production |
 | `TRUSTED_PROXIES` | _(empty)_ | Use `*` or explicit list behind reverse proxy |
 | `CORS_ALLOWED_ORIGINS` | _(empty)_ | Comma-separated allowed browser origins for cross-origin API access; empty means same-origin only |
@@ -96,6 +96,7 @@ Review Queue default strategy:
 
 - `APP_ENV=production`
 - `APP_DEBUG=false`
+- unique secret `APP_KEY` from platform secrets (not the local compose dev key)
 - `APP_URL=https://...`
 - `SESSION_SECURE_COOKIE=true`
 - `DB_CONNECTION=pgsql`
