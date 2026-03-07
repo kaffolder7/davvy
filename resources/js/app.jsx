@@ -5419,16 +5419,16 @@ function AdminPage({ auth, theme }) {
               <button
                 className="btn-outline btn-outline-sm"
                 type="button"
-                onClick={openBackupRestoreDrawer}
-              >
-                Restore
-              </button>
-              <button
-                className="btn-outline btn-outline-sm"
-                type="button"
                 onClick={openBackupConfigDrawer}
               >
                 Configure
+              </button>
+              <button
+                className="inline-flex items-center px-1 text-xs font-semibold text-app-muted underline underline-offset-4 transition hover:text-app-strong"
+                type="button"
+                onClick={openBackupRestoreDrawer}
+              >
+                Restore...
               </button>
             </div>
           </div>
