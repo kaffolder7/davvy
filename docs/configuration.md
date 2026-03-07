@@ -53,9 +53,39 @@ When an `app_settings` key exists, it overrides env defaults.
 | `ENABLE_CONTACT_MANAGEMENT` | `false` | Enables managed contacts UI/API |
 | `ENABLE_CONTACT_CHANGE_MODERATION` | `false` | Enables Review Queue workflow for cross-owner contact edits (recommended for families/teams, optional for personal use) |
 | `CONTACT_CHANGE_REQUEST_RETENTION_DAYS` | `90` | Purge horizon for applied/denied queue history |
+| `ENABLE_AUTOMATED_BACKUPS` | `false` | Enables scheduled automated backups |
+| `BACKUPS_LOCAL_ENABLED` | `true` | Write backup snapshots to local filesystem path |
+| `BACKUPS_LOCAL_PATH` | `/var/www/html/storage/app/backups` | Root folder for local snapshots (`daily/weekly/monthly/yearly` subfolders) |
+| `BACKUPS_S3_ENABLED` | `false` | Upload backup snapshots to configured S3 disk |
+| `BACKUPS_S3_DISK` | `s3` | Filesystem disk name used for remote backup storage |
+| `BACKUPS_S3_PREFIX` | `davvy-backups` | Key prefix for remote backup objects |
+| `BACKUPS_SCHEDULE_TIMES` | `02:30` | Comma-separated list of daily backup windows in `HH:MM` (24h) |
+| `BACKUPS_TIMEZONE` | `UTC` | IANA timezone used for schedule and retention anchors |
+| `BACKUPS_WEEKLY_DAY` | `0` | Weekly anchor day (`0=Sunday` ... `6=Saturday`) |
+| `BACKUPS_MONTHLY_DAY` | `1` | Monthly anchor day (`1..31`, clamped to month length) |
+| `BACKUPS_YEARLY_MONTH` | `1` | Yearly anchor month (`1..12`) |
+| `BACKUPS_YEARLY_DAY` | `1` | Yearly anchor day (`1..31`, clamped to month length) |
+| `BACKUPS_RETENTION_DAILY` | `7` | Number of daily snapshots to retain |
+| `BACKUPS_RETENTION_WEEKLY` | `4` | Number of weekly snapshots to retain |
+| `BACKUPS_RETENTION_MONTHLY` | `12` | Number of monthly snapshots to retain |
+| `BACKUPS_RETENTION_YEARLY` | `3` | Number of yearly snapshots to retain |
 | `DAV_LOG_CLIENT_TRAFFIC` | `false` | Debug logging for targeted DAV traffic patterns |
 | `DAV_AUTH_THROTTLE_MAX_ATTEMPTS` | `20` | Failed DAV auth attempts allowed per source key (`username + IP`) before temporary lockout |
 | `DAV_AUTH_THROTTLE_DECAY_SECONDS` | `60` | Lockout window (seconds) for DAV failed-auth throttling |
+
+### Optional Remote S3 Credentials
+
+These are required only when `BACKUPS_S3_ENABLED=true` and the selected disk is `s3`.
+
+| Variable | Default | Notes |
+| --- | --- | --- |
+| `AWS_ACCESS_KEY_ID` | _(empty)_ | S3 API access key |
+| `AWS_SECRET_ACCESS_KEY` | _(empty)_ | S3 API secret |
+| `AWS_DEFAULT_REGION` | `us-east-1` | Bucket region |
+| `AWS_BUCKET` | _(empty)_ | Target bucket name |
+| `AWS_URL` | _(empty)_ | Optional custom URL for generated links |
+| `AWS_ENDPOINT` | _(empty)_ | Optional custom endpoint (MinIO, R2, etc.) |
+| `AWS_USE_PATH_STYLE_ENDPOINT` | `false` | Set `true` for some S3-compatible providers |
 
 ### Startup Bootstrap Controls
 
@@ -63,6 +93,7 @@ When an `app_settings` key exists, it overrides env defaults.
 | --- | --- | --- |
 | `RUN_DB_MIGRATIONS` | `true` | Runs migrations on startup |
 | `RUN_DB_SEED` | `false` | Runs seeder on startup |
+| `RUN_SCHEDULER` | `true` | Runs `php artisan schedule:work` in the container for scheduled tasks (including backups) |
 | `DEFAULT_ADMIN_EMAIL` | _(empty)_ | Used by seeder when seeding enabled |
 | `DEFAULT_ADMIN_PASSWORD` | _(empty)_ | Used by seeder when seeding enabled |
 
@@ -87,6 +118,22 @@ Admin Control Center toggles map to these settings keys:
 - `contact_management_enabled`
 - `contact_change_moderation_enabled`
 - `contact_change_request_retention_days`
+- `backups_enabled`
+- `backup_local_enabled`
+- `backup_local_path`
+- `backup_s3_enabled`
+- `backup_s3_disk`
+- `backup_s3_prefix`
+- `backup_schedule_times`
+- `backup_timezone`
+- `backup_weekly_day`
+- `backup_monthly_day`
+- `backup_yearly_month`
+- `backup_yearly_day`
+- `backup_retention_daily`
+- `backup_retention_weekly`
+- `backup_retention_monthly`
+- `backup_retention_yearly`
 
 Review Queue default strategy:
 - `contact_change_moderation_enabled` defaults to `false` (personal-first)

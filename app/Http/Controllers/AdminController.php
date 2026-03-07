@@ -10,6 +10,8 @@ use App\Models\AppSetting;
 use App\Models\Calendar;
 use App\Models\ContactChangeRequest;
 use App\Models\User;
+use App\Services\Backups\BackupService;
+use App\Services\Backups\BackupSettingsService;
 use App\Services\Contacts\ContactMilestoneCalendarService;
 use App\Services\RegistrationSettingsService;
 use Illuminate\Http\JsonResponse;
@@ -23,6 +25,8 @@ class AdminController extends Controller
     public function __construct(
         private readonly RegistrationSettingsService $registrationSettings,
         private readonly ContactMilestoneCalendarService $milestoneCalendarService,
+        private readonly BackupSettingsService $backupSettings,
+        private readonly BackupService $backupService,
     ) {}
 
     public function users(): JsonResponse
@@ -249,5 +253,63 @@ class AdminController extends Controller
         $summary = $this->milestoneCalendarService->purgeGeneratedCalendarsAndDisableSettings();
 
         return response()->json($summary);
+    }
+
+    public function backupSettings(): JsonResponse
+    {
+        return response()->json($this->backupSettings->current());
+    }
+
+    public function setBackupSettings(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'enabled' => ['required', 'boolean'],
+            'local_enabled' => ['required', 'boolean'],
+            'local_path' => ['required', 'string', 'max:1024'],
+            's3_enabled' => ['required', 'boolean'],
+            's3_disk' => ['required', 'string', 'max:255'],
+            's3_prefix' => ['nullable', 'string', 'max:1024'],
+            'schedule_times' => ['required', 'array', 'min:1'],
+            'schedule_times.*' => ['required', 'string', 'regex:/^(?:[01]\d|2[0-3]):[0-5]\d$/'],
+            'timezone' => ['required', 'timezone'],
+            'weekly_day' => ['required', 'integer', 'min:0', 'max:6'],
+            'monthly_day' => ['required', 'integer', 'min:1', 'max:31'],
+            'yearly_month' => ['required', 'integer', 'min:1', 'max:12'],
+            'yearly_day' => ['required', 'integer', 'min:1', 'max:31'],
+            'retention_daily' => ['required', 'integer', 'min:0', 'max:3650'],
+            'retention_weekly' => ['required', 'integer', 'min:0', 'max:520'],
+            'retention_monthly' => ['required', 'integer', 'min:0', 'max:240'],
+            'retention_yearly' => ['required', 'integer', 'min:0', 'max:50'],
+        ]);
+
+        if ((bool) $data['enabled'] && ! (bool) $data['local_enabled'] && ! (bool) $data['s3_enabled']) {
+            abort(422, 'Enable at least one destination (local or S3) when backups are enabled.');
+        }
+
+        if (
+            (int) $data['retention_daily'] === 0
+            && (int) $data['retention_weekly'] === 0
+            && (int) $data['retention_monthly'] === 0
+            && (int) $data['retention_yearly'] === 0
+        ) {
+            abort(422, 'At least one retention tier must be greater than zero.');
+        }
+
+        return response()->json($this->backupSettings->update($data, $request->user()));
+    }
+
+    public function runBackupNow(): JsonResponse
+    {
+        $result = $this->backupService->run(force: true, trigger: 'manual');
+
+        if ($result['status'] === 'failed') {
+            return response()->json($result, 500);
+        }
+
+        if ($result['status'] === 'skipped') {
+            return response()->json($result, 422);
+        }
+
+        return response()->json($result);
     }
 }
