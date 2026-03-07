@@ -5424,11 +5424,26 @@ function AdminPage({ auth, theme }) {
                 Configure
               </button>
               <button
-                className="inline-flex items-center px-1 text-xs font-semibold text-app-muted underline underline-offset-4 transition hover:text-app-strong"
+                className="inline-flex items-center gap-1 px-1 text-xs font-medium text-app-muted transition hover:text-app-strong"
                 type="button"
                 onClick={openBackupRestoreDrawer}
               >
-                Restore...
+                Restore
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12h14" />
+                  <path d="m13 5 7 7-7 7" />
+                </svg>
               </button>
             </div>
           </div>
