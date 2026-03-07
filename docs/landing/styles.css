@@ -941,6 +941,15 @@ main {
   line-height: 1.6;
 }
 
+.open-source-card > p a {
+  color: var(--accent);
+}
+
+.open-source-card > p a:focus,
+.open-source-card > p a:hover {
+  color: var(--accent-hover);
+}
+
 .open-source-actions {
   position: relative;
   margin-top: 2rem;
@@ -990,16 +999,19 @@ main {
 }
 
 .footer-left {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
   font-size: 0.85rem;
   color: var(--ink-tertiary);
 }
 
 .footer-left img {
   border-radius: 4px;
+  margin-right: 0.3rem;
   opacity: 0.6;
+  vertical-align: middle;
+}
+
+.footer-left a {
+  color: inherit;
 }
 
 .footer-links {
