@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   BrowserRouter,
@@ -4475,6 +4475,32 @@ function AdminPage({ auth, theme }) {
   const [backupAdvancedOpen, setBackupAdvancedOpen] = useState(false);
   const [backupRetentionPreset, setBackupRetentionPreset] =
     useState("recommended");
+  const backupConfigOpenFrameRef = useRef(null);
+
+  const closeBackupConfigDrawer = () => {
+    if (backupConfigOpenFrameRef.current !== null) {
+      window.cancelAnimationFrame(backupConfigOpenFrameRef.current);
+      backupConfigOpenFrameRef.current = null;
+    }
+
+    setBackupConfigOpen(false);
+  };
+
+  const openBackupConfigDrawer = () => {
+    if (backupConfigOpenFrameRef.current !== null) {
+      window.cancelAnimationFrame(backupConfigOpenFrameRef.current);
+      backupConfigOpenFrameRef.current = null;
+    }
+
+    setBackupAdvancedOpen(false);
+    setBackupConfigRendered(true);
+    setBackupConfigOpen(false);
+
+    backupConfigOpenFrameRef.current = window.requestAnimationFrame(() => {
+      backupConfigOpenFrameRef.current = null;
+      setBackupConfigOpen(true);
+    });
+  };
 
   const load = async () => {
     setState((prev) => ({ ...prev, loading: true, error: "" }));
@@ -4577,6 +4603,15 @@ function AdminPage({ auth, theme }) {
 
     return () => window.clearTimeout(timer);
   }, [backupConfigOpen]);
+
+  useEffect(
+    () => () => {
+      if (backupConfigOpenFrameRef.current !== null) {
+        window.cancelAnimationFrame(backupConfigOpenFrameRef.current);
+      }
+    },
+    [],
+  );
 
   const createUser = async (event) => {
     event.preventDefault();
@@ -4945,7 +4980,7 @@ function AdminPage({ auth, theme }) {
         backupLastRunStatus: lastRun.status || prev.backupLastRunStatus,
         backupLastRunMessage: lastRun.message || prev.backupLastRunMessage,
       }));
-      setBackupConfigOpen(false);
+      closeBackupConfigDrawer();
       setBackupAdvancedOpen(false);
     } catch (err) {
       setState((prev) => ({
@@ -5112,11 +5147,7 @@ function AdminPage({ auth, theme }) {
               <button
                 className="btn-outline btn-outline-sm"
                 type="button"
-                onClick={() => {
-                  setBackupAdvancedOpen(false);
-                  setBackupConfigRendered(true);
-                  setBackupConfigOpen(true);
-                }}
+                onClick={openBackupConfigDrawer}
               >
                 Configure
               </button>
@@ -5221,7 +5252,7 @@ function AdminPage({ auth, theme }) {
             className={`absolute inset-0 bg-black/45 transition-opacity duration-200 ease-out motion-reduce:transition-none ${
               backupConfigOpen ? "opacity-100" : "opacity-0"
             }`}
-            onClick={() => setBackupConfigOpen(false)}
+            onClick={closeBackupConfigDrawer}
             tabIndex={backupConfigOpen ? 0 : -1}
           />
           <div
@@ -5244,7 +5275,7 @@ function AdminPage({ auth, theme }) {
               <button
                 type="button"
                 className="btn-outline btn-outline-sm"
-                onClick={() => setBackupConfigOpen(false)}
+                onClick={closeBackupConfigDrawer}
               >
                 Close
               </button>
@@ -5558,7 +5589,7 @@ function AdminPage({ auth, theme }) {
               <button
                 className="btn-outline btn-outline-sm"
                 type="button"
-                onClick={() => setBackupConfigOpen(false)}
+                onClick={closeBackupConfigDrawer}
               >
                 Cancel
               </button>
