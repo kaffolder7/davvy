@@ -4476,13 +4476,55 @@ function AdminPage({ auth, theme }) {
   const [backupRetentionPreset, setBackupRetentionPreset] =
     useState("recommended");
   const backupConfigOpenFrameRef = useRef(null);
+  const backupConfigSnapshotRef = useRef(null);
 
-  const closeBackupConfigDrawer = () => {
+  const captureBackupConfigSnapshot = () => ({
+    backupEnabled: state.backupEnabled,
+    backupLocalEnabled: state.backupLocalEnabled,
+    backupLocalPath: state.backupLocalPath,
+    backupS3Enabled: state.backupS3Enabled,
+    backupS3Disk: state.backupS3Disk,
+    backupS3Prefix: state.backupS3Prefix,
+    backupTimezone: state.backupTimezone,
+    backupScheduleTimes: state.backupScheduleTimes,
+    backupWeeklyDay: state.backupWeeklyDay,
+    backupMonthlyDay: state.backupMonthlyDay,
+    backupYearlyMonth: state.backupYearlyMonth,
+    backupYearlyDay: state.backupYearlyDay,
+    backupRetentionDaily: state.backupRetentionDaily,
+    backupRetentionWeekly: state.backupRetentionWeekly,
+    backupRetentionMonthly: state.backupRetentionMonthly,
+    backupRetentionYearly: state.backupRetentionYearly,
+    backupRetentionPreset,
+  });
+
+  const restoreBackupConfigSnapshot = (snapshot) => {
+    if (!snapshot) {
+      return;
+    }
+
+    const { backupRetentionPreset: nextRetentionPreset, ...snapshotState } =
+      snapshot;
+
+    setBackupRetentionPreset(nextRetentionPreset);
+    setState((prev) => ({
+      ...prev,
+      ...snapshotState,
+    }));
+  };
+
+  const closeBackupConfigDrawer = ({ discardChanges = true } = {}) => {
     if (backupConfigOpenFrameRef.current !== null) {
       window.cancelAnimationFrame(backupConfigOpenFrameRef.current);
       backupConfigOpenFrameRef.current = null;
     }
 
+    if (discardChanges) {
+      restoreBackupConfigSnapshot(backupConfigSnapshotRef.current);
+    }
+
+    backupConfigSnapshotRef.current = null;
+    setBackupAdvancedOpen(false);
     setBackupConfigOpen(false);
   };
 
@@ -4492,6 +4534,7 @@ function AdminPage({ auth, theme }) {
       backupConfigOpenFrameRef.current = null;
     }
 
+    backupConfigSnapshotRef.current = captureBackupConfigSnapshot();
     setBackupAdvancedOpen(false);
     setBackupConfigRendered(true);
     setBackupConfigOpen(false);
@@ -4609,6 +4652,8 @@ function AdminPage({ auth, theme }) {
       if (backupConfigOpenFrameRef.current !== null) {
         window.cancelAnimationFrame(backupConfigOpenFrameRef.current);
       }
+
+      backupConfigSnapshotRef.current = null;
     },
     [],
   );
@@ -4980,8 +5025,7 @@ function AdminPage({ auth, theme }) {
         backupLastRunStatus: lastRun.status || prev.backupLastRunStatus,
         backupLastRunMessage: lastRun.message || prev.backupLastRunMessage,
       }));
-      closeBackupConfigDrawer();
-      setBackupAdvancedOpen(false);
+      closeBackupConfigDrawer({ discardChanges: false });
     } catch (err) {
       setState((prev) => ({
         ...prev,
