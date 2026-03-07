@@ -82,7 +82,12 @@ html {
 }
 
 body {
-  font-family: "DM Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family:
+    "DM Sans",
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 1rem;
   line-height: 1.6;
   color: var(--ink);
@@ -112,7 +117,11 @@ body::before {
   right: -10%;
   width: 60%;
   height: 60%;
-  background: radial-gradient(circle, var(--bg-accent-glow) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    var(--bg-accent-glow) 0%,
+    transparent 70%
+  );
   pointer-events: none;
   z-index: 0;
 }
@@ -124,15 +133,25 @@ body::after {
   left: -10%;
   width: 50%;
   height: 50%;
-  background: radial-gradient(circle, var(--bg-accent-glow) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    var(--bg-accent-glow) 0%,
+    transparent 70%
+  );
   pointer-events: none;
   z-index: 0;
 }
 
 /* --- Typography --- */
-h1, h2, h3, h4, h5, h6 {
-  font-family: "Instrument Serif", Georgia, "Times New Roman", serif;
-  font-weight: 400;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Space Grotesk", sans-serif;
+  /*font-family: "Roboto", sans-serif;*/
+  font-weight: 600;
   line-height: 1.1;
 }
 
@@ -206,7 +225,9 @@ main {
   font-weight: 500;
   color: var(--ink-secondary);
   border-radius: var(--radius-sm);
-  transition: color 0.2s, background 0.2s;
+  transition:
+    color 0.2s,
+    background 0.2s;
 }
 
 .nav-links > a:hover {
@@ -225,7 +246,9 @@ main {
   color: #fff !important;
   background: var(--accent);
   border-radius: var(--radius-md);
-  transition: background 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    transform 0.15s;
 }
 
 .nav-github:hover {
@@ -250,7 +273,10 @@ main {
   background: transparent;
   color: var(--ink-secondary);
   cursor: pointer;
-  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    color 0.2s,
+    background 0.2s;
 }
 
 .theme-toggle:hover {
@@ -307,13 +333,19 @@ main {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 .hero-title {
   margin-top: 1.5rem;
-  font-size: clamp(2.8rem, 6.5vw, 5rem);
+  font-size: clamp(2.8rem, 6.5vw, 4.5rem);
+  font-weight: 700;
   letter-spacing: -0.025em;
   color: var(--ink);
 }
@@ -352,7 +384,10 @@ main {
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    transform 0.15s,
+    box-shadow 0.2s;
 }
 
 .btn-primary:hover {
@@ -374,7 +409,10 @@ main {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: border-color 0.2s, transform 0.15s, color 0.2s;
+  transition:
+    border-color 0.2s,
+    transform 0.15s,
+    color 0.2s;
 }
 
 .btn-ghost:hover {
@@ -424,9 +462,15 @@ main {
   border-radius: 50%;
 }
 
-.terminal-dot:nth-child(1) { background: #ff5f57; }
-.terminal-dot:nth-child(2) { background: #febc2e; }
-.terminal-dot:nth-child(3) { background: #28c840; }
+.terminal-dot:nth-child(1) {
+  background: #ff5f57;
+}
+.terminal-dot:nth-child(2) {
+  background: #febc2e;
+}
+.terminal-dot:nth-child(3) {
+  background: #28c840;
+}
 
 .terminal-title {
   flex: 1;
@@ -487,8 +531,13 @@ main {
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 /* ============================================================
@@ -594,7 +643,10 @@ main {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   backdrop-filter: blur(8px);
-  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+  transition:
+    border-color 0.25s,
+    box-shadow 0.25s,
+    transform 0.25s;
 }
 
 .feature-card:hover {
@@ -658,7 +710,12 @@ main {
   left: calc(16.67% + 1rem);
   right: calc(16.67% + 1rem);
   height: 1px;
-  background: linear-gradient(90deg, var(--border), var(--accent), var(--border));
+  background: linear-gradient(
+    90deg,
+    var(--border),
+    var(--accent),
+    var(--border)
+  );
   opacity: 0.4;
 }
 
@@ -676,13 +733,16 @@ main {
   border-radius: 50%;
   background: var(--surface-solid);
   border: 2px solid var(--border);
-  font-family: "Instrument Serif", Georgia, serif;
+  font-family: "Space Grotesk", sans-serif;
+  /*font-family: "Roboto", sans-serif;*/
   font-size: 1.5rem;
   color: var(--accent);
   margin-bottom: 1.25rem;
   position: relative;
   z-index: 1;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
 }
 
 .step:hover .step-number {
@@ -856,7 +916,11 @@ main {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 50% 0%, var(--accent-glow) 0%, transparent 60%);
+  background: radial-gradient(
+    ellipse at 50% 0%,
+    var(--accent-glow) 0%,
+    transparent 60%
+  );
   pointer-events: none;
 }
 
@@ -960,7 +1024,9 @@ main {
 .reveal {
   opacity: 0;
   transform: translateY(20px);
-  transition: opacity 0.7s ease, transform 0.7s ease;
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s ease;
 }
 
 .reveal.revealed {
@@ -969,12 +1035,24 @@ main {
 }
 
 /* Stagger delays for grid children */
-.reveal-stagger > .reveal:nth-child(1) { transition-delay: 0s; }
-.reveal-stagger > .reveal:nth-child(2) { transition-delay: 0.08s; }
-.reveal-stagger > .reveal:nth-child(3) { transition-delay: 0.16s; }
-.reveal-stagger > .reveal:nth-child(4) { transition-delay: 0.24s; }
-.reveal-stagger > .reveal:nth-child(5) { transition-delay: 0.32s; }
-.reveal-stagger > .reveal:nth-child(6) { transition-delay: 0.4s; }
+.reveal-stagger > .reveal:nth-child(1) {
+  transition-delay: 0s;
+}
+.reveal-stagger > .reveal:nth-child(2) {
+  transition-delay: 0.08s;
+}
+.reveal-stagger > .reveal:nth-child(3) {
+  transition-delay: 0.16s;
+}
+.reveal-stagger > .reveal:nth-child(4) {
+  transition-delay: 0.24s;
+}
+.reveal-stagger > .reveal:nth-child(5) {
+  transition-delay: 0.32s;
+}
+.reveal-stagger > .reveal:nth-child(6) {
+  transition-delay: 0.4s;
+}
 
 /* Hero entrance */
 .hero-content {
@@ -1147,7 +1225,10 @@ main {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   backdrop-filter: blur(8px);
-  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+  transition:
+    border-color 0.25s,
+    box-shadow 0.25s,
+    transform 0.25s;
 }
 
 .feature-card-large:hover {
@@ -1161,9 +1242,10 @@ main {
 }
 
 .feature-card-large h3 {
-  font-family: "Instrument Serif", Georgia, serif;
+  font-family: "Space Grotesk", sans-serif;
+  /*font-family: "Roboto", sans-serif;*/
   font-size: 1.35rem;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--ink);
   margin-bottom: 0.5rem;
   line-height: 1.2;
