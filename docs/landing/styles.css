@@ -486,12 +486,13 @@ main {
   font-family: "DM Mono", ui-monospace, "SF Mono", "Cascadia Code", monospace;
   font-size: 0.82rem;
   line-height: 1.8;
+  overflow-x: auto;
 }
 
 .terminal-line {
   display: block;
   color: var(--terminal-text);
-  white-space: pre;
+  white-space: nowrap;
 }
 
 .terminal-line .prompt {
