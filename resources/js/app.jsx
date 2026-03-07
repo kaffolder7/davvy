@@ -5697,7 +5697,7 @@ function AdminPage({ auth, theme }) {
                 Cancel
               </button>
               <button
-                className="btn btn-outline-sm"
+                className="btn-outline-accent btn-outline-sm"
                 type="button"
                 onClick={saveBackupSettings}
                 disabled={backupSaving}
