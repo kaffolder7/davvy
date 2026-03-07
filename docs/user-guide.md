@@ -116,6 +116,12 @@ Admins can:
 - Create users with role selection
 - Manage cross-user share assignments globally
 - Set contact change queue history retention (days)
+- Configure automated backups:
+  - enable/disable backup automation
+  - configure local and optional S3 destinations
+  - define one or more daily backup windows (`HH:MM`)
+  - tune retention tiers (`daily`, `weekly`, `monthly`, `yearly`)
+- Run backups on demand from Admin Control Center
 - Purge generated milestone calendars (destructive maintenance action)
 
 Important guard:

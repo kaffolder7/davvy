@@ -5,6 +5,7 @@ APP_ENV_VALUE="${APP_ENV:-production}"
 LOCAL_DEV_APP_KEY='base64:MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI='
 RUN_DB_MIGRATIONS_VALUE="${RUN_DB_MIGRATIONS:-true}"
 RUN_DB_SEED_VALUE="${RUN_DB_SEED:-false}"
+RUN_SCHEDULER_VALUE="${RUN_SCHEDULER:-true}"
 
 # Ensure config reflects current runtime environment.
 php artisan config:clear --no-interaction >/dev/null 2>&1 || true
@@ -115,17 +116,37 @@ php_fpm_pid=$!
 nginx -c "${NGINX_CONFIG_FILE}" -g 'daemon off; error_log /dev/stderr warn;' &
 nginx_pid=$!
 
+scheduler_pid=""
+if [ "${RUN_SCHEDULER_VALUE}" = "true" ]; then
+  php artisan schedule:work --no-interaction &
+  scheduler_pid=$!
+fi
+
 shutdown() {
+  if [ -n "${scheduler_pid}" ]; then
+    kill -TERM "${scheduler_pid}" 2>/dev/null || true
+  fi
+
   kill -TERM "${php_fpm_pid}" "${nginx_pid}" 2>/dev/null || true
 }
 
 trap 'shutdown' INT TERM
 
 while kill -0 "${php_fpm_pid}" 2>/dev/null && kill -0 "${nginx_pid}" 2>/dev/null; do
+  if [ -n "${scheduler_pid}" ] && ! kill -0 "${scheduler_pid}" 2>/dev/null; then
+    break
+  fi
+
   sleep 1
 done
 
-if ! kill -0 "${php_fpm_pid}" 2>/dev/null; then
+if [ -n "${scheduler_pid}" ] && ! kill -0 "${scheduler_pid}" 2>/dev/null; then
+  if wait "${scheduler_pid}"; then
+    exit_code=0
+  else
+    exit_code=$?
+  fi
+elif ! kill -0 "${php_fpm_pid}" 2>/dev/null; then
   if wait "${php_fpm_pid}"; then
     exit_code=0
   else
@@ -140,6 +161,9 @@ else
 fi
 
 shutdown
+if [ -n "${scheduler_pid}" ]; then
+  wait "${scheduler_pid}" 2>/dev/null || true
+fi
 wait "${php_fpm_pid}" 2>/dev/null || true
 wait "${nginx_pid}" 2>/dev/null || true
 

@@ -112,6 +112,52 @@ async function downloadExport(url, fallbackName) {
 const THEME_STORAGE_KEY = "davvy-theme";
 const VALID_THEMES = new Set(["system", "light", "dark"]);
 const MILESTONE_PURGE_SUMMARY_AUTO_HIDE_MS = 6000;
+const WEEKDAY_OPTIONS = [
+  { value: 0, label: "Sunday" },
+  { value: 1, label: "Monday" },
+  { value: 2, label: "Tuesday" },
+  { value: 3, label: "Wednesday" },
+  { value: 4, label: "Thursday" },
+  { value: 5, label: "Friday" },
+  { value: 6, label: "Saturday" },
+];
+const MONTH_OPTIONS = [
+  { value: 1, label: "January" },
+  { value: 2, label: "February" },
+  { value: 3, label: "March" },
+  { value: 4, label: "April" },
+  { value: 5, label: "May" },
+  { value: 6, label: "June" },
+  { value: 7, label: "July" },
+  { value: 8, label: "August" },
+  { value: 9, label: "September" },
+  { value: 10, label: "October" },
+  { value: 11, label: "November" },
+  { value: 12, label: "December" },
+];
+
+function parseBackupScheduleTimes(value) {
+  const parsed = String(value ?? "")
+    .split(/[,\n]/g)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .filter((item) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(item));
+
+  return Array.from(new Set(parsed)).sort();
+}
+
+function formatAdminTimestamp(value) {
+  if (!value) {
+    return "Never";
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "Invalid timestamp";
+  }
+
+  return parsed.toLocaleString();
+}
 
 function getSystemTheme() {
   if (typeof window === "undefined" || !window.matchMedia) {
@@ -4267,6 +4313,25 @@ function AdminPage({ auth, theme }) {
     contactChangeRetentionDays: 90,
     milestonePurgeVisible: false,
     milestonePurgeAvailable: false,
+    backupEnabled: false,
+    backupLocalEnabled: true,
+    backupLocalPath: "",
+    backupS3Enabled: false,
+    backupS3Disk: "s3",
+    backupS3Prefix: "davvy-backups",
+    backupTimezone: "UTC",
+    backupScheduleTimes: "02:30",
+    backupWeeklyDay: 0,
+    backupMonthlyDay: 1,
+    backupYearlyMonth: 1,
+    backupYearlyDay: 1,
+    backupRetentionDaily: 7,
+    backupRetentionWeekly: 4,
+    backupRetentionMonthly: 12,
+    backupRetentionYearly: 3,
+    backupLastRunAt: null,
+    backupLastRunStatus: null,
+    backupLastRunMessage: "",
   });
   const [userForm, setUserForm] = useState({
     name: "",
@@ -4284,17 +4349,24 @@ function AdminPage({ auth, theme }) {
     useState(false);
   const [milestonePurgeSummary, setMilestonePurgeSummary] = useState("");
   const [retentionSubmitting, setRetentionSubmitting] = useState(false);
+  const [backupSaving, setBackupSaving] = useState(false);
+  const [backupRunning, setBackupRunning] = useState(false);
 
   const load = async () => {
     setState((prev) => ({ ...prev, loading: true, error: "" }));
 
     try {
-      const [users, resources, shares, retention] = await Promise.all([
+      const [users, resources, shares, retention, backupSettings] =
+        await Promise.all([
         api.get("/api/admin/users"),
         api.get("/api/admin/resources"),
         api.get("/api/admin/shares"),
         api.get("/api/admin/settings/contact-change-retention"),
+        api.get("/api/admin/settings/backups"),
       ]);
+
+      const backup = backupSettings.data ?? {};
+      const lastRun = backup.last_run ?? {};
 
       setState((prev) => ({
         ...prev,
@@ -4305,6 +4377,27 @@ function AdminPage({ auth, theme }) {
         contactChangeRetentionDays: Number(retention.data?.days || 90),
         milestonePurgeVisible: !!resources.data?.milestone_purge_visible,
         milestonePurgeAvailable: !!resources.data?.milestone_purge_available,
+        backupEnabled: !!backup.enabled,
+        backupLocalEnabled: !!backup.local_enabled,
+        backupLocalPath: backup.local_path || "",
+        backupS3Enabled: !!backup.s3_enabled,
+        backupS3Disk: backup.s3_disk || "s3",
+        backupS3Prefix: backup.s3_prefix || "",
+        backupTimezone: backup.timezone || "UTC",
+        backupScheduleTimes: Array.isArray(backup.schedule_times)
+          ? backup.schedule_times.join(", ")
+          : "02:30",
+        backupWeeklyDay: Number(backup.weekly_day ?? 0),
+        backupMonthlyDay: Number(backup.monthly_day ?? 1),
+        backupYearlyMonth: Number(backup.yearly_month ?? 1),
+        backupYearlyDay: Number(backup.yearly_day ?? 1),
+        backupRetentionDaily: Number(backup.retention_daily ?? 7),
+        backupRetentionWeekly: Number(backup.retention_weekly ?? 4),
+        backupRetentionMonthly: Number(backup.retention_monthly ?? 12),
+        backupRetentionYearly: Number(backup.retention_yearly ?? 3),
+        backupLastRunAt: lastRun.at || null,
+        backupLastRunStatus: lastRun.status || null,
+        backupLastRunMessage: lastRun.message || "",
       }));
     } catch (err) {
       setState((prev) => ({
@@ -4587,10 +4680,131 @@ function AdminPage({ auth, theme }) {
     }
   };
 
+  const saveBackupSettings = async () => {
+    const scheduleTimes = parseBackupScheduleTimes(state.backupScheduleTimes);
+    if (scheduleTimes.length === 0) {
+      setState((prev) => ({
+        ...prev,
+        error: "Backup schedule must include one or more HH:MM values.",
+      }));
+      return;
+    }
+
+    if (
+      state.backupEnabled &&
+      !state.backupLocalEnabled &&
+      !state.backupS3Enabled
+    ) {
+      setState((prev) => ({
+        ...prev,
+        error:
+          "Enable at least one destination (local or S3) when backups are enabled.",
+      }));
+      return;
+    }
+
+    setBackupSaving(true);
+    setState((prev) => ({ ...prev, error: "" }));
+
+    try {
+      const response = await api.patch("/api/admin/settings/backups", {
+        enabled: !!state.backupEnabled,
+        local_enabled: !!state.backupLocalEnabled,
+        local_path: state.backupLocalPath,
+        s3_enabled: !!state.backupS3Enabled,
+        s3_disk: state.backupS3Disk,
+        s3_prefix: state.backupS3Prefix,
+        schedule_times: scheduleTimes,
+        timezone: state.backupTimezone,
+        weekly_day: Number(state.backupWeeklyDay),
+        monthly_day: Number(state.backupMonthlyDay),
+        yearly_month: Number(state.backupYearlyMonth),
+        yearly_day: Number(state.backupYearlyDay),
+        retention_daily: Number(state.backupRetentionDaily),
+        retention_weekly: Number(state.backupRetentionWeekly),
+        retention_monthly: Number(state.backupRetentionMonthly),
+        retention_yearly: Number(state.backupRetentionYearly),
+      });
+
+      const backup = response.data ?? {};
+      const lastRun = backup.last_run ?? {};
+
+      setState((prev) => ({
+        ...prev,
+        backupEnabled: !!backup.enabled,
+        backupLocalEnabled: !!backup.local_enabled,
+        backupLocalPath: backup.local_path || "",
+        backupS3Enabled: !!backup.s3_enabled,
+        backupS3Disk: backup.s3_disk || "s3",
+        backupS3Prefix: backup.s3_prefix || "",
+        backupTimezone: backup.timezone || "UTC",
+        backupScheduleTimes: Array.isArray(backup.schedule_times)
+          ? backup.schedule_times.join(", ")
+          : prev.backupScheduleTimes,
+        backupWeeklyDay: Number(backup.weekly_day ?? 0),
+        backupMonthlyDay: Number(backup.monthly_day ?? 1),
+        backupYearlyMonth: Number(backup.yearly_month ?? 1),
+        backupYearlyDay: Number(backup.yearly_day ?? 1),
+        backupRetentionDaily: Number(backup.retention_daily ?? 7),
+        backupRetentionWeekly: Number(backup.retention_weekly ?? 4),
+        backupRetentionMonthly: Number(backup.retention_monthly ?? 12),
+        backupRetentionYearly: Number(backup.retention_yearly ?? 3),
+        backupLastRunAt: lastRun.at || prev.backupLastRunAt,
+        backupLastRunStatus: lastRun.status || prev.backupLastRunStatus,
+        backupLastRunMessage: lastRun.message || prev.backupLastRunMessage,
+      }));
+    } catch (err) {
+      setState((prev) => ({
+        ...prev,
+        error: extractError(err, "Unable to save backup settings."),
+      }));
+    } finally {
+      setBackupSaving(false);
+    }
+  };
+
+  const runBackupNow = async () => {
+    if (backupRunning) {
+      return;
+    }
+
+    setBackupRunning(true);
+    setState((prev) => ({ ...prev, error: "" }));
+
+    try {
+      const response = await api.post("/api/admin/backups/run");
+      const result = response.data ?? {};
+
+      setState((prev) => ({
+        ...prev,
+        backupLastRunAt: result.executed_at_utc || prev.backupLastRunAt,
+        backupLastRunStatus: result.status || "success",
+        backupLastRunMessage: result.reason || "Backup completed successfully.",
+      }));
+
+      await load();
+    } catch (err) {
+      const message = extractError(err, "Unable to run backup now.");
+      setState((prev) => ({
+        ...prev,
+        error: message,
+        backupLastRunStatus: "failed",
+        backupLastRunMessage: message,
+      }));
+    } finally {
+      setBackupRunning(false);
+    }
+  };
+
   const resourceOptions =
     shareForm.resource_type === "calendar"
       ? state.resources.calendars
       : state.resources.address_books;
+  const backupLastRunLabel = state.backupLastRunStatus
+    ? `${state.backupLastRunStatus.toUpperCase()} at ${formatAdminTimestamp(
+        state.backupLastRunAt,
+      )}`
+    : "No backup has run yet.";
 
   return (
     <AppShell auth={auth} theme={theme}>
@@ -4655,6 +4869,279 @@ function AdminPage({ auth, theme }) {
               </button>
             </div>
           </Field>
+        </div>
+        <div className="mt-6 rounded-2xl border border-app-edge bg-app-surface p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold text-app-strong">
+              Automated Backups
+            </h3>
+            <button
+              className="btn-outline btn-outline-sm"
+              type="button"
+              onClick={runBackupNow}
+              disabled={backupRunning}
+            >
+              {backupRunning ? "Running backup..." : "Run Backup Now"}
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-app-faint">
+            Create rotating backup snapshots for calendars and address books to
+            local storage and optional S3.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <AdminFeatureToggle
+              label="Backups enabled"
+              enabled={state.backupEnabled}
+              onClick={() =>
+                setState((prev) => ({
+                  ...prev,
+                  backupEnabled: !prev.backupEnabled,
+                }))
+              }
+            />
+            <AdminFeatureToggle
+              label="Local destination"
+              enabled={state.backupLocalEnabled}
+              onClick={() =>
+                setState((prev) => ({
+                  ...prev,
+                  backupLocalEnabled: !prev.backupLocalEnabled,
+                }))
+              }
+            />
+            <AdminFeatureToggle
+              label="S3 destination"
+              enabled={state.backupS3Enabled}
+              onClick={() =>
+                setState((prev) => ({
+                  ...prev,
+                  backupS3Enabled: !prev.backupS3Enabled,
+                }))
+              }
+            />
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <Field label="Schedule times (HH:MM, comma-separated)">
+              <input
+                className="input"
+                value={state.backupScheduleTimes}
+                onChange={(event) =>
+                  setState((prev) => ({
+                    ...prev,
+                    backupScheduleTimes: event.target.value,
+                  }))
+                }
+                placeholder="02:30, 14:30"
+              />
+            </Field>
+            <Field label="Timezone">
+              <input
+                className="input"
+                value={state.backupTimezone}
+                onChange={(event) =>
+                  setState((prev) => ({
+                    ...prev,
+                    backupTimezone: event.target.value,
+                  }))
+                }
+                placeholder="America/Indiana/Indianapolis"
+              />
+            </Field>
+            <Field label="Local backup path">
+              <input
+                className="input"
+                value={state.backupLocalPath}
+                onChange={(event) =>
+                  setState((prev) => ({
+                    ...prev,
+                    backupLocalPath: event.target.value,
+                  }))
+                }
+                placeholder="/var/backups/davvy"
+              />
+            </Field>
+            <Field label="S3 disk name">
+              <input
+                className="input"
+                value={state.backupS3Disk}
+                onChange={(event) =>
+                  setState((prev) => ({
+                    ...prev,
+                    backupS3Disk: event.target.value,
+                  }))
+                }
+                placeholder="s3"
+              />
+            </Field>
+            <Field label="S3 key prefix">
+              <input
+                className="input"
+                value={state.backupS3Prefix}
+                onChange={(event) =>
+                  setState((prev) => ({
+                    ...prev,
+                    backupS3Prefix: event.target.value,
+                  }))
+                }
+                placeholder="davvy-backups"
+              />
+            </Field>
+            <Field label="Weekly backup day">
+              <select
+                className="input"
+                value={state.backupWeeklyDay}
+                onChange={(event) =>
+                  setState((prev) => ({
+                    ...prev,
+                    backupWeeklyDay: Number(event.target.value),
+                  }))
+                }
+              >
+                {WEEKDAY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Monthly backup day">
+              <input
+                className="input"
+                type="number"
+                min="1"
+                max="31"
+                value={state.backupMonthlyDay}
+                onChange={(event) =>
+                  setState((prev) => ({
+                    ...prev,
+                    backupMonthlyDay: event.target.value,
+                  }))
+                }
+              />
+            </Field>
+            <Field label="Yearly backup month">
+              <select
+                className="input"
+                value={state.backupYearlyMonth}
+                onChange={(event) =>
+                  setState((prev) => ({
+                    ...prev,
+                    backupYearlyMonth: Number(event.target.value),
+                  }))
+                }
+              >
+                {MONTH_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Yearly backup day">
+              <input
+                className="input"
+                type="number"
+                min="1"
+                max="31"
+                value={state.backupYearlyDay}
+                onChange={(event) =>
+                  setState((prev) => ({
+                    ...prev,
+                    backupYearlyDay: event.target.value,
+                  }))
+                }
+              />
+            </Field>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Field label="Daily retention">
+              <input
+                className="input"
+                type="number"
+                min="0"
+                max="3650"
+                value={state.backupRetentionDaily}
+                onChange={(event) =>
+                  setState((prev) => ({
+                    ...prev,
+                    backupRetentionDaily: event.target.value,
+                  }))
+                }
+              />
+            </Field>
+            <Field label="Weekly retention">
+              <input
+                className="input"
+                type="number"
+                min="0"
+                max="520"
+                value={state.backupRetentionWeekly}
+                onChange={(event) =>
+                  setState((prev) => ({
+                    ...prev,
+                    backupRetentionWeekly: event.target.value,
+                  }))
+                }
+              />
+            </Field>
+            <Field label="Monthly retention">
+              <input
+                className="input"
+                type="number"
+                min="0"
+                max="240"
+                value={state.backupRetentionMonthly}
+                onChange={(event) =>
+                  setState((prev) => ({
+                    ...prev,
+                    backupRetentionMonthly: event.target.value,
+                  }))
+                }
+              />
+            </Field>
+            <Field label="Yearly retention">
+              <input
+                className="input"
+                type="number"
+                min="0"
+                max="50"
+                value={state.backupRetentionYearly}
+                onChange={(event) =>
+                  setState((prev) => ({
+                    ...prev,
+                    backupRetentionYearly: event.target.value,
+                  }))
+                }
+              />
+            </Field>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <button
+              className="btn-outline btn-outline-sm"
+              type="button"
+              onClick={saveBackupSettings}
+              disabled={backupSaving}
+            >
+              {backupSaving ? "Saving backup settings..." : "Save Backup Settings"}
+            </button>
+            <p className="text-xs text-app-faint">{backupLastRunLabel}</p>
+          </div>
+          {state.backupLastRunMessage ? (
+            <p
+              className={`mt-2 text-xs ${
+                state.backupLastRunStatus === "failed"
+                  ? "text-app-danger"
+                  : state.backupLastRunStatus === "success"
+                    ? "text-app-accent"
+                    : "text-app-faint"
+              }`}
+            >
+              {state.backupLastRunMessage}
+            </p>
+          ) : null}
         </div>
         {state.milestonePurgeVisible ? (
           <div className="mt-6 flex flex-wrap items-center gap-2">
