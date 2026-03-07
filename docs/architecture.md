@@ -135,6 +135,10 @@ Runtime toggles are read from `app_settings` (with env defaults if unset):
   - local filesystem directory
   - optional remote storage via configured Laravel disk (default `s3`)
 - Admins can run manual backup jobs from Admin Control Center.
+- Restore pipeline reads the backup ZIP directly, validates ICS/vCard payloads, and supports `merge` or `replace` modes with optional dry-run previews.
+- Restore entry points:
+  - CLI: `php artisan app:backup:restore {archive} [--mode=merge|replace] [--dry-run] [--fallback-owner-id=...]`
+  - Admin API/UI: `POST /api/admin/backups/restore` + Admin Control Center import flow
 
 ## Operational Hardening
 

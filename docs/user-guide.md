@@ -122,6 +122,7 @@ Admins can:
   - define one or more daily backup windows (`HH:MM`)
   - tune retention tiers (`daily`, `weekly`, `monthly`, `yearly`)
 - Run backups on demand from Admin Control Center
+- Restore backups from Admin Control Center using ZIP import (`merge`, `replace`, and optional dry-run)
 - Manual backup reruns in the same day/week/month/year replace that period snapshot (no duplicate period artifacts)
 - Purge generated milestone calendars (destructive maintenance action)
 

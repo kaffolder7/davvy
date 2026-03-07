@@ -367,6 +367,29 @@ Response:
 Period behavior:
 - each tier keeps one snapshot per period key (manual reruns replace the same period artifact instead of creating duplicates).
 
+#### `POST /api/admin/backups/restore`
+Restore calendars and address books from an uploaded backup ZIP archive (admin only).
+
+Multipart form body:
+- `backup` (required file, `.zip`)
+- `mode` (optional): `merge` (default) or `replace`
+- `dry_run` (optional bool): preview only, no writes
+- `fallback_owner_id` (optional int): remap unresolved owner IDs to an existing user (defaults to current admin user when omitted)
+
+Response:
+- `status`: `success` | `failed`
+- `mode`: `merge` | `replace`
+- `dry_run` (bool)
+- `reason`
+- `executed_at_utc`
+- `manifest` (if present in ZIP)
+- `summary`:
+  - `files_total`, `files_processed`, `files_skipped`
+  - `owners_total`, `owners_resolved`, `owners_missing`, `fallback_owner_id`
+  - created/updated/deleted counters for calendars, address books, and objects/cards
+  - `resources_skipped_invalid`, `resources_skipped_owner`
+- `warnings[]`
+
 ### Admin Share Management
 
 #### `GET /api/admin/shares`

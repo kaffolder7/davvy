@@ -1,8 +1,10 @@
 <?php
 
 use App\Services\Backups\BackupService;
+use App\Services\Backups\BackupRestoreService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
+use Throwable;
 
 Artisan::command('app:about', function (): void {
     $this->comment('Davvy MVP - Laravel + SabreDAV');
@@ -153,6 +155,74 @@ Artisan::command('app:backup {--force : Run immediately, ignoring enabled flag a
 
     return 1;
 })->purpose('Run automated data backups with retention (local and optional S3)');
+
+Artisan::command(
+    'app:backup:restore
+    {archive : Path to backup ZIP archive}
+    {--mode=merge : Restore mode: merge or replace}
+    {--dry-run : Validate and preview restore operations without writing changes}
+    {--fallback-owner-id= : Assign unresolved backup owner IDs to this user ID}',
+    function (): int {
+        /** @var BackupRestoreService $backupRestoreService */
+        $backupRestoreService = app(BackupRestoreService::class);
+
+        $archivePath = (string) $this->argument('archive');
+        $mode = trim((string) $this->option('mode'));
+        $dryRun = (bool) $this->option('dry-run');
+        $fallbackOwnerInput = $this->option('fallback-owner-id');
+        $fallbackOwnerId = null;
+
+        if ($fallbackOwnerInput !== null && $fallbackOwnerInput !== '') {
+            if (preg_match('/^\d+$/', (string) $fallbackOwnerInput) !== 1) {
+                $this->error('--fallback-owner-id must be a numeric user ID.');
+
+                return 1;
+            }
+
+            $fallbackOwnerId = (int) $fallbackOwnerInput;
+        }
+
+        try {
+            $result = $backupRestoreService->restoreFromArchive(
+                archivePath: $archivePath,
+                mode: $mode,
+                dryRun: $dryRun,
+                fallbackOwnerId: $fallbackOwnerId,
+                trigger: 'manual-cli',
+            );
+        } catch (Throwable $throwable) {
+            $this->error('Restore failed: '.$throwable->getMessage());
+
+            return 1;
+        }
+
+        foreach (($result['warnings'] ?? []) as $warning) {
+            if (is_string($warning) && $warning !== '') {
+                $this->warn('Warning: '.$warning);
+            }
+        }
+
+        $summary = is_array($result['summary'] ?? null) ? $result['summary'] : [];
+        $this->info((string) ($result['reason'] ?? 'Restore complete.'));
+        $this->line(sprintf(
+            'Calendars created/updated: %d/%d',
+            (int) ($summary['calendars_created'] ?? 0),
+            (int) ($summary['calendars_updated'] ?? 0),
+        ));
+        $this->line(sprintf(
+            'Address books created/updated: %d/%d',
+            (int) ($summary['address_books_created'] ?? 0),
+            (int) ($summary['address_books_updated'] ?? 0),
+        ));
+        $this->line(sprintf(
+            'Objects created/updated: %d/%d',
+            (int) (($summary['calendar_objects_created'] ?? 0) + ($summary['cards_created'] ?? 0)),
+            (int) (($summary['calendar_objects_updated'] ?? 0) + ($summary['cards_updated'] ?? 0)),
+        ));
+
+        return 0;
+    },
+)->purpose('Restore calendars/address books from a backup ZIP archive');
 
 Schedule::command('app:backup')
     ->everyMinute()

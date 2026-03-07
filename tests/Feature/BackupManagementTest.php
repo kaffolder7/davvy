@@ -9,6 +9,7 @@ use App\Models\CalendarObject;
 use App\Models\Card;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -83,6 +84,7 @@ class BackupManagementTest extends TestCase
     public function test_regular_user_cannot_access_backup_admin_endpoints(): void
     {
         $user = User::factory()->create();
+        $upload = UploadedFile::fake()->createWithContent('restore.zip', 'not-a-real-zip');
 
         $this->actingAs($user)
             ->getJson('/api/admin/settings/backups')
@@ -111,6 +113,14 @@ class BackupManagementTest extends TestCase
 
         $this->actingAs($user)
             ->postJson('/api/admin/backups/run')
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->post('/api/admin/backups/restore', [
+                'backup' => $upload,
+                'mode' => 'merge',
+                'dry_run' => '1',
+            ])
             ->assertForbidden();
     }
 
@@ -261,6 +271,148 @@ class BackupManagementTest extends TestCase
         );
     }
 
+    public function test_admin_can_restore_backup_archive_via_admin_import_endpoint(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $this->seedBackupData();
+
+        $archivePath = $this->createBackupArchiveAt(
+            directory: storage_path('framework/testing/backups-restore-endpoint'),
+            date: [2026, 3, 8, 2, 30, 0],
+        );
+
+        CalendarObject::query()->delete();
+        Card::query()->delete();
+        Calendar::query()->delete();
+        AddressBook::query()->delete();
+
+        $this->assertDatabaseCount('calendars', 0);
+        $this->assertDatabaseCount('address_books', 0);
+
+        $upload = UploadedFile::fake()->createWithContent(
+            'restore.zip',
+            (string) file_get_contents($archivePath),
+        );
+
+        $this->actingAs($admin)
+            ->post('/api/admin/backups/restore', [
+                'backup' => $upload,
+                'mode' => 'merge',
+                'dry_run' => '0',
+            ])
+            ->assertOk()
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('mode', 'merge')
+            ->assertJsonPath('dry_run', false);
+
+        $this->assertGreaterThan(0, Calendar::query()->count());
+        $this->assertGreaterThan(0, AddressBook::query()->count());
+        $this->assertGreaterThan(0, CalendarObject::query()->count());
+        $this->assertGreaterThan(0, Card::query()->count());
+    }
+
+    public function test_backup_restore_command_supports_dry_run_then_apply(): void
+    {
+        $this->seedBackupData();
+
+        $archivePath = $this->createBackupArchiveAt(
+            directory: storage_path('framework/testing/backups-restore-command'),
+            date: [2026, 3, 9, 2, 30, 0],
+        );
+
+        CalendarObject::query()->delete();
+        Card::query()->delete();
+        Calendar::query()->delete();
+        AddressBook::query()->delete();
+
+        $this->assertDatabaseCount('calendars', 0);
+        $this->assertDatabaseCount('address_books', 0);
+
+        $this->artisan('app:backup:restore', [
+            'archive' => $archivePath,
+            '--dry-run' => true,
+        ])->assertExitCode(0);
+
+        $this->assertDatabaseCount('calendars', 0);
+        $this->assertDatabaseCount('address_books', 0);
+        $this->assertDatabaseCount('calendar_objects', 0);
+        $this->assertDatabaseCount('cards', 0);
+
+        $this->artisan('app:backup:restore', [
+            'archive' => $archivePath,
+        ])->assertExitCode(0);
+
+        $this->assertGreaterThan(0, Calendar::query()->count());
+        $this->assertGreaterThan(0, AddressBook::query()->count());
+        $this->assertGreaterThan(0, CalendarObject::query()->count());
+        $this->assertGreaterThan(0, Card::query()->count());
+    }
+
+    public function test_backup_restore_keeps_same_name_collections_distinct(): void
+    {
+        $this->seedBackupData();
+
+        $ownerId = Calendar::query()
+            ->where('uri', 'household-calendar')
+            ->value('owner_id');
+        $this->assertNotNull($ownerId);
+        $ownerId = (int) $ownerId;
+
+        $secondCalendar = Calendar::factory()->create([
+            'owner_id' => $ownerId,
+            'display_name' => 'Household Calendar',
+            'uri' => 'household-calendar-extra',
+        ]);
+        $secondCalendarPayload = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Davvy//Tests//EN\nBEGIN:VEVENT\nUID:backup-test-event-two\nDTSTAMP:20260301T120000Z\nDTSTART:20260302T130000Z\nDTEND:20260302T140000Z\nSUMMARY:Backup Test Event Two\nEND:VEVENT\nEND:VCALENDAR";
+        CalendarObject::query()->create([
+            'calendar_id' => $secondCalendar->id,
+            'uri' => 'backup-test-event-two.ics',
+            'uid' => 'backup-test-event-two',
+            'etag' => sha1($secondCalendarPayload),
+            'size' => strlen($secondCalendarPayload),
+            'component_type' => 'VEVENT',
+            'data' => $secondCalendarPayload,
+        ]);
+
+        $secondAddressBook = AddressBook::factory()->create([
+            'owner_id' => $ownerId,
+            'display_name' => 'Household Contacts',
+            'uri' => 'household-contacts-extra',
+        ]);
+        $secondCardPayload = "BEGIN:VCARD\nVERSION:4.0\nFN:Backup Contact Two\nUID:backup-contact-two\nEMAIL:backup-two@example.com\nEND:VCARD";
+        Card::query()->create([
+            'address_book_id' => $secondAddressBook->id,
+            'uri' => 'backup-contact-two.vcf',
+            'uid' => 'backup-contact-two',
+            'etag' => sha1($secondCardPayload),
+            'size' => strlen($secondCardPayload),
+            'data' => $secondCardPayload,
+        ]);
+
+        $archivePath = $this->createBackupArchiveAt(
+            directory: storage_path('framework/testing/backups-restore-same-name'),
+            date: [2026, 3, 10, 2, 30, 0],
+        );
+
+        CalendarObject::query()->delete();
+        Card::query()->delete();
+        Calendar::query()->delete();
+        AddressBook::query()->delete();
+
+        $this->artisan('app:backup:restore', [
+            'archive' => $archivePath,
+        ])->assertExitCode(0);
+
+        $this->assertSame(
+            2,
+            Calendar::query()->where('display_name', 'Household Calendar')->count(),
+        );
+        $this->assertSame(
+            2,
+            AddressBook::query()->where('display_name', 'Household Contacts')->count(),
+        );
+    }
+
     private function seedBackupData(): void
     {
         $owner = User::factory()->create();
@@ -314,5 +466,38 @@ class BackupManagementTest extends TestCase
     {
         $this->cleanupDirectories[] = $directory;
         File::deleteDirectory($directory);
+    }
+
+    private function createBackupArchiveAt(string $directory, array $date): string
+    {
+        [$year, $month, $day, $hour, $minute, $second] = $date;
+        $this->registerCleanupDirectory($directory);
+
+        $this->storeBackupSettings([
+            'backups_enabled' => 'true',
+            'backup_local_enabled' => 'true',
+            'backup_local_path' => $directory,
+            'backup_s3_enabled' => 'false',
+            'backup_schedule_times' => json_encode(['02:30']),
+            'backup_timezone' => 'UTC',
+            'backup_weekly_day' => '0',
+            'backup_monthly_day' => '1',
+            'backup_yearly_month' => '1',
+            'backup_yearly_day' => '1',
+            'backup_retention_daily' => '7',
+            'backup_retention_weekly' => '4',
+            'backup_retention_monthly' => '12',
+            'backup_retention_yearly' => '3',
+        ]);
+
+        $this->travelTo(now()->setDate($year, $month, $day)->setTime($hour, $minute, $second));
+        $this->artisan('app:backup --force')->assertExitCode(0);
+
+        $files = glob($directory.'/daily/*.zip');
+        $this->assertIsArray($files);
+        $this->assertCount(1, $files);
+        $this->assertIsString($files[0]);
+
+        return (string) $files[0];
     }
 }
