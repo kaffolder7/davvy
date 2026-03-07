@@ -364,6 +364,9 @@ Response:
 - `artifacts[]` (`tier`, `period`, `file_name`, `local_path`, `s3_path`)
 - `resource_counts` (`calendars`, `address_books`, `calendar_objects`, `cards`)
 
+Period behavior:
+- each tier keeps one snapshot per period key (manual reruns replace the same period artifact instead of creating duplicates).
+
 ### Admin Share Management
 
 #### `GET /api/admin/shares`

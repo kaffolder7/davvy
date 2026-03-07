@@ -87,6 +87,10 @@ These are required only when `BACKUPS_S3_ENABLED=true` and the selected disk is 
 | `AWS_ENDPOINT` | _(empty)_ | Optional custom endpoint (MinIO, R2, etc.) |
 | `AWS_USE_PATH_STYLE_ENDPOINT` | `false` | Set `true` for some S3-compatible providers |
 
+Backup period semantics:
+- Davvy keeps one artifact per tier period (`daily=YYYY-MM-DD`, `weekly=ISO week`, `monthly=YYYY-MM`, `yearly=YYYY`).
+- Re-running a backup in the same period replaces that period snapshot instead of creating duplicates.
+
 ### Startup Bootstrap Controls
 
 | Variable | Default | Notes |
