@@ -112,6 +112,7 @@ async function downloadExport(url, fallbackName) {
 const THEME_STORAGE_KEY = "davvy-theme";
 const VALID_THEMES = new Set(["system", "light", "dark"]);
 const MILESTONE_PURGE_SUMMARY_AUTO_HIDE_MS = 6000;
+const BACKUP_DRAWER_ANIMATION_MS = 220;
 const WEEKDAY_OPTIONS = [
   { value: 0, label: "Sunday" },
   { value: 1, label: "Monday" },
@@ -4470,6 +4471,7 @@ function AdminPage({ auth, theme }) {
   const [backupSaving, setBackupSaving] = useState(false);
   const [backupRunning, setBackupRunning] = useState(false);
   const [backupConfigOpen, setBackupConfigOpen] = useState(false);
+  const [backupConfigRendered, setBackupConfigRendered] = useState(false);
   const [backupAdvancedOpen, setBackupAdvancedOpen] = useState(false);
   const [backupRetentionPreset, setBackupRetentionPreset] =
     useState("recommended");
@@ -4485,7 +4487,7 @@ function AdminPage({ auth, theme }) {
           api.get("/api/admin/shares"),
           api.get("/api/admin/settings/contact-change-retention"),
           api.get("/api/admin/settings/backups"),
-      ]);
+        ]);
 
       const backup = backupSettings.data ?? {};
       const lastRun = backup.last_run ?? {};
@@ -4561,6 +4563,20 @@ function AdminPage({ auth, theme }) {
 
     return () => window.clearTimeout(timer);
   }, [milestonePurgeSummary]);
+
+  useEffect(() => {
+    if (backupConfigOpen) {
+      setBackupConfigRendered(true);
+      return undefined;
+    }
+
+    const timer = window.setTimeout(
+      () => setBackupConfigRendered(false),
+      BACKUP_DRAWER_ANIMATION_MS,
+    );
+
+    return () => window.clearTimeout(timer);
+  }, [backupConfigOpen]);
 
   const createUser = async (event) => {
     event.preventDefault();
@@ -5098,6 +5114,7 @@ function AdminPage({ auth, theme }) {
                 type="button"
                 onClick={() => {
                   setBackupAdvancedOpen(false);
+                  setBackupConfigRendered(true);
                   setBackupConfigOpen(true);
                 }}
               >
@@ -5191,15 +5208,29 @@ function AdminPage({ auth, theme }) {
         ) : null}
       </div>
 
-      {backupConfigOpen ? (
-        <div className="fixed inset-0 z-40">
+      {backupConfigRendered ? (
+        <div
+          className={`fixed inset-0 z-40 ${
+            backupConfigOpen ? "pointer-events-auto" : "pointer-events-none"
+          }`}
+          aria-hidden={!backupConfigOpen}
+        >
           <button
             type="button"
             aria-label="Close backup configuration"
-            className="absolute inset-0 bg-black/45"
+            className={`absolute inset-0 bg-black/45 transition-opacity duration-200 ease-out motion-reduce:transition-none ${
+              backupConfigOpen ? "opacity-100" : "opacity-0"
+            }`}
             onClick={() => setBackupConfigOpen(false)}
+            tabIndex={backupConfigOpen ? 0 : -1}
           />
-          <div className="absolute inset-y-0 right-0 w-full max-w-2xl overflow-y-auto border-l border-app-edge bg-app-surface p-5 shadow-2xl">
+          <div
+            className={`absolute inset-y-0 right-0 w-full max-w-2xl overflow-y-auto border-l border-app-edge bg-app-surface p-5 shadow-2xl transition-all duration-200 ease-out motion-reduce:transition-none motion-reduce:transform-none ${
+              backupConfigOpen
+                ? "translate-x-0 opacity-100"
+                : "translate-x-full opacity-0"
+            }`}
+          >
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-xl font-semibold text-app-strong">
