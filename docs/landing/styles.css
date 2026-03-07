@@ -150,7 +150,6 @@ h4,
 h5,
 h6 {
   font-family: "Space Grotesk", sans-serif;
-  /*font-family: "Roboto", sans-serif;*/
   font-weight: 600;
   line-height: 1.1;
 }
@@ -735,7 +734,6 @@ main {
   background: var(--surface-solid);
   border: 2px solid var(--border);
   font-family: "Space Grotesk", sans-serif;
-  /*font-family: "Roboto", sans-serif;*/
   font-size: 1.5rem;
   color: var(--accent);
   margin-bottom: 1.25rem;
@@ -1244,7 +1242,6 @@ main {
 
 .feature-card-large h3 {
   font-family: "Space Grotesk", sans-serif;
-  /*font-family: "Roboto", sans-serif;*/
   font-size: 1.35rem;
   font-weight: 500;
   color: var(--ink);
