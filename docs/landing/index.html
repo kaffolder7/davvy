@@ -26,7 +26,10 @@
                 : "light"
               : preferred;
 
-          document.documentElement.classList.toggle("dark", resolved === "dark");
+          document.documentElement.classList.toggle(
+            "dark",
+            resolved === "dark",
+          );
           document.documentElement.dataset.theme = resolved;
           document.documentElement.style.colorScheme = resolved;
         } catch {
@@ -87,7 +90,9 @@
       <section class="surface hero fade-up">
         <div class="hero-grid">
           <div>
-            <p class="hero-badge">Built for teams that run their own sync stack</p>
+            <p class="hero-badge">
+              Built for teams that run their own sync stack
+            </p>
             <h2 class="hero-title">
               Manage CalDAV and CardDAV in one clean control center.
             </h2>
@@ -111,7 +116,9 @@
                 rel="noreferrer"
                 >Read Documentation</a
               >
-              <a class="btn-outline" href="./features.html">See Full Capability Map</a>
+              <a class="btn-outline" href="./features.html"
+                >See Full Capability Map</a
+              >
             </div>
             <div class="stats">
               <article class="stat-card">
@@ -137,8 +144,8 @@
                 <strong>Contacts</strong> resources per user
               </li>
               <li>
-                Export support for <strong>ICS</strong>, <strong>VCF</strong>, and
-                full ZIP bundles
+                Export support for <strong>ICS</strong>, <strong>VCF</strong>,
+                and full ZIP bundles
               </li>
               <li>
                 Owner and admin sharing controls with per-resource permission
@@ -150,7 +157,10 @@
               </li>
             </ul>
             <div class="quickstart">
-              <p><strong>Connection URL:</strong> <code>https://your-host/dav</code></p>
+              <p>
+                <strong>Connection URL:</strong>
+                <code>https://your-host/dav</code>
+              </p>
               <p>
                 Use your Davvy account credentials in any CalDAV/CardDAV client.
               </p>
@@ -164,8 +174,8 @@
           <p class="feature-label">Unified Auth</p>
           <h3 class="feature-title">Web + DAV identity model</h3>
           <p class="feature-copy">
-            Session auth for dashboard users and basic auth for DAV clients under
-            the same account and role system.
+            Session auth for dashboard users and basic auth for DAV clients
+            under the same account and role system.
           </p>
         </article>
         <article class="surface feature-card">
@@ -194,26 +204,9 @@
         </article>
       </section>
 
-      <section class="surface split-callout fade-up">
-        <div>
-          <p class="callout-kicker">GitHub Pages ready</p>
-          <p class="callout-title">Publish this landing site directly from docs/</p>
-          <p class="callout-copy">
-            This page is fully static and lives in
-            <code>docs/landing/index.html</code>. Enable GitHub Pages for your repo
-            and point it at that directory to host it without running Laravel.
-          </p>
-        </div>
-        <a
-          class="btn-outline"
-          href="https://github.com/kaffolder7/davvy/tree/main/docs/landing"
-          target="_blank"
-          rel="noreferrer"
-          >Open Source Files</a
-        >
-      </section>
-
-      <footer class="footer">Davvy is open-source software under the MIT license.</footer>
+      <footer class="footer">
+        Davvy is open-source software under the MIT license.
+      </footer>
     </main>
 
     <script src="./script.js"></script>
