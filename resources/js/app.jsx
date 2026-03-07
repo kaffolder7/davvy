@@ -5068,45 +5068,51 @@ function AdminPage({ auth, theme }) {
                 ))}
               </select>
             </Field>
-            <Field label="Local backup path">
-              <input
-                className="input"
-                value={state.backupLocalPath}
-                onChange={(event) =>
-                  setState((prev) => ({
-                    ...prev,
-                    backupLocalPath: event.target.value,
-                  }))
-                }
-                placeholder="/var/backups/davvy"
-              />
-            </Field>
-            <Field label="S3 disk name">
-              <input
-                className="input"
-                value={state.backupS3Disk}
-                onChange={(event) =>
-                  setState((prev) => ({
-                    ...prev,
-                    backupS3Disk: event.target.value,
-                  }))
-                }
-                placeholder="s3"
-              />
-            </Field>
-            <Field label="S3 key prefix">
-              <input
-                className="input"
-                value={state.backupS3Prefix}
-                onChange={(event) =>
-                  setState((prev) => ({
-                    ...prev,
-                    backupS3Prefix: event.target.value,
-                  }))
-                }
-                placeholder="davvy-backups"
-              />
-            </Field>
+            {state.backupLocalEnabled ? (
+              <Field label="Local backup path">
+                <input
+                  className="input"
+                  value={state.backupLocalPath}
+                  onChange={(event) =>
+                    setState((prev) => ({
+                      ...prev,
+                      backupLocalPath: event.target.value,
+                    }))
+                  }
+                  placeholder="/var/backups/davvy"
+                />
+              </Field>
+            ) : null}
+            {state.backupS3Enabled ? (
+              <Field label="S3 disk name">
+                <input
+                  className="input"
+                  value={state.backupS3Disk}
+                  onChange={(event) =>
+                    setState((prev) => ({
+                      ...prev,
+                      backupS3Disk: event.target.value,
+                    }))
+                  }
+                  placeholder="s3"
+                />
+              </Field>
+            ) : null}
+            {state.backupS3Enabled ? (
+              <Field label="S3 key prefix">
+                <input
+                  className="input"
+                  value={state.backupS3Prefix}
+                  onChange={(event) =>
+                    setState((prev) => ({
+                      ...prev,
+                      backupS3Prefix: event.target.value,
+                    }))
+                  }
+                  placeholder="davvy-backups"
+                />
+              </Field>
+            ) : null}
             <Field label="Weekly backup day">
               <select
                 className="input"
