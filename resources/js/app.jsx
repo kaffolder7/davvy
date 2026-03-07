@@ -5202,7 +5202,7 @@ function AdminPage({ auth, theme }) {
     );
   const backupSaveButtonClass = backupConfigHasUnsavedChanges
     ? "btn btn-outline-sm"
-    : "btn-outline-accent btn-outline-sm";
+    : "btn-outline btn-outline-sm";
 
   return (
     <AppShell auth={auth} theme={theme}>
