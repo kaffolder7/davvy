@@ -5399,18 +5399,11 @@ function AdminPage({ auth, theme }) {
                 {backupRetentionSummary}
               </span>
             </span>
-            <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-app-edge bg-app-surface px-2.5 py-1 text-xs">
-              <span className="text-app-faint">Last Run</span>
-              <span
-                className="truncate font-semibold text-app-strong"
-                title={backupLastRunLabel}
-              >
-                {backupLastRunLabel}
-              </span>
-            </span>
           </div>
 
-          <p className="mt-3 text-xs text-app-faint">{backupLastRunLabel}</p>
+          <p className="mt-3 text-xs text-app-faint">
+            Last Run: {backupLastRunLabel}
+          </p>
           {state.backupLastRunMessage ? (
             <p
               className={`mt-1 text-xs ${
