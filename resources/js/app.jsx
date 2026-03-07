@@ -112,6 +112,7 @@ async function downloadExport(url, fallbackName) {
 const THEME_STORAGE_KEY = "davvy-theme";
 const VALID_THEMES = new Set(["system", "light", "dark"]);
 const MILESTONE_PURGE_SUMMARY_AUTO_HIDE_MS = 6000;
+const BACKUP_RUN_TOAST_AUTO_HIDE_MS = 3200;
 const BACKUP_DRAWER_ANIMATION_MS = 220;
 const WEEKDAY_OPTIONS = [
   { value: 0, label: "Sunday" },
@@ -4470,6 +4471,7 @@ function AdminPage({ auth, theme }) {
   const [retentionSubmitting, setRetentionSubmitting] = useState(false);
   const [backupSaving, setBackupSaving] = useState(false);
   const [backupRunning, setBackupRunning] = useState(false);
+  const [backupRunToast, setBackupRunToast] = useState(null);
   const [backupConfigOpen, setBackupConfigOpen] = useState(false);
   const [backupConfigRendered, setBackupConfigRendered] = useState(false);
   const [backupAdvancedOpen, setBackupAdvancedOpen] = useState(false);
@@ -4632,6 +4634,19 @@ function AdminPage({ auth, theme }) {
 
     return () => window.clearTimeout(timer);
   }, [milestonePurgeSummary]);
+
+  useEffect(() => {
+    if (!backupRunToast) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(
+      () => setBackupRunToast(null),
+      BACKUP_RUN_TOAST_AUTO_HIDE_MS,
+    );
+
+    return () => window.clearTimeout(timer);
+  }, [backupRunToast]);
 
   useEffect(() => {
     if (backupConfigOpen) {
@@ -5056,13 +5071,19 @@ function AdminPage({ auth, theme }) {
     try {
       const response = await api.post("/api/admin/backups/run");
       const result = response.data ?? {};
+      const nextStatus = result.status || "success";
+      const nextMessage = result.reason || "Backup completed successfully.";
 
       setState((prev) => ({
         ...prev,
         backupLastRunAt: result.executed_at_utc || prev.backupLastRunAt,
-        backupLastRunStatus: result.status || "success",
-        backupLastRunMessage: result.reason || "Backup completed successfully.",
+        backupLastRunStatus: nextStatus,
+        backupLastRunMessage: nextMessage,
       }));
+      setBackupRunToast({
+        status: nextStatus,
+        message: nextMessage,
+      });
 
       await load();
     } catch (err) {
@@ -5073,6 +5094,10 @@ function AdminPage({ auth, theme }) {
         backupLastRunStatus: "failed",
         backupLastRunMessage: message,
       }));
+      setBackupRunToast({
+        status: "failed",
+        message,
+      });
     } finally {
       setBackupRunning(false);
     }
@@ -5114,6 +5139,13 @@ function AdminPage({ auth, theme }) {
   )}w / ${Number(state.backupRetentionMonthly)}m / ${Number(
     state.backupRetentionYearly,
   )}y`;
+  const backupRunToastStatus = String(backupRunToast?.status || "").toLowerCase();
+  const backupRunToastToneClass =
+    backupRunToastStatus === "failed"
+      ? "text-app-danger"
+      : backupRunToastStatus === "success"
+        ? "text-app-accent"
+        : "text-app-faint";
 
   return (
     <AppShell auth={auth} theme={theme}>
@@ -5298,6 +5330,17 @@ function AdminPage({ auth, theme }) {
           <p className="mt-3 text-sm text-app-danger">{state.error}</p>
         ) : null}
       </div>
+
+      {backupRunToast ? (
+        <div className="pointer-events-none fixed bottom-4 right-4 z-30 w-[min(92vw,28rem)] rounded-xl border border-app-edge bg-app-surface px-3 py-2 shadow-2xl">
+          <p
+            className={`text-[11px] font-semibold uppercase tracking-wide ${backupRunToastToneClass}`}
+          >
+            {String(backupRunToast.status || "status").toUpperCase()}
+          </p>
+          <p className="mt-1 text-sm text-app-strong">{backupRunToast.message}</p>
+        </div>
+      ) : null}
 
       {backupConfigRendered ? (
         <div
