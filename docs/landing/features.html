@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Davvy feature overview: identity and access, sharing, managed contacts, interoperability, milestone calendars, and deployment controls."
+    />
+    <title>Features | Davvy</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script>
+      (function () {
+        var k = "davvy-theme",
+          a = new Set(["system", "light", "dark"]);
+        try {
+          var r = window.localStorage.getItem(k);
+          var p = a.has(r) ? r : "system";
+          var v =
+            p === "system"
+              ? window.matchMedia &&
+                window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light"
+              : p;
+          document.documentElement.classList.toggle("dark", v === "dark");
+          document.documentElement.dataset.theme = v;
+          document.documentElement.style.colorScheme = v;
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="grain"></div>
+
+    <!-- ── Navigation ── -->
+    <nav class="nav">
+      <div class="nav-inner">
+        <a href="./" class="nav-logo">
+          <img src="./favicon.svg" width="28" height="28" alt="" />
+          <span>Davvy</span>
+        </a>
+        <div class="nav-links">
+          <a href="./">Home</a>
+          <a
+            href="https://github.com/kaffolder7/davvy/tree/main/docs"
+            target="_blank"
+            rel="noreferrer"
+            >Docs</a
+          >
+          <button
+            id="theme-toggle"
+            type="button"
+            class="theme-toggle"
+            aria-label="Toggle theme"
+            title="Toggle theme"
+          >
+            <svg
+              id="theme-icon"
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" />
+            </svg>
+          </button>
+          <a
+            class="nav-github"
+            href="https://github.com/kaffolder7/davvy"
+            target="_blank"
+            rel="noreferrer"
+          >
+            GitHub
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M7 17l9.2-9.2M17 17V8H8" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <!-- ── Features Hero ── -->
+      <section class="features-hero">
+        <div class="container">
+          <div class="hero-badge" style="margin: 0 auto">Capability Map</div>
+          <h1>Everything included in&nbsp;<em>Davvy</em></h1>
+          <p>
+            A unified platform for CalDAV and CardDAV management. Built for
+            day-2 operations with production guardrails, sharing controls, and
+            standards compliance.
+          </p>
+        </div>
+      </section>
+
+      <!-- ── Feature Grid ── -->
+      <section>
+        <div class="container">
+          <div class="features-page-grid reveal-stagger">
+            <!-- Identity & Access -->
+            <article class="feature-card-large reveal">
+              <div class="feature-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <h3>Identity &amp; Access</h3>
+              <p>
+                Unified account model for web dashboard and DAV clients.
+                Session-based web auth and HTTP Basic auth for DAV share the same
+                principals, roles, and settings. Two roles: admin and regular.
+              </p>
+              <div class="feature-details">
+                <span class="feature-tag">Session Auth</span>
+                <span class="feature-tag">Basic Auth</span>
+                <span class="feature-tag">Rate Limiting</span>
+                <span class="feature-tag">CSRF Protection</span>
+              </div>
+            </article>
+
+            <!-- Calendars & Address Books -->
+            <article class="feature-card-large reveal">
+              <div class="feature-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <h3>Calendars &amp; Address Books</h3>
+              <p>
+                New users are auto-provisioned with a default Personal Calendar
+                and Contacts collection. Create additional calendars (with color
+                and timezone controls) and address books (with custom names).
+              </p>
+              <div class="feature-details">
+                <span class="feature-tag">Auto-provisioning</span>
+                <span class="feature-tag">ICS Export</span>
+                <span class="feature-tag">VCF Export</span>
+                <span class="feature-tag">ZIP Bundles</span>
+              </div>
+            </article>
+
+            <!-- Sharing Model -->
+            <article class="feature-card-large reveal">
+              <div class="feature-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <h3>Sharing Model</h3>
+              <p>
+                Per-resource sharing with three permission levels: read-only,
+                editor, and admin. Owner-managed sharing can be toggled by system
+                admins. Global cross-user share assignments available.
+              </p>
+              <div class="feature-details">
+                <span class="feature-tag">Read-only</span>
+                <span class="feature-tag">Editor</span>
+                <span class="feature-tag">Admin</span>
+                <span class="feature-tag">Per-resource</span>
+              </div>
+            </article>
+
+            <!-- Managed Contacts -->
+            <article class="feature-card-large reveal">
+              <div class="feature-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <h3>Managed Contacts</h3>
+              <p>
+                Web UI for structured contact management with bi-directional
+                vCard sync. Contact moderation queue for cross-owner edits with
+                approval/denial workflow and merge conflict resolution.
+              </p>
+              <div class="feature-details">
+                <span class="feature-tag">Bi-directional Sync</span>
+                <span class="feature-tag">Moderation Queue</span>
+                <span class="feature-tag">Change Requests</span>
+              </div>
+            </article>
+
+            <!-- Interoperability -->
+            <article class="feature-card-large reveal">
+              <div class="feature-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              </div>
+              <h3>Interoperability</h3>
+              <p>
+                CalDAV/CardDAV endpoints with autodiscovery redirects. Strict
+                RFC-compliant validation by default with an admin-controlled
+                compatibility mode for edge clients. Sync-token support for
+                efficient incremental updates.
+              </p>
+              <div class="feature-details">
+                <span class="feature-tag">Autodiscovery</span>
+                <span class="feature-tag">Sync Tokens</span>
+                <span class="feature-tag">RFC Compliant</span>
+                <span class="feature-tag">Compatibility Mode</span>
+              </div>
+            </article>
+
+            <!-- Operations -->
+            <article class="feature-card-large reveal">
+              <div class="feature-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              </div>
+              <h3>Operations &amp; Deployment</h3>
+              <p>
+                Production preflight checks, auth throttling, PostgreSQL
+                advisory-lock bootstrapping for replica-safe startups, and
+                deployment guidance for Railway and Coolify.
+              </p>
+              <div class="feature-details">
+                <span class="feature-tag">Preflight Checks</span>
+                <span class="feature-tag">Auth Throttling</span>
+                <span class="feature-tag">Docker-first</span>
+              </div>
+            </article>
+
+            <!-- Milestone Calendars -->
+            <article class="feature-card-large reveal">
+              <div class="feature-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+              </div>
+              <h3>Milestone Calendars</h3>
+              <p>
+                Address books can auto-generate and maintain dedicated birthday
+                and anniversary calendars based on managed contact data.
+              </p>
+              <div class="feature-details">
+                <span class="feature-tag">Birthdays</span>
+                <span class="feature-tag">Anniversaries</span>
+                <span class="feature-tag">Auto-generated</span>
+              </div>
+            </article>
+
+            <!-- Apple Compatibility -->
+            <article class="feature-card-large reveal">
+              <div class="feature-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              </div>
+              <h3>Apple Compatibility</h3>
+              <p>
+                Optional source mirroring lets selected address books mirror into
+                a user's default contacts collection for improved Apple client
+                visibility across the ecosystem.
+              </p>
+              <div class="feature-details">
+                <span class="feature-tag">Source Mirroring</span>
+                <span class="feature-tag">macOS</span>
+                <span class="feature-tag">iOS</span>
+              </div>
+            </article>
+          </div>
+
+          <!-- Deployment Callout -->
+          <div class="deployment-callout reveal">
+            <div>
+              <h3>Single app, full DAV&nbsp;stack</h3>
+              <p>
+                Davvy runs as one Laravel application serving web UI, API, and
+                DAV endpoints. Start with the Docker quick-start, then move to
+                your preferred host.
+              </p>
+            </div>
+            <a
+              class="btn-primary"
+              href="https://github.com/kaffolder7/davvy/blob/main/docs/deployment.md"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Deployment Guide
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M7 17l9.2-9.2M17 17V8H8" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ── Footer ── -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-inner">
+          <div class="footer-left">
+            <img src="./favicon.svg" width="20" height="20" alt="" />
+            Davvy is source-available software under DSAL-1.0.
+          </div>
+          <div class="footer-links">
+            <a
+              href="https://github.com/kaffolder7/davvy"
+              target="_blank"
+              rel="noreferrer"
+              >GitHub</a
+            >
+            <a
+              href="https://github.com/kaffolder7/davvy/tree/main/docs"
+              target="_blank"
+              rel="noreferrer"
+              >Documentation</a
+            >
+            <a href="./">Home</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
