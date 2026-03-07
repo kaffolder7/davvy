@@ -5404,6 +5404,29 @@ function AdminPage({ auth, theme }) {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button
+                className="mr-2 inline-flex items-center gap-1 px-1 text-xs font-medium text-app-muted transition hover:text-app-strong"
+                type="button"
+                onClick={openBackupRestoreDrawer}
+              >
+                Restore
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M12 21V9" />
+                  <path d="m7 14 5-5 5 5" />
+                  <path d="M5 4h14" />
+                </svg>
+              </button>
+              <button
                 className="btn btn-outline-sm"
                 type="button"
                 onClick={runBackupNow}
@@ -5422,13 +5445,6 @@ function AdminPage({ auth, theme }) {
                 onClick={openBackupConfigDrawer}
               >
                 Configure
-              </button>
-              <button
-                className="inline-flex items-center gap-1 px-1 text-xs font-medium text-app-muted transition hover:text-app-strong"
-                type="button"
-                onClick={openBackupRestoreDrawer}
-              >
-                Restore...
               </button>
             </div>
           </div>
