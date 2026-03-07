@@ -347,11 +347,45 @@ main {
   font-weight: 700;
   letter-spacing: -0.025em;
   color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 0.05em;
 }
+
+.hero-title-line {
+  display: block;
+  opacity: 0;
+  transform: translateY(14px);
+  animation: heroTitleLineIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/*.hero-title-line:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.hero-title-line:nth-child(2) {
+  animation-delay: 1s;
+}
+
+.hero-title-line:nth-child(3) {
+  animation-delay: 2s;
+}*/
 
 .hero-title em {
   font-style: italic;
   color: var(--accent);
+}
+
+@keyframes heroTitleLineIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .hero-subtitle {
@@ -360,6 +394,10 @@ main {
   font-size: 1.125rem;
   line-height: 1.65;
   color: var(--ink-secondary);
+  opacity: 0;
+  transform: translateY(14px);
+  animation: heroTitleLineIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: 0.2s;
 }
 
 .hero-actions {
@@ -367,6 +405,20 @@ main {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+.hero-actions > * {
+  opacity: 0;
+  transform: translateY(14px);
+  animation: heroTitleLineIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.hero-actions > *:nth-child(1) {
+  animation-delay: 0.25s;
+}
+
+.hero-actions > *:nth-child(2) {
+  animation-delay: 0.35s;
 }
 
 /* --- Buttons --- */
@@ -1092,11 +1144,25 @@ main {
 
   .hero-content,
   .hero-visual,
+  .hero-title-line,
+  .hero-subtitle,
+  .hero-actions > *,
   .hero-badge::before,
   .terminal-cursor,
   .reveal {
     animation: none !important;
     transition: none !important;
+  }
+
+  .hero-title-line {
+    opacity: 1;
+    transform: none;
+  }
+
+  .hero-subtitle,
+  .hero-actions > * {
+    opacity: 1;
+    transform: none;
   }
 
   .reveal {
