@@ -194,7 +194,9 @@ function buildTimezoneGroups(referenceDate = new Date()) {
 
   if (typeof Intl?.supportedValuesOf === "function") {
     try {
-      names = Array.from(new Set(["UTC", ...Intl.supportedValuesOf("timeZone")]));
+      names = Array.from(
+        new Set(["UTC", ...Intl.supportedValuesOf("timeZone")]),
+      );
     } catch {
       names = ["UTC"];
     }
@@ -239,7 +241,9 @@ function buildTimezoneGroups(referenceDate = new Date()) {
       minOffset: values[0]?.offset ?? 0,
       options: values,
     }))
-    .sort((a, b) => a.minOffset - b.minOffset || a.region.localeCompare(b.region));
+    .sort(
+      (a, b) => a.minOffset - b.minOffset || a.region.localeCompare(b.region),
+    );
 }
 
 function parseBackupScheduleTimes(value) {
@@ -252,18 +256,58 @@ function parseBackupScheduleTimes(value) {
   return Array.from(new Set(parsed)).sort();
 }
 
-function isRecommendedBackupRetention({
-  daily,
-  weekly,
-  monthly,
-  yearly,
-}) {
+function isRecommendedBackupRetention({ daily, weekly, monthly, yearly }) {
   return (
     Number(daily) === RECOMMENDED_BACKUP_RETENTION.daily &&
     Number(weekly) === RECOMMENDED_BACKUP_RETENTION.weekly &&
     Number(monthly) === RECOMMENDED_BACKUP_RETENTION.monthly &&
     Number(yearly) === RECOMMENDED_BACKUP_RETENTION.yearly
   );
+}
+
+function normalizeBackupConfigSnapshot(snapshot) {
+  if (!snapshot) {
+    return null;
+  }
+
+  return {
+    backupEnabled: !!snapshot.backupEnabled,
+    backupLocalEnabled: !!snapshot.backupLocalEnabled,
+    backupLocalPath: String(snapshot.backupLocalPath ?? ""),
+    backupS3Enabled: !!snapshot.backupS3Enabled,
+    backupS3Disk: String(snapshot.backupS3Disk ?? ""),
+    backupS3Prefix: String(snapshot.backupS3Prefix ?? ""),
+    backupTimezone: String(snapshot.backupTimezone ?? ""),
+    backupScheduleTimes: parseBackupScheduleTimes(
+      snapshot.backupScheduleTimes,
+    ).join(","),
+    backupWeeklyDay: Number(snapshot.backupWeeklyDay ?? 0),
+    backupMonthlyDay: Number(snapshot.backupMonthlyDay ?? 1),
+    backupYearlyMonth: Number(snapshot.backupYearlyMonth ?? 1),
+    backupYearlyDay: Number(snapshot.backupYearlyDay ?? 1),
+    backupRetentionDaily: Number(snapshot.backupRetentionDaily ?? 0),
+    backupRetentionWeekly: Number(snapshot.backupRetentionWeekly ?? 0),
+    backupRetentionMonthly: Number(snapshot.backupRetentionMonthly ?? 0),
+    backupRetentionYearly: Number(snapshot.backupRetentionYearly ?? 0),
+    backupRetentionPreset: String(snapshot.backupRetentionPreset ?? ""),
+  };
+}
+
+function areBackupConfigSnapshotsEqual(left, right) {
+  const normalizedLeft = normalizeBackupConfigSnapshot(left);
+  const normalizedRight = normalizeBackupConfigSnapshot(right);
+
+  if (!normalizedLeft || !normalizedRight) {
+    return normalizedLeft === normalizedRight;
+  }
+
+  for (const key of Object.keys(normalizedLeft)) {
+    if (normalizedLeft[key] !== normalizedRight[key]) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function formatAdminTimestamp(value) {
@@ -5127,25 +5171,38 @@ function AdminPage({ auth, theme }) {
     .filter(Boolean)
     .join(" + ");
   const backupHasDestination = !!backupDestinationSummary;
-  const backupScheduleValues = parseBackupScheduleTimes(state.backupScheduleTimes);
+  const backupScheduleValues = parseBackupScheduleTimes(
+    state.backupScheduleTimes,
+  );
   const backupScheduleSummary =
     backupScheduleValues.length === 0
       ? `No windows (${state.backupTimezone})`
       : backupScheduleValues.length <= 2
-      ? `${backupScheduleValues.join(", ")} (${state.backupTimezone})`
-      : `${backupScheduleValues.length} windows (${state.backupTimezone})`;
+        ? `${backupScheduleValues.join(", ")} (${state.backupTimezone})`
+        : `${backupScheduleValues.length} windows (${state.backupTimezone})`;
   const backupRetentionSummary = `${Number(state.backupRetentionDaily)}d / ${Number(
     state.backupRetentionWeekly,
   )}w / ${Number(state.backupRetentionMonthly)}m / ${Number(
     state.backupRetentionYearly,
   )}y`;
-  const backupRunToastStatus = String(backupRunToast?.status || "").toLowerCase();
+  const backupRunToastStatus = String(
+    backupRunToast?.status || "",
+  ).toLowerCase();
   const backupRunToastToneClass =
     backupRunToastStatus === "failed"
       ? "text-app-danger"
       : backupRunToastStatus === "success"
         ? "text-app-accent"
         : "text-app-faint";
+  const backupConfigHasUnsavedChanges =
+    !!backupConfigSnapshotRef.current &&
+    !areBackupConfigSnapshotsEqual(
+      captureBackupConfigSnapshot(),
+      backupConfigSnapshotRef.current,
+    );
+  const backupSaveButtonClass = backupConfigHasUnsavedChanges
+    ? "btn btn-outline-sm"
+    : "btn-outline-accent btn-outline-sm";
 
   return (
     <AppShell auth={auth} theme={theme}>
@@ -5338,7 +5395,9 @@ function AdminPage({ auth, theme }) {
           >
             {String(backupRunToast.status || "status").toUpperCase()}
           </p>
-          <p className="mt-1 text-sm text-app-strong">{backupRunToast.message}</p>
+          <p className="mt-1 text-sm text-app-strong">
+            {backupRunToast.message}
+          </p>
         </div>
       ) : null}
 
@@ -5613,7 +5672,9 @@ function AdminPage({ auth, theme }) {
                         }
                       }}
                     >
-                      <option value="recommended">Recommended (7/4/12/3)</option>
+                      <option value="recommended">
+                        Recommended (7/4/12/3)
+                      </option>
                       <option value="custom">Custom</option>
                     </select>
                   </Field>
@@ -5697,7 +5758,7 @@ function AdminPage({ auth, theme }) {
                 Cancel
               </button>
               <button
-                className="btn-outline-accent btn-outline-sm"
+                className={backupSaveButtonClass}
                 type="button"
                 onClick={saveBackupSettings}
                 disabled={backupSaving}
