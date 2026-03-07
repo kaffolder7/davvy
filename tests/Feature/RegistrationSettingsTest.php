@@ -50,6 +50,50 @@ class RegistrationSettingsTest extends TestCase
         ]);
     }
 
+    public function test_registration_normalizes_email_and_rejects_case_variant_duplicates(): void
+    {
+        app(RegistrationSettingsService::class)->setPublicRegistrationEnabled(true);
+
+        $first = $this->postJson('/api/auth/register', [
+            'name' => 'Mixed Case',
+            'email' => 'Mixed.Case@Example.com',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+        ]);
+
+        $first->assertCreated();
+        $first->assertJsonPath('user.email', 'mixed.case@example.com');
+        $this->assertDatabaseHas('users', [
+            'email' => 'mixed.case@example.com',
+        ]);
+
+        $duplicate = $this->postJson('/api/auth/register', [
+            'name' => 'Duplicate Case',
+            'email' => 'MIXED.CASE@EXAMPLE.COM',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+        ]);
+
+        $duplicate->assertStatus(422);
+        $duplicate->assertJsonValidationErrors(['email']);
+    }
+
+    public function test_login_accepts_case_variant_email(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'login.case@example.com',
+            'password' => 'Password123!',
+        ]);
+
+        $response = $this->postJson('/api/auth/login', [
+            'email' => 'LOGIN.CASE@EXAMPLE.COM',
+            'password' => 'Password123!',
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('user.id', $user->id);
+    }
+
     public function test_public_config_includes_dav_compatibility_mode_setting(): void
     {
         app(RegistrationSettingsService::class)->setDavCompatibilityModeEnabled(true);
@@ -70,6 +114,16 @@ class RegistrationSettingsTest extends TestCase
         $response->assertJsonPath('contact_management_enabled', true);
     }
 
+    public function test_public_config_includes_contact_change_moderation_setting(): void
+    {
+        app(RegistrationSettingsService::class)->setContactChangeModerationEnabled(true);
+
+        $response = $this->getJson('/api/public/config');
+
+        $response->assertOk();
+        $response->assertJsonPath('contact_change_moderation_enabled', true);
+    }
+
     public function test_authenticated_me_payload_includes_contact_management_setting(): void
     {
         $user = User::factory()->create();
@@ -79,5 +133,16 @@ class RegistrationSettingsTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('contact_management_enabled', true);
+    }
+
+    public function test_authenticated_me_payload_includes_contact_change_moderation_setting(): void
+    {
+        $user = User::factory()->create();
+        app(RegistrationSettingsService::class)->setContactChangeModerationEnabled(true);
+
+        $response = $this->actingAs($user)->getJson('/api/auth/me');
+
+        $response->assertOk();
+        $response->assertJsonPath('contact_change_moderation_enabled', true);
     }
 }

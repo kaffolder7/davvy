@@ -1,21 +1,110 @@
-MIT License
-
+Davvy Source-Available License 1.0 (DSAL-1.0)
 Copyright (c) 2026 kaffolder7
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This license is source-available and is not an OSI-approved open source license.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. Definitions
+
+"Software" means this repository and all source code, object code, configuration,
+build files, documentation, and other material distributed by Licensor under this
+license.
+
+"Licensor" means kaffolder7 and any person or entity authorized by Licensor
+to grant rights under this license.
+
+"You" means an individual or legal entity exercising rights under this license.
+
+"Sell" means to provide the Software to third parties for a fee or other
+consideration, including by charging for licenses, subscriptions, support,
+hosting, managed services, consulting, or other services where the primary value
+to the customer is the Software (or substantially similar functionality).
+
+"Competing Service" means a hosted, managed, or API-based service made available
+to third parties where the primary value is functionality substantially similar
+to the Software.
+
+2. License Grant
+
+Subject to the terms of this license, Licensor grants You a worldwide,
+royalty-free, non-exclusive, non-transferable copyright license to:
+
+a) use, run, and reproduce the Software;
+b) modify the Software and create derivative works; and
+c) distribute the Software or derivative works in source or object form.
+
+3. Conditions for Redistribution
+
+If You distribute the Software or derivative works, You must:
+
+a) include a copy of this license;
+b) preserve all copyright, patent, trademark, and attribution notices;
+c) state that You changed the files when You distribute modified versions; and
+d) ensure recipients receive this same license for the distributed Software.
+
+4. Commercial Use That Is Allowed
+
+Commercial use is allowed for Your own business operations, including internal
+use by for-profit organizations.
+
+Examples of allowed use include using the Software internally to support Your
+operations, even if Your business is commercial.
+
+5. Prohibited Uses
+
+Without a separate written commercial agreement from Licensor, You may not:
+
+a) Sell the Software or derivative works;
+b) offer a Competing Service;
+c) sublicense the Software under different terms that permit actions forbidden
+   by this license; or
+d) remove or obscure required notices.
+
+6. Separate Commercial Licensing
+
+Licensor may offer separate commercial terms. If You receive such terms in
+writing from Licensor, those terms govern to the extent they conflict with this
+license.
+
+7. Patent License
+
+Subject to this license, Licensor grants You a perpetual, worldwide,
+non-exclusive, royalty-free patent license to make, have made, use, sell, offer
+for sale, import, and otherwise transfer the Software, but only for rights
+required to exercise the license grant in Section 2 and only for uses not
+prohibited by Section 5.
+
+If You initiate patent litigation alleging the Software infringes a patent, Your
+patent license under this Section terminates as of the filing date.
+
+8. Trademarks
+
+This license does not grant rights to use Licensor's names, logos, or marks,
+except as required for reasonable and customary attribution.
+
+9. No Warranty
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR
+A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.
+
+10. Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL LICENSOR BE LIABLE FOR
+ANY INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES, OR FOR
+ANY LOSS OF PROFITS, REVENUE, DATA, OR GOODWILL, ARISING FROM OR RELATED TO THIS
+LICENSE OR THE SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+11. Termination
+
+This license continues until terminated. Your rights under this license
+terminate automatically if You violate any term.
+
+If You cure the violation within 30 days of written notice from Licensor, Your
+license may be reinstated at Licensor's discretion.
+
+12. General
+
+If any provision is unenforceable, the remaining provisions remain in effect.
+Failure to enforce a provision is not a waiver. This license is the complete
+agreement for rights granted here unless superseded by a separate written
+agreement from Licensor.

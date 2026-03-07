@@ -111,6 +111,7 @@ async function downloadExport(url, fallbackName) {
 
 const THEME_STORAGE_KEY = "davvy-theme";
 const VALID_THEMES = new Set(["system", "light", "dark"]);
+const MILESTONE_PURGE_SUMMARY_AUTO_HIDE_MS = 6000;
 
 function getSystemTheme() {
   if (typeof window === "undefined" || !window.matchMedia) {
@@ -203,6 +204,7 @@ function App() {
     ownerShareManagementEnabled: false,
     davCompatibilityModeEnabled: false,
     contactManagementEnabled: false,
+    contactChangeModerationEnabled: false,
   });
 
   const refreshAuth = async () => {
@@ -215,6 +217,8 @@ function App() {
         ownerShareManagementEnabled: !!data.owner_share_management_enabled,
         davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
         contactManagementEnabled: !!data.contact_management_enabled,
+        contactChangeModerationEnabled:
+          !!data.contact_change_moderation_enabled,
       });
     } catch {
       try {
@@ -226,6 +230,8 @@ function App() {
           ownerShareManagementEnabled: !!data.owner_share_management_enabled,
           davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
           contactManagementEnabled: !!data.contact_management_enabled,
+          contactChangeModerationEnabled:
+            !!data.contact_change_moderation_enabled,
         });
       } catch {
         setAuth({
@@ -235,6 +241,7 @@ function App() {
           ownerShareManagementEnabled: false,
           davCompatibilityModeEnabled: false,
           contactManagementEnabled: false,
+          contactChangeModerationEnabled: false,
         });
       }
     }
@@ -288,7 +295,11 @@ function App() {
         path="/review-queue"
         element={
           <ProtectedRoute auth={value}>
-            <ContactChangeQueuePage auth={value} theme={theme} />
+            {value.contactChangeModerationEnabled ? (
+              <ContactChangeQueuePage auth={value} theme={theme} />
+            ) : (
+              <Navigate to="/" replace />
+            )}
           </ProtectedRoute>
         }
       />
@@ -352,6 +363,8 @@ function LoginPage({ auth, theme }) {
         ownerShareManagementEnabled: !!data.owner_share_management_enabled,
         davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
         contactManagementEnabled: !!data.contact_management_enabled,
+        contactChangeModerationEnabled:
+          !!data.contact_change_moderation_enabled,
       });
       navigate("/");
     } catch (err) {
@@ -439,6 +452,8 @@ function RegisterPage({ auth, theme }) {
         ownerShareManagementEnabled: !!data.owner_share_management_enabled,
         davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
         contactManagementEnabled: !!data.contact_management_enabled,
+        contactChangeModerationEnabled:
+          !!data.contact_change_moderation_enabled,
       });
       navigate("/");
     } catch (err) {
@@ -932,8 +947,9 @@ function DashboardPage({ auth, theme }) {
             Apple Contacts Compatibility
           </h2>
           <p className="mt-1 text-sm text-app-muted">
-            Off by default. Mirror selected address books into your{" "}
-            <code>/contacts</code> book so macOS and iOS clients can see them.
+            Off by default. Mirror selected address books into your main address
+            book (<code>{data.apple_compat.target_display_name}</code>) so macOS
+            and iOS clients can see them.
           </p>
 
           {data.apple_compat.target_address_book_id ? (
@@ -1757,7 +1773,8 @@ function ContactsPage({ auth, theme }) {
 
       if (response?.data?.queued) {
         setQueueStatusNotice(
-          response.data?.message || "Change submitted for owner/admin approval.",
+          response.data?.message ||
+            "Change submitted for owner/admin approval.",
         );
         await loadContacts({
           preserveSelection: true,
@@ -2752,6 +2769,7 @@ function ContactsPage({ auth, theme }) {
                             >
                               <input
                                 type="checkbox"
+                                className="mt-0.5 h-4 w-4 shrink-0 self-start"
                                 checked={isAssigned}
                                 onChange={(event) =>
                                   toggleAssignedAddressBook(
@@ -2761,15 +2779,18 @@ function ContactsPage({ auth, theme }) {
                                 }
                               />
                               <span className="min-w-0">
-                                <span className="flex items-center gap-2">
+                                <span className="flex items-start gap-2">
                                   <span className="block font-medium text-app-strong">
                                     {book.display_name}
                                   </span>
-                                  {isAssigned ? (
-                                    <span className="rounded-full border border-app-accent-edge px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-app-accent">
-                                      Selected
-                                    </span>
-                                  ) : null}
+                                  <span
+                                    className={`mt-0.5 inline-flex h-4 shrink-0 items-center rounded-full border border-app-accent-edge px-1.5 text-[9px] font-semibold uppercase leading-none tracking-wide text-app-accent ${
+                                      isAssigned ? "" : "invisible"
+                                    }`}
+                                    aria-hidden={!isAssigned}
+                                  >
+                                    Selected
+                                  </span>
                                 </span>
                                 <span className="block text-xs text-app-faint">
                                   /{book.uri} •{" "}
@@ -3714,7 +3735,7 @@ function AdminFeatureToggle({ label, enabled, onClick }) {
       className={`btn-outline inline-flex items-center gap-1.5 rounded-lg !px-2.5 !py-1.5 !text-sm ${
         enabled
           ? "border-app-accent-edge bg-app-surface text-app-strong ring-1 ring-teal-500/25 hover:border-app-accent-edge"
-          : "border-app-edge bg-app-surface text-app-base hover:border-app-edge"
+          : "border-app-edge bg-app-surface text-app-muted hover:border-app-edge"
       }`}
       type="button"
       aria-pressed={enabled}
@@ -3848,7 +3869,11 @@ function ContactChangeQueuePage({ auth, theme }) {
     (row) => row.status === "pending" || row.status === "manual_merge_needed",
   );
 
-  const approveRow = async (row, resolvedPayload = null, resolvedAddressIds = null) => {
+  const approveRow = async (
+    row,
+    resolvedPayload = null,
+    resolvedAddressIds = null,
+  ) => {
     setSubmitting(true);
     setError("");
 
@@ -3861,7 +3886,10 @@ function ContactChangeQueuePage({ auth, theme }) {
         payload.resolved_address_book_ids = resolvedAddressIds;
       }
 
-      await api.patch(`/api/contact-change-requests/${row.id}/approve`, payload);
+      await api.patch(
+        `/api/contact-change-requests/${row.id}/approve`,
+        payload,
+      );
       setNotice("Request approved.");
       await loadQueue({ withLoading: false });
       window.dispatchEvent(new Event("review-queue-updated"));
@@ -3889,7 +3917,9 @@ function ContactChangeQueuePage({ auth, theme }) {
   };
 
   const runBulkAction = async (action) => {
-    const ids = actionableRows.map((row) => Number(row.id)).filter((id) => id > 0);
+    const ids = actionableRows
+      .map((row) => Number(row.id))
+      .filter((id) => id > 0);
     if (ids.length === 0) {
       return;
     }
@@ -3965,7 +3995,9 @@ function ContactChangeQueuePage({ auth, theme }) {
       !Array.isArray(resolvedAddressBookIds) ||
       resolvedAddressBookIds.some((value) => Number(value) <= 0)
     ) {
-      setError("Resolved address book IDs must be an array of positive integers.");
+      setError(
+        "Resolved address book IDs must be an array of positive integers.",
+      );
       return;
     }
 
@@ -4061,9 +4093,7 @@ function ContactChangeQueuePage({ auth, theme }) {
           </button>
         </div>
 
-        {error ? (
-          <p className="mt-3 text-sm text-app-danger">{error}</p>
-        ) : null}
+        {error ? <p className="mt-3 text-sm text-app-danger">{error}</p> : null}
       </section>
 
       {loading ? (
@@ -4150,14 +4180,17 @@ function ContactChangeQueuePage({ auth, theme }) {
                   </p>
                 </div>
 
-                {Array.isArray(row.changed_fields) && row.changed_fields.length > 0 ? (
+                {Array.isArray(row.changed_fields) &&
+                row.changed_fields.length > 0 ? (
                   <p className="mt-2 text-xs text-app-muted">
                     Changed fields: {row.changed_fields.join(", ")}
                   </p>
                 ) : null}
 
                 {row.status_reason ? (
-                  <p className="mt-2 text-sm text-app-danger">{row.status_reason}</p>
+                  <p className="mt-2 text-sm text-app-danger">
+                    {row.status_reason}
+                  </p>
                 ) : null}
               </article>
             ))
@@ -4230,7 +4263,10 @@ function AdminPage({ auth, theme }) {
     ownerShareManagementEnabled: auth.ownerShareManagementEnabled,
     davCompatibilityModeEnabled: auth.davCompatibilityModeEnabled,
     contactManagementEnabled: auth.contactManagementEnabled,
+    contactChangeModerationEnabled: auth.contactChangeModerationEnabled,
     contactChangeRetentionDays: 90,
+    milestonePurgeVisible: false,
+    milestonePurgeAvailable: false,
   });
   const [userForm, setUserForm] = useState({
     name: "",
@@ -4267,6 +4303,8 @@ function AdminPage({ auth, theme }) {
         resources: resources.data,
         shares: shares.data.data,
         contactChangeRetentionDays: Number(retention.data?.days || 90),
+        milestonePurgeVisible: !!resources.data?.milestone_purge_visible,
+        milestonePurgeAvailable: !!resources.data?.milestone_purge_available,
       }));
     } catch (err) {
       setState((prev) => ({
@@ -4280,6 +4318,19 @@ function AdminPage({ auth, theme }) {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    if (!milestonePurgeSummary) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(
+      () => setMilestonePurgeSummary(""),
+      MILESTONE_PURGE_SUMMARY_AUTO_HIDE_MS,
+    );
+
+    return () => window.clearTimeout(timer);
+  }, [milestonePurgeSummary]);
 
   const createUser = async (event) => {
     event.preventDefault();
@@ -4430,8 +4481,37 @@ function AdminPage({ auth, theme }) {
     }
   };
 
+  const toggleContactChangeModeration = async () => {
+    const next = !state.contactChangeModerationEnabled;
+
+    try {
+      const response = await api.patch(
+        "/api/admin/settings/contact-change-moderation",
+        {
+          enabled: next,
+        },
+      );
+      setState((prev) => ({
+        ...prev,
+        contactChangeModerationEnabled: !!response.data.enabled,
+      }));
+      auth.setAuth((prev) => ({
+        ...prev,
+        contactChangeModerationEnabled: !!response.data.enabled,
+      }));
+    } catch (err) {
+      setState((prev) => ({
+        ...prev,
+        error: extractError(
+          err,
+          "Unable to update contact change moderation setting.",
+        ),
+      }));
+    }
+  };
+
   const purgeGeneratedMilestoneCalendars = async () => {
-    if (milestonePurgeSubmitting) {
+    if (milestonePurgeSubmitting || !state.milestonePurgeAvailable) {
       return;
     }
 
@@ -4452,7 +4532,9 @@ function AdminPage({ auth, theme }) {
       );
       const purgedCalendars = Number(response.data?.purged_calendar_count ?? 0);
       const purgedEvents = Number(response.data?.purged_event_count ?? 0);
-      const disabledSettings = Number(response.data?.disabled_setting_count ?? 0);
+      const disabledSettings = Number(
+        response.data?.disabled_setting_count ?? 0,
+      );
       setMilestonePurgeSummary(
         `Purged ${purgedCalendars} generated calendar(s), removed ${purgedEvents} event(s), and disabled ${disabledSettings} setting(s).`,
       );
@@ -4460,7 +4542,10 @@ function AdminPage({ auth, theme }) {
     } catch (err) {
       setState((prev) => ({
         ...prev,
-        error: extractError(err, "Unable to purge generated milestone calendars."),
+        error: extractError(
+          err,
+          "Unable to purge generated milestone calendars.",
+        ),
       }));
     } finally {
       setMilestonePurgeSubmitting(false);
@@ -4534,53 +4619,72 @@ function AdminPage({ auth, theme }) {
             enabled={state.contactManagementEnabled}
             onClick={toggleContactManagement}
           />
+          <AdminFeatureToggle
+            label="Review queue"
+            enabled={state.contactChangeModerationEnabled}
+            onClick={toggleContactChangeModeration}
+          />
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <button
-            className="btn-outline btn-outline-sm text-app-danger"
-            type="button"
-            onClick={purgeGeneratedMilestoneCalendars}
-            disabled={milestonePurgeSubmitting}
-          >
-            {milestonePurgeSubmitting
-              ? "Purging milestone calendars..."
-              : "Purge Generated Milestone Calendars"}
-          </button>
-          <p className="text-xs text-app-faint">
-            Deletes generated Birthday/Anniversary calendars and disables
-            milestone sync settings.
-          </p>
-        </div>
-        <div className="mt-3 flex flex-wrap items-end gap-2">
+        <div className="mt-4">
           <Field label="Queue retention (days)">
-            <input
-              className="input w-40"
-              type="number"
-              min="1"
-              max="3650"
-              value={state.contactChangeRetentionDays}
-              onChange={(event) =>
-                setState((prev) => ({
-                  ...prev,
-                  contactChangeRetentionDays: event.target.value,
-                }))
-              }
-            />
+            <p className="mb-2 text-xs text-app-faint">
+              Applied/denied queue history older than this is purged
+              automatically.
+            </p>
+            <div className="flex flex-wrap items-end gap-2">
+              <input
+                className="input w-40"
+                type="number"
+                min="1"
+                max="3650"
+                value={state.contactChangeRetentionDays}
+                onChange={(event) =>
+                  setState((prev) => ({
+                    ...prev,
+                    contactChangeRetentionDays: event.target.value,
+                  }))
+                }
+              />
+              <button
+                className="btn-outline btn-outline-sm"
+                type="button"
+                onClick={saveContactChangeRetention}
+                disabled={retentionSubmitting}
+              >
+                {retentionSubmitting ? "Saving..." : "Save Retention"}
+              </button>
+            </div>
           </Field>
-          <button
-            className="btn-outline btn-outline-sm"
-            type="button"
-            onClick={saveContactChangeRetention}
-            disabled={retentionSubmitting}
-          >
-            {retentionSubmitting ? "Saving..." : "Save Retention"}
-          </button>
-          <p className="text-xs text-app-faint">
-            Applied/denied queue history older than this is purged automatically.
-          </p>
         </div>
+        {state.milestonePurgeVisible ? (
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            <button
+              className="btn-outline btn-outline-sm text-app-danger"
+              type="button"
+              onClick={purgeGeneratedMilestoneCalendars}
+              disabled={
+                milestonePurgeSubmitting || !state.milestonePurgeAvailable
+              }
+              title={
+                !state.milestonePurgeAvailable
+                  ? "No enabled/generated milestone calendars to purge."
+                  : undefined
+              }
+            >
+              {milestonePurgeSubmitting
+                ? "Purging milestone calendars..."
+                : "Purge Generated Milestone Calendars"}
+            </button>
+            <p className="text-xs text-app-faint">
+              Deletes generated Birthday/Anniversary calendars and disables
+              milestone sync settings.
+            </p>
+          </div>
+        ) : null}
         {milestonePurgeSummary ? (
-          <p className="mt-2 text-sm text-app-accent">{milestonePurgeSummary}</p>
+          <p className="mt-2 text-sm text-app-accent">
+            {milestonePurgeSummary}
+          </p>
         ) : null}
         {state.error ? (
           <p className="mt-3 text-sm text-app-danger">{state.error}</p>
@@ -4888,8 +4992,10 @@ function AppShell({ auth, theme, children }) {
   const onAdminPage = location.pathname === "/admin";
   const onReviewQueuePage = location.pathname === "/review-queue";
   const [reviewQueueCount, setReviewQueueCount] = useState(0);
+  const [mobileAccountMenuOpen, setMobileAccountMenuOpen] = useState(false);
 
   const logout = async () => {
+    setMobileAccountMenuOpen(false);
     await api.post("/api/auth/logout");
     auth.setAuth({
       loading: false,
@@ -4898,12 +5004,13 @@ function AppShell({ auth, theme, children }) {
       ownerShareManagementEnabled: auth.ownerShareManagementEnabled,
       davCompatibilityModeEnabled: auth.davCompatibilityModeEnabled,
       contactManagementEnabled: auth.contactManagementEnabled,
+      contactChangeModerationEnabled: auth.contactChangeModerationEnabled,
     });
     navigate("/login");
   };
 
   useEffect(() => {
-    if (!auth.user) {
+    if (!auth.user || !auth.contactChangeModerationEnabled) {
       setReviewQueueCount(0);
       return undefined;
     }
@@ -4943,7 +5050,11 @@ function AppShell({ auth, theme, children }) {
       window.removeEventListener("review-queue-updated", onQueueUpdated);
       window.clearInterval(timer);
     };
-  }, [auth.user, location.pathname]);
+  }, [auth.contactChangeModerationEnabled, auth.user, location.pathname]);
+
+  useEffect(() => {
+    setMobileAccountMenuOpen(false);
+  }, [location.pathname]);
 
   const reviewQueueCountLabel =
     reviewQueueCount > 99 ? "99+" : String(reviewQueueCount);
@@ -4951,7 +5062,7 @@ function AppShell({ auth, theme, children }) {
   return (
     <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <header className="surface fade-up rounded-3xl p-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <Link className="block" to="/">
               <p className="text-xs font-bold uppercase tracking-[0.24em] text-app-accent">
@@ -4969,84 +5080,172 @@ function AppShell({ auth, theme, children }) {
               </p>
             </div>
           </div>
-          <nav className="flex flex-col items-end gap-3">
-            {auth.user.role === "admin" ? (
+          <nav className="flex w-full flex-col gap-3 md:w-auto md:items-end">
+            <div className="order-1 flex w-full items-center gap-2 overflow-x-auto pb-1 md:order-2 md:w-auto md:justify-end md:overflow-visible md:pb-0">
               <Link
-                className={
-                  onAdminPage
-                    ? "btn-outline btn-outline-sm admin-cta admin-cta-active group"
-                    : "btn-outline btn-outline-sm admin-cta group"
-                }
-                to="/admin"
-                aria-label="Open Admin Control Center"
-                title="Open Admin Control Center"
-              >
-                <svg
-                  aria-hidden="true"
-                  className="h-4 w-4 opacity-85 transition group-hover:opacity-100"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 3l7 3v6c0 4.4-2.8 8.2-7 9-4.2-.8-7-4.6-7-9V6l7-3z" />
-                  <path d="M9.5 12.5l1.7 1.7 3.3-3.6" />
-                </svg>
-                <span>Admin Control Center</span>
-                {onAdminPage ? null : (
-                  <svg
-                    aria-hidden="true"
-                    className="h-3.5 w-3.5 transition group-hover:translate-x-0.5"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M5 12h14" />
-                    <path d="M13 6l6 6-6 6" />
-                  </svg>
-                )}
-              </Link>
-            ) : null}
-            <div className="flex items-center gap-2">
-              <Link
-                className={location.pathname === "/" ? "tab tab-active" : "tab"}
+                className={`${location.pathname === "/" ? "tab tab-active" : "tab"} shrink-0`}
                 to="/"
               >
                 Dashboard
               </Link>
               {auth.contactManagementEnabled ? (
                 <Link
-                  className={
-                    location.pathname === "/contacts" ? "tab tab-active" : "tab"
-                  }
+                  className={`${location.pathname === "/contacts" ? "tab tab-active" : "tab"} shrink-0`}
                   to="/contacts"
                 >
                   Contacts
                 </Link>
               ) : null}
-              <Link
-                className={`${onReviewQueuePage ? "tab tab-active" : "tab"} inline-flex items-center gap-1.5`}
-                to="/review-queue"
+              {auth.contactChangeModerationEnabled ? (
+                <Link
+                  className={`${onReviewQueuePage ? "tab tab-active" : "tab"} inline-flex shrink-0 items-center gap-1.5`}
+                  to="/review-queue"
+                >
+                  <span>Review Queue</span>
+                  {reviewQueueCount > 0 ? (
+                    <span className="rounded-full border border-app-accent-edge bg-app-surface px-2 py-0.5 text-[10px] font-semibold leading-none text-app-accent">
+                      {reviewQueueCountLabel}
+                    </span>
+                  ) : null}
+                </Link>
+              ) : null}
+            </div>
+            <div className="order-2 md:hidden">
+              <button
+                className="btn-outline w-full justify-between"
+                type="button"
+                onClick={() => setMobileAccountMenuOpen((current) => !current)}
+                aria-expanded={mobileAccountMenuOpen}
+                aria-label="Toggle account menu"
               >
-                <span>Review Queue</span>
-                {reviewQueueCount > 0 ? (
-                  <span className="rounded-full border border-app-accent-edge bg-app-surface px-2 py-0.5 text-[10px] font-semibold leading-none text-app-accent">
-                    {reviewQueueCountLabel}
-                  </span>
-                ) : null}
-              </Link>
+                <span>Account</span>
+                <svg
+                  aria-hidden="true"
+                  className={`h-4 w-4 transition-transform ${
+                    mobileAccountMenuOpen ? "rotate-180" : ""
+                  }`}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+              {mobileAccountMenuOpen ? (
+                <div className="mt-2 grid gap-2 rounded-2xl border border-app-edge bg-app-surface p-2">
+                  <Link
+                    className={`${location.pathname === "/profile" ? "tab tab-active" : "tab"} inline-flex items-center justify-between gap-2`}
+                    to="/profile"
+                    onClick={() => setMobileAccountMenuOpen(false)}
+                  >
+                    <span className="truncate">{auth.user.name}</span>
+                    <svg
+                      aria-hidden="true"
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.75"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="8" r="4" />
+                      <path d="M5 20c1.6-3.3 4-5 7-5s5.4 1.7 7 5" />
+                    </svg>
+                  </Link>
+                  {auth.user.role === "admin" ? (
+                    <Link
+                      className={
+                        onAdminPage
+                          ? "btn-outline btn-outline-sm admin-cta admin-cta-active group justify-center"
+                          : "btn-outline btn-outline-sm admin-cta group justify-center"
+                      }
+                      to="/admin"
+                      onClick={() => setMobileAccountMenuOpen(false)}
+                      aria-label="Open Admin Control Center"
+                      title="Open Admin Control Center"
+                    >
+                      <svg
+                        aria-hidden="true"
+                        className="h-4 w-4 opacity-85 transition group-hover:opacity-100"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 3l7 3v6c0 4.4-2.8 8.2-7 9-4.2-.8-7-4.6-7-9V6l7-3z" />
+                        <path d="M9.5 12.5l1.7 1.7 3.3-3.6" />
+                      </svg>
+                      <span>Admin Control Center</span>
+                    </Link>
+                  ) : null}
+                  <button
+                    className="btn-outline w-full text-app-danger"
+                    type="button"
+                    onClick={logout}
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            <div className="order-3 hidden items-center gap-2 md:order-1 md:flex md:justify-end">
+              {auth.user.role === "admin" ? (
+                <Link
+                  className={
+                    onAdminPage
+                      ? "btn-outline btn-outline-sm admin-cta admin-cta-active group"
+                      : "btn-outline btn-outline-sm admin-cta group"
+                  }
+                  to="/admin"
+                  aria-label="Open Admin Control Center"
+                  title="Open Admin Control Center"
+                >
+                  <svg
+                    aria-hidden="true"
+                    className="h-4 w-4 opacity-85 transition group-hover:opacity-100"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 3l7 3v6c0 4.4-2.8 8.2-7 9-4.2-.8-7-4.6-7-9V6l7-3z" />
+                    <path d="M9.5 12.5l1.7 1.7 3.3-3.6" />
+                  </svg>
+                  <span>Admin Control Center</span>
+                  {onAdminPage ? null : (
+                    <svg
+                      aria-hidden="true"
+                      className="h-3.5 w-3.5 transition group-hover:translate-x-0.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M5 12h14" />
+                      <path d="M13 6l6 6-6 6" />
+                    </svg>
+                  )}
+                </Link>
+              ) : null}
               <Link
-                className={`${location.pathname === "/profile" ? "tab tab-active" : "tab"} inline-flex items-center gap-1.5`}
+                className={`${location.pathname === "/profile" ? "tab tab-active" : "tab"} min-w-0 inline-flex items-center gap-1.5`}
                 to="/profile"
                 aria-label="Profile"
                 title="Profile"
               >
-                <span className="max-w-36 truncate">{auth.user.name}</span>
+                <span className="max-w-24 truncate sm:max-w-36">
+                  {auth.user.name}
+                </span>
                 <svg
                   aria-hidden="true"
                   className="h-4 w-4"

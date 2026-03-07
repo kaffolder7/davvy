@@ -4,11 +4,14 @@ namespace Tests\Feature;
 
 use App\Models\AddressBook;
 use App\Models\AddressBookContactMilestoneCalendar;
+use App\Models\AppSetting;
 use App\Models\Calendar;
 use App\Models\CalendarObject;
+use App\Models\ContactChangeRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class AdminUserManagementTest extends TestCase
@@ -52,6 +55,38 @@ class AdminUserManagementTest extends TestCase
         $response->assertForbidden();
     }
 
+    public function test_admin_user_creation_normalizes_email_and_rejects_case_variant_duplicates(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $first = $this
+            ->actingAs($admin)
+            ->postJson('/api/admin/users', [
+                'name' => 'Case Managed User',
+                'email' => 'Case.Managed@Example.com',
+                'password' => 'Password123!',
+                'role' => 'regular',
+            ]);
+
+        $first->assertCreated();
+        $first->assertJsonPath('email', 'case.managed@example.com');
+        $this->assertDatabaseHas('users', [
+            'email' => 'case.managed@example.com',
+        ]);
+
+        $duplicate = $this
+            ->actingAs($admin)
+            ->postJson('/api/admin/users', [
+                'name' => 'Case Duplicate User',
+                'email' => 'CASE.MANAGED@EXAMPLE.COM',
+                'password' => 'Password123!',
+                'role' => 'regular',
+            ]);
+
+        $duplicate->assertStatus(422);
+        $duplicate->assertJsonValidationErrors(['email']);
+    }
+
     public function test_admin_can_toggle_owner_share_management_setting(): void
     {
         $admin = User::factory()->admin()->create();
@@ -92,6 +127,108 @@ class AdminUserManagementTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('enabled', true);
+    }
+
+    public function test_admin_can_toggle_contact_change_moderation_setting(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this
+            ->actingAs($admin)
+            ->patchJson('/api/admin/settings/contact-change-moderation', [
+                'enabled' => true,
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('enabled', true);
+    }
+
+    public function test_disabling_contact_change_moderation_requires_resolved_queue_requests(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $requester = User::factory()->create();
+
+        ContactChangeRequest::query()->create([
+            'group_uuid' => (string) Str::uuid(),
+            'approval_owner_id' => $admin->id,
+            'requester_id' => $requester->id,
+            'contact_id' => null,
+            'contact_uid' => null,
+            'contact_display_name' => 'Pending Contact',
+            'operation' => 'update',
+            'status' => 'pending',
+            'scope_address_book_ids' => [],
+            'base_payload' => null,
+            'base_address_book_ids' => null,
+            'base_contact_updated_at' => null,
+            'proposed_payload' => ['first_name' => 'Taylor'],
+            'proposed_address_book_ids' => [],
+            'request_fingerprint' => hash('sha256', 'pending-request'),
+            'source' => 'web',
+            'meta' => null,
+        ]);
+
+        $response = $this
+            ->actingAs($admin)
+            ->patchJson('/api/admin/settings/contact-change-moderation', [
+                'enabled' => false,
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath(
+            'message',
+            'Resolve or deny 1 unresolved review queue request(s) before disabling moderation.',
+        );
+    }
+
+    public function test_admin_resources_reports_milestone_purge_unavailable_without_enabled_or_generated_settings(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->getJson('/api/admin/resources')
+            ->assertOk()
+            ->assertJsonPath('milestone_purge_visible', false)
+            ->assertJsonPath('milestone_purge_available', false);
+    }
+
+    public function test_admin_resources_reports_milestone_purge_available_when_milestone_sync_is_enabled(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $owner = User::factory()->create();
+        $addressBook = AddressBook::factory()->create([
+            'owner_id' => $owner->id,
+        ]);
+
+        AddressBookContactMilestoneCalendar::query()->create([
+            'address_book_id' => $addressBook->id,
+            'milestone_type' => AddressBookContactMilestoneCalendar::TYPE_BIRTHDAY,
+            'enabled' => true,
+            'calendar_id' => null,
+            'custom_display_name' => null,
+        ]);
+
+        $this->actingAs($admin)
+            ->getJson('/api/admin/resources')
+            ->assertOk()
+            ->assertJsonPath('milestone_purge_visible', true)
+            ->assertJsonPath('milestone_purge_available', true);
+    }
+
+    public function test_admin_resources_keeps_milestone_purge_visible_after_first_enable_even_when_unavailable(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        AppSetting::query()->updateOrCreate(
+            ['key' => 'milestone_purge_control_visible'],
+            ['value' => 'true'],
+        );
+
+        $this->actingAs($admin)
+            ->getJson('/api/admin/resources')
+            ->assertOk()
+            ->assertJsonPath('milestone_purge_visible', true)
+            ->assertJsonPath('milestone_purge_available', false);
     }
 
     public function test_enabling_contact_management_requires_contact_schema_tables(): void

@@ -14,7 +14,7 @@ database:
 
 use_dns_when_possible: true
 composer_version: "2"
-nodejs_version: "20"
+nodejs_version: "24"
 
 web_environment:
   - VITE_PORT=5173

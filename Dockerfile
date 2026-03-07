@@ -1,31 +1,55 @@
 # syntax=docker/dockerfile:1.7
 
-FROM composer:2 AS vendor
+# Keep tag+digest so the pinned image is both readable and immutable.
+ARG COMPOSER_IMAGE=composer:2@sha256:f0809732b2188154b3faa8e44ab900595acb0b09cd0aa6c34e798efe4ebc9021
+ARG NODE_IMAGE=node:24-alpine@sha256:7fddd9ddeae8196abf4a3ef2de34e11f7b1a722119f91f28ddf1e99dcafdf114
+ARG PHP_IMAGE=php:8.4-fpm-alpine@sha256:b7bad36533116d6360d00c3b12820be69bf7655af6057f6222b57befa5eee5c4
+
+FROM ${COMPOSER_IMAGE} AS vendor-prod
 WORKDIR /app
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --prefer-dist --no-interaction --ignore-platform-reqs
+RUN composer install --no-dev --no-scripts --prefer-dist --no-interaction \
+    && composer check-platform-reqs
 
-FROM node:20-alpine AS frontend
+FROM ${COMPOSER_IMAGE} AS vendor-dev
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm install
+COPY composer.json composer.lock ./
+RUN composer install --no-scripts --prefer-dist --no-interaction \
+    && composer check-platform-reqs
+
+FROM ${NODE_IMAGE} AS frontend
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
 COPY resources ./resources
 COPY vite.config.js tailwind.config.js postcss.config.js ./
 RUN npm run build
 
-FROM php:8.4-fpm-alpine AS runtime
+FROM ${PHP_IMAGE} AS runtime-base
 WORKDIR /var/www/html
 
-RUN apk add --no-cache bash libpq-dev zip unzip icu-dev oniguruma-dev nginx \
-    && docker-php-ext-install pdo pdo_pgsql intl mbstring
+RUN set -eux; \
+    apk add --no-cache nginx icu-libs libpq oniguruma libzip; \
+    apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libpq-dev oniguruma-dev libzip-dev; \
+    docker-php-ext-install -j"$(nproc)" pdo pdo_pgsql intl mbstring zip; \
+    apk del --no-network .build-deps
 
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-COPY . .
-COPY --from=vendor /app/vendor ./vendor
-COPY --from=frontend /app/public/build ./public/build
+COPY artisan composer.json composer.lock phpunit.xml .env.example ./
+COPY app ./app
+COPY bootstrap ./bootstrap
+COPY config ./config
+COPY database ./database
+COPY docker ./docker
+COPY docker/php/conf.d/zz-davvy-production.ini /usr/local/etc/php/conf.d/zz-davvy-production.ini
+COPY docker/php-fpm/zz-davvy-pool.conf /usr/local/etc/php-fpm.d/zz-davvy-pool.conf
+COPY public ./public
+COPY resources ./resources
+COPY routes ./routes
+COPY --from=vendor-prod /app/vendor ./vendor
 
 RUN addgroup -g 1000 app && adduser -D -G app -u 1000 app \
     && mkdir -p \
+        storage/app/{private,public} \
         storage/framework/{cache,sessions,views,testing} \
         storage/logs \
         bootstrap/cache \
@@ -55,5 +79,31 @@ ENV RUN_DB_SEED=false
 ENV PORT=8080
 
 EXPOSE 8080
+
+FROM runtime-base AS ci-test
+USER root
+COPY tests ./tests
+COPY --from=vendor-dev /app/vendor ./vendor
+RUN cp .env.example .env \
+    && chown app:app .env
+USER app
+ENV APP_ENV=testing
+ENV APP_DEBUG=true
+ENV APP_KEY=base64:MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=
+ENV DB_CONNECTION=sqlite
+ENV DB_DATABASE=:memory:
+ENV CACHE_STORE=array
+ENV SESSION_DRIVER=array
+ENV QUEUE_CONNECTION=sync
+ENV MAIL_MAILER=array
+ENV RUN_DB_MIGRATIONS=false
+ENV RUN_DB_SEED=false
+CMD ["php", "artisan", "test"]
+
+FROM runtime-base AS runtime
+COPY --from=frontend /app/public/build ./public/build
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget -q -T 2 -O /dev/null "http://127.0.0.1:${PORT:-8080}/up" || exit 1
 
 CMD ["sh", "/var/www/html/docker/entrypoint.sh"]

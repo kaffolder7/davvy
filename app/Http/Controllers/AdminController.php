@@ -2,15 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ContactChangeStatus;
 use App\Enums\Role;
 use App\Models\AddressBook;
+use App\Models\AddressBookContactMilestoneCalendar;
+use App\Models\AppSetting;
 use App\Models\Calendar;
+use App\Models\ContactChangeRequest;
 use App\Models\User;
 use App\Services\Contacts\ContactMilestoneCalendarService;
 use App\Services\RegistrationSettingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
 class AdminController extends Controller
@@ -32,6 +37,11 @@ class AdminController extends Controller
 
     public function createUser(Request $request): JsonResponse
     {
+        $email = Str::lower(trim((string) $request->input('email', '')));
+        if ($email !== '') {
+            $request->merge(['email' => $email]);
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
@@ -63,9 +73,35 @@ class AdminController extends Controller
             ->orderBy('display_name')
             ->get();
 
+        $milestonePurgeVisible = AppSetting::milestonePurgeControlVisible();
+        $milestonePurgeAvailable = false;
+
+        if (Schema::hasTable('address_book_contact_milestone_calendars')) {
+            if (! $milestonePurgeVisible) {
+                $milestonePurgeVisible = AddressBookContactMilestoneCalendar::query()
+                    ->exists();
+
+                if ($milestonePurgeVisible) {
+                    AppSetting::query()->updateOrCreate(
+                        ['key' => 'milestone_purge_control_visible'],
+                        ['value' => 'true'],
+                    );
+                }
+            }
+
+            $milestonePurgeAvailable = AddressBookContactMilestoneCalendar::query()
+                ->where(function ($query): void {
+                    $query->where('enabled', true)
+                        ->orWhereNotNull('calendar_id');
+                })
+                ->exists();
+        }
+
         return response()->json([
             'calendars' => $calendars,
             'address_books' => $addressBooks,
+            'milestone_purge_visible' => $milestonePurgeVisible,
+            'milestone_purge_available' => $milestonePurgeAvailable,
         ]);
     }
 
@@ -140,6 +176,48 @@ class AdminController extends Controller
 
         return response()->json([
             'enabled' => $this->registrationSettings->isContactManagementEnabled(),
+        ]);
+    }
+
+    public function setContactChangeModerationSetting(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'enabled' => ['required', 'boolean'],
+        ]);
+
+        $enabled = (bool) $data['enabled'];
+
+        if (
+            $enabled
+            && ! Schema::hasTable('contact_change_requests')
+        ) {
+            abort(422, 'Contact change moderation schema is not available. Run migrations before enabling.');
+        }
+
+        if (! $enabled && Schema::hasTable('contact_change_requests')) {
+            $unresolvedCount = ContactChangeRequest::query()
+                ->whereIn('status', [
+                    ContactChangeStatus::Pending->value,
+                    ContactChangeStatus::Approved->value,
+                    ContactChangeStatus::ManualMergeNeeded->value,
+                ])
+                ->count();
+
+            if ($unresolvedCount > 0) {
+                abort(
+                    422,
+                    "Resolve or deny {$unresolvedCount} unresolved review queue request(s) before disabling moderation."
+                );
+            }
+        }
+
+        $this->registrationSettings->setContactChangeModerationEnabled(
+            enabled: $enabled,
+            actor: $request->user()
+        );
+
+        return response()->json([
+            'enabled' => $this->registrationSettings->isContactChangeModerationEnabled(),
         ]);
     }
 

@@ -46,7 +46,7 @@ This keeps auth, permissions, data models, and DAV behavior in one codebase.
 ### Managed Contacts Subsystem
 - `contacts`: normalized contact payloads (web-managed records)
 - `contact_address_book_assignments`: contact-to-address-book and linked card mapping
-- `contact_change_requests`: moderation queue for cross-owner edits
+- `contact_change_requests`: optional moderation queue for cross-owner edits
 - `address_book_contact_milestone_calendars`: birthday/anniversary calendar settings
 
 ### Apple Compatibility Mirror Subsystem
@@ -71,6 +71,7 @@ Runtime toggles are read from `app_settings` (with env defaults if unset):
 - `owner_share_management_enabled`
 - `dav_compatibility_mode_enabled`
 - `contact_management_enabled`
+- `contact_change_moderation_enabled`
 - `contact_change_request_retention_days`
 
 ## Key Workflows
@@ -92,9 +93,11 @@ Runtime toggles are read from `app_settings` (with env defaults if unset):
 - Assignments keep card/contact linkage stable across address books.
 
 ### Contact Change Moderation
+- Default-off, opt-in workflow intended for collaborative family/team deployments.
 - Cross-owner updates/deletes are queued in `contact_change_requests`.
 - Queue groups by request + impacted owners.
 - Reviewers can approve/deny, or resolve manual merge conflicts.
+- When disabled, cross-owner edits bypass queue and apply directly (latest write wins).
 - Applied/denied history is purged based on retention setting.
 
 ### Milestone Calendar Generation

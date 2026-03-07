@@ -1,0 +1,73 @@
+version: 2
+updates:
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "docker"
+    groups:
+      docker-dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      github-actions-dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    cooldown:
+      semver-major-days: 30
+    labels:
+      - "dependencies"
+      - "composer"
+    groups:
+      composer-non-major:
+        update-types:
+          - "minor"
+          - "patch"
+        patterns:
+          - "*"
+      composer-major:
+        update-types:
+          - "major"
+        patterns:
+          - "*"
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    cooldown:
+      semver-major-days: 30
+    labels:
+      - "dependencies"
+      - "npm"
+    groups:
+      npm-non-major:
+        update-types:
+          - "minor"
+          - "patch"
+        patterns:
+          - "*"
+      npm-major:
+        update-types:
+          - "major"
+        patterns:
+          - "*"
