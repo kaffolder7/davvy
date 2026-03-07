@@ -136,6 +136,104 @@ const MONTH_OPTIONS = [
   { value: 12, label: "December" },
 ];
 
+function formatUtcOffset(offsetMinutes) {
+  const sign = offsetMinutes >= 0 ? "+" : "-";
+  const absolute = Math.abs(offsetMinutes);
+  const hours = String(Math.floor(absolute / 60)).padStart(2, "0");
+  const minutes = String(absolute % 60).padStart(2, "0");
+
+  return `UTC${sign}${hours}:${minutes}`;
+}
+
+function timezoneOffsetMinutes(timeZone, referenceDate = new Date()) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  });
+
+  const parts = formatter.formatToParts(referenceDate);
+  const values = Object.create(null);
+  for (const part of parts) {
+    if (part.type !== "literal") {
+      values[part.type] = part.value;
+    }
+  }
+
+  const asUtcTimestamp = Date.UTC(
+    Number(values.year),
+    Number(values.month) - 1,
+    Number(values.day),
+    Number(values.hour),
+    Number(values.minute),
+    Number(values.second),
+  );
+
+  return Math.round((asUtcTimestamp - referenceDate.getTime()) / 60000);
+}
+
+function formatTimezoneDisplayName(timeZone) {
+  return timeZone.replace(/_/g, " ");
+}
+
+function buildTimezoneGroups(referenceDate = new Date()) {
+  let names = ["UTC"];
+
+  if (typeof Intl?.supportedValuesOf === "function") {
+    try {
+      names = Array.from(new Set(["UTC", ...Intl.supportedValuesOf("timeZone")]));
+    } catch {
+      names = ["UTC"];
+    }
+  }
+
+  const options = names
+    .map((timeZone) => {
+      try {
+        const offset = timezoneOffsetMinutes(timeZone, referenceDate);
+        return {
+          value: timeZone,
+          offset,
+          region: timeZone.includes("/") ? timeZone.split("/")[0] : "Global",
+          label: `(${formatUtcOffset(offset)}) ${formatTimezoneDisplayName(
+            timeZone,
+          )}`,
+        };
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean)
+    .sort(
+      (a, b) =>
+        a.offset - b.offset ||
+        a.region.localeCompare(b.region) ||
+        a.value.localeCompare(b.value),
+    );
+
+  const map = new Map();
+  for (const option of options) {
+    if (!map.has(option.region)) {
+      map.set(option.region, []);
+    }
+
+    map.get(option.region).push(option);
+  }
+
+  return Array.from(map.entries())
+    .map(([region, values]) => ({
+      region,
+      minOffset: values[0]?.offset ?? 0,
+      options: values,
+    }))
+    .sort((a, b) => a.minOffset - b.minOffset || a.region.localeCompare(b.region));
+}
+
 function parseBackupScheduleTimes(value) {
   const parsed = String(value ?? "")
     .split(/[,\n]/g)
@@ -4800,6 +4898,14 @@ function AdminPage({ auth, theme }) {
     shareForm.resource_type === "calendar"
       ? state.resources.calendars
       : state.resources.address_books;
+  const backupTimezoneGroups = useMemo(() => buildTimezoneGroups(), []);
+  const backupTimezoneExistsInOptions = useMemo(
+    () =>
+      backupTimezoneGroups.some((group) =>
+        group.options.some((option) => option.value === state.backupTimezone),
+      ),
+    [backupTimezoneGroups, state.backupTimezone],
+  );
   const backupLastRunLabel = state.backupLastRunStatus
     ? `${state.backupLastRunStatus.toUpperCase()} at ${formatAdminTimestamp(
         state.backupLastRunAt,
@@ -4936,7 +5042,7 @@ function AdminPage({ auth, theme }) {
               />
             </Field>
             <Field label="Timezone">
-              <input
+              <select
                 className="input"
                 value={state.backupTimezone}
                 onChange={(event) =>
@@ -4945,8 +5051,22 @@ function AdminPage({ auth, theme }) {
                     backupTimezone: event.target.value,
                   }))
                 }
-                placeholder="America/Indiana/Indianapolis"
-              />
+              >
+                {!backupTimezoneExistsInOptions && state.backupTimezone ? (
+                  <option value={state.backupTimezone}>
+                    {state.backupTimezone} (current)
+                  </option>
+                ) : null}
+                {backupTimezoneGroups.map((group) => (
+                  <optgroup key={group.region} label={group.region}>
+                    {group.options.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
             </Field>
             <Field label="Local backup path">
               <input
