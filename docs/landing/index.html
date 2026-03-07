@@ -296,7 +296,7 @@
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
               </svg>
-              GNOME Contacts
+              Other DAV Clients
             </span>
             <span class="client-separator"></span>
             <span class="client-item">
@@ -315,7 +315,7 @@
                   d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
                 />
               </svg>
-              Any CalDAV/CardDAV Client
+              Standards-based DAV Clients
             </span>
           </div>
         </div>
@@ -419,8 +419,9 @@
               </div>
               <h3>Managed contacts</h3>
               <p>
-                Bi-directional contact-to-vCard sync with moderation queues for
-                cross-owner edits and structured change requests.
+                Optional managed contacts with bi-directional contact-to-vCard
+                sync. Optional moderation queues support cross-owner review
+                workflows.
               </p>
             </article>
 
@@ -443,8 +444,9 @@
               </div>
               <h3>Milestone calendars</h3>
               <p>
-                Auto-generate birthday and anniversary calendars from your
-                managed contacts. Apple compatibility mirroring included.
+                Auto-generate birthday and anniversary calendars from contact
+                data. Optional Apple compatibility mirroring improves
+                visibility in iOS and macOS.
               </p>
             </article>
 
@@ -504,8 +506,8 @@
               <div class="step-number">3</div>
               <h3>Connect clients</h3>
               <p>
-                Point any CalDAV/CardDAV client at your server. Autodiscovery
-                handles the rest.
+                Connect standards-based CalDAV/CardDAV clients to your server.
+                Well-known autodiscovery and manual paths are both supported.
               </p>
             </div>
           </div>
@@ -520,8 +522,8 @@
               <h2>Connect from <em>anywhere</em></h2>
               <p>
                 Davvy exposes standard CalDAV and CardDAV endpoints with
-                well-known autodiscovery. Your clients find what they need
-                automatically.
+                well-known autodiscovery. Supported clients can autodiscover,
+                and manual DAV paths are documented when needed.
               </p>
               <div class="connection-details">
                 <div class="connection-detail">
@@ -568,8 +570,8 @@
                   <div>
                     <strong>Same credentials</strong>
                     <span
-                      >Use your Davvy account email and password in any
-                      client</span
+                      >Use your Davvy account email and password in supported
+                      clients</span
                     >
                   </div>
                 </div>
@@ -614,7 +616,7 @@
                   <span class="config-value">Basic Auth</span>
                 </li>
                 <li class="config-item">
-                  <span class="config-key">Default port</span>
+                  <span class="config-key">Docker port (quick start)</span>
                   <span class="config-value">8080</span>
                 </li>
                 <li class="config-item">
@@ -623,7 +625,7 @@
                 </li>
                 <li class="config-item">
                   <span class="config-key">Engine</span>
-                  <span class="config-value">SabreDAV 4.6</span>
+                  <span class="config-value">SabreDAV 4.x</span>
                 </li>
                 <li class="config-item">
                   <span class="config-key">Export formats</span>
