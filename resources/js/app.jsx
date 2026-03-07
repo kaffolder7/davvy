@@ -5213,39 +5213,40 @@ function AdminPage({ auth, theme }) {
             </div>
           </div>
 
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-xl border border-app-edge bg-app-surface p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-app-faint">
-                Status
-              </p>
-              <p className="mt-1 text-sm font-semibold text-app-strong">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full border border-app-edge bg-app-surface px-2.5 py-1 text-xs">
+              <span className="text-app-faint">Status</span>
+              <span className="font-semibold text-app-strong">
                 {state.backupEnabled ? "Enabled" : "Disabled"}
-              </p>
-            </div>
-            <div className="rounded-xl border border-app-edge bg-app-surface p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-app-faint">
-                Destinations
-              </p>
-              <p className="mt-1 text-sm font-semibold text-app-strong">
+              </span>
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-app-edge bg-app-surface px-2.5 py-1 text-xs">
+              <span className="text-app-faint">Destinations</span>
+              <span className="font-semibold text-app-strong">
                 {backupDestinationSummary || "None"}
-              </p>
-            </div>
-            <div className="rounded-xl border border-app-edge bg-app-surface p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-app-faint">
-                Schedule
-              </p>
-              <p className="mt-1 text-sm font-semibold text-app-strong">
+              </span>
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-app-edge bg-app-surface px-2.5 py-1 text-xs">
+              <span className="text-app-faint">Schedule</span>
+              <span className="font-semibold text-app-strong">
                 {backupScheduleSummary}
-              </p>
-            </div>
-            <div className="rounded-xl border border-app-edge bg-app-surface p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-app-faint">
-                Retention
-              </p>
-              <p className="mt-1 text-sm font-semibold text-app-strong">
+              </span>
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-app-edge bg-app-surface px-2.5 py-1 text-xs">
+              <span className="text-app-faint">Retention</span>
+              <span className="font-semibold text-app-strong">
                 {backupRetentionSummary}
-              </p>
-            </div>
+              </span>
+            </span>
+            <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-app-edge bg-app-surface px-2.5 py-1 text-xs">
+              <span className="text-app-faint">Last Run</span>
+              <span
+                className="truncate font-semibold text-app-strong"
+                title={backupLastRunLabel}
+              >
+                {backupLastRunLabel}
+              </span>
+            </span>
           </div>
 
           <p className="mt-3 text-xs text-app-faint">{backupLastRunLabel}</p>
