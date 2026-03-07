@@ -11,6 +11,7 @@ use App\Models\Calendar;
 use App\Models\ContactChangeRequest;
 use App\Models\User;
 use App\Services\Backups\BackupService;
+use App\Services\Backups\BackupRestoreService;
 use App\Services\Backups\BackupSettingsService;
 use App\Services\Contacts\ContactMilestoneCalendarService;
 use App\Services\RegistrationSettingsService;
@@ -19,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Throwable;
 
 class AdminController extends Controller
 {
@@ -27,6 +29,7 @@ class AdminController extends Controller
         private readonly ContactMilestoneCalendarService $milestoneCalendarService,
         private readonly BackupSettingsService $backupSettings,
         private readonly BackupService $backupService,
+        private readonly BackupRestoreService $backupRestoreService,
     ) {}
 
     public function users(): JsonResponse
@@ -308,6 +311,51 @@ class AdminController extends Controller
 
         if ($result['status'] === 'skipped') {
             return response()->json($result, 422);
+        }
+
+        return response()->json($result);
+    }
+
+    public function restoreBackup(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'backup' => ['required', 'file', 'max:102400'],
+            'mode' => ['nullable', 'in:merge,replace'],
+            'dry_run' => ['nullable', 'boolean'],
+            'fallback_owner_id' => ['nullable', 'integer', 'exists:users,id'],
+        ]);
+
+        $archive = $request->file('backup');
+        if (! $archive || ! $archive->isValid()) {
+            abort(422, 'Backup archive upload is missing or invalid.');
+        }
+
+        $archivePath = $archive->getRealPath();
+        if (! is_string($archivePath) || $archivePath === '') {
+            abort(422, 'Unable to access uploaded backup archive.');
+        }
+
+        $mode = (string) ($data['mode'] ?? 'merge');
+        $dryRun = filter_var($request->input('dry_run', false), FILTER_VALIDATE_BOOLEAN);
+        $fallbackOwnerId = array_key_exists('fallback_owner_id', $data)
+            ? (int) $data['fallback_owner_id']
+            : (int) $request->user()->id;
+
+        try {
+            $result = $this->backupRestoreService->restoreFromArchive(
+                archivePath: $archivePath,
+                mode: $mode,
+                dryRun: (bool) $dryRun,
+                fallbackOwnerId: $fallbackOwnerId,
+                trigger: 'manual-admin',
+            );
+        } catch (Throwable $throwable) {
+            report($throwable);
+
+            return response()->json([
+                'status' => 'failed',
+                'reason' => 'Backup restore failed: '.$throwable->getMessage(),
+            ], 422);
         }
 
         return response()->json($result);

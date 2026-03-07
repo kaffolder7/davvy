@@ -91,6 +91,11 @@ Backup period semantics:
 - Davvy keeps one artifact per tier period (`daily=YYYY-MM-DD`, `weekly=ISO week`, `monthly=YYYY-MM`, `yearly=YYYY`).
 - Re-running a backup in the same period replaces that period snapshot instead of creating duplicates.
 
+Backup restore tooling:
+- CLI command: `php artisan app:backup:restore {archive} [--mode=merge|replace] [--dry-run] [--fallback-owner-id=...]`
+- Admin import endpoint: `POST /api/admin/backups/restore`
+- Restore is destination-agnostic; it reads a ZIP archive and writes resources back into the database.
+
 ### Startup Bootstrap Controls
 
 | Variable | Default | Notes |

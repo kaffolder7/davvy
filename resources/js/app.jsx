@@ -4515,6 +4515,11 @@ function AdminPage({ auth, theme }) {
   const [retentionSubmitting, setRetentionSubmitting] = useState(false);
   const [backupSaving, setBackupSaving] = useState(false);
   const [backupRunning, setBackupRunning] = useState(false);
+  const [backupRestoring, setBackupRestoring] = useState(false);
+  const [backupRestoreMode, setBackupRestoreMode] = useState("merge");
+  const [backupRestoreDryRun, setBackupRestoreDryRun] = useState(false);
+  const [backupRestoreFile, setBackupRestoreFile] = useState(null);
+  const [backupRestoreResult, setBackupRestoreResult] = useState(null);
   const [backupRunToast, setBackupRunToast] = useState(null);
   const [backupConfigOpen, setBackupConfigOpen] = useState(false);
   const [backupConfigRendered, setBackupConfigRendered] = useState(false);
@@ -5147,6 +5152,69 @@ function AdminPage({ auth, theme }) {
     }
   };
 
+  const runBackupRestore = async () => {
+    if (backupRestoring) {
+      return;
+    }
+
+    if (!backupRestoreFile) {
+      setState((prev) => ({
+        ...prev,
+        error: "Select a backup ZIP archive before running restore.",
+      }));
+      return;
+    }
+
+    const confirmMessage = backupRestoreDryRun
+      ? "Run backup restore dry-run? No data will be modified."
+      : backupRestoreMode === "replace"
+        ? "Replace mode will delete existing calendars/address books for owners included in the archive before restoring. Continue?"
+        : "Run backup restore in merge mode?";
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    setBackupRestoring(true);
+    setBackupRestoreResult(null);
+    setState((prev) => ({ ...prev, error: "" }));
+
+    try {
+      const form = new FormData();
+      form.append("backup", backupRestoreFile);
+      form.append("mode", backupRestoreMode);
+      form.append("dry_run", backupRestoreDryRun ? "1" : "0");
+
+      const response = await api.post("/api/admin/backups/restore", form, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      const result = response.data ?? {};
+
+      setBackupRestoreResult(result);
+      setBackupRunToast({
+        status: result.status || "success",
+        message: result.reason || "Backup restore completed.",
+      });
+
+      if (!backupRestoreDryRun) {
+        await load();
+      }
+    } catch (err) {
+      const message = extractError(err, "Unable to restore backup archive.");
+      setState((prev) => ({
+        ...prev,
+        error: message,
+      }));
+      setBackupRunToast({
+        status: "failed",
+        message,
+      });
+    } finally {
+      setBackupRestoring(false);
+    }
+  };
+
   const resourceOptions =
     shareForm.resource_type === "calendar"
       ? state.resources.calendars
@@ -5185,6 +5253,10 @@ function AdminPage({ auth, theme }) {
   )}w / ${Number(state.backupRetentionMonthly)}m / ${Number(
     state.backupRetentionYearly,
   )}y`;
+  const backupRestoreSummary = backupRestoreResult?.summary ?? null;
+  const backupRestoreWarnings = Array.isArray(backupRestoreResult?.warnings)
+    ? backupRestoreResult.warnings
+    : [];
   const backupRunToastStatus = String(
     backupRunToast?.status || "",
   ).toLowerCase();
@@ -5743,6 +5815,157 @@ function AdminPage({ auth, theme }) {
                           />
                         </Field>
                       </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </section>
+
+            <section className="mt-4 rounded-2xl border border-app-edge p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h4 className="text-sm font-semibold text-app-strong">
+                    Restore Backup Archive
+                  </h4>
+                  <p className="mt-1 text-xs text-app-faint">
+                    Import a previously generated backup ZIP into calendars and
+                    address books.
+                  </p>
+                </div>
+                <span className="rounded-full border border-app-edge px-2 py-0.5 text-[11px] font-semibold text-app-faint">
+                  Admin import
+                </span>
+              </div>
+
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <Field label="Backup ZIP file">
+                  <input
+                    className="input"
+                    type="file"
+                    accept=".zip,application/zip"
+                    onChange={(event) => {
+                      const nextFile = event.target.files?.[0] ?? null;
+                      setBackupRestoreFile(nextFile);
+                    }}
+                  />
+                </Field>
+                <Field label="Restore mode">
+                  <select
+                    className="input"
+                    value={backupRestoreMode}
+                    onChange={(event) => setBackupRestoreMode(event.target.value)}
+                  >
+                    <option value="merge">Merge (upsert)</option>
+                    <option value="replace">Replace owner data</option>
+                  </select>
+                </Field>
+              </div>
+
+              <label className="mt-3 inline-flex items-center gap-2 text-xs text-app-faint">
+                <input
+                  type="checkbox"
+                  checked={backupRestoreDryRun}
+                  onChange={(event) =>
+                    setBackupRestoreDryRun(!!event.target.checked)
+                  }
+                />
+                Dry run only (preview changes without writing data)
+              </label>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  className="btn-outline-accent btn-outline-sm"
+                  type="button"
+                  onClick={runBackupRestore}
+                  disabled={backupRestoring || !backupRestoreFile}
+                >
+                  {backupRestoring
+                    ? "Running restore..."
+                    : backupRestoreDryRun
+                      ? "Run Restore Dry-Run"
+                      : "Run Restore"}
+                </button>
+                {backupRestoreFile ? (
+                  <p className="max-w-full truncate text-xs text-app-faint">
+                    {backupRestoreFile.name}
+                  </p>
+                ) : null}
+              </div>
+
+              {backupRestoreResult ? (
+                <div className="mt-3 rounded-xl border border-app-edge bg-app-surface p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-app-faint">
+                    Restore Result
+                  </p>
+                  <p className="mt-1 text-sm text-app-strong">
+                    {backupRestoreResult.reason ||
+                      "Restore completed successfully."}
+                  </p>
+
+                  {backupRestoreSummary ? (
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      <p className="text-xs text-app-faint">
+                        Files processed:{" "}
+                        <span className="font-semibold text-app-strong">
+                          {Number(backupRestoreSummary.files_processed || 0)}
+                        </span>
+                      </p>
+                      <p className="text-xs text-app-faint">
+                        Files skipped:{" "}
+                        <span className="font-semibold text-app-strong">
+                          {Number(backupRestoreSummary.files_skipped || 0)}
+                        </span>
+                      </p>
+                      <p className="text-xs text-app-faint">
+                        Calendars (create/update):{" "}
+                        <span className="font-semibold text-app-strong">
+                          {Number(backupRestoreSummary.calendars_created || 0)}/
+                          {Number(backupRestoreSummary.calendars_updated || 0)}
+                        </span>
+                      </p>
+                      <p className="text-xs text-app-faint">
+                        Address books (create/update):{" "}
+                        <span className="font-semibold text-app-strong">
+                          {Number(backupRestoreSummary.address_books_created || 0)}
+                          /
+                          {Number(backupRestoreSummary.address_books_updated || 0)}
+                        </span>
+                      </p>
+                      <p className="text-xs text-app-faint">
+                        Objects (create/update):{" "}
+                        <span className="font-semibold text-app-strong">
+                          {Number(
+                            (backupRestoreSummary.calendar_objects_created || 0) +
+                              (backupRestoreSummary.cards_created || 0),
+                          )}
+                          /
+                          {Number(
+                            (backupRestoreSummary.calendar_objects_updated || 0) +
+                              (backupRestoreSummary.cards_updated || 0),
+                          )}
+                        </span>
+                      </p>
+                      <p className="text-xs text-app-faint">
+                        Invalid resources skipped:{" "}
+                        <span className="font-semibold text-app-strong">
+                          {Number(
+                            backupRestoreSummary.resources_skipped_invalid || 0,
+                          )}
+                        </span>
+                      </p>
+                    </div>
+                  ) : null}
+
+                  {backupRestoreWarnings.length > 0 ? (
+                    <div className="mt-3">
+                      <p className="text-xs font-semibold text-app-faint">
+                        Warnings
+                      </p>
+                      <ul className="mt-1 list-disc space-y-1 pl-4 text-xs text-app-faint">
+                        {backupRestoreWarnings.map((warning, index) => (
+                          <li key={`${warning}-${index}`}>{warning}</li>
+                        ))}
+                      </ul>
                     </div>
                   ) : null}
                 </div>
