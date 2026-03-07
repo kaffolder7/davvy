@@ -5404,7 +5404,7 @@ function AdminPage({ auth, theme }) {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button
-                className="btn-outline btn-outline-sm"
+                className="btn btn-outline-sm"
                 type="button"
                 onClick={runBackupNow}
                 disabled={backupRunning || !backupHasDestination}
@@ -5428,22 +5428,7 @@ function AdminPage({ auth, theme }) {
                 type="button"
                 onClick={openBackupRestoreDrawer}
               >
-                Restore
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M5 12h14" />
-                  <path d="m13 5 7 7-7 7" />
-                </svg>
+                Restore...
               </button>
             </div>
           </div>
@@ -5968,7 +5953,9 @@ function AdminPage({ auth, theme }) {
                   <select
                     className="input"
                     value={backupRestoreMode}
-                    onChange={(event) => setBackupRestoreMode(event.target.value)}
+                    onChange={(event) =>
+                      setBackupRestoreMode(event.target.value)
+                    }
                   >
                     <option value="merge">Merge (upsert)</option>
                     <option value="replace">Replace owner data</option>
@@ -6007,7 +5994,8 @@ function AdminPage({ auth, theme }) {
                   Restore Result
                 </p>
                 <p className="mt-1 text-sm text-app-strong">
-                  {backupRestoreResult.reason || "Restore completed successfully."}
+                  {backupRestoreResult.reason ||
+                    "Restore completed successfully."}
                 </p>
 
                 {backupRestoreSummary ? (
@@ -6034,8 +6022,13 @@ function AdminPage({ auth, theme }) {
                     <p className="text-xs text-app-faint">
                       Address books (create/update):{" "}
                       <span className="font-semibold text-app-strong">
-                        {Number(backupRestoreSummary.address_books_created || 0)}/
-                        {Number(backupRestoreSummary.address_books_updated || 0)}
+                        {Number(
+                          backupRestoreSummary.address_books_created || 0,
+                        )}
+                        /
+                        {Number(
+                          backupRestoreSummary.address_books_updated || 0,
+                        )}
                       </span>
                     </p>
                     <p className="text-xs text-app-faint">
@@ -6055,7 +6048,9 @@ function AdminPage({ auth, theme }) {
                     <p className="text-xs text-app-faint">
                       Invalid resources skipped:{" "}
                       <span className="font-semibold text-app-strong">
-                        {Number(backupRestoreSummary.resources_skipped_invalid || 0)}
+                        {Number(
+                          backupRestoreSummary.resources_skipped_invalid || 0,
+                        )}
                       </span>
                     </p>
                   </div>
