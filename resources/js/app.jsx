@@ -4997,6 +4997,15 @@ function AdminPage({ auth, theme }) {
       return;
     }
 
+    if (!state.backupLocalEnabled && !state.backupS3Enabled) {
+      setState((prev) => ({
+        ...prev,
+        error:
+          "Configure at least one destination (local or S3) before running a backup.",
+      }));
+      return;
+    }
+
     setBackupRunning(true);
     setState((prev) => ({ ...prev, error: "" }));
 
@@ -5048,6 +5057,7 @@ function AdminPage({ auth, theme }) {
   ]
     .filter(Boolean)
     .join(" + ");
+  const backupHasDestination = !!backupDestinationSummary;
   const backupScheduleValues = parseBackupScheduleTimes(state.backupScheduleTimes);
   const backupScheduleSummary =
     backupScheduleValues.length === 0
@@ -5140,7 +5150,12 @@ function AdminPage({ auth, theme }) {
                 className="btn-outline btn-outline-sm"
                 type="button"
                 onClick={runBackupNow}
-                disabled={backupRunning}
+                disabled={backupRunning || !backupHasDestination}
+                title={
+                  !backupHasDestination
+                    ? "Configure at least one destination first."
+                    : undefined
+                }
               >
                 {backupRunning ? "Running backup..." : "Run Backup Now"}
               </button>
