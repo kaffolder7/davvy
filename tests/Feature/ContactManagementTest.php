@@ -130,6 +130,28 @@ class ContactManagementTest extends TestCase
         $this->assertStringContainsString('X-DAVVY-EXCLUDE-MILESTONES:1', $card->data);
     }
 
+    public function test_contact_can_be_marked_as_head_of_household(): void
+    {
+        $user = User::factory()->create();
+        $book = AddressBook::factory()->create(['owner_id' => $user->id, 'uri' => 'household-book']);
+
+        $response = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'head_of_household' => true,
+            'address_book_ids' => [$book->id],
+        ]));
+
+        $response->assertCreated();
+        $response->assertJsonPath('head_of_household', true);
+
+        $uid = (string) $response->json('uid');
+        $card = Card::query()
+            ->where('address_book_id', $book->id)
+            ->where('uid', $uid)
+            ->firstOrFail();
+
+        $this->assertStringContainsString('X-DAVVY-HEAD-OF-HOUSEHOLD:1', $card->data);
+    }
+
     public function test_create_contact_requires_write_access_to_selected_address_books(): void
     {
         $owner = User::factory()->create();
@@ -277,6 +299,7 @@ class ContactManagementTest extends TestCase
             'maiden_name' => 'Taylor',
             'verification_code' => '123456',
             'profile' => 'https://example.com/profile/alex',
+            'head_of_household' => false,
             'exclude_milestone_calendars' => false,
             'birthday' => [
                 'year' => 1990,

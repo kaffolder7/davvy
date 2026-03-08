@@ -57,6 +57,7 @@ class ContactCardDavSyncTest extends TestCase
         $this->assertSame('Platform', $contact->payload['department'] ?? null);
         $this->assertSame('+15555550100', $contact->payload['phones'][0]['value'] ?? null);
         $this->assertSame('alex.sync@example.com', $contact->payload['emails'][0]['value'] ?? null);
+        $this->assertFalse((bool) ($contact->payload['head_of_household'] ?? false));
         $this->assertFalse((bool) ($contact->payload['exclude_milestone_calendars'] ?? false));
 
         $this->assertDatabaseHas('contact_address_book_assignments', [
@@ -102,7 +103,7 @@ class ContactCardDavSyncTest extends TestCase
         app(LaravelCardDavBackend::class)->updateCard(
             $addressBook->id,
             $cardUri,
-            "BEGIN:VCARD\nVERSION:4.0\nFN:Jordan Parker\nN:Parker;Jordan;;;\nUID:{$uid}\nORG:Acme Co;Research\nTITLE:Lead Engineer\nTEL;TYPE=CELL:+15555550111\nEMAIL;TYPE=WORK:jordan.parker@example.com\nX-DAVVY-PRONOUNS:they/them\nX-DAVVY-EXCLUDE-MILESTONES:1\nEND:VCARD"
+            "BEGIN:VCARD\nVERSION:4.0\nFN:Jordan Parker\nN:Parker;Jordan;;;\nUID:{$uid}\nORG:Acme Co;Research\nTITLE:Lead Engineer\nTEL;TYPE=CELL:+15555550111\nEMAIL;TYPE=WORK:jordan.parker@example.com\nX-DAVVY-PRONOUNS:they/them\nX-DAVVY-HEAD-OF-HOUSEHOLD:1\nX-DAVVY-EXCLUDE-MILESTONES:1\nEND:VCARD"
         );
 
         $contact = Contact::query()->findOrFail($contactId);
@@ -116,6 +117,7 @@ class ContactCardDavSyncTest extends TestCase
         $this->assertSame('they/them', $payload['pronouns'] ?? null);
         $this->assertSame('+15555550111', $payload['phones'][0]['value'] ?? null);
         $this->assertSame('jordan.parker@example.com', $payload['emails'][0]['value'] ?? null);
+        $this->assertTrue((bool) ($payload['head_of_household'] ?? false));
         $this->assertTrue((bool) ($payload['exclude_milestone_calendars'] ?? false));
     }
 

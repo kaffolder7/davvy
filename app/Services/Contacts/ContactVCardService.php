@@ -266,6 +266,11 @@ class ContactVCardService
         $this->addSimpleProperty($vCard, 'X-DAVVY-PROFILE', $payload['profile'] ?? null);
         $this->addSimpleProperty(
             $vCard,
+            'X-DAVVY-HEAD-OF-HOUSEHOLD',
+            ! empty($payload['head_of_household']) ? '1' : null,
+        );
+        $this->addSimpleProperty(
+            $vCard,
             'X-DAVVY-EXCLUDE-MILESTONES',
             ! empty($payload['exclude_milestone_calendars']) ? '1' : null,
         );
@@ -321,6 +326,9 @@ class ContactVCardService
         $payload['text_tone'] = $this->firstPropertyValue($component, 'X-DAVVY-TEXT-TONE');
         $payload['verification_code'] = $this->firstPropertyValue($component, 'X-DAVVY-VERIFICATION-CODE');
         $payload['profile'] = $this->firstPropertyValue($component, 'X-DAVVY-PROFILE');
+        $payload['head_of_household'] = $this->toBoolean(
+            $this->firstPropertyValue($component, 'X-DAVVY-HEAD-OF-HOUSEHOLD'),
+        );
         $payload['exclude_milestone_calendars'] = $this->toBoolean(
             $this->firstPropertyValue($component, 'X-DAVVY-EXCLUDE-MILESTONES'),
         );
@@ -568,6 +576,7 @@ class ContactVCardService
             'maiden_name' => null,
             'verification_code' => null,
             'profile' => null,
+            'head_of_household' => false,
             'exclude_milestone_calendars' => false,
             'birthday' => [],
             'phones' => [],
