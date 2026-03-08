@@ -1366,6 +1366,33 @@ function hasTextValue(value) {
   return typeof value === "string" ? value.trim() !== "" : false;
 }
 
+function sanitizeDatePartInput(value, maxLength) {
+  return String(value ?? "")
+    .replace(/\D+/g, "")
+    .slice(0, maxLength);
+}
+
+function normalizeDatePartInput(field, value) {
+  if (field === "month" || field === "day") {
+    return sanitizeDatePartInput(value, 2);
+  }
+
+  if (field === "year") {
+    return sanitizeDatePartInput(value, 4);
+  }
+
+  return String(value ?? "");
+}
+
+function formatDatePartForInput(value, padLength = 0) {
+  const normalized = String(value ?? "").trim();
+  if (!normalized) {
+    return "";
+  }
+
+  return padLength > 0 ? normalized.padStart(padLength, "0") : normalized;
+}
+
 function hasValueRowContent(rows) {
   return Array.isArray(rows)
     ? rows.some(
@@ -1550,9 +1577,9 @@ function createEmptyContactForm(defaultAddressBookIds = []) {
 
 function datePartsToFormValue(parts) {
   return {
-    year: parts?.year != null ? String(parts.year) : "",
-    month: parts?.month != null ? String(parts.month) : "",
-    day: parts?.day != null ? String(parts.day) : "",
+    year: formatDatePartForInput(parts?.year),
+    month: formatDatePartForInput(parts?.month, 2),
+    day: formatDatePartForInput(parts?.day, 2),
   };
 }
 
@@ -1599,9 +1626,9 @@ function hydrateContactForm(contact, defaultAddressBookIds = []) {
     return rows.map((row) => ({
       label: row?.label ?? "other",
       custom_label: row?.custom_label ?? "",
-      year: row?.year != null ? String(row.year) : "",
-      month: row?.month != null ? String(row.month) : "",
-      day: row?.day != null ? String(row.day) : "",
+      year: formatDatePartForInput(row?.year),
+      month: formatDatePartForInput(row?.month, 2),
+      day: formatDatePartForInput(row?.day, 2),
     }));
   };
 
@@ -1943,11 +1970,12 @@ function ContactsPage({ auth, theme }) {
   };
 
   const updateBirthdayField = (field, value) => {
+    const normalizedValue = normalizeDatePartInput(field, value);
     setForm((prev) => ({
       ...prev,
       birthday: {
         ...prev.birthday,
-        [field]: value,
+        [field]: normalizedValue,
       },
     }));
   };
@@ -2663,9 +2691,11 @@ function ContactsPage({ auth, theme }) {
                         <Field label="Month">
                           <input
                             className="input"
-                            type="number"
-                            min="1"
-                            max="12"
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={2}
+                            placeholder="MM"
                             value={form.birthday.month}
                             onChange={(event) =>
                               updateBirthdayField("month", event.target.value)
@@ -2675,9 +2705,11 @@ function ContactsPage({ auth, theme }) {
                         <Field label="Day">
                           <input
                             className="input"
-                            type="number"
-                            min="1"
-                            max="31"
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={2}
+                            placeholder="DD"
                             value={form.birthday.day}
                             onChange={(event) =>
                               updateBirthdayField("day", event.target.value)
@@ -2687,9 +2719,11 @@ function ContactsPage({ auth, theme }) {
                         <Field label="Year">
                           <input
                             className="input"
-                            type="number"
-                            min="1"
-                            max="9999"
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={4}
+                            placeholder="YYYY"
                             value={form.birthday.year}
                             onChange={(event) =>
                               updateBirthdayField("year", event.target.value)
@@ -3319,9 +3353,10 @@ function DateEditor({ rows, setRows }) {
   const safeRows = Array.isArray(rows) ? rows : [];
 
   const updateRow = (index, field, value) => {
+    const normalizedValue = normalizeDatePartInput(field, value);
     setRows(
       safeRows.map((row, rowIndex) =>
-        rowIndex === index ? { ...row, [field]: value } : row,
+        rowIndex === index ? { ...row, [field]: normalizedValue } : row,
       ),
     );
   };
@@ -3374,9 +3409,10 @@ function DateEditor({ rows, setRows }) {
                 <div className="grid gap-2 sm:grid-cols-3">
                   <input
                     className="input"
-                    type="number"
-                    min="1"
-                    max="12"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={2}
                     value={row.month ?? ""}
                     placeholder="MM"
                     onChange={(event) =>
@@ -3385,9 +3421,10 @@ function DateEditor({ rows, setRows }) {
                   />
                   <input
                     className="input"
-                    type="number"
-                    min="1"
-                    max="31"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={2}
                     value={row.day ?? ""}
                     placeholder="DD"
                     onChange={(event) =>
@@ -3396,9 +3433,10 @@ function DateEditor({ rows, setRows }) {
                   />
                   <input
                     className="input"
-                    type="number"
-                    min="1"
-                    max="9999"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={4}
                     value={row.year ?? ""}
                     placeholder="YYYY"
                     onChange={(event) =>
