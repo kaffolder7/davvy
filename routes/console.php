@@ -4,7 +4,6 @@ use App\Services\Backups\BackupRestoreService;
 use App\Services\Backups\BackupService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
-use Throwable;
 
 Artisan::command('app:about', function (): void {
     $this->comment('Davvy MVP - Laravel + SabreDAV');
