@@ -1393,6 +1393,160 @@ function formatDatePartForInput(value, padLength = 0) {
   return padLength > 0 ? normalized.padStart(padLength, "0") : normalized;
 }
 
+function moveArrayItem(items, fromIndex, toIndex) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return [];
+  }
+
+  if (
+    fromIndex === toIndex ||
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= items.length ||
+    toIndex >= items.length
+  ) {
+    return [...items];
+  }
+
+  const next = [...items];
+  const [moved] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, moved);
+  return next;
+}
+
+function useRowReorder(rows, setRows) {
+  const [dragFromIndex, setDragFromIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+  const activePointerIdRef = useRef(null);
+  const activeGroupRef = useRef("");
+
+  const moveRow = (fromIndex, toIndex) => {
+    if (fromIndex === toIndex) {
+      return;
+    }
+
+    setRows(moveArrayItem(rows, fromIndex, toIndex));
+  };
+
+  const handleDragStart = (index, event) => {
+    if (event.pointerType === "mouse" && event.button !== 0) {
+      return;
+    }
+
+    activePointerIdRef.current = event.pointerId;
+    activeGroupRef.current =
+      event.currentTarget?.getAttribute("data-reorder-group") ?? "";
+    setDragFromIndex(index);
+    setDragOverIndex(index);
+
+    if (event.currentTarget?.setPointerCapture) {
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } catch {
+        // Ignore capture failures in browsers that partially implement Pointer Events.
+      }
+    }
+
+    event.preventDefault();
+  };
+
+  const handleDragMove = (event) => {
+    if (
+      activePointerIdRef.current !== event.pointerId ||
+      dragFromIndex === null
+    ) {
+      return;
+    }
+
+    const hoveredElement = document
+      .elementFromPoint(event.clientX, event.clientY)
+      ?.closest("[data-reorder-index][data-reorder-group]");
+    if (!hoveredElement) {
+      return;
+    }
+
+    if (hoveredElement.getAttribute("data-reorder-group") !== activeGroupRef.current) {
+      return;
+    }
+
+    const hoveredIndex = Number(hoveredElement.getAttribute("data-reorder-index"));
+    if (!Number.isInteger(hoveredIndex)) {
+      return;
+    }
+
+    setDragOverIndex((previous) =>
+      previous === hoveredIndex ? previous : hoveredIndex,
+    );
+    event.preventDefault();
+  };
+
+  const completeDrag = (event, cancel = false) => {
+    if (activePointerIdRef.current !== event.pointerId) {
+      return;
+    }
+
+    if (
+      event.currentTarget?.hasPointerCapture?.(event.pointerId) &&
+      event.currentTarget?.releasePointerCapture
+    ) {
+      try {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      } catch {
+        // Ignore release failures in browsers that partially implement Pointer Events.
+      }
+    }
+
+    const sourceIndex = dragFromIndex;
+    const targetIndex = dragOverIndex ?? sourceIndex;
+
+    activePointerIdRef.current = null;
+    activeGroupRef.current = "";
+    setDragFromIndex(null);
+    setDragOverIndex(null);
+
+    if (
+      cancel ||
+      sourceIndex === null ||
+      targetIndex === null ||
+      sourceIndex === targetIndex
+    ) {
+      return;
+    }
+
+    moveRow(sourceIndex, targetIndex);
+  };
+
+  const moveRowUp = (index) => {
+    if (index <= 0) {
+      return;
+    }
+
+    moveRow(index, index - 1);
+  };
+
+  const moveRowDown = (index) => {
+    if (index >= rows.length - 1) {
+      return;
+    }
+
+    moveRow(index, index + 1);
+  };
+
+  const isDragSource = (index) => dragFromIndex === index;
+  const isDropTarget = (index) =>
+    dragFromIndex !== null && dragOverIndex === index && dragFromIndex !== index;
+
+  return {
+    handleDragStart,
+    handleDragMove,
+    completeDrag,
+    moveRowUp,
+    moveRowDown,
+    isDragSource,
+    isDropTarget,
+  };
+}
+
 function hasValueRowContent(rows) {
   return Array.isArray(rows)
     ? rows.some(
@@ -3136,6 +3290,79 @@ function ContactsPage({ auth, theme }) {
   );
 }
 
+function RowReorderControls({
+  rowLabel,
+  rowGroup,
+  rowIndex,
+  rowCount,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
+  onDragCancel,
+  onMoveUp,
+  onMoveDown,
+  onRemove,
+}) {
+  const canMoveUp = rowIndex > 0;
+  const canMoveDown = rowIndex < rowCount - 1;
+
+  return (
+    <div className="flex flex-wrap items-center justify-end gap-1">
+      <button
+        className="inline-flex h-8 w-8 cursor-grab touch-none items-center justify-center rounded-lg border border-app-edge bg-app-surface text-app-faint transition hover:border-app-accent-edge hover:text-app-accent active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300"
+        type="button"
+        aria-label={`Drag to reorder ${rowLabel} ${rowIndex + 1}`}
+        title="Drag to reorder"
+        data-reorder-group={rowGroup}
+        onPointerDown={(event) => onDragStart(rowIndex, event)}
+        onPointerMove={onDragMove}
+        onPointerUp={(event) => onDragEnd(event, false)}
+        onPointerCancel={(event) => onDragCancel(event, true)}
+      >
+        <svg
+          className="h-3.5 w-3.5"
+          viewBox="0 0 12 12"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <circle cx="3" cy="2.5" r="1" />
+          <circle cx="9" cy="2.5" r="1" />
+          <circle cx="3" cy="6" r="1" />
+          <circle cx="9" cy="6" r="1" />
+          <circle cx="3" cy="9.5" r="1" />
+          <circle cx="9" cy="9.5" r="1" />
+        </svg>
+      </button>
+      <button
+        className="btn-outline btn-outline-sm !px-2 !py-1"
+        type="button"
+        onClick={() => onMoveUp(rowIndex)}
+        disabled={!canMoveUp}
+        aria-label={`Move ${rowLabel} ${rowIndex + 1} up`}
+      >
+        Up
+      </button>
+      <button
+        className="btn-outline btn-outline-sm !px-2 !py-1"
+        type="button"
+        onClick={() => onMoveDown(rowIndex)}
+        disabled={!canMoveDown}
+        aria-label={`Move ${rowLabel} ${rowIndex + 1} down`}
+      >
+        Down
+      </button>
+      <button
+        className="btn-outline btn-outline-sm"
+        type="button"
+        onClick={() => onRemove(rowIndex)}
+        aria-label={`Remove ${rowLabel} ${rowIndex + 1}`}
+      >
+        Remove
+      </button>
+    </div>
+  );
+}
+
 function LabeledValueEditor({
   title,
   rows,
@@ -3145,6 +3372,11 @@ function LabeledValueEditor({
   addLabel,
 }) {
   const safeRows = Array.isArray(rows) ? rows : [];
+  const reorder = useRowReorder(safeRows, setRows);
+  const rowGroup = useMemo(
+    () => `reorder-${String(title ?? "rows").toLowerCase().replace(/\s+/g, "-")}`,
+    [title],
+  );
 
   const updateRow = (index, field, value) => {
     const nextRows = safeRows.map((row, rowIndex) =>
@@ -3182,53 +3414,70 @@ function LabeledValueEditor({
         {safeRows.length === 0 ? (
           <p className="text-sm text-app-faint">No entries.</p>
         ) : (
-          safeRows.map((row, index) => (
-            <div
-              key={`${title}-${index}`}
-              className="rounded-xl border border-app-edge p-3"
-            >
-              <div className="grid gap-3 md:grid-cols-[12rem_1fr_auto]">
-                <select
-                  className="input"
-                  value={row.label ?? "other"}
-                  onChange={(event) =>
-                    updateRow(index, "label", event.target.value)
-                  }
-                >
-                  {labelOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  className="input"
-                  value={row.value ?? ""}
-                  onChange={(event) =>
-                    updateRow(index, "value", event.target.value)
-                  }
-                  placeholder={valuePlaceholder}
-                />
-                <button
-                  className="btn-outline btn-outline-sm"
-                  type="button"
-                  onClick={() => removeRow(index)}
-                >
-                  Remove
-                </button>
+          safeRows.map((row, index) => {
+            const rowIsDragSource = reorder.isDragSource(index);
+            const rowIsDropTarget = reorder.isDropTarget(index);
+
+            return (
+              <div
+                key={`${title}-${index}`}
+                data-reorder-index={index}
+                data-reorder-group={rowGroup}
+                className={`rounded-xl border p-3 transition ${
+                  rowIsDropTarget
+                    ? "border-app-accent-edge ring-1 ring-teal-500/30"
+                    : "border-app-edge"
+                } ${rowIsDragSource ? "opacity-70" : ""}`}
+              >
+                <div className="grid gap-3 md:grid-cols-[12rem_1fr_auto]">
+                  <select
+                    className="input"
+                    value={row.label ?? "other"}
+                    onChange={(event) =>
+                      updateRow(index, "label", event.target.value)
+                    }
+                  >
+                    {labelOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    className="input"
+                    value={row.value ?? ""}
+                    onChange={(event) =>
+                      updateRow(index, "value", event.target.value)
+                    }
+                    placeholder={valuePlaceholder}
+                  />
+                  <RowReorderControls
+                    rowLabel={title}
+                    rowGroup={rowGroup}
+                    rowIndex={index}
+                    rowCount={safeRows.length}
+                    onDragStart={reorder.handleDragStart}
+                    onDragMove={reorder.handleDragMove}
+                    onDragEnd={reorder.completeDrag}
+                    onDragCancel={reorder.completeDrag}
+                    onMoveUp={reorder.moveRowUp}
+                    onMoveDown={reorder.moveRowDown}
+                    onRemove={removeRow}
+                  />
+                </div>
+                {row.label === "custom" ? (
+                  <input
+                    className="input mt-2"
+                    value={row.custom_label ?? ""}
+                    onChange={(event) =>
+                      updateRow(index, "custom_label", event.target.value)
+                    }
+                    placeholder="Custom label"
+                  />
+                ) : null}
               </div>
-              {row.label === "custom" ? (
-                <input
-                  className="input mt-2"
-                  value={row.custom_label ?? ""}
-                  onChange={(event) =>
-                    updateRow(index, "custom_label", event.target.value)
-                  }
-                  placeholder="Custom label"
-                />
-              ) : null}
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </section>
@@ -3237,6 +3486,8 @@ function LabeledValueEditor({
 
 function AddressEditor({ rows, setRows }) {
   const safeRows = Array.isArray(rows) ? rows : [];
+  const reorder = useRowReorder(safeRows, setRows);
+  const rowGroup = "reorder-address";
 
   const updateRow = (index, field, value) => {
     setRows(
@@ -3272,87 +3523,104 @@ function AddressEditor({ rows, setRows }) {
         {safeRows.length === 0 ? (
           <p className="text-sm text-app-faint">No addresses.</p>
         ) : (
-          safeRows.map((row, index) => (
-            <div
-              key={`address-${index}`}
-              className="rounded-xl border border-app-edge p-3"
-            >
-              <div className="grid gap-3 md:grid-cols-[12rem_1fr_auto]">
-                <select
-                  className="input"
-                  value={row.label ?? "home"}
-                  onChange={(event) =>
-                    updateRow(index, "label", event.target.value)
-                  }
-                >
-                  {ADDRESS_LABEL_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  className="input"
-                  value={row.street ?? ""}
-                  onChange={(event) =>
-                    updateRow(index, "street", event.target.value)
-                  }
-                  placeholder="Street"
-                />
-                <button
-                  className="btn-outline btn-outline-sm"
-                  type="button"
-                  onClick={() => removeRow(index)}
-                >
-                  Remove
-                </button>
+          safeRows.map((row, index) => {
+            const rowIsDragSource = reorder.isDragSource(index);
+            const rowIsDropTarget = reorder.isDropTarget(index);
+
+            return (
+              <div
+                key={`address-${index}`}
+                data-reorder-index={index}
+                data-reorder-group={rowGroup}
+                className={`rounded-xl border p-3 transition ${
+                  rowIsDropTarget
+                    ? "border-app-accent-edge ring-1 ring-teal-500/30"
+                    : "border-app-edge"
+                } ${rowIsDragSource ? "opacity-70" : ""}`}
+              >
+                <div className="grid gap-3 md:grid-cols-[12rem_1fr_auto]">
+                  <select
+                    className="input"
+                    value={row.label ?? "home"}
+                    onChange={(event) =>
+                      updateRow(index, "label", event.target.value)
+                    }
+                  >
+                    {ADDRESS_LABEL_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    className="input"
+                    value={row.street ?? ""}
+                    onChange={(event) =>
+                      updateRow(index, "street", event.target.value)
+                    }
+                    placeholder="Street"
+                  />
+                  <RowReorderControls
+                    rowLabel="Address"
+                    rowGroup={rowGroup}
+                    rowIndex={index}
+                    rowCount={safeRows.length}
+                    onDragStart={reorder.handleDragStart}
+                    onDragMove={reorder.handleDragMove}
+                    onDragEnd={reorder.completeDrag}
+                    onDragCancel={reorder.completeDrag}
+                    onMoveUp={reorder.moveRowUp}
+                    onMoveDown={reorder.moveRowDown}
+                    onRemove={removeRow}
+                  />
+                </div>
+                {row.label === "custom" ? (
+                  <input
+                    className="input mt-2"
+                    value={row.custom_label ?? ""}
+                    onChange={(event) =>
+                      updateRow(index, "custom_label", event.target.value)
+                    }
+                    placeholder="Custom label"
+                  />
+                ) : null}
+                <div className="mt-2 grid gap-3 md:grid-cols-2">
+                  <input
+                    className="input"
+                    value={row.city ?? ""}
+                    onChange={(event) =>
+                      updateRow(index, "city", event.target.value)
+                    }
+                    placeholder="City"
+                  />
+                  <input
+                    className="input"
+                    value={row.state ?? ""}
+                    onChange={(event) =>
+                      updateRow(index, "state", event.target.value)
+                    }
+                    placeholder="State / Region"
+                  />
+                  <input
+                    className="input"
+                    value={row.postal_code ?? ""}
+                    onChange={(event) =>
+                      updateRow(index, "postal_code", event.target.value)
+                    }
+                    placeholder="Postal code"
+                  />
+                  <input
+                    className="input"
+                    value={row.country ?? ""}
+                    onChange={(event) =>
+                      updateRow(index, "country", event.target.value)
+                    }
+                    placeholder="Country"
+                  />
+                </div>
               </div>
-              {row.label === "custom" ? (
-                <input
-                  className="input mt-2"
-                  value={row.custom_label ?? ""}
-                  onChange={(event) =>
-                    updateRow(index, "custom_label", event.target.value)
-                  }
-                  placeholder="Custom label"
-                />
-              ) : null}
-              <div className="mt-2 grid gap-3 md:grid-cols-2">
-                <input
-                  className="input"
-                  value={row.city ?? ""}
-                  onChange={(event) =>
-                    updateRow(index, "city", event.target.value)
-                  }
-                  placeholder="City"
-                />
-                <input
-                  className="input"
-                  value={row.state ?? ""}
-                  onChange={(event) =>
-                    updateRow(index, "state", event.target.value)
-                  }
-                  placeholder="State / Region"
-                />
-                <input
-                  className="input"
-                  value={row.postal_code ?? ""}
-                  onChange={(event) =>
-                    updateRow(index, "postal_code", event.target.value)
-                  }
-                  placeholder="Postal code"
-                />
-                <input
-                  className="input"
-                  value={row.country ?? ""}
-                  onChange={(event) =>
-                    updateRow(index, "country", event.target.value)
-                  }
-                  placeholder="Country"
-                />
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </section>
