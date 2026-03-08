@@ -3311,10 +3311,10 @@ function RowReorderControls({
     "btn-outline btn-outline-sm !h-8 !w-8 !px-0 !py-0 opacity-0 transition-opacity duration-150 group-hover/row:opacity-100 group-focus-within/row:opacity-100";
 
   return (
-    <div className="flex flex-wrap items-center justify-end gap-1">
+    <div className="flex items-center justify-end gap-1">
       {showHandle ? (
         <button
-          className="inline-flex h-8 w-8 cursor-grab touch-none items-center justify-center rounded-lg bg-transparent text-app-faint transition hover:text-app-accent active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300"
+          className="inline-flex h-7 w-7 cursor-grab touch-none items-center justify-center rounded-lg bg-transparent text-app-faint transition hover:text-app-accent active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300"
           type="button"
           aria-label={`Drag to reorder ${rowLabel} ${rowIndex + 1}`}
           title="Drag to reorder"
@@ -3458,14 +3458,14 @@ function LabeledValueEditor({
                 key={`${title}-${index}`}
                 data-reorder-index={index}
                 data-reorder-group={rowGroup}
-                className={`group/row rounded-xl border p-3 transition ${
+                className={`group/row rounded-xl border px-2 py-3 transition ${
                   rowIsDropTarget
                     ? "border-app-accent-edge ring-1 ring-teal-500/30"
                     : "border-app-edge"
                 } ${rowIsDragSource ? "opacity-70" : ""}`}
               >
-                <div className="grid gap-3 md:grid-cols-[auto_12rem_1fr_auto]">
-                  <div className="md:self-start">
+                <div className="grid items-center gap-2 md:grid-cols-[1.5rem_12rem_1fr_auto]">
+                  <div className="self-center">
                     <RowReorderControls
                       rowLabel={title}
                       rowGroup={rowGroup}
@@ -3502,7 +3502,7 @@ function LabeledValueEditor({
                     }
                     placeholder={valuePlaceholder}
                   />
-                  <div className="md:self-start">
+                  <div className="self-center">
                     <RowReorderControls
                       rowLabel={title}
                       rowGroup={rowGroup}
@@ -3586,14 +3586,14 @@ function AddressEditor({ rows, setRows }) {
                 key={`address-${index}`}
                 data-reorder-index={index}
                 data-reorder-group={rowGroup}
-                className={`group/row rounded-xl border p-3 transition ${
+                className={`group/row rounded-xl border px-2 py-3 transition ${
                   rowIsDropTarget
                     ? "border-app-accent-edge ring-1 ring-teal-500/30"
                     : "border-app-edge"
                 } ${rowIsDragSource ? "opacity-70" : ""}`}
               >
-                <div className="grid gap-3 md:grid-cols-[auto_12rem_1fr_auto]">
-                  <div className="md:self-start">
+                <div className="grid items-center gap-2 md:grid-cols-[1.5rem_12rem_1fr_auto]">
+                  <div className="self-center">
                     <RowReorderControls
                       rowLabel="Address"
                       rowGroup={rowGroup}
@@ -3630,7 +3630,7 @@ function AddressEditor({ rows, setRows }) {
                     }
                     placeholder="Street"
                   />
-                  <div className="md:self-start">
+                  <div className="self-center">
                     <RowReorderControls
                       rowLabel="Address"
                       rowGroup={rowGroup}
