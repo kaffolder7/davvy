@@ -1393,6 +1393,37 @@ function formatDatePartForInput(value, padLength = 0) {
   return padLength > 0 ? normalized.padStart(padLength, "0") : normalized;
 }
 
+function normalizeDatePartForPayload(value) {
+  const normalized = String(value ?? "").trim();
+  if (!normalized) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(normalized, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizeDatePartsForPayload(parts) {
+  return {
+    year: normalizeDatePartForPayload(parts?.year),
+    month: normalizeDatePartForPayload(parts?.month),
+    day: normalizeDatePartForPayload(parts?.day),
+  };
+}
+
+function normalizeDateRowsForPayload(rows) {
+  if (!Array.isArray(rows)) {
+    return [];
+  }
+
+  return rows.map((row) => ({
+    ...row,
+    year: normalizeDatePartForPayload(row?.year),
+    month: normalizeDatePartForPayload(row?.month),
+    day: normalizeDatePartForPayload(row?.day),
+  }));
+}
+
 function moveArrayItem(items, fromIndex, toIndex) {
   if (!Array.isArray(items) || items.length === 0) {
     return [];
@@ -2164,6 +2195,8 @@ function ContactsPage({ auth, theme }) {
 
     const payload = {
       ...form,
+      birthday: normalizeDatePartsForPayload(form.birthday),
+      dates: normalizeDateRowsForPayload(form.dates),
       address_book_ids: form.address_book_ids.map((id) => Number(id)),
     };
     delete payload.id;
