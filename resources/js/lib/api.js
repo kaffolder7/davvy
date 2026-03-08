@@ -1,17 +1,13 @@
 import axios from 'axios';
 
-const token =
-  typeof document !== 'undefined'
-    ? document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-    : null;
-
 export const api = axios.create({
   headers: {
     'X-Requested-With': 'XMLHttpRequest',
-    ...(token ? { 'X-CSRF-TOKEN': token } : {}),
     Accept: 'application/json',
   },
   withCredentials: true,
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
 });
 
 export function extractError(error, fallback = 'Something went wrong.') {
