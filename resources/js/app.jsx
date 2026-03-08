@@ -5305,6 +5305,10 @@ function AdminPage({ auth, theme }) {
   )}w / ${Number(state.backupRetentionMonthly)}m / ${Number(
     state.backupRetentionYearly,
   )}y`;
+  const backupRunNowDisabled = backupRunning || !backupHasDestination;
+  const backupRunNowButtonClass = backupRunNowDisabled
+    ? "inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-400"
+    : "btn btn-outline-sm";
   const backupRestoreSummary = backupRestoreResult?.summary ?? null;
   const backupRestoreWarnings = Array.isArray(backupRestoreResult?.warnings)
     ? backupRestoreResult.warnings
@@ -5445,10 +5449,10 @@ function AdminPage({ auth, theme }) {
                 </svg>*/}
               </button>
               <button
-                className="btn btn-outline-sm"
+                className={backupRunNowButtonClass}
                 type="button"
                 onClick={runBackupNow}
-                disabled={backupRunning || !backupHasDestination}
+                disabled={backupRunNowDisabled}
                 title={
                   !backupHasDestination
                     ? "Configure at least one destination first."
