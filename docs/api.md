@@ -303,6 +303,93 @@ Get queue history retention days.
 #### `PATCH /api/admin/settings/contact-change-retention`
 Set queue history retention days (`1..3650`).
 
+#### `GET /api/admin/settings/backups`
+Get backup automation settings (effective values with env fallback).
+
+Returns:
+- `enabled`
+- `local_enabled`
+- `local_path`
+- `s3_enabled`
+- `s3_disk`
+- `s3_prefix`
+- `schedule_times[]` (`HH:MM`)
+- `timezone`
+- `weekly_day` (`0..6`)
+- `monthly_day` (`1..31`)
+- `yearly_month` (`1..12`)
+- `yearly_day` (`1..31`)
+- `retention_daily`
+- `retention_weekly`
+- `retention_monthly`
+- `retention_yearly`
+- `last_run`:
+  - `at`
+  - `status`
+  - `message`
+
+#### `PATCH /api/admin/settings/backups`
+Update backup automation settings.
+
+Body:
+- `enabled` (bool)
+- `local_enabled` (bool)
+- `local_path` (string)
+- `s3_enabled` (bool)
+- `s3_disk` (string)
+- `s3_prefix` (string, optional)
+- `schedule_times[]` (`HH:MM`)
+- `timezone` (IANA timezone string)
+- `weekly_day` (`0..6`)
+- `monthly_day` (`1..31`)
+- `yearly_month` (`1..12`)
+- `yearly_day` (`1..31`)
+- `retention_daily` (`0..3650`)
+- `retention_weekly` (`0..520`)
+- `retention_monthly` (`0..240`)
+- `retention_yearly` (`0..50`)
+
+Validation rules:
+- when `enabled=true`, at least one destination must be enabled (`local_enabled` or `s3_enabled`)
+- at least one retention tier must be greater than zero
+
+#### `POST /api/admin/backups/run`
+Run backup immediately (manual trigger, admin only).
+
+Response:
+- `status`: `success` | `skipped` | `failed`
+- `reason`
+- `tiers[]`
+- `artifact_count`
+- `artifacts[]` (`tier`, `period`, `file_name`, `local_path`, `s3_path`)
+- `resource_counts` (`calendars`, `address_books`, `calendar_objects`, `cards`)
+
+Period behavior:
+- each tier keeps one snapshot per period key (manual reruns replace the same period artifact instead of creating duplicates).
+
+#### `POST /api/admin/backups/restore`
+Restore calendars and address books from an uploaded backup ZIP archive (admin only).
+
+Multipart form body:
+- `backup` (required file, `.zip`)
+- `mode` (optional): `merge` (default) or `replace`
+- `dry_run` (optional bool): preview only, no writes
+- `fallback_owner_id` (optional int): remap unresolved owner IDs to an existing user (defaults to current admin user when omitted)
+
+Response:
+- `status`: `success` | `failed`
+- `mode`: `merge` | `replace`
+- `dry_run` (bool)
+- `reason`
+- `executed_at_utc`
+- `manifest` (if present in ZIP)
+- `summary`:
+  - `files_total`, `files_processed`, `files_skipped`
+  - `owners_total`, `owners_resolved`, `owners_missing`, `fallback_owner_id`
+  - created/updated/deleted counters for calendars, address books, and objects/cards
+  - `resources_skipped_invalid`, `resources_skipped_owner`
+- `warnings[]`
+
 ### Admin Share Management
 
 #### `GET /api/admin/shares`

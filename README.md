@@ -11,6 +11,7 @@ It is designed for:
 - Share-based collaboration (`read_only`, `editor`, `admin`)
 - Browser-based administration and operational controls
 - DAV client interoperability with strict validation plus compatibility mode when needed
+- Automated rotating backups (local + optional S3) with restore tooling
 
 ## Core Capabilities 🚀
 
@@ -19,6 +20,7 @@ It is designed for:
 - DAV basic auth at `/dav`
 - Roles: `admin`, `regular`
 - Feature flags controlled by admins (public registration, owner sharing, contact management, review queue moderation, DAV compatibility mode)
+- Admin backup controls for schedule, destinations, retention strategy, and ZIP restore import
 
 ### Calendars and Address Books 🗓️
 - Default `Personal Calendar` and `Contacts` resources provisioned for each new user
@@ -52,6 +54,9 @@ It is designed for:
 
 ### Runtime and Deployment 🛠️
 - Docker-first runtime with preflight checks (`php artisan app:preflight`)
+- Built-in scheduler worker support (`RUN_SCHEDULER=true`) for periodic jobs
+- Automated backup tiers with rotating retention (`daily`, `weekly`, `monthly`, `yearly`)
+- Restore snapshots via CLI (`app:backup:restore`) or Admin Control Center import flow
 - Railway and Coolify deployment support
 - PostgreSQL advisory-lock startup bootstrap for multi-replica safety
 
