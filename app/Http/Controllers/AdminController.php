@@ -251,6 +251,42 @@ class AdminController extends Controller
         ]);
     }
 
+    public function milestoneGenerationYearsSetting(): JsonResponse
+    {
+        return response()->json([
+            'years' => $this->registrationSettings->milestoneCalendarGenerationYears(),
+        ]);
+    }
+
+    public function setMilestoneGenerationYearsSetting(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'years' => ['required', 'integer', 'min:1', 'max:25'],
+        ]);
+
+        $this->registrationSettings->setMilestoneCalendarGenerationYears(
+            years: (int) $data['years'],
+            actor: $request->user(),
+        );
+
+        if (Schema::hasTable('address_book_contact_milestone_calendars')) {
+            $addressBookIds = AddressBookContactMilestoneCalendar::query()
+                ->where('enabled', true)
+                ->pluck('address_book_id')
+                ->map(fn (mixed $id): int => (int) $id)
+                ->filter(fn (int $id): bool => $id > 0)
+                ->unique()
+                ->values()
+                ->all();
+
+            $this->milestoneCalendarService->syncAddressBooksByIds($addressBookIds);
+        }
+
+        return response()->json([
+            'years' => $this->registrationSettings->milestoneCalendarGenerationYears(),
+        ]);
+    }
+
     public function purgeGeneratedMilestoneCalendars(): JsonResponse
     {
         $summary = $this->milestoneCalendarService->purgeGeneratedCalendarsAndDisableSettings();

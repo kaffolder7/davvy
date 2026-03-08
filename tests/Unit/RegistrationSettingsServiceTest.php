@@ -77,4 +77,17 @@ class RegistrationSettingsServiceTest extends TestCase
         $service->setContactChangeRequestRetentionDays(99999);
         $this->assertSame(3650, $service->contactChangeRequestRetentionDays());
     }
+
+    public function test_milestone_calendar_generation_years_setting_can_be_updated(): void
+    {
+        $service = app(RegistrationSettingsService::class);
+
+        $this->assertSame(3, $service->milestoneCalendarGenerationYears());
+
+        $service->setMilestoneCalendarGenerationYears(5);
+        $this->assertSame(5, $service->milestoneCalendarGenerationYears());
+
+        $service->setMilestoneCalendarGenerationYears(999);
+        $this->assertSame(25, $service->milestoneCalendarGenerationYears());
+    }
 }
