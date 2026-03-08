@@ -3308,38 +3308,10 @@ function RowReorderControls({
   const canMoveUp = rowIndex > 0;
   const canMoveDown = rowIndex < rowCount - 1;
   const iconControlClass =
-    "btn-outline btn-outline-sm !h-8 !w-8 !px-0 !py-0 opacity-0 transition-opacity duration-150 group-hover/row:opacity-100 group-focus-within/row:opacity-100";
+    "btn-outline btn-outline-sm !h-8 !w-8 !px-0 !py-0 hidden group-hover/row:inline-flex group-focus-within/row:inline-flex";
 
   return (
-    <div className="flex items-center justify-end gap-1">
-      {showHandle ? (
-        <button
-          className="inline-flex h-7 w-7 cursor-grab touch-none items-center justify-center rounded-lg bg-transparent text-app-faint transition hover:text-app-accent active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300"
-          type="button"
-          aria-label={`Drag to reorder ${rowLabel} ${rowIndex + 1}`}
-          title="Drag to reorder"
-          data-reorder-group={rowGroup}
-          onPointerDown={(event) => onDragStart(rowIndex, event)}
-          onPointerMove={onDragMove}
-          onPointerUp={(event) => onDragEnd(event, false)}
-          onPointerCancel={(event) => onDragCancel(event, true)}
-        >
-          <svg
-            className="h-4 w-4"
-            viewBox="0 0 12 12"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M3 3.25h6" />
-            <path d="M3 6h6" />
-            <path d="M3 8.75h6" />
-          </svg>
-        </button>
-      ) : null}
+    <div className="flex items-center justify-end gap-1.5">
       {showActions ? (
         <>
           <button
@@ -3394,6 +3366,34 @@ function RowReorderControls({
           </button>
         </>
       ) : null}
+      {showHandle ? (
+        <button
+          className="inline-flex h-7 w-7 cursor-grab touch-none items-center justify-center rounded-lg bg-transparent text-app-faint transition hover:text-app-accent active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300"
+          type="button"
+          aria-label={`Drag to reorder ${rowLabel} ${rowIndex + 1}`}
+          title="Drag to reorder"
+          data-reorder-group={rowGroup}
+          onPointerDown={(event) => onDragStart(rowIndex, event)}
+          onPointerMove={onDragMove}
+          onPointerUp={(event) => onDragEnd(event, false)}
+          onPointerCancel={(event) => onDragCancel(event, true)}
+        >
+          <svg
+            className="h-4 w-4"
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 3.25h6" />
+            <path d="M3 6h6" />
+            <path d="M3 8.75h6" />
+          </svg>
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -3445,7 +3445,7 @@ function LabeledValueEditor({
           {addLabel}
         </button>
       </div>
-      <div className="mt-3 space-y-3 pr-6">
+      <div className="mt-3 space-y-3">
         {safeRows.length === 0 ? (
           <p className="text-sm text-app-faint">No entries.</p>
         ) : (
@@ -3458,28 +3458,12 @@ function LabeledValueEditor({
                 key={`${title}-${index}`}
                 data-reorder-index={index}
                 data-reorder-group={rowGroup}
-                className={`group/row relative rounded-xl border px-2 py-3 transition ${
+                className={`group/row rounded-xl border px-2 py-3 transition ${
                   rowIsDropTarget
                     ? "border-app-accent-edge ring-1 ring-teal-500/30"
                     : "border-app-edge"
                 } ${rowIsDragSource ? "opacity-70" : ""}`}
               >
-                <div className="absolute -right-6 top-1/2 -translate-y-1/2">
-                  <RowReorderControls
-                    rowLabel={title}
-                    rowGroup={rowGroup}
-                    rowIndex={index}
-                    rowCount={safeRows.length}
-                    onDragStart={reorder.handleDragStart}
-                    onDragMove={reorder.handleDragMove}
-                    onDragEnd={reorder.completeDrag}
-                    onDragCancel={reorder.completeDrag}
-                    onMoveUp={reorder.moveRowUp}
-                    onMoveDown={reorder.moveRowDown}
-                    onRemove={removeRow}
-                    showActions={false}
-                  />
-                </div>
                 <div className="grid items-center gap-2 md:grid-cols-[12rem_1fr_auto]">
                   <select
                     className="input"
@@ -3515,7 +3499,6 @@ function LabeledValueEditor({
                       onMoveUp={reorder.moveRowUp}
                       onMoveDown={reorder.moveRowDown}
                       onRemove={removeRow}
-                      showHandle={false}
                     />
                   </div>
                 </div>
@@ -3573,7 +3556,7 @@ function AddressEditor({ rows, setRows }) {
           Add address
         </button>
       </div>
-      <div className="mt-3 space-y-3 pr-6">
+      <div className="mt-3 space-y-3">
         {safeRows.length === 0 ? (
           <p className="text-sm text-app-faint">No addresses.</p>
         ) : (
@@ -3586,28 +3569,12 @@ function AddressEditor({ rows, setRows }) {
                 key={`address-${index}`}
                 data-reorder-index={index}
                 data-reorder-group={rowGroup}
-                className={`group/row relative rounded-xl border px-2 py-3 transition ${
+                className={`group/row rounded-xl border px-2 py-3 transition ${
                   rowIsDropTarget
                     ? "border-app-accent-edge ring-1 ring-teal-500/30"
                     : "border-app-edge"
                 } ${rowIsDragSource ? "opacity-70" : ""}`}
               >
-                <div className="absolute -right-6 top-1/2 -translate-y-1/2">
-                  <RowReorderControls
-                    rowLabel="Address"
-                    rowGroup={rowGroup}
-                    rowIndex={index}
-                    rowCount={safeRows.length}
-                    onDragStart={reorder.handleDragStart}
-                    onDragMove={reorder.handleDragMove}
-                    onDragEnd={reorder.completeDrag}
-                    onDragCancel={reorder.completeDrag}
-                    onMoveUp={reorder.moveRowUp}
-                    onMoveDown={reorder.moveRowDown}
-                    onRemove={removeRow}
-                    showActions={false}
-                  />
-                </div>
                 <div className="grid items-center gap-2 md:grid-cols-[12rem_1fr_auto]">
                   <select
                     className="input"
@@ -3643,7 +3610,6 @@ function AddressEditor({ rows, setRows }) {
                       onMoveUp={reorder.moveRowUp}
                       onMoveDown={reorder.moveRowDown}
                       onRemove={removeRow}
-                      showHandle={false}
                     />
                   </div>
                 </div>
