@@ -2321,6 +2321,7 @@ function ContactsPage({ auth, theme }) {
                   disabled={
                     submitting ||
                     addressBooks.length === 0 ||
+                    selectedAddressBookCount === 0 ||
                     !hasRequiredContactIdentity
                   }
                 >
@@ -3038,6 +3039,7 @@ function ContactsPage({ auth, theme }) {
                     disabled={
                       submitting ||
                       addressBooks.length === 0 ||
+                      selectedAddressBookCount === 0 ||
                       !hasRequiredContactIdentity
                     }
                   >
