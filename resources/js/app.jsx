@@ -1632,6 +1632,7 @@ function deriveContactSectionOpenState(form) {
     hasTextValue(form.text_tone) ||
     hasTextValue(form.verification_code) ||
     hasTextValue(form.profile) ||
+    form.head_of_household === true ||
     form.exclude_milestone_calendars === true ||
     hasTextValue(form.birthday?.month) ||
     hasTextValue(form.birthday?.day) ||
@@ -1747,6 +1748,7 @@ function createEmptyContactForm(defaultAddressBookIds = []) {
     maiden_name: "",
     verification_code: "",
     profile: "",
+    head_of_household: false,
     exclude_milestone_calendars: false,
     birthday: { year: "", month: "", day: "" },
     phones: [createEmptyLabeledValue("mobile")],
@@ -1845,6 +1847,7 @@ function hydrateContactForm(contact, defaultAddressBookIds = []) {
     maiden_name: contact.maiden_name ?? "",
     verification_code: contact.verification_code ?? "",
     profile: contact.profile ?? "",
+    head_of_household: !!contact.head_of_household,
     exclude_milestone_calendars: !!contact.exclude_milestone_calendars,
     birthday: datePartsToFormValue(contact.birthday),
     phones: nonEmptyRows(contact.phones, () =>
@@ -2879,6 +2882,25 @@ function ContactsPage({ auth, theme }) {
                         </Field>
                       ) : null}
                     </div>
+
+                    <section className="rounded-2xl border border-app-accent-edge bg-app-surface p-3 ring-1 ring-teal-500/10">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-app-accent">
+                        Household
+                      </p>
+                      <label className="inline-flex items-center gap-2 text-[13px] font-semibold leading-5 text-app-base">
+                        <input
+                          type="checkbox"
+                          checked={!!form.head_of_household}
+                          onChange={(event) =>
+                            updateFormField(
+                              "head_of_household",
+                              event.target.checked,
+                            )
+                          }
+                        />
+                        Head of Household
+                      </label>
+                    </section>
 
                     <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
                       <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
