@@ -3302,6 +3302,8 @@ function RowReorderControls({
   onMoveUp,
   onMoveDown,
   onRemove,
+  showHandle = true,
+  showActions = true,
 }) {
   const canMoveUp = rowIndex > 0;
   const canMoveDown = rowIndex < rowCount - 1;
@@ -3310,81 +3312,88 @@ function RowReorderControls({
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-1">
-      <button
-        className="inline-flex h-8 w-8 cursor-grab touch-none items-center justify-center rounded-lg border border-app-edge bg-app-surface text-app-faint transition hover:border-app-accent-edge hover:text-app-accent active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300"
-        type="button"
-        aria-label={`Drag to reorder ${rowLabel} ${rowIndex + 1}`}
-        title="Drag to reorder"
-        data-reorder-group={rowGroup}
-        onPointerDown={(event) => onDragStart(rowIndex, event)}
-        onPointerMove={onDragMove}
-        onPointerUp={(event) => onDragEnd(event, false)}
-        onPointerCancel={(event) => onDragCancel(event, true)}
-      >
-        <svg
-          className="h-3.5 w-3.5"
-          viewBox="0 0 12 12"
-          fill="currentColor"
-          aria-hidden="true"
+      {showHandle ? (
+        <button
+          className="inline-flex h-8 w-8 cursor-grab touch-none items-center justify-center rounded-lg bg-transparent text-app-faint transition hover:text-app-accent active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300"
+          type="button"
+          aria-label={`Drag to reorder ${rowLabel} ${rowIndex + 1}`}
+          title="Drag to reorder"
+          data-reorder-group={rowGroup}
+          onPointerDown={(event) => onDragStart(rowIndex, event)}
+          onPointerMove={onDragMove}
+          onPointerUp={(event) => onDragEnd(event, false)}
+          onPointerCancel={(event) => onDragCancel(event, true)}
         >
-          <circle cx="3" cy="2.5" r="1" />
-          <circle cx="9" cy="2.5" r="1" />
-          <circle cx="3" cy="6" r="1" />
-          <circle cx="9" cy="6" r="1" />
-          <circle cx="3" cy="9.5" r="1" />
-          <circle cx="9" cy="9.5" r="1" />
-        </svg>
-      </button>
-      <button
-        className={iconControlClass}
-        type="button"
-        onClick={() => onMoveUp(rowIndex)}
-        disabled={!canMoveUp}
-        aria-label={`Move ${rowLabel} ${rowIndex + 1} up`}
-        title="Move up"
-      >
-        <svg
-          className="h-3.5 w-3.5"
-          viewBox="0 0 12 12"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M2.5 7.5L6 4l3.5 3.5" />
-        </svg>
-      </button>
-      <button
-        className={iconControlClass}
-        type="button"
-        onClick={() => onMoveDown(rowIndex)}
-        disabled={!canMoveDown}
-        aria-label={`Move ${rowLabel} ${rowIndex + 1} down`}
-        title="Move down"
-      >
-        <svg
-          className="h-3.5 w-3.5"
-          viewBox="0 0 12 12"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M2.5 4.5L6 8l3.5-3.5" />
-        </svg>
-      </button>
-      <button
-        className="btn-outline btn-outline-sm"
-        type="button"
-        onClick={() => onRemove(rowIndex)}
-        aria-label={`Remove ${rowLabel} ${rowIndex + 1}`}
-      >
-        Remove
-      </button>
+          <svg
+            className="h-4 w-4"
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 3.25h6" />
+            <path d="M3 6h6" />
+            <path d="M3 8.75h6" />
+          </svg>
+        </button>
+      ) : null}
+      {showActions ? (
+        <>
+          <button
+            className={iconControlClass}
+            type="button"
+            onClick={() => onMoveUp(rowIndex)}
+            disabled={!canMoveUp}
+            aria-label={`Move ${rowLabel} ${rowIndex + 1} up`}
+            title="Move up"
+          >
+            <svg
+              className="h-3.5 w-3.5"
+              viewBox="0 0 12 12"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M2.5 7.5L6 4l3.5 3.5" />
+            </svg>
+          </button>
+          <button
+            className={iconControlClass}
+            type="button"
+            onClick={() => onMoveDown(rowIndex)}
+            disabled={!canMoveDown}
+            aria-label={`Move ${rowLabel} ${rowIndex + 1} down`}
+            title="Move down"
+          >
+            <svg
+              className="h-3.5 w-3.5"
+              viewBox="0 0 12 12"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M2.5 4.5L6 8l3.5-3.5" />
+            </svg>
+          </button>
+          <button
+            className="btn-outline btn-outline-sm"
+            type="button"
+            onClick={() => onRemove(rowIndex)}
+            aria-label={`Remove ${rowLabel} ${rowIndex + 1}`}
+          >
+            Remove
+          </button>
+        </>
+      ) : null}
     </div>
   );
 }
@@ -3455,7 +3464,23 @@ function LabeledValueEditor({
                     : "border-app-edge"
                 } ${rowIsDragSource ? "opacity-70" : ""}`}
               >
-                <div className="grid gap-3 md:grid-cols-[12rem_1fr_auto]">
+                <div className="grid gap-3 md:grid-cols-[auto_12rem_1fr_auto]">
+                  <div className="md:self-start">
+                    <RowReorderControls
+                      rowLabel={title}
+                      rowGroup={rowGroup}
+                      rowIndex={index}
+                      rowCount={safeRows.length}
+                      onDragStart={reorder.handleDragStart}
+                      onDragMove={reorder.handleDragMove}
+                      onDragEnd={reorder.completeDrag}
+                      onDragCancel={reorder.completeDrag}
+                      onMoveUp={reorder.moveRowUp}
+                      onMoveDown={reorder.moveRowDown}
+                      onRemove={removeRow}
+                      showActions={false}
+                    />
+                  </div>
                   <select
                     className="input"
                     value={row.label ?? "other"}
@@ -3477,19 +3502,22 @@ function LabeledValueEditor({
                     }
                     placeholder={valuePlaceholder}
                   />
-                  <RowReorderControls
-                    rowLabel={title}
-                    rowGroup={rowGroup}
-                    rowIndex={index}
-                    rowCount={safeRows.length}
-                    onDragStart={reorder.handleDragStart}
-                    onDragMove={reorder.handleDragMove}
-                    onDragEnd={reorder.completeDrag}
-                    onDragCancel={reorder.completeDrag}
-                    onMoveUp={reorder.moveRowUp}
-                    onMoveDown={reorder.moveRowDown}
-                    onRemove={removeRow}
-                  />
+                  <div className="md:self-start">
+                    <RowReorderControls
+                      rowLabel={title}
+                      rowGroup={rowGroup}
+                      rowIndex={index}
+                      rowCount={safeRows.length}
+                      onDragStart={reorder.handleDragStart}
+                      onDragMove={reorder.handleDragMove}
+                      onDragEnd={reorder.completeDrag}
+                      onDragCancel={reorder.completeDrag}
+                      onMoveUp={reorder.moveRowUp}
+                      onMoveDown={reorder.moveRowDown}
+                      onRemove={removeRow}
+                      showHandle={false}
+                    />
+                  </div>
                 </div>
                 {row.label === "custom" ? (
                   <input
@@ -3564,7 +3592,23 @@ function AddressEditor({ rows, setRows }) {
                     : "border-app-edge"
                 } ${rowIsDragSource ? "opacity-70" : ""}`}
               >
-                <div className="grid gap-3 md:grid-cols-[12rem_1fr_auto]">
+                <div className="grid gap-3 md:grid-cols-[auto_12rem_1fr_auto]">
+                  <div className="md:self-start">
+                    <RowReorderControls
+                      rowLabel="Address"
+                      rowGroup={rowGroup}
+                      rowIndex={index}
+                      rowCount={safeRows.length}
+                      onDragStart={reorder.handleDragStart}
+                      onDragMove={reorder.handleDragMove}
+                      onDragEnd={reorder.completeDrag}
+                      onDragCancel={reorder.completeDrag}
+                      onMoveUp={reorder.moveRowUp}
+                      onMoveDown={reorder.moveRowDown}
+                      onRemove={removeRow}
+                      showActions={false}
+                    />
+                  </div>
                   <select
                     className="input"
                     value={row.label ?? "home"}
@@ -3586,19 +3630,22 @@ function AddressEditor({ rows, setRows }) {
                     }
                     placeholder="Street"
                   />
-                  <RowReorderControls
-                    rowLabel="Address"
-                    rowGroup={rowGroup}
-                    rowIndex={index}
-                    rowCount={safeRows.length}
-                    onDragStart={reorder.handleDragStart}
-                    onDragMove={reorder.handleDragMove}
-                    onDragEnd={reorder.completeDrag}
-                    onDragCancel={reorder.completeDrag}
-                    onMoveUp={reorder.moveRowUp}
-                    onMoveDown={reorder.moveRowDown}
-                    onRemove={removeRow}
-                  />
+                  <div className="md:self-start">
+                    <RowReorderControls
+                      rowLabel="Address"
+                      rowGroup={rowGroup}
+                      rowIndex={index}
+                      rowCount={safeRows.length}
+                      onDragStart={reorder.handleDragStart}
+                      onDragMove={reorder.handleDragMove}
+                      onDragEnd={reorder.completeDrag}
+                      onDragCancel={reorder.completeDrag}
+                      onMoveUp={reorder.moveRowUp}
+                      onMoveDown={reorder.moveRowDown}
+                      onRemove={removeRow}
+                      showHandle={false}
+                    />
+                  </div>
                 </div>
                 {row.label === "custom" ? (
                   <input
