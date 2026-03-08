@@ -193,6 +193,10 @@ body {
     @apply inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:pointer-events-none disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:opacity-70;
   }
 
+  .btn-outline-accent {
+    @apply inline-flex items-center justify-center rounded-xl border border-teal-600 bg-white px-3 py-2 text-sm font-semibold text-teal-700 transition hover:border-teal-700 hover:bg-teal-50 hover:text-teal-800 disabled:cursor-not-allowed disabled:pointer-events-none disabled:border-teal-200 disabled:bg-slate-100 disabled:text-teal-300 disabled:opacity-70;
+  }
+
   .btn-outline-sm {
     @apply px-2.5 py-1 text-xs;
   }
@@ -221,6 +225,11 @@ body {
   :root.dark .btn-outline,
   :root[data-theme="dark"] .btn-outline {
     @apply border-zinc-600 bg-zinc-900 text-zinc-100 hover:border-zinc-500 hover:text-white disabled:border-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-500;
+  }
+
+  :root.dark .btn-outline-accent,
+  :root[data-theme="dark"] .btn-outline-accent {
+    @apply border-teal-700 bg-zinc-900 text-teal-300 hover:border-teal-600 hover:text-teal-200 disabled:border-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-500;
   }
 
   :root.dark .tab,

@@ -41,6 +41,23 @@ Common Davvy feature/runtime vars:
 - `ENABLE_CONTACT_MANAGEMENT`
 - `ENABLE_CONTACT_CHANGE_MODERATION`
 - `CONTACT_CHANGE_REQUEST_RETENTION_DAYS`
+- `ENABLE_AUTOMATED_BACKUPS`
+- `BACKUPS_LOCAL_ENABLED`
+- `BACKUPS_LOCAL_PATH`
+- `BACKUPS_S3_ENABLED`
+- `BACKUPS_S3_DISK`
+- `BACKUPS_S3_PREFIX`
+- `BACKUPS_SCHEDULE_TIMES`
+- `BACKUPS_TIMEZONE`
+- `BACKUPS_WEEKLY_DAY`
+- `BACKUPS_MONTHLY_DAY`
+- `BACKUPS_YEARLY_MONTH`
+- `BACKUPS_YEARLY_DAY`
+- `BACKUPS_RETENTION_DAILY`
+- `BACKUPS_RETENTION_WEEKLY`
+- `BACKUPS_RETENTION_MONTHLY`
+- `BACKUPS_RETENTION_YEARLY`
+- `RUN_SCHEDULER`
 - `DAV_LOG_CLIENT_TRAFFIC`
 - `CORS_ALLOWED_ORIGINS`
 - `CORS_ALLOWED_ORIGIN_PATTERNS`
@@ -57,6 +74,10 @@ Common Davvy feature/runtime vars:
 Note on `ENABLE_PUBLIC_REGISTRATION`:
 - Public registration is ultimately controlled by `app_settings` and admin toggles.
 - If seeding runs, public registration is initialized to disabled.
+
+Backup scheduler note:
+- When `RUN_SCHEDULER=true` (default), the container runs `php artisan schedule:work` for periodic jobs.
+- If you set `RUN_SCHEDULER=false`, you must run `php artisan schedule:run` externally every minute.
 
 ## Railway
 
