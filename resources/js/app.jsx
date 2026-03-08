@@ -1005,6 +1005,7 @@ function DashboardPage({ auth, theme }) {
                     >
                       <input
                         type="checkbox"
+                        className="mt-0.5 h-4 w-4 shrink-0 self-start"
                         checked={checked}
                         onChange={(event) => {
                           if (event.target.checked) {
