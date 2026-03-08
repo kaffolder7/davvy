@@ -3445,7 +3445,7 @@ function LabeledValueEditor({
           {addLabel}
         </button>
       </div>
-      <div className="mt-3 space-y-3">
+      <div className="mt-3 space-y-3 pr-6">
         {safeRows.length === 0 ? (
           <p className="text-sm text-app-faint">No entries.</p>
         ) : (
@@ -3458,29 +3458,29 @@ function LabeledValueEditor({
                 key={`${title}-${index}`}
                 data-reorder-index={index}
                 data-reorder-group={rowGroup}
-                className={`group/row rounded-xl border px-2 py-3 transition ${
+                className={`group/row relative rounded-xl border px-2 py-3 transition ${
                   rowIsDropTarget
                     ? "border-app-accent-edge ring-1 ring-teal-500/30"
                     : "border-app-edge"
                 } ${rowIsDragSource ? "opacity-70" : ""}`}
               >
-                <div className="grid items-center gap-2 md:grid-cols-[1.5rem_12rem_1fr_auto]">
-                  <div className="self-center">
-                    <RowReorderControls
-                      rowLabel={title}
-                      rowGroup={rowGroup}
-                      rowIndex={index}
-                      rowCount={safeRows.length}
-                      onDragStart={reorder.handleDragStart}
-                      onDragMove={reorder.handleDragMove}
-                      onDragEnd={reorder.completeDrag}
-                      onDragCancel={reorder.completeDrag}
-                      onMoveUp={reorder.moveRowUp}
-                      onMoveDown={reorder.moveRowDown}
-                      onRemove={removeRow}
-                      showActions={false}
-                    />
-                  </div>
+                <div className="absolute -right-6 top-1/2 -translate-y-1/2">
+                  <RowReorderControls
+                    rowLabel={title}
+                    rowGroup={rowGroup}
+                    rowIndex={index}
+                    rowCount={safeRows.length}
+                    onDragStart={reorder.handleDragStart}
+                    onDragMove={reorder.handleDragMove}
+                    onDragEnd={reorder.completeDrag}
+                    onDragCancel={reorder.completeDrag}
+                    onMoveUp={reorder.moveRowUp}
+                    onMoveDown={reorder.moveRowDown}
+                    onRemove={removeRow}
+                    showActions={false}
+                  />
+                </div>
+                <div className="grid items-center gap-2 md:grid-cols-[12rem_1fr_auto]">
                   <select
                     className="input"
                     value={row.label ?? "other"}
@@ -3573,7 +3573,7 @@ function AddressEditor({ rows, setRows }) {
           Add address
         </button>
       </div>
-      <div className="mt-3 space-y-3">
+      <div className="mt-3 space-y-3 pr-6">
         {safeRows.length === 0 ? (
           <p className="text-sm text-app-faint">No addresses.</p>
         ) : (
@@ -3586,29 +3586,29 @@ function AddressEditor({ rows, setRows }) {
                 key={`address-${index}`}
                 data-reorder-index={index}
                 data-reorder-group={rowGroup}
-                className={`group/row rounded-xl border px-2 py-3 transition ${
+                className={`group/row relative rounded-xl border px-2 py-3 transition ${
                   rowIsDropTarget
                     ? "border-app-accent-edge ring-1 ring-teal-500/30"
                     : "border-app-edge"
                 } ${rowIsDragSource ? "opacity-70" : ""}`}
               >
-                <div className="grid items-center gap-2 md:grid-cols-[1.5rem_12rem_1fr_auto]">
-                  <div className="self-center">
-                    <RowReorderControls
-                      rowLabel="Address"
-                      rowGroup={rowGroup}
-                      rowIndex={index}
-                      rowCount={safeRows.length}
-                      onDragStart={reorder.handleDragStart}
-                      onDragMove={reorder.handleDragMove}
-                      onDragEnd={reorder.completeDrag}
-                      onDragCancel={reorder.completeDrag}
-                      onMoveUp={reorder.moveRowUp}
-                      onMoveDown={reorder.moveRowDown}
-                      onRemove={removeRow}
-                      showActions={false}
-                    />
-                  </div>
+                <div className="absolute -right-6 top-1/2 -translate-y-1/2">
+                  <RowReorderControls
+                    rowLabel="Address"
+                    rowGroup={rowGroup}
+                    rowIndex={index}
+                    rowCount={safeRows.length}
+                    onDragStart={reorder.handleDragStart}
+                    onDragMove={reorder.handleDragMove}
+                    onDragEnd={reorder.completeDrag}
+                    onDragCancel={reorder.completeDrag}
+                    onMoveUp={reorder.moveRowUp}
+                    onMoveDown={reorder.moveRowDown}
+                    onRemove={removeRow}
+                    showActions={false}
+                  />
+                </div>
+                <div className="grid items-center gap-2 md:grid-cols-[12rem_1fr_auto]">
                   <select
                     className="input"
                     value={row.label ?? "home"}
