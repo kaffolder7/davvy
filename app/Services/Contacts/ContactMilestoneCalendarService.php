@@ -387,9 +387,10 @@ class ContactMilestoneCalendarService
         AddressBookContactMilestoneCalendar $setting,
         Calendar $calendar,
     ): void {
+        $generationYears = AppSetting::milestoneCalendarGenerationYears();
         $desiredObjects = $setting->milestone_type === AddressBookContactMilestoneCalendar::TYPE_BIRTHDAY
-            ? $this->desiredBirthdayEvents($addressBook)
-            : $this->desiredAnniversaryEvents($addressBook);
+            ? $this->desiredBirthdayEvents($addressBook, $generationYears)
+            : $this->desiredAnniversaryEvents($addressBook, $generationYears);
 
         $managedPrefix = $this->managedUriPrefix($setting->milestone_type);
 
@@ -477,7 +478,7 @@ class ContactMilestoneCalendarService
     /**
      * @return array<string, string>
      */
-    private function desiredBirthdayEvents(AddressBook $addressBook): array
+    private function desiredBirthdayEvents(AddressBook $addressBook, int $generationYears): array
     {
         $events = [];
 
@@ -496,23 +497,34 @@ class ContactMilestoneCalendarService
                 continue;
             }
 
-            $uri = $this->managedUri(
-                type: AddressBookContactMilestoneCalendar::TYPE_BIRTHDAY,
-                contactId: $contact->id,
-            );
-
-            $events[$uri] = $this->buildAnnualAllDayEvent(
-                uid: $this->managedUid(
+            foreach ($this->upcomingOccurrenceYears($dateParts, $generationYears) as $occurrenceYear) {
+                $yearSuffix = (string) $occurrenceYear;
+                $uri = $this->managedUri(
                     type: AddressBookContactMilestoneCalendar::TYPE_BIRTHDAY,
+                    contactId: $contact->id,
+                    suffix: $yearSuffix,
+                );
+
+                $events[$uri] = $this->buildAllDayEvent(
+                    uid: $this->managedUid(
+                        type: AddressBookContactMilestoneCalendar::TYPE_BIRTHDAY,
+                        addressBookId: $addressBook->id,
+                        contactId: $contact->id,
+                        suffix: $yearSuffix,
+                    ),
+                    summary: $this->birthdaySummary(
+                        contactName: $contactName,
+                        baseYear: $dateParts['year'],
+                        occurrenceYear: $occurrenceYear,
+                    ),
+                    year: $occurrenceYear,
+                    month: $dateParts['month'],
+                    day: $dateParts['day'],
                     addressBookId: $addressBook->id,
                     contactId: $contact->id,
-                ),
-                summary: $this->birthdaySummary($contactName),
-                dateParts: $dateParts,
-                addressBookId: $addressBook->id,
-                contactId: $contact->id,
-                milestoneType: AddressBookContactMilestoneCalendar::TYPE_BIRTHDAY,
-            );
+                    milestoneType: AddressBookContactMilestoneCalendar::TYPE_BIRTHDAY,
+                );
+            }
         }
 
         return $events;
@@ -521,7 +533,7 @@ class ContactMilestoneCalendarService
     /**
      * @return array<string, string>
      */
-    private function desiredAnniversaryEvents(AddressBook $addressBook): array
+    private function desiredAnniversaryEvents(AddressBook $addressBook, int $generationYears): array
     {
         $events = [];
 
@@ -539,27 +551,35 @@ class ContactMilestoneCalendarService
             $anniversaries = $this->anniversaryDates($payload);
 
             foreach ($anniversaries as $anniversary) {
-                $suffix = $anniversary['id'];
                 $dateParts = $anniversary['date_parts'];
-                $uri = $this->managedUri(
-                    type: AddressBookContactMilestoneCalendar::TYPE_ANNIVERSARY,
-                    contactId: $contact->id,
-                    suffix: $suffix,
-                );
-
-                $events[$uri] = $this->buildAnnualAllDayEvent(
-                    uid: $this->managedUid(
+                foreach ($this->upcomingOccurrenceYears($dateParts, $generationYears) as $occurrenceYear) {
+                    $suffix = $anniversary['id'].'-'.$occurrenceYear;
+                    $uri = $this->managedUri(
                         type: AddressBookContactMilestoneCalendar::TYPE_ANNIVERSARY,
-                        addressBookId: $addressBook->id,
                         contactId: $contact->id,
                         suffix: $suffix,
-                    ),
-                    summary: $this->anniversarySummary($contactName),
-                    dateParts: $dateParts,
-                    addressBookId: $addressBook->id,
-                    contactId: $contact->id,
-                    milestoneType: AddressBookContactMilestoneCalendar::TYPE_ANNIVERSARY,
-                );
+                    );
+
+                    $events[$uri] = $this->buildAllDayEvent(
+                        uid: $this->managedUid(
+                            type: AddressBookContactMilestoneCalendar::TYPE_ANNIVERSARY,
+                            addressBookId: $addressBook->id,
+                            contactId: $contact->id,
+                            suffix: $suffix,
+                        ),
+                        summary: $this->anniversarySummary(
+                            contactName: $contactName,
+                            baseYear: $dateParts['year'],
+                            occurrenceYear: $occurrenceYear,
+                        ),
+                        year: $occurrenceYear,
+                        month: $dateParts['month'],
+                        day: $dateParts['day'],
+                        addressBookId: $addressBook->id,
+                        contactId: $contact->id,
+                        milestoneType: AddressBookContactMilestoneCalendar::TYPE_ANNIVERSARY,
+                    );
+                }
             }
         }
 
@@ -657,23 +677,17 @@ class ContactMilestoneCalendarService
         ];
     }
 
-    /**
-     * @param  array{year:?int,month:int,day:int,effective_year:int}  $dateParts
-     */
-    private function buildAnnualAllDayEvent(
+    private function buildAllDayEvent(
         string $uid,
         string $summary,
-        array $dateParts,
+        int $year,
+        int $month,
+        int $day,
         int $addressBookId,
         int $contactId,
         string $milestoneType,
     ): string {
-        $dateValue = sprintf(
-            '%04d%02d%02d',
-            $dateParts['effective_year'],
-            $dateParts['month'],
-            $dateParts['day'],
-        );
+        $dateValue = sprintf('%04d%02d%02d', $year, $month, $day);
 
         $lines = [
             'BEGIN:VCALENDAR',
@@ -685,7 +699,6 @@ class ContactMilestoneCalendarService
             'DTSTAMP:'.now()->utc()->format('Ymd\THis\Z'),
             'SUMMARY:'.$this->escapeIcsText($summary),
             'DTSTART;VALUE=DATE:'.$dateValue,
-            'RRULE:FREQ=YEARLY',
             'TRANSP:TRANSPARENT',
             'X-DAVVY-SOURCE-ADDRESS-BOOK-ID:'.$addressBookId,
             'X-DAVVY-SOURCE-CONTACT-ID:'.$contactId,
@@ -698,14 +711,22 @@ class ContactMilestoneCalendarService
         return implode("\r\n", $lines);
     }
 
-    private function birthdaySummary(string $contactName): string
+    private function birthdaySummary(string $contactName, ?int $baseYear, int $occurrenceYear): string
     {
-        return '🎂 '.$contactName.'\'s Birthday';
+        $ordinal = $this->milestoneOrdinal($baseYear, $occurrenceYear);
+
+        return $ordinal !== null
+            ? '🎂 '.$contactName.'\'s '.$ordinal.' Birthday'
+            : '🎂 '.$contactName.'\'s Birthday';
     }
 
-    private function anniversarySummary(string $contactName): string
+    private function anniversarySummary(string $contactName, ?int $baseYear, int $occurrenceYear): string
     {
-        return '💍 '.$contactName.'\'s Anniversary';
+        $ordinal = $this->milestoneOrdinal($baseYear, $occurrenceYear);
+
+        return $ordinal !== null
+            ? '💍 '.$contactName.'\'s '.$ordinal.' Anniversary'
+            : '💍 '.$contactName.'\'s Anniversary';
     }
 
     private function contactMilestoneName(Contact $contact): ?string
@@ -725,6 +746,65 @@ class ContactMilestoneCalendarService
         }
 
         return $this->normalizeString($payload['company'] ?? null);
+    }
+
+    /**
+     * @param  array{year:?int,month:int,day:int,effective_year:int}  $dateParts
+     * @return array<int, int>
+     */
+    private function upcomingOccurrenceYears(array $dateParts, int $generationYears): array
+    {
+        $targetCount = max(1, $generationYears);
+        $today = now()->startOfDay();
+        $candidateYear = (int) $today->year;
+        $maxYear = $candidateYear + max(50, $targetCount * 6);
+        $years = [];
+
+        while ($candidateYear <= $maxYear && count($years) < $targetCount) {
+            if (! checkdate($dateParts['month'], $dateParts['day'], $candidateYear)) {
+                $candidateYear++;
+                continue;
+            }
+
+            $occurrenceDate = $today->copy()->setDate(
+                $candidateYear,
+                $dateParts['month'],
+                $dateParts['day'],
+            );
+            if ($occurrenceDate->lt($today)) {
+                $candidateYear++;
+                continue;
+            }
+
+            $years[] = $candidateYear;
+            $candidateYear++;
+        }
+
+        return $years;
+    }
+
+    private function milestoneOrdinal(?int $baseYear, int $occurrenceYear): ?string
+    {
+        if ($baseYear === null) {
+            return null;
+        }
+
+        $number = $occurrenceYear - $baseYear;
+        if ($number <= 0) {
+            return null;
+        }
+
+        $suffix = 'th';
+        if (! in_array($number % 100, [11, 12, 13], true)) {
+            $suffix = match ($number % 10) {
+                1 => 'st',
+                2 => 'nd',
+                3 => 'rd',
+                default => 'th',
+            };
+        }
+
+        return $number.$suffix;
     }
 
     private function managedUri(string $type, int $contactId, ?string $suffix = null): string

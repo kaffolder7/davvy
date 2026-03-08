@@ -98,6 +98,8 @@ Route::middleware('auth')->group(function (): void {
         Route::patch('/api/admin/settings/contact-change-moderation', [AdminController::class, 'setContactChangeModerationSetting']);
         Route::get('/api/admin/settings/contact-change-retention', [AdminController::class, 'contactChangeRequestRetentionSetting']);
         Route::patch('/api/admin/settings/contact-change-retention', [AdminController::class, 'setContactChangeRequestRetentionSetting']);
+        Route::get('/api/admin/settings/milestone-generation-years', [AdminController::class, 'milestoneGenerationYearsSetting']);
+        Route::patch('/api/admin/settings/milestone-generation-years', [AdminController::class, 'setMilestoneGenerationYearsSetting']);
         Route::get('/api/admin/settings/backups', [AdminController::class, 'backupSettings']);
         Route::patch('/api/admin/settings/backups', [AdminController::class, 'setBackupSettings']);
         Route::post('/api/admin/backups/run', [AdminController::class, 'runBackupNow']);

@@ -86,4 +86,19 @@ class RegistrationSettingsService
             ['value' => (string) $normalized, 'updated_by' => $actor?->id]
         );
     }
+
+    public function milestoneCalendarGenerationYears(): int
+    {
+        return AppSetting::milestoneCalendarGenerationYears();
+    }
+
+    public function setMilestoneCalendarGenerationYears(int $years, ?User $actor = null): void
+    {
+        $normalized = max(1, min(25, $years));
+
+        AppSetting::query()->updateOrCreate(
+            ['key' => 'milestone_calendar_generation_years'],
+            ['value' => (string) $normalized, 'updated_by' => $actor?->id]
+        );
+    }
 }

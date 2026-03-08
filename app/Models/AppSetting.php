@@ -69,6 +69,18 @@ class AppSetting extends Model
         );
     }
 
+    public static function milestoneCalendarGenerationYears(): int
+    {
+        $default = (int) config('services.contacts.milestone_calendar_generation_years', 3);
+
+        return self::integerSetting(
+            key: 'milestone_calendar_generation_years',
+            default: max(1, min(25, $default)),
+            min: 1,
+            max: 25,
+        );
+    }
+
     public static function milestonePurgeControlVisible(): bool
     {
         return self::booleanSetting(

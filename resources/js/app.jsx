@@ -4833,6 +4833,7 @@ function AdminPage({ auth, theme }) {
     contactManagementEnabled: auth.contactManagementEnabled,
     contactChangeModerationEnabled: auth.contactChangeModerationEnabled,
     contactChangeRetentionDays: 90,
+    milestoneGenerationYears: 3,
     milestonePurgeVisible: false,
     milestonePurgeAvailable: false,
     backupEnabled: false,
@@ -4871,6 +4872,8 @@ function AdminPage({ auth, theme }) {
     useState(false);
   const [milestonePurgeSummary, setMilestonePurgeSummary] = useState("");
   const [retentionSubmitting, setRetentionSubmitting] = useState(false);
+  const [milestoneGenerationSubmitting, setMilestoneGenerationSubmitting] =
+    useState(false);
   const [backupSaving, setBackupSaving] = useState(false);
   const [backupRunning, setBackupRunning] = useState(false);
   const [backupRestoring, setBackupRestoring] = useState(false);
@@ -4993,12 +4996,20 @@ function AdminPage({ auth, theme }) {
     setState((prev) => ({ ...prev, loading: true, error: "" }));
 
     try {
-      const [users, resources, shares, retention, backupSettings] =
+      const [
+        users,
+        resources,
+        shares,
+        retention,
+        milestoneGeneration,
+        backupSettings,
+      ] =
         await Promise.all([
           api.get("/api/admin/users"),
           api.get("/api/admin/resources"),
           api.get("/api/admin/shares"),
           api.get("/api/admin/settings/contact-change-retention"),
+          api.get("/api/admin/settings/milestone-generation-years"),
           api.get("/api/admin/settings/backups"),
         ]);
 
@@ -5027,6 +5038,7 @@ function AdminPage({ auth, theme }) {
         resources: resources.data,
         shares: shares.data.data,
         contactChangeRetentionDays: Number(retention.data?.days || 90),
+        milestoneGenerationYears: Number(milestoneGeneration.data?.years || 3),
         milestonePurgeVisible: !!resources.data?.milestone_purge_visible,
         milestonePurgeAvailable: !!resources.data?.milestone_purge_available,
         backupEnabled: !!backup.enabled,
@@ -5384,6 +5396,44 @@ function AdminPage({ auth, theme }) {
       }));
     } finally {
       setRetentionSubmitting(false);
+    }
+  };
+
+  const saveMilestoneGenerationYears = async () => {
+    const years = Number(state.milestoneGenerationYears);
+    if (!Number.isInteger(years) || years < 1 || years > 25) {
+      setState((prev) => ({
+        ...prev,
+        error: "Milestone generation years must be between 1 and 25.",
+      }));
+      return;
+    }
+
+    setMilestoneGenerationSubmitting(true);
+    setState((prev) => ({ ...prev, error: "" }));
+
+    try {
+      const response = await api.patch(
+        "/api/admin/settings/milestone-generation-years",
+        {
+          years,
+        },
+      );
+
+      setState((prev) => ({
+        ...prev,
+        milestoneGenerationYears: Number(response.data?.years || years),
+      }));
+    } catch (err) {
+      setState((prev) => ({
+        ...prev,
+        error: extractError(
+          err,
+          "Unable to update milestone generation years.",
+        ),
+      }));
+    } finally {
+      setMilestoneGenerationSubmitting(false);
     }
   };
 
@@ -5757,6 +5807,37 @@ function AdminPage({ auth, theme }) {
               </button>
             </div>
           </Field>
+          <div className="mt-4">
+            <Field label="Milestone generation horizon (years)">
+              <p className="mb-2 text-xs text-app-faint">
+                How many upcoming years of birthday/anniversary events are
+                generated.
+              </p>
+              <div className="flex flex-wrap items-end gap-2">
+                <input
+                  className="input w-40"
+                  type="number"
+                  min="1"
+                  max="25"
+                  value={state.milestoneGenerationYears}
+                  onChange={(event) =>
+                    setState((prev) => ({
+                      ...prev,
+                      milestoneGenerationYears: event.target.value,
+                    }))
+                  }
+                />
+                <button
+                  className="btn-outline btn-outline-sm"
+                  type="button"
+                  onClick={saveMilestoneGenerationYears}
+                  disabled={milestoneGenerationSubmitting}
+                >
+                  {milestoneGenerationSubmitting ? "Saving..." : "Save Horizon"}
+                </button>
+              </div>
+            </Field>
+          </div>
         </div>
         <div className="mt-6 rounded-2xl border border-app-edge bg-app-surface p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">

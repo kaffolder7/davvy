@@ -9,6 +9,7 @@ use App\Models\Calendar;
 use App\Models\CalendarObject;
 use App\Models\ContactChangeRequest;
 use App\Models\User;
+use App\Services\RegistrationSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -179,6 +180,102 @@ class AdminUserManagementTest extends TestCase
             'message',
             'Resolve or deny 1 unresolved review queue request(s) before disabling moderation.',
         );
+    }
+
+    public function test_admin_can_read_and_update_milestone_generation_years_setting(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->getJson('/api/admin/settings/milestone-generation-years')
+            ->assertOk()
+            ->assertJsonPath('years', 3);
+
+        $this->actingAs($admin)
+            ->patchJson('/api/admin/settings/milestone-generation-years', [
+                'years' => 5,
+            ])
+            ->assertOk()
+            ->assertJsonPath('years', 5);
+
+        $this->assertDatabaseHas('app_settings', [
+            'key' => 'milestone_calendar_generation_years',
+            'value' => '5',
+            'updated_by' => $admin->id,
+        ]);
+    }
+
+    public function test_milestone_generation_years_setting_validates_range(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->patchJson('/api/admin/settings/milestone-generation-years', [
+                'years' => 0,
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['years']);
+
+        $this->actingAs($admin)
+            ->patchJson('/api/admin/settings/milestone-generation-years', [
+                'years' => 26,
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['years']);
+    }
+
+    public function test_updating_milestone_generation_years_resyncs_enabled_milestone_calendars(): void
+    {
+        app(RegistrationSettingsService::class)->setContactManagementEnabled(true);
+
+        $admin = User::factory()->admin()->create();
+        $owner = User::factory()->create();
+        $addressBook = AddressBook::factory()->create([
+            'owner_id' => $owner->id,
+            'display_name' => 'Family',
+            'uri' => 'family',
+        ]);
+
+        $this->actingAs($owner)
+            ->postJson('/api/contacts', [
+                'first_name' => 'Alex',
+                'last_name' => 'Rivera',
+                'company' => '',
+                'exclude_milestone_calendars' => false,
+                'birthday' => [
+                    'year' => 1990,
+                    'month' => 6,
+                    'day' => 15,
+                ],
+                'dates' => [],
+                'phones' => [],
+                'emails' => [],
+                'urls' => [],
+                'addresses' => [],
+                'related_names' => [],
+                'instant_messages' => [],
+                'address_book_ids' => [$addressBook->id],
+            ])
+            ->assertCreated();
+
+        $enabled = $this->actingAs($owner)
+            ->patchJson('/api/address-books/'.$addressBook->id.'/milestone-calendars', [
+                'birthdays_enabled' => true,
+                'anniversaries_enabled' => false,
+            ])
+            ->assertOk();
+
+        $birthdayCalendarId = (int) $enabled->json('milestone_calendars.birthdays.calendar_id');
+        $this->assertCount(3, CalendarObject::query()->where('calendar_id', $birthdayCalendarId)->get());
+
+        $this->actingAs($admin)
+            ->patchJson('/api/admin/settings/milestone-generation-years', [
+                'years' => 5,
+            ])
+            ->assertOk()
+            ->assertJsonPath('years', 5);
+
+        $this->assertCount(5, CalendarObject::query()->where('calendar_id', $birthdayCalendarId)->get());
     }
 
     public function test_admin_resources_reports_milestone_purge_unavailable_without_enabled_or_generated_settings(): void
