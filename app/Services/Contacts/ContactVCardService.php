@@ -424,7 +424,7 @@ class ContactVCardService
                 continue;
             }
 
-            $rawLabel = strtolower($this->propertyParameterValue($property, 'X-ABLabel') ?? '');
+            $rawLabel = $this->appleDateLabelForProperty($component, $property) ?? '';
             if ($rawLabel === 'anniversary' || $rawLabel === 'other') {
                 $label = $rawLabel;
                 $customLabel = null;
@@ -476,6 +476,46 @@ class ContactVCardService
             'managed_contact_id' => $this->toInteger($this->firstPropertyValue($component, 'X-DAVVY-CONTACT-ID')),
             'managed_owner_id' => $this->toInteger($this->firstPropertyValue($component, 'X-DAVVY-CONTACT-OWNER')),
         ];
+    }
+
+    private function appleDateLabelForProperty(VCard $vCard, mixed $property): ?string
+    {
+        $parameterLabel = $this->normalizeAppleDateLabel(
+            $this->propertyParameterValue($property, 'X-ABLabel'),
+        );
+        if ($parameterLabel !== null) {
+            return $parameterLabel;
+        }
+
+        $group = $this->cleanString($property->group ?? null);
+        if ($group === null) {
+            return null;
+        }
+
+        foreach ($vCard->select('X-ABLABEL') as $labelProperty) {
+            $labelGroup = $this->cleanString($labelProperty->group ?? null);
+            if ($labelGroup === null || strcasecmp($labelGroup, $group) !== 0) {
+                continue;
+            }
+
+            return $this->normalizeAppleDateLabel((string) $labelProperty);
+        }
+
+        return null;
+    }
+
+    private function normalizeAppleDateLabel(?string $value): ?string
+    {
+        $label = strtolower(trim((string) ($value ?? '')));
+        if ($label === '') {
+            return null;
+        }
+
+        if (preg_match('/^_\\$!<(.+)>!\\$_$/', $label, $matches) === 1) {
+            $label = strtolower(trim($matches[1]));
+        }
+
+        return $label !== '' ? $label : null;
     }
 
     /**
