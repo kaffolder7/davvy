@@ -137,6 +137,22 @@ Fix:
 - Set a valid `APP_KEY` in environment/secrets for every deployment.
 - In production, use a unique secret key and do not reuse the local compose development key.
 
+### Coolify deploy fails with `Invalid template` or `/artifacts/build-time.env` parse error
+
+Typical errors:
+- `failed to read /artifacts/build-time.env: Invalid template: "..."`
+- Failure during Coolify `docker compose ... build` stage before containers start
+
+Common causes:
+- A Coolify UI environment variable value contains Compose-style template syntax (for example `${VAR:-default}` or nested `${...${...}}`)
+- A compose variable promoted to build args uses fallback/template syntax that Coolify cannot parse reliably
+
+Fix:
+- In Coolify, store environment variable values as literal values only (no `${...}` templates in UI values)
+- For variables commonly promoted by Coolify build args (`APP_URL`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`), prefer direct variables over nested/default template expressions
+- Remove stale/legacy template values from Coolify UI variables, save, then redeploy
+- If needed, trigger a no-cache rebuild after correcting variables
+
 ### Migrations/seeding race in replicas
 With PostgreSQL, startup uses advisory lock to serialize bootstrap.
 

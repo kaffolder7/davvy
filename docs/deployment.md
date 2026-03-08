@@ -100,16 +100,23 @@ See checklists:
 
 ## Coolify
 
-Davvy deploys to Coolify using the same production Dockerfile.
+Davvy supports two Coolify deployment patterns:
 
-Recommended flow:
-1. Create Application from repository Dockerfile.
-2. Provision or connect PostgreSQL.
-3. Set environment variables.
-4. Configure health check path `/up`.
-5. Deploy.
-6. Optionally scale replicas.
-7. Verify logs and endpoints as above.
+### Recommended: Docker Compose + Magic Variables
+
+Use repository `compose.yml` as the application definition.
+
+1. Create a Docker Compose application from this repository.
+2. Configure domain + HTTPS in Coolify.
+3. Configure health check path `/up`.
+4. Set required app/service variables (for example: `APP_KEY`, `SERVICE_URL_APP`, `POSTGRES_DB`, `SERVICE_USER_POSTGRES`, `SERVICE_PASSWORD_POSTGRES`).
+5. Keep Coolify UI variable values literal (avoid storing template expressions like `${VAR:-default}` in the UI).
+6. Deploy.
+7. Optionally scale app replicas; keep database topology intentional for your environment.
+
+### Alternative: Dockerfile-based App
+
+If you prefer a single-service application definition, you can still deploy from the repository `Dockerfile` and provide database connectivity via external/PostgreSQL service variables.
 
 See checklists:
 - [Release Checklist (Core)](./release-checklist-core.md)
