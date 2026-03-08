@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AddressBook;
 use App\Models\AppSetting;
+use App\Models\Card;
 use App\Models\Calendar;
 use App\Models\CalendarObject;
 use App\Models\User;
@@ -96,6 +97,79 @@ class ContactMilestoneCalendarTest extends TestCase
         $this->assertStringContainsString('SUMMARY:🎂 Alex Rivera\'s 36th Birthday', $birthdayData);
         $this->assertStringContainsString('X-DAVVY-MILESTONE-TYPE:ANNIVERSARY', $anniversaryData);
         $this->assertStringContainsString('SUMMARY:💍 Alex Rivera\'s 11th Anniversary', $anniversaryData);
+    }
+
+    public function test_enabling_milestones_backfills_legacy_cards_and_parses_apple_anniversary_labels(): void
+    {
+        $this->travelTo(Carbon::create(2026, 1, 15, 12, 0, 0, 'UTC'));
+
+        $user = User::factory()->create();
+        $addressBook = AddressBook::factory()->create([
+            'owner_id' => $user->id,
+            'display_name' => 'Family',
+            'uri' => 'family',
+        ]);
+
+        $uid = '7CA82058-5B9F-477B-AB0F-1F24DBEF89CF';
+        $cardData = implode("\r\n", [
+            'BEGIN:VCARD',
+            'VERSION:3.0',
+            'FN:Collin Affolder',
+            'N:Affolder;Collin;;;',
+            'ORG:First Bank of Berne;Business Banking',
+            'BDAY:1995-11-07',
+            'ITEM1.X-ABDATE:2018-09-23',
+            'ITEM1.X-ABLABEL:_$!<Anniversary>!$_',
+            'UID:'.$uid,
+            'END:VCARD',
+            '',
+        ]);
+
+        $card = Card::query()->create([
+            'address_book_id' => $addressBook->id,
+            'uri' => $uid.'.vcf',
+            'uid' => $uid,
+            'etag' => md5($cardData),
+            'size' => strlen($cardData),
+            'data' => $cardData,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->patchJson('/api/address-books/'.$addressBook->id.'/milestone-calendars', [
+                'birthdays_enabled' => true,
+                'anniversaries_enabled' => true,
+            ])
+            ->assertOk();
+
+        $birthdayCalendarId = (int) $response->json('milestone_calendars.birthdays.calendar_id');
+        $anniversaryCalendarId = (int) $response->json('milestone_calendars.anniversaries.calendar_id');
+
+        $this->assertDatabaseHas('contacts', [
+            'owner_id' => $user->id,
+            'uid' => $uid,
+            'full_name' => 'Collin Affolder',
+        ]);
+        $this->assertDatabaseHas('contact_address_book_assignments', [
+            'address_book_id' => $addressBook->id,
+            'card_id' => $card->id,
+            'card_uri' => $card->uri,
+        ]);
+
+        $birthdayData = CalendarObject::query()
+            ->where('calendar_id', $birthdayCalendarId)
+            ->get()
+            ->pluck('data')
+            ->implode("\n");
+        $anniversaryData = CalendarObject::query()
+            ->where('calendar_id', $anniversaryCalendarId)
+            ->get()
+            ->pluck('data')
+            ->implode("\n");
+
+        $this->assertSame(3, substr_count($birthdayData, 'BEGIN:VEVENT'));
+        $this->assertSame(3, substr_count($anniversaryData, 'BEGIN:VEVENT'));
+        $this->assertStringContainsString('SUMMARY:🎂 Collin Affolder\'s 31st Birthday', $birthdayData);
+        $this->assertStringContainsString('SUMMARY:💍 Collin Affolder\'s 8th Anniversary', $anniversaryData);
     }
 
     public function test_contacts_marked_to_exclude_milestones_are_skipped_from_generated_events(): void
