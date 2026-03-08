@@ -13,8 +13,9 @@ services:
       APP_ENV: ${APP_ENV:-production}
       APP_DEBUG: ${APP_DEBUG:-false}
       # APP_URL: ${APP_URL:-http://localhost:8080}
-      APP_URL: ${SERVICE_URL_APP:-http://localhost:8080}
+      # APP_URL: ${SERVICE_URL_APP:-http://localhost:8080}
       # APP_URL: ${SERVICE_URL_APP_8080:-http://localhost:8080}
+      APP_URL: ${SERVICE_URL_APP}
       # APP_HOST: ${SERVICE_FQDN_APP:-localhost}
       # APP_KEY: ${APP_KEY:-base64:MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=}
       # APP_KEY: ${SERVICE_BASE64_64_APP_KEY:?}
@@ -24,11 +25,14 @@ services:
       DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_DATABASE: ${POSTGRES_DB:-davvy}
+      # DB_DATABASE: ${POSTGRES_DB:-davvy}
+      DB_DATABASE: ${POSTGRES_DB}
       # DB_USERNAME: ${DB_USERNAME:-davvy}
-      DB_USERNAME: ${SERVICE_USER_POSTGRES:-davvy}
+      # DB_USERNAME: ${SERVICE_USER_POSTGRES:-davvy}
+      DB_USERNAME: ${SERVICE_USER_POSTGRES}
       # DB_PASSWORD: ${DB_PASSWORD:-secret}
-      DB_PASSWORD: ${SERVICE_PASSWORD_POSTGRES:?}
+      # DB_PASSWORD: ${SERVICE_PASSWORD_POSTGRES:?}
+      DB_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
 
       SESSION_DRIVER: ${SESSION_DRIVER:-database}
       SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-true}
