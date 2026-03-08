@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Davvy is a self-hosted CalDAV and CardDAV server with a modern web dashboard for managing calendars, contacts, sharing, and client compatibility."
+      content="Davvy is a self-hosted CalDAV and CardDAV server with a modern web dashboard for calendars, contacts, sharing, automated backup rotation, and restore import tooling."
     />
     <title>Davvy | Self-hosted CalDAV + CardDAV</title>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
@@ -126,7 +126,8 @@
               <p class="hero-subtitle">
                 A self-hosted CalDAV and CardDAV server with a modern web
                 dashboard. Manage calendars, contacts, sharing, and client
-                compatibility from one place.
+                compatibility, then protect everything with automated backup
+                rotation and one-click restore imports.
               </p>
               <div class="hero-actions">
                 <a
@@ -445,8 +446,38 @@
               <h3>Milestone calendars</h3>
               <p>
                 Auto-generate birthday and anniversary calendars from contact
-                data. Optional Apple compatibility mirroring improves
-                visibility in iOS and macOS.
+                data. Optional Apple compatibility mirroring improves visibility
+                in iOS and macOS.
+              </p>
+            </article>
+
+            <article class="feature-card reveal">
+              <div class="feature-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M12 2v6" />
+                  <path d="M12 16v6" />
+                  <path d="M4.93 4.93l4.24 4.24" />
+                  <path d="M14.83 14.83l4.24 4.24" />
+                  <path d="M2 12h6" />
+                  <path d="M16 12h6" />
+                  <path d="M4.93 19.07l4.24-4.24" />
+                  <path d="M14.83 9.17l4.24-4.24" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </div>
+              <h3>Automated backup + restore</h3>
+              <p>
+                Capture local and optional S3 snapshots with daily, weekly,
+                monthly, and yearly retention tiers, then restore from ZIP
+                archives in Admin Control Center.
               </p>
             </article>
 
@@ -631,6 +662,16 @@
                   <span class="config-key">Export formats</span>
                   <span class="config-value">ICS / VCF / ZIP</span>
                 </li>
+                <li class="config-item">
+                  <span class="config-key">Backup tiers</span>
+                  <span class="config-value"
+                    >Daily / Weekly / Monthly / Yearly</span
+                  >
+                </li>
+                <li class="config-item">
+                  <span class="config-key">Restore modes</span>
+                  <span class="config-value">Merge / Replace / Dry-run</span>
+                </li>
               </ul>
             </div>
           </div>
@@ -729,6 +770,23 @@
                   <line x1="4" y1="22" x2="4" y2="15" />
                 </svg>
                 Laravel 12 + React 18
+              </span>
+              <span class="open-source-stat">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M20 7h-9" />
+                  <path d="M14 17H5" />
+                  <circle cx="17" cy="17" r="3" />
+                  <circle cx="7" cy="7" r="3" />
+                </svg>
+                Built-in backup + restore
               </span>
             </div>
           </div>

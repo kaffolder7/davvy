@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Davvy feature overview: identity and access, sharing, managed contacts, interoperability, milestone calendars, and deployment controls."
+      content="avvy feature overview: identity and access, sharing, managed contacts, interoperability, automated backup rotation with restore tooling, and deployment controls."
     />
     <title>Features | Davvy</title>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
@@ -306,6 +306,45 @@
                 <span class="feature-tag">Preflight Checks</span>
                 <span class="feature-tag">Auth Throttling</span>
                 <span class="feature-tag">Docker-first</span>
+              </div>
+            </article>
+
+            <!-- Automated Backups -->
+            <article class="feature-card-large reveal">
+              <div class="feature-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M12 2v6" />
+                  <path d="M12 16v6" />
+                  <path d="M4.93 4.93l4.24 4.24" />
+                  <path d="M14.83 14.83l4.24 4.24" />
+                  <path d="M2 12h6" />
+                  <path d="M16 12h6" />
+                  <path d="M4.93 19.07l4.24-4.24" />
+                  <path d="M14.83 9.17l4.24-4.24" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </div>
+              <h3>Automated Backup + Restore</h3>
+              <p>
+                Built-in scheduled backup snapshots for calendars and address
+                books with retention strategy controls for daily, weekly,
+                monthly, and yearly tiers. Store locally, remotely on S3, or
+                both, then restore with merge/replace modes and dry-run
+                previews.
+              </p>
+              <div class="feature-details">
+                <span class="feature-tag">Run Now</span>
+                <span class="feature-tag">Schedule Windows</span>
+                <span class="feature-tag">Local + S3</span>
+                <span class="feature-tag">ZIP Restore Import</span>
               </div>
             </article>
 
