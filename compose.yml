@@ -18,11 +18,8 @@ services:
       DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: 5432
-      # DB_DATABASE: ${POSTGRES_DB:-davvy}
       DB_DATABASE: ${POSTGRES_DB}
-      # DB_USERNAME: ${SERVICE_USER_POSTGRES:-davvy}
       DB_USERNAME: ${SERVICE_USER_POSTGRES}
-      # DB_PASSWORD: ${SERVICE_PASSWORD_POSTGRES:?}
       DB_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
 
       SESSION_DRIVER: ${SESSION_DRIVER:-database}
@@ -80,7 +77,6 @@ services:
     #   - "5432:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-davvy}
-      # POSTGRES_USER: ${POSTGRES_USER:-davvy}
       POSTGRES_USER: ${SERVICE_USER_POSTGRES:-davvy}
       POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES:?}
     volumes:
