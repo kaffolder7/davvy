@@ -3305,6 +3305,8 @@ function RowReorderControls({
 }) {
   const canMoveUp = rowIndex > 0;
   const canMoveDown = rowIndex < rowCount - 1;
+  const iconControlClass =
+    "btn-outline btn-outline-sm !h-8 !w-8 !px-0 !py-0 opacity-0 transition-opacity duration-150 group-hover/row:opacity-100 group-focus-within/row:opacity-100";
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-1">
@@ -3334,22 +3336,46 @@ function RowReorderControls({
         </svg>
       </button>
       <button
-        className="btn-outline btn-outline-sm !px-2 !py-1"
+        className={iconControlClass}
         type="button"
         onClick={() => onMoveUp(rowIndex)}
         disabled={!canMoveUp}
         aria-label={`Move ${rowLabel} ${rowIndex + 1} up`}
+        title="Move up"
       >
-        Up
+        <svg
+          className="h-3.5 w-3.5"
+          viewBox="0 0 12 12"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M2.5 7.5L6 4l3.5 3.5" />
+        </svg>
       </button>
       <button
-        className="btn-outline btn-outline-sm !px-2 !py-1"
+        className={iconControlClass}
         type="button"
         onClick={() => onMoveDown(rowIndex)}
         disabled={!canMoveDown}
         aria-label={`Move ${rowLabel} ${rowIndex + 1} down`}
+        title="Move down"
       >
-        Down
+        <svg
+          className="h-3.5 w-3.5"
+          viewBox="0 0 12 12"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M2.5 4.5L6 8l3.5-3.5" />
+        </svg>
       </button>
       <button
         className="btn-outline btn-outline-sm"
@@ -3423,7 +3449,7 @@ function LabeledValueEditor({
                 key={`${title}-${index}`}
                 data-reorder-index={index}
                 data-reorder-group={rowGroup}
-                className={`rounded-xl border p-3 transition ${
+                className={`group/row rounded-xl border p-3 transition ${
                   rowIsDropTarget
                     ? "border-app-accent-edge ring-1 ring-teal-500/30"
                     : "border-app-edge"
@@ -3532,7 +3558,7 @@ function AddressEditor({ rows, setRows }) {
                 key={`address-${index}`}
                 data-reorder-index={index}
                 data-reorder-group={rowGroup}
-                className={`rounded-xl border p-3 transition ${
+                className={`group/row rounded-xl border p-3 transition ${
                   rowIsDropTarget
                     ? "border-app-accent-edge ring-1 ring-teal-500/30"
                     : "border-app-edge"
