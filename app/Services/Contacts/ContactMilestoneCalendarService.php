@@ -689,12 +689,22 @@ class ContactMilestoneCalendarService
 
     private function birthdaySummary(Contact $contact): string
     {
-        return $this->contactDisplayName($contact).'\'s Birthday';
+        return '🎂 '.$this->contactMilestoneName($contact).'\'s Birthday';
     }
 
     private function anniversarySummary(Contact $contact): string
     {
-        return $this->contactDisplayName($contact).' Anniversary';
+        return '💍 '.$this->contactMilestoneName($contact).'\'s Anniversary';
+    }
+
+    private function contactMilestoneName(Contact $contact): string
+    {
+        $payload = is_array($contact->payload) ? $contact->payload : [];
+        $firstName = $this->normalizeString($payload['first_name'] ?? null);
+        $lastName = $this->normalizeString($payload['last_name'] ?? null);
+        $name = trim(implode(' ', array_filter([$firstName, $lastName])));
+
+        return $name !== '' ? $name : $this->contactDisplayName($contact);
     }
 
     private function contactDisplayName(Contact $contact): string
