@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Davvy is a self-hosted CalDAV and CardDAV server with a modern web dashboard for calendars, contacts, sharing, automated backup rotation, and restore import tooling."
+    />
+    <title>Davvy | Self-hosted CalDAV + CardDAV</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=Space+Grotesk:wght@300..700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script>
+      (function () {
+        var k = "davvy-theme",
+          a = new Set(["system", "light", "dark"]);
+        try {
+          var r = window.localStorage.getItem(k);
+          var p = a.has(r) ? r : "system";
+          var v =
+            p === "system"
+              ? window.matchMedia &&
+                window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light"
+              : p;
+          document.documentElement.classList.toggle("dark", v === "dark");
+          document.documentElement.dataset.theme = v;
+          document.documentElement.style.colorScheme = v;
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="grain"></div>
+
+    <!-- ── Navigation ── -->
+    <nav class="nav">
+      <div class="nav-inner">
+        <a href="./" class="nav-logo">
+          <img src="./favicon.svg" width="28" height="28" alt="" />
+          <span>Davvy</span>
+        </a>
+        <div class="nav-links">
+          <a href="./features.html">Features</a>
+          <a
+            href="https://github.com/kaffolder7/davvy/tree/main/docs"
+            target="_blank"
+            rel="noreferrer"
+            >Docs</a
+          >
+          <button
+            id="theme-toggle"
+            type="button"
+            class="theme-toggle"
+            aria-label="Toggle theme"
+            title="Toggle theme"
+          >
+            <svg
+              id="theme-icon"
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" />
+            </svg>
+          </button>
+          <a
+            class="nav-github"
+            href="https://github.com/kaffolder7/davvy"
+            target="_blank"
+            rel="noreferrer"
+          >
+            GitHub
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M7 17l9.2-9.2M17 17V8H8" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <!-- ── Hero ── -->
+      <section class="hero">
+        <div class="container">
+          <div class="hero-grid">
+            <div class="hero-content">
+              <div class="hero-badge">
+                <a
+                  href="https://github.com/kaffolder7/davvy/blob/main/LICENSE"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >Source-Available &middot; DSAL-1.0</a
+                >
+              </div>
+              <h1 class="hero-title">
+                <span class="hero-title-line">Your calendars.</span>
+                <span class="hero-title-line">Your contacts.</span>
+                <span class="hero-title-line"><em>Your server.</em></span>
+              </h1>
+              <p class="hero-subtitle">
+                A self-hosted CalDAV and CardDAV server with a modern web
+                dashboard. Manage calendars, contacts, sharing, and client
+                compatibility, then protect everything with automated backup
+                rotation and one-click restore imports.
+              </p>
+              <div class="hero-actions">
+                <a
+                  class="btn-primary"
+                  href="https://github.com/kaffolder7/davvy#quick-start-docker-"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="4 17 10 11 4 5" />
+                    <line x1="12" y1="19" x2="20" y2="19" />
+                  </svg>
+                  Deploy with Docker
+                </a>
+                <a class="btn-ghost" href="./features.html">
+                  Explore Features
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            <div class="hero-visual">
+              <div class="terminal">
+                <div class="terminal-bar">
+                  <div class="terminal-dots">
+                    <span class="terminal-dot"></span>
+                    <span class="terminal-dot"></span>
+                    <span class="terminal-dot"></span>
+                  </div>
+                  <span class="terminal-title">Terminal</span>
+                  <span></span>
+                </div>
+                <div class="terminal-body">
+                  <span class="terminal-line"
+                    ><span class="prompt">$</span> docker compose up
+                    <span class="flag">-d</span></span
+                  >
+                  <span class="terminal-line output">[+] Running 2/2</span>
+                  <span class="terminal-line output"
+                    >&#10003; Network davvy_default Created</span
+                  >
+                  <span class="terminal-line output"
+                    >&#10003; Container davvy Started</span
+                  >
+                  <span class="terminal-line success"
+                    >Davvy running at
+                    <span class="value">localhost:8080</span></span
+                  >
+                  <span class="terminal-line"
+                    ><span class="prompt">$</span
+                    ><span class="terminal-cursor"></span
+                  ></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Compatible Clients ── -->
+      <section class="clients-strip">
+        <div class="container">
+          <p class="clients-label">Works with your existing clients</p>
+          <div class="clients-list">
+            <span class="client-item">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              Apple Calendar
+            </span>
+            <span class="client-separator"></span>
+            <span class="client-item">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+              Thunderbird
+            </span>
+            <span class="client-separator"></span>
+            <span class="client-item">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                <line x1="12" y1="18" x2="12.01" y2="18" />
+              </svg>
+              DAVx5
+            </span>
+            <span class="client-separator"></span>
+            <span class="client-item">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                <line x1="12" y1="18" x2="12.01" y2="18" />
+              </svg>
+              iOS &amp; macOS
+            </span>
+            <span class="client-separator"></span>
+            <span class="client-item">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+              Other DAV Clients
+            </span>
+            <span class="client-separator"></span>
+            <span class="client-item">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="2" y1="12" x2="22" y2="12" />
+                <path
+                  d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+                />
+              </svg>
+              Standards-based DAV Clients
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Features ── -->
+      <section class="features" id="features">
+        <div class="container">
+          <div class="section-header reveal">
+            <p class="section-kicker">Capabilities</p>
+            <h2 class="section-title">
+              Everything you need to run your own sync&nbsp;stack
+            </h2>
+            <p class="section-subtitle">
+              Built for day-2 operations. Not a demo.
+            </p>
+          </div>
+
+          <div class="features-grid reveal-stagger">
+            <article class="feature-card reveal">
+              <div class="feature-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <h3>Unified identity model</h3>
+              <p>
+                One account, two auth channels. Session-based web auth and DAV
+                basic auth share the same principals and roles.
+              </p>
+            </article>
+
+            <article class="feature-card reveal">
+              <div class="feature-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+              </div>
+              <h3>Granular sharing controls</h3>
+              <p>
+                Three permission levels&mdash;read-only, editor,
+                admin&mdash;enforced across web operations and DAV requests.
+              </p>
+            </article>
+
+            <article class="feature-card reveal">
+              <div class="feature-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="16 18 22 12 16 6" />
+                  <polyline points="8 6 2 12 8 18" />
+                </svg>
+              </div>
+              <h3>Strict-first validation</h3>
+              <p>
+                RFC-compliant payload validation by default with an
+                admin-controlled compatibility mode for legacy clients.
+              </p>
+            </article>
+
+            <article class="feature-card reveal">
+              <div class="feature-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </div>
+              <h3>Managed contacts</h3>
+              <p>
+                Optional managed contacts with bi-directional contact-to-vCard
+                sync. Optional moderation queues support cross-owner review
+                workflows.
+              </p>
+            </article>
+
+            <article class="feature-card reveal">
+              <div class="feature-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+              </div>
+              <h3>Milestone calendars</h3>
+              <p>
+                Auto-generate birthday and anniversary calendars from contact
+                data. Optional Apple compatibility mirroring improves visibility
+                in iOS and macOS.
+              </p>
+            </article>
+
+            <article class="feature-card reveal">
+              <div class="feature-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M12 2v6" />
+                  <path d="M12 16v6" />
+                  <path d="M4.93 4.93l4.24 4.24" />
+                  <path d="M14.83 14.83l4.24 4.24" />
+                  <path d="M2 12h6" />
+                  <path d="M16 12h6" />
+                  <path d="M4.93 19.07l4.24-4.24" />
+                  <path d="M14.83 9.17l4.24-4.24" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </div>
+              <h3>Automated backup + restore</h3>
+              <p>
+                Capture local and optional S3 snapshots with daily, weekly,
+                monthly, and yearly retention tiers, then restore from ZIP
+                archives in Admin Control Center.
+              </p>
+            </article>
+
+            <article class="feature-card reveal">
+              <div class="feature-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="3" />
+                  <path
+                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+                  />
+                </svg>
+              </div>
+              <h3>Admin control center</h3>
+              <p>
+                Feature flags, user management, cross-user share controls, and
+                queue retention&mdash;all from one dashboard.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── How It Works ── -->
+      <section class="how-it-works">
+        <div class="container">
+          <div class="section-header reveal">
+            <p class="section-kicker">Getting started</p>
+            <h2 class="section-title">Running in three&nbsp;steps</h2>
+          </div>
+
+          <div class="steps-grid">
+            <div class="step reveal">
+              <div class="step-number">1</div>
+              <h3>Deploy</h3>
+              <p>
+                Run the Docker image or deploy to Railway, Coolify, or any
+                container host.
+              </p>
+            </div>
+            <div class="step reveal">
+              <div class="step-number">2</div>
+              <h3>Create users</h3>
+              <p>
+                Each user gets a personal calendar and contacts collection
+                automatically.
+              </p>
+            </div>
+            <div class="step reveal">
+              <div class="step-number">3</div>
+              <h3>Connect clients</h3>
+              <p>
+                Connect standards-based CalDAV/CardDAV clients to your server.
+                Well-known autodiscovery and manual paths are both supported.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Connection Details ── -->
+      <section class="connection">
+        <div class="container">
+          <div class="connection-grid">
+            <div class="connection-content reveal">
+              <h2>Connect from <em>anywhere</em></h2>
+              <p>
+                Davvy exposes standard CalDAV and CardDAV endpoints with
+                well-known autodiscovery. Supported clients can autodiscover,
+                and manual DAV paths are documented when needed.
+              </p>
+              <div class="connection-details">
+                <div class="connection-detail">
+                  <div class="connection-detail-icon">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="2" y1="12" x2="22" y2="12" />
+                      <path
+                        d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <strong>Autodiscovery</strong>
+                    <span
+                      >Well-known redirects at
+                      <code>/.well-known/caldav</code> and
+                      <code>/.well-known/carddav</code></span
+                    >
+                  </div>
+                </div>
+                <div class="connection-detail">
+                  <div class="connection-detail-icon">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <strong>Same credentials</strong>
+                    <span
+                      >Use your Davvy account email and password in supported
+                      clients</span
+                    >
+                  </div>
+                </div>
+                <div class="connection-detail">
+                  <div class="connection-detail-icon">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <polyline points="23 4 23 10 17 10" />
+                      <polyline points="1 20 1 14 7 14" />
+                      <path
+                        d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <strong>Sync tokens</strong>
+                    <span
+                      >Incremental sync support for efficient client
+                      updates</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-card reveal">
+              <span class="config-card-label">Server details</span>
+              <ul class="config-list">
+                <li class="config-item">
+                  <span class="config-key">DAV endpoint</span>
+                  <span class="config-value">/dav</span>
+                </li>
+                <li class="config-item">
+                  <span class="config-key">Auth method</span>
+                  <span class="config-value">Basic Auth</span>
+                </li>
+                <li class="config-item">
+                  <span class="config-key">Docker port (quick start)</span>
+                  <span class="config-value">8080</span>
+                </li>
+                <li class="config-item">
+                  <span class="config-key">Health check</span>
+                  <span class="config-value">/up</span>
+                </li>
+                <li class="config-item">
+                  <span class="config-key">Engine</span>
+                  <span class="config-value">SabreDAV 4.x</span>
+                </li>
+                <li class="config-item">
+                  <span class="config-key">Export formats</span>
+                  <span class="config-value">ICS / VCF / ZIP</span>
+                </li>
+                <li class="config-item">
+                  <span class="config-key">Backup tiers</span>
+                  <span class="config-value"
+                    >Daily / Weekly / Monthly / Yearly</span
+                  >
+                </li>
+                <li class="config-item">
+                  <span class="config-key">Restore modes</span>
+                  <span class="config-value">Merge / Replace / Dry-run</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Source-Available CTA ── -->
+      <section class="open-source">
+        <div class="container">
+          <div class="open-source-card reveal">
+            <h2>Free and source-available</h2>
+            <p>
+              Davvy is licensed under the
+              <a
+                href="https://github.com/kaffolder7/davvy/blob/main/LICENSE"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Davvy Source-Available License 1.0 (DSAL-1.0)</a
+              >. Internal commercial use is allowed; resale and competing hosted
+              services require separate commercial terms.
+            </p>
+            <div class="open-source-actions">
+              <a
+                class="btn-primary"
+                href="https://github.com/kaffolder7/davvy"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+                  />
+                </svg>
+                View on GitHub
+              </a>
+              <a
+                class="btn-ghost"
+                href="https://github.com/kaffolder7/davvy/tree/main/docs"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Read the docs
+              </a>
+            </div>
+            <div class="open-source-meta">
+              <span class="open-source-stat">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                DSAL-1.0
+              </span>
+              <span class="open-source-stat">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+                  />
+                </svg>
+                Docker-first
+              </span>
+              <span class="open-source-stat">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"
+                  />
+                  <line x1="4" y1="22" x2="4" y2="15" />
+                </svg>
+                Laravel 12 + React 18
+              </span>
+              <span class="open-source-stat">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M20 7h-9" />
+                  <path d="M14 17H5" />
+                  <circle cx="17" cy="17" r="3" />
+                  <circle cx="7" cy="7" r="3" />
+                </svg>
+                Built-in backup + restore
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ── Footer ── -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-inner">
+          <div class="footer-left">
+            <img src="./favicon.svg" width="20" height="20" alt="" />
+            Davvy is source-available software under
+            <a
+              href="https://github.com/kaffolder7/davvy/blob/main/LICENSE"
+              target="_blank"
+              rel="noopener noreferrer"
+              >DSAL-1.0</a
+            >.
+          </div>
+          <div class="footer-links">
+            <a
+              href="https://github.com/kaffolder7/davvy"
+              target="_blank"
+              rel="noreferrer"
+              >GitHub</a
+            >
+            <a
+              href="https://github.com/kaffolder7/davvy/tree/main/docs"
+              target="_blank"
+              rel="noreferrer"
+              >Documentation</a
+            >
+            <a href="./features.html">Features</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
