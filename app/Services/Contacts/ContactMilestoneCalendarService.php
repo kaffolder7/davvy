@@ -491,6 +491,11 @@ class ContactMilestoneCalendarService
                 continue;
             }
 
+            $contactName = $this->contactMilestoneName($contact);
+            if ($contactName === null) {
+                continue;
+            }
+
             $uri = $this->managedUri(
                 type: AddressBookContactMilestoneCalendar::TYPE_BIRTHDAY,
                 contactId: $contact->id,
@@ -502,7 +507,7 @@ class ContactMilestoneCalendarService
                     addressBookId: $addressBook->id,
                     contactId: $contact->id,
                 ),
-                summary: $this->birthdaySummary($contact),
+                summary: $this->birthdaySummary($contactName),
                 dateParts: $dateParts,
                 addressBookId: $addressBook->id,
                 contactId: $contact->id,
@@ -525,6 +530,12 @@ class ContactMilestoneCalendarService
             if ($this->contactExcludedFromMilestones($payload)) {
                 continue;
             }
+
+            $contactName = $this->contactMilestoneName($contact);
+            if ($contactName === null) {
+                continue;
+            }
+
             $anniversaries = $this->anniversaryDates($payload);
 
             foreach ($anniversaries as $anniversary) {
@@ -543,7 +554,7 @@ class ContactMilestoneCalendarService
                         contactId: $contact->id,
                         suffix: $suffix,
                     ),
-                    summary: $this->anniversarySummary($contact),
+                    summary: $this->anniversarySummary($contactName),
                     dateParts: $dateParts,
                     addressBookId: $addressBook->id,
                     contactId: $contact->id,
@@ -687,49 +698,33 @@ class ContactMilestoneCalendarService
         return implode("\r\n", $lines);
     }
 
-    private function birthdaySummary(Contact $contact): string
+    private function birthdaySummary(string $contactName): string
     {
-        return '🎂 '.$this->contactMilestoneName($contact).'\'s Birthday';
+        return '🎂 '.$contactName.'\'s Birthday';
     }
 
-    private function anniversarySummary(Contact $contact): string
+    private function anniversarySummary(string $contactName): string
     {
-        return '💍 '.$this->contactMilestoneName($contact).'\'s Anniversary';
+        return '💍 '.$contactName.'\'s Anniversary';
     }
 
-    private function contactMilestoneName(Contact $contact): string
+    private function contactMilestoneName(Contact $contact): ?string
     {
+        $fullName = $this->normalizeString($contact->full_name);
+        if ($fullName !== null && strtolower($fullName) !== 'unnamed contact') {
+            return $fullName;
+        }
+
         $payload = is_array($contact->payload) ? $contact->payload : [];
         $firstName = $this->normalizeString($payload['first_name'] ?? null);
         $lastName = $this->normalizeString($payload['last_name'] ?? null);
         $name = trim(implode(' ', array_filter([$firstName, $lastName])));
 
-        return $name !== '' ? $name : $this->contactDisplayName($contact);
-    }
-
-    private function contactDisplayName(Contact $contact): string
-    {
-        $name = $this->normalizeString($contact->full_name);
-        if ($name !== null && strtolower($name) !== 'unnamed contact') {
+        if ($name !== '') {
             return $name;
         }
 
-        $payload = is_array($contact->payload) ? $contact->payload : [];
-        $firstName = $this->normalizeString($payload['first_name'] ?? null);
-        $lastName = $this->normalizeString($payload['last_name'] ?? null);
-        $company = $this->normalizeString($payload['company'] ?? null);
-
-        $fullName = trim(implode(' ', array_filter([$firstName, $lastName])));
-
-        if ($fullName !== '') {
-            return $fullName;
-        }
-
-        if ($company !== null) {
-            return $company;
-        }
-
-        return 'Contact '.$contact->id;
+        return $this->normalizeString($payload['company'] ?? null);
     }
 
     private function managedUri(string $type, int $contactId, ?string $suffix = null): string
