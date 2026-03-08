@@ -3,52 +3,79 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "${APP_BIND_ADDRESS:-127.0.0.1}:${APP_PORT:-}:8080"
+    # ports:
+    #   - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      APP_NAME: "${APP_NAME:-Davvy}"
-      APP_ENV: "${APP_ENV:-local}"
-      APP_DEBUG: "${APP_DEBUG:-true}"
-      APP_URL: "${SERVICE_URL_APP}"
-      APP_KEY: "${APP_KEY:-base64:MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=}"
-      DB_CONNECTION: "${DB_CONNECTION:-pgsql}"
-      DB_HOST: "${DB_HOST:-postgres}"
-      DB_PORT: "${DB_PORT:-5432}"
-      DB_DATABASE: "${POSTGRES_DB}"
-      DB_USERNAME: "${SERVICE_USER_POSTGRES}"
-      DB_PASSWORD: "${SERVICE_PASSWORD_POSTGRES}"
-      SESSION_DRIVER: "${SESSION_DRIVER:-database}"
-      CACHE_STORE: "${CACHE_STORE:-database}"
-      QUEUE_CONNECTION: "${QUEUE_CONNECTION:-database}"
-      RUN_DB_SEED: "${RUN_DB_SEED:-true}"
-      RUN_SCHEDULER: "${RUN_SCHEDULER:-true}"
-      ENABLE_PUBLIC_REGISTRATION: "${ENABLE_PUBLIC_REGISTRATION:-false}"
-      ENABLE_OWNER_SHARE_MANAGEMENT: "${ENABLE_OWNER_SHARE_MANAGEMENT:-true}"
-      ENABLE_DAV_COMPATIBILITY_MODE: "${ENABLE_DAV_COMPATIBILITY_MODE:-false}"
-      ENABLE_AUTOMATED_BACKUPS: "${ENABLE_AUTOMATED_BACKUPS:-false}"
-      BACKUPS_LOCAL_ENABLED: "${BACKUPS_LOCAL_ENABLED:-true}"
-      BACKUPS_LOCAL_PATH: "${BACKUPS_LOCAL_PATH:-/var/www/html/storage/app/backups}"
-      BACKUPS_S3_ENABLED: "${BACKUPS_S3_ENABLED:-false}"
-      BACKUPS_S3_DISK: "${BACKUPS_S3_DISK:-s3}"
-      BACKUPS_S3_PREFIX: "${BACKUPS_S3_PREFIX:-davvy-backups}"
-      BACKUPS_SCHEDULE_TIMES: "${BACKUPS_SCHEDULE_TIMES:-02:30}"
-      BACKUPS_TIMEZONE: "${BACKUPS_TIMEZONE:-UTC}"
-      BACKUPS_WEEKLY_DAY: "${BACKUPS_WEEKLY_DAY:-0}"
-      BACKUPS_MONTHLY_DAY: "${BACKUPS_MONTHLY_DAY:-1}"
-      BACKUPS_YEARLY_MONTH: "${BACKUPS_YEARLY_MONTH:-1}"
-      BACKUPS_YEARLY_DAY: "${BACKUPS_YEARLY_DAY:-1}"
-      BACKUPS_RETENTION_DAILY: "${BACKUPS_RETENTION_DAILY:-7}"
-      BACKUPS_RETENTION_WEEKLY: "${BACKUPS_RETENTION_WEEKLY:-4}"
-      BACKUPS_RETENTION_MONTHLY: "${BACKUPS_RETENTION_MONTHLY:-12}"
-      BACKUPS_RETENTION_YEARLY: "${BACKUPS_RETENTION_YEARLY:-3}"
-      DEFAULT_ADMIN_EMAIL: "${DEFAULT_ADMIN_EMAIL:-admin@davvy.local}"
-      DEFAULT_ADMIN_PASSWORD: "${DEFAULT_ADMIN_PASSWORD:-ChangeMe123!}"
-      TRUSTED_PROXIES: "${TRUSTED_PROXIES:-*}"
+      APP_NAME: ${APP_NAME:-Davvy}
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      # APP_URL: ${APP_URL:-http://localhost:8080}
+      APP_URL: ${SERVICE_URL_APP:-http://localhost:8080}
+      # APP_URL: ${SERVICE_URL_APP_8080:-http://localhost:8080}
+      # APP_HOST: ${SERVICE_FQDN_APP:-localhost}
+      # APP_KEY: ${APP_KEY:-base64:MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=}
+      # APP_KEY: ${SERVICE_BASE64_64_APP_KEY:?}
+      # APP_KEY: ${SERVICE_BASE64_64_APP_KEY:-base64:MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=}
+      APP_KEY: ${APP_KEY:?}
+
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${POSTGRES_DB:-davvy}
+      # DB_USERNAME: ${DB_USERNAME:-davvy}
+      DB_USERNAME: ${SERVICE_USER_POSTGRES:-davvy}
+      # DB_PASSWORD: ${DB_PASSWORD:-secret}
+      DB_PASSWORD: ${SERVICE_PASSWORD_POSTGRES:?}
+
+      SESSION_DRIVER: ${SESSION_DRIVER:-database}
+      SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-true}
+      SESSION_HTTP_ONLY: ${SESSION_HTTP_ONLY:-true}
+      SESSION_SAME_SITE: ${SESSION_SAME_SITE:-lax}
+      CACHE_STORE: ${CACHE_STORE:-database}
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
+
+      RUN_DB_SEED: ${RUN_DB_SEED:-false}
+      RUN_SCHEDULER: ${RUN_SCHEDULER:-true}
+
+      ENABLE_PUBLIC_REGISTRATION: ${ENABLE_PUBLIC_REGISTRATION:-false}
+      ENABLE_OWNER_SHARE_MANAGEMENT: ${ENABLE_OWNER_SHARE_MANAGEMENT:-true}
+      ENABLE_DAV_COMPATIBILITY_MODE: ${ENABLE_DAV_COMPATIBILITY_MODE:-false}
+
+      ENABLE_AUTOMATED_BACKUPS: ${ENABLE_AUTOMATED_BACKUPS:-false}
+      BACKUPS_LOCAL_ENABLED: ${BACKUPS_LOCAL_ENABLED:-true}
+      BACKUPS_LOCAL_PATH: ${BACKUPS_LOCAL_PATH:-/var/www/html/storage/app/backups}
+      BACKUPS_S3_ENABLED: ${BACKUPS_S3_ENABLED:-false}
+      BACKUPS_S3_DISK: ${BACKUPS_S3_DISK:-s3}
+      BACKUPS_S3_PREFIX: ${BACKUPS_S3_PREFIX:-davvy-backups}
+      BACKUPS_SCHEDULE_TIMES: ${BACKUPS_SCHEDULE_TIMES:-02:30}
+      BACKUPS_TIMEZONE: ${BACKUPS_TIMEZONE:-UTC}
+      BACKUPS_WEEKLY_DAY: ${BACKUPS_WEEKLY_DAY:-0}
+      BACKUPS_MONTHLY_DAY: ${BACKUPS_MONTHLY_DAY:-1}
+      BACKUPS_YEARLY_MONTH: ${BACKUPS_YEARLY_MONTH:-1}
+      BACKUPS_YEARLY_DAY: ${BACKUPS_YEARLY_DAY:-1}
+      BACKUPS_RETENTION_DAILY: ${BACKUPS_RETENTION_DAILY:-7}
+      BACKUPS_RETENTION_WEEKLY: ${BACKUPS_RETENTION_WEEKLY:-4}
+      BACKUPS_RETENTION_MONTHLY: ${BACKUPS_RETENTION_MONTHLY:-12}
+      BACKUPS_RETENTION_YEARLY: ${BACKUPS_RETENTION_YEARLY:-3}
+
+      # DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:?}
+      DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL}
+      # DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:?}
+      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD}
+
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-*}
+      PORT: ${PORT:-8080}
+    volumes:
+      - app_storage:/var/www/html/storage
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -T 2 -O /dev/null http://127.0.0.1:$${PORT:-8080}/up || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -T 2 -O /dev/null http://127.0.0.1:$${PORT:-8080}/up || exit 1",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -56,16 +83,22 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    ports:
-      - "${POSTGRES_BIND_ADDRESS:-127.0.0.1}:${POSTGRES_PORT:-}:5432"
+    # ports:
+    #   - "5432:5432"
     environment:
-      POSTGRES_DB: "${POSTGRES_DB:-davvy}"
-      POSTGRES_USER: "${SERVICE_USER_POSTGRES:-davvy}"
-      POSTGRES_PASSWORD: "${SERVICE_PASSWORD_POSTGRES:-secret}"
+      POSTGRES_DB: ${POSTGRES_DB:-davvy}
+      # POSTGRES_USER: ${POSTGRES_USER:-davvy}
+      POSTGRES_USER: ${SERVICE_USER_POSTGRES:-davvy}
+      # POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret}
+      POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES:?}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -h 127.0.0.1 -U $$POSTGRES_USER -d $$POSTGRES_DB",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -73,3 +106,4 @@ services:
 
 volumes:
   postgres_data:
+  app_storage:

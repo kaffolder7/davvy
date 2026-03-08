@@ -16,8 +16,8 @@ When an `app_settings` key exists, it overrides env defaults.
 
 | Variable | Default | Notes |
 | --- | --- | --- |
-| `APP_ENV` | `local` | Must be `production` in production |
-| `APP_DEBUG` | `true` (local) | Must be `false` in production |
+| `APP_ENV` | `production` | Can be set as `local` for local development |
+| `APP_DEBUG` | `false` (production) | May be set to `true` for local development |
 | `APP_KEY` | _(empty)_ | Required at runtime. In production it must be a unique secret and must not match the local compose development key. |
 | `APP_URL` | `http://localhost` | Must be HTTPS in production |
 | `TRUSTED_PROXIES` | _(empty)_ | Use `*` or explicit list behind reverse proxy |
@@ -39,7 +39,7 @@ When an `app_settings` key exists, it overrides env defaults.
 | `DB_USERNAME` | `davvy` | Required |
 | `DB_PASSWORD` | `secret` (local example) | Required |
 | `SESSION_DRIVER` | `database` | Recommended for multi-replica |
-| `SESSION_SECURE_COOKIE` | `false` local | Must be `true` in production |
+| `SESSION_SECURE_COOKIE` | `true` (production) | Set to `false` for local development |
 | `SESSION_HTTP_ONLY` | `true` | Recommended |
 | `SESSION_SAME_SITE` | `lax` | Recommended |
 

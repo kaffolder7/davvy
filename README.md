@@ -72,28 +72,28 @@ It is designed for:
 - [Release Checklist (Railway)](docs/release-checklist.md)
 - [Release Checklist (Coolify)](docs/release-checklist-coolify.md)
 
-## Quick Start (Docker) 🐳
+## Quick Start (Docker Compose) 🐳
 
-1. Start app + database:
+The repository `compose.yml` is tuned for production-style deployment (including Coolify magic variables).
+
+For local development, prefer the DDEV flow below. If you still want local Docker Compose:
+
+1. Provide required environment values (for example in `.env`):
+   - `APP_KEY=base64:<generated-key>`
+   - `SERVICE_URL_APP=http://localhost:8080`
+   - `SERVICE_USER_POSTGRES=<db-user>`
+   - `SERVICE_PASSWORD_POSTGRES=<db-password>`
+2. Optionally enable bootstrap admin creation:
+   - `RUN_DB_SEED=true`
+   - `DEFAULT_ADMIN_EMAIL=<admin email>`
+   - `DEFAULT_ADMIN_PASSWORD=<strong password>`
+3. Start app + database:
 
 ```bash
 docker compose up --build
 ```
 
-2. Open:
-- App UI: `http://localhost:8080`
-- Health: `http://localhost:8080/up`
-- DAV: `http://localhost:8080/dav`
-
-3. Default admin credentials from `compose.yml`:
-- Email: `admin@davvy.local`
-- Password: `ChangeMe123!`
-
-Notes 💡:
-- The default compose setup enables seed-on-start (`RUN_DB_SEED=true`).
-- The default compose setup includes a fixed local development `APP_KEY` for deterministic startup.
-- Do not reuse that local development `APP_KEY` for internet-facing production deployments.
-- If `DEFAULT_ADMIN_EMAIL` or `DEFAULT_ADMIN_PASSWORD` is empty, no bootstrap admin is created.
+If you need host-accessible ports locally, uncomment the `ports` mappings in `compose.yml`.
 
 ## Local Development (DDEV) 💻
 

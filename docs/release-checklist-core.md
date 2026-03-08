@@ -53,8 +53,8 @@ Set these in your app service environment.
 | `DAV_LOG_CLIENT_TRAFFIC` | `false` | Optional targeted DAV traffic debug logging |
 | `RUN_DB_MIGRATIONS` | `true` | Recommended; set `false` only if migrations run out-of-band |
 | `RUN_DB_SEED` | `false` | Secure default; opt-in only for bootstrap |
-| `DEFAULT_ADMIN_EMAIL` | *(empty)* | Set only when `RUN_DB_SEED=true` |
-| `DEFAULT_ADMIN_PASSWORD` | *(empty)* | Set only when `RUN_DB_SEED=true` |
+| `DEFAULT_ADMIN_EMAIL` | *(empty)* | Keep empty unless `RUN_DB_SEED=true` for one-time bootstrap |
+| `DEFAULT_ADMIN_PASSWORD` | *(empty)* | Keep empty unless `RUN_DB_SEED=true` for one-time bootstrap |
 
 ## 2. Optional One-Time Admin Bootstrap
 
@@ -66,7 +66,7 @@ If you want automatic admin creation via seeding:
    - `DEFAULT_ADMIN_PASSWORD=<strong random password>`
 2. Deploy once.
 3. Confirm admin login works.
-4. Set `RUN_DB_SEED=false` and remove `DEFAULT_ADMIN_PASSWORD`.
+4. Set `RUN_DB_SEED=false` and clear both `DEFAULT_ADMIN_EMAIL` and `DEFAULT_ADMIN_PASSWORD`.
 
 ## 3. Deploy Sanity Checks
 
