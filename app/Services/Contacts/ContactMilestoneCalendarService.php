@@ -6,9 +6,11 @@ use App\Enums\ShareResourceType;
 use App\Models\AddressBook;
 use App\Models\AddressBookContactMilestoneCalendar;
 use App\Models\AppSetting;
+use App\Models\Card;
 use App\Models\Calendar;
 use App\Models\CalendarObject;
 use App\Models\Contact;
+use App\Models\ContactAddressBookAssignment;
 use App\Models\User;
 use App\Services\Dav\DavSyncService;
 use App\Services\Dav\IcsValidator;
@@ -27,6 +29,7 @@ class ContactMilestoneCalendarService
     public function __construct(
         private readonly DavSyncService $syncService,
         private readonly IcsValidator $icsValidator,
+        private readonly ContactVCardService $contactVCardService,
     ) {}
 
     /**
@@ -283,6 +286,7 @@ class ContactMilestoneCalendarService
             }
 
             try {
+                $this->reconcileLegacyCardsForAddressBook($addressBook);
                 $calendar = $this->ensureCalendarForSetting($addressBook, $setting, $setting->milestone_type);
                 $setting->setRelation('calendar', $calendar);
                 $this->syncCalendarDisplayName($addressBook, $setting, $setting->milestone_type);
@@ -746,6 +750,115 @@ class ContactMilestoneCalendarService
         }
 
         return $this->normalizeString($payload['company'] ?? null);
+    }
+
+    private function reconcileLegacyCardsForAddressBook(AddressBook $addressBook): void
+    {
+        if (! Schema::hasTable('cards')) {
+            return;
+        }
+
+        $orphanCards = Card::query()
+            ->where('address_book_id', $addressBook->id)
+            ->whereNotExists(function ($query): void {
+                $query->select(DB::raw(1))
+                    ->from('contact_address_book_assignments')
+                    ->whereColumn('contact_address_book_assignments.card_id', 'cards.id');
+            })
+            ->orderBy('id')
+            ->get();
+
+        foreach ($orphanCards as $card) {
+            $this->upsertLegacyManagedContact($addressBook, $card);
+        }
+    }
+
+    private function upsertLegacyManagedContact(AddressBook $addressBook, Card $card): void
+    {
+        $parsed = $this->contactVCardService->parse($card->data);
+        if ($parsed === null) {
+            return;
+        }
+
+        $uid = $this->normalizeString($card->uid) ?? $this->normalizeString($parsed['uid'] ?? null);
+        if ($uid === null) {
+            return;
+        }
+
+        $payload = is_array($parsed['payload'] ?? null) ? $parsed['payload'] : [];
+        $fullName = $this->contactVCardService->displayName($payload);
+        $ownerId = (int) $addressBook->owner_id;
+        $hintContactId = $this->toInteger($parsed['managed_contact_id'] ?? null);
+
+        DB::transaction(function () use (
+            $addressBook,
+            $card,
+            $uid,
+            $payload,
+            $fullName,
+            $ownerId,
+            $hintContactId
+        ): void {
+            $targetContact = Contact::query()
+                ->where('owner_id', $ownerId)
+                ->where('uid', $uid)
+                ->first();
+
+            if ($targetContact === null && $hintContactId !== null) {
+                $targetContact = Contact::query()
+                    ->where('id', $hintContactId)
+                    ->where('owner_id', $ownerId)
+                    ->first();
+            }
+
+            if ($targetContact === null) {
+                $targetContact = Contact::query()->create([
+                    'owner_id' => $ownerId,
+                    'uid' => $uid,
+                    'full_name' => $fullName,
+                    'payload' => $payload,
+                ]);
+            } else {
+                if ($targetContact->uid !== $uid) {
+                    $conflict = Contact::query()
+                        ->where('owner_id', $ownerId)
+                        ->where('uid', $uid)
+                        ->where('id', '!=', $targetContact->id)
+                        ->first();
+
+                    if ($conflict) {
+                        $targetContact = $conflict;
+                    } else {
+                        $targetContact->uid = $uid;
+                    }
+                }
+
+                $targetContact->full_name = $fullName;
+                $targetContact->payload = $payload;
+                $targetContact->save();
+            }
+
+            $assignment = ContactAddressBookAssignment::query()
+                ->where('contact_id', $targetContact->id)
+                ->where('address_book_id', $addressBook->id)
+                ->first();
+
+            if ($assignment) {
+                $assignment->update([
+                    'card_id' => $card->id,
+                    'card_uri' => $card->uri,
+                ]);
+
+                return;
+            }
+
+            ContactAddressBookAssignment::query()->create([
+                'contact_id' => $targetContact->id,
+                'address_book_id' => $addressBook->id,
+                'card_id' => $card->id,
+                'card_uri' => $card->uri,
+            ]);
+        });
     }
 
     /**
