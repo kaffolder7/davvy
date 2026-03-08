@@ -1897,7 +1897,7 @@ function ContactsPage({ auth, theme }) {
 
   const loadContacts = async ({
     preserveSelection = true,
-    selectId = null,
+    selectId = undefined,
   } = {}) => {
     setError("");
     setLoading(true);
@@ -1915,13 +1915,22 @@ function ContactsPage({ auth, theme }) {
       setAddressBooks(nextAddressBooks);
 
       const fallbackIds = nextAddressBooks[0] ? [nextAddressBooks[0].id] : [];
-      const activeId =
-        selectId ??
-        (preserveSelection &&
+      const hasExplicitSelectId = selectId !== undefined;
+      const explicitContactId =
+        hasExplicitSelectId &&
+        selectId !== null &&
+        nextContacts.some((contact) => contact.id === selectId)
+          ? selectId
+          : null;
+      const preservedContactId =
+        preserveSelection &&
         selectedContactId &&
         nextContacts.some((contact) => contact.id === selectedContactId)
           ? selectedContactId
-          : (nextContacts[0]?.id ?? null));
+          : null;
+      const activeId = hasExplicitSelectId
+        ? explicitContactId
+        : preservedContactId;
 
       setSelectedContactId(activeId);
 
@@ -2016,14 +2025,15 @@ function ContactsPage({ auth, theme }) {
             "Change submitted for owner/admin approval.",
         );
         await loadContacts({
-          preserveSelection: true,
+          preserveSelection: false,
+          selectId: null,
         });
         return;
       }
 
       await loadContacts({
         preserveSelection: false,
-        selectId: response.data?.id ?? null,
+        selectId: null,
       });
     } catch (err) {
       if (await redirectIfFeatureDisabled(err)) {
