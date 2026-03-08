@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "${APP_PORT:-8080}:8080"
+      - "${APP_BIND_ADDRESS:-127.0.0.1}:${APP_PORT:-}:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -12,14 +12,14 @@ services:
       APP_NAME: "${APP_NAME:-Davvy}"
       APP_ENV: "${APP_ENV:-local}"
       APP_DEBUG: "${APP_DEBUG:-true}"
-      APP_URL: "${SERVICE_URL_APP_8080:-http://localhost:8080}"
+      APP_URL: "${APP_URL:-${SERVICE_URL_APP:-${SERVICE_URL_APP_8080:-http://localhost:8080}}}"
       APP_KEY: "${APP_KEY:-base64:MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=}"
       DB_CONNECTION: "${DB_CONNECTION:-pgsql}"
       DB_HOST: "${DB_HOST:-postgres}"
       DB_PORT: "${DB_PORT:-5432}"
-      DB_DATABASE: "${POSTGRES_DB:-davvy}"
-      DB_USERNAME: "${SERVICE_USER_POSTGRES:-davvy}"
-      DB_PASSWORD: "${SERVICE_PASSWORD_POSTGRES:-secret}"
+      DB_DATABASE: "${DB_DATABASE:-${POSTGRES_DB:-davvy}}"
+      DB_USERNAME: "${DB_USERNAME:-${SERVICE_USER_POSTGRES:-davvy}}"
+      DB_PASSWORD: "${DB_PASSWORD:-${SERVICE_PASSWORD_POSTGRES:-secret}}"
       SESSION_DRIVER: "${SESSION_DRIVER:-database}"
       CACHE_STORE: "${CACHE_STORE:-database}"
       QUEUE_CONNECTION: "${QUEUE_CONNECTION:-database}"
@@ -57,7 +57,7 @@ services:
   postgres:
     image: postgres:16-alpine
     ports:
-      - "${POSTGRES_BIND_ADDRESS:-127.0.0.1}:${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_BIND_ADDRESS:-127.0.0.1}:${POSTGRES_PORT:-}:5432"
     environment:
       POSTGRES_DB: "${POSTGRES_DB:-davvy}"
       POSTGRES_USER: "${SERVICE_USER_POSTGRES:-davvy}"
