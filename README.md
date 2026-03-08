@@ -1,7 +1,6 @@
 # Davvy ✨
 
-[![Lint & Format Checks](https://img.shields.io/github/actions/workflow/status/kaffolder7/davvy/lint-checks.yml?label=Lint%20%26%20Format%20Checks&logo=github)](https://github.com/kaffolder7/davvy/actions/workflows/lint-checks.yml) [![Release Image](https://img.shields.io/github/actions/workflow/status/kaffolder7/davvy/release-image.yml?label=Release%20Image&logo=github)](https://github.com/kaffolder7/davvy/actions/workflows/release-image.yml) [![Latest Release](https://img.shields.io/github/v/release/kaffolder7/davvy?label=Latest%20Release)](https://github.com/kaffolder7/davvy/releases/latest)
-<!--[![License](https://img.shields.io/github/license/kaffolder7/davvy)](https://github.com/kaffolder7/davvy/blob/main/LICENSE)-->
+[![Lint & Format Checks](https://img.shields.io/github/actions/workflow/status/kaffolder7/davvy/lint-checks.yml?label=Lint%20%26%20Format%20Checks&logo=github)](https://github.com/kaffolder7/davvy/actions/workflows/lint-checks.yml) [![Release Image](https://img.shields.io/github/actions/workflow/status/kaffolder7/davvy/release-image.yml?label=Release%20Image&logo=github)](https://github.com/kaffolder7/davvy/actions/workflows/release-image.yml) [![Latest Release](https://img.shields.io/github/v/release/kaffolder7/davvy?label=Latest%20Release)](https://github.com/kaffolder7/davvy/releases/latest) [![license](https://img.shields.io/badge/license-DSAL--1.0-lightgrey)](https://github.com/kaffolder7/davvy/blob/main/LICENSE)
 
 Davvy is a Laravel + React app that combines a web admin/dashboard experience with a built-in SabreDAV CalDAV/CardDAV server.
 
