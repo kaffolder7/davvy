@@ -33,6 +33,23 @@ Set these in your app service environment.
 | `ENABLE_CONTACT_MANAGEMENT` | `false` | Secure default for gated contacts UI/API |
 | `ENABLE_CONTACT_CHANGE_MODERATION` | `false` | Default-off moderation mode for collaborative deployments |
 | `CONTACT_CHANGE_REQUEST_RETENTION_DAYS` | `90` | Queue history purge horizon for applied/denied requests |
+| `ENABLE_AUTOMATED_BACKUPS` | `false` | Enable scheduled local/S3 backup rotation |
+| `BACKUPS_LOCAL_ENABLED` | `true` | Keep local backup destination enabled unless intentionally remote-only |
+| `BACKUPS_LOCAL_PATH` | `/var/www/html/storage/app/backups` | Local backup root path in container |
+| `BACKUPS_S3_ENABLED` | `false` | Enable when remote S3 backup upload is desired |
+| `BACKUPS_S3_DISK` | `s3` | Laravel filesystem disk used for remote backups |
+| `BACKUPS_S3_PREFIX` | `davvy-backups` | S3 key prefix for snapshots |
+| `BACKUPS_SCHEDULE_TIMES` | `02:30` | One or more comma-separated `HH:MM` backup windows |
+| `BACKUPS_TIMEZONE` | `UTC` | Timezone used for backup schedule + rotation boundaries |
+| `BACKUPS_WEEKLY_DAY` | `0` | Weekly anchor day (`0=Sunday`) |
+| `BACKUPS_MONTHLY_DAY` | `1` | Monthly anchor day |
+| `BACKUPS_YEARLY_MONTH` | `1` | Yearly anchor month |
+| `BACKUPS_YEARLY_DAY` | `1` | Yearly anchor day |
+| `BACKUPS_RETENTION_DAILY` | `7` | Daily snapshots retained |
+| `BACKUPS_RETENTION_WEEKLY` | `4` | Weekly snapshots retained |
+| `BACKUPS_RETENTION_MONTHLY` | `12` | Monthly snapshots retained |
+| `BACKUPS_RETENTION_YEARLY` | `3` | Yearly snapshots retained |
+| `RUN_SCHEDULER` | `true` | Runs Laravel scheduler worker in container |
 | `DAV_LOG_CLIENT_TRAFFIC` | `false` | Optional targeted DAV traffic debug logging |
 | `RUN_DB_MIGRATIONS` | `true` | Recommended; set `false` only if migrations run out-of-band |
 | `RUN_DB_SEED` | `false` | Secure default; opt-in only for bootstrap |
@@ -66,6 +83,7 @@ If you want automatic admin creation via seeding:
    - `/dav`
 7. DB migrations are applied successfully (no pending migration errors).
 8. If replicas > 1, logs show advisory-lock serialization during startup and no migration race errors.
+9. If automated backups are enabled, confirm scheduler is running (`RUN_SCHEDULER=true` or external `schedule:run`).
 
 ## 4. Post-Deploy Security Quick Check
 

@@ -73,6 +73,23 @@ Runtime toggles are read from `app_settings` (with env defaults if unset):
 - `contact_management_enabled`
 - `contact_change_moderation_enabled`
 - `contact_change_request_retention_days`
+- backup automation keys:
+  - `backups_enabled`
+  - `backup_local_enabled`
+  - `backup_local_path`
+  - `backup_s3_enabled`
+  - `backup_s3_disk`
+  - `backup_s3_prefix`
+  - `backup_schedule_times`
+  - `backup_timezone`
+  - `backup_weekly_day`
+  - `backup_monthly_day`
+  - `backup_yearly_month`
+  - `backup_yearly_day`
+  - `backup_retention_daily`
+  - `backup_retention_weekly`
+  - `backup_retention_monthly`
+  - `backup_retention_yearly`
 
 ## Key Workflows
 
@@ -110,6 +127,19 @@ Runtime toggles are read from `app_settings` (with env defaults if unset):
 - Mirrored cards include internal metadata properties for round-trip sync.
 - Edits to mirrored cards can propagate back to source when permitted.
 
+### Automated Backup Rotation
+- Scheduled command `app:backup` runs every minute via Laravel scheduler and only executes on matching configured backup windows.
+- Backup archives include all calendars (`.ics`) and address books (`.vcf`) plus a `manifest.json`.
+- Strategy supports rotating tiers (`daily`, `weekly`, `monthly`, `yearly`) with independently configurable retention.
+- Destinations:
+  - local filesystem directory
+  - optional remote storage via configured Laravel disk (default `s3`)
+- Admins can run manual backup jobs from Admin Control Center.
+- Restore pipeline reads the backup ZIP directly, validates ICS/vCard payloads, and supports `merge` or `replace` modes with optional dry-run previews.
+- Restore entry points:
+  - CLI: `php artisan app:backup:restore {archive} [--mode=merge|replace] [--dry-run] [--fallback-owner-id=...]`
+  - Admin API/UI: `POST /api/admin/backups/restore` + Admin Control Center import flow
+
 ## Operational Hardening
 
 - Auth endpoint rate limits:
@@ -118,6 +148,7 @@ Runtime toggles are read from `app_settings` (with env defaults if unset):
   - password change
 - Preflight command (`app:preflight`) enforces production safety checks.
 - Startup DB bootstrap on PostgreSQL uses advisory lock for replica-safe migrations/seeding.
+- Runtime can start Laravel scheduler worker (`RUN_SCHEDULER=true`) for periodic jobs.
 
 ## Notable Design Choices
 

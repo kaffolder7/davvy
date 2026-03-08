@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   BrowserRouter,
@@ -112,6 +112,216 @@ async function downloadExport(url, fallbackName) {
 const THEME_STORAGE_KEY = "davvy-theme";
 const VALID_THEMES = new Set(["system", "light", "dark"]);
 const MILESTONE_PURGE_SUMMARY_AUTO_HIDE_MS = 6000;
+const BACKUP_RUN_TOAST_AUTO_HIDE_MS = 3200;
+const BACKUP_DRAWER_ANIMATION_MS = 220;
+const WEEKDAY_OPTIONS = [
+  { value: 0, label: "Sunday" },
+  { value: 1, label: "Monday" },
+  { value: 2, label: "Tuesday" },
+  { value: 3, label: "Wednesday" },
+  { value: 4, label: "Thursday" },
+  { value: 5, label: "Friday" },
+  { value: 6, label: "Saturday" },
+];
+const MONTH_OPTIONS = [
+  { value: 1, label: "January" },
+  { value: 2, label: "February" },
+  { value: 3, label: "March" },
+  { value: 4, label: "April" },
+  { value: 5, label: "May" },
+  { value: 6, label: "June" },
+  { value: 7, label: "July" },
+  { value: 8, label: "August" },
+  { value: 9, label: "September" },
+  { value: 10, label: "October" },
+  { value: 11, label: "November" },
+  { value: 12, label: "December" },
+];
+const RECOMMENDED_BACKUP_RETENTION = {
+  daily: 7,
+  weekly: 4,
+  monthly: 12,
+  yearly: 3,
+};
+
+function formatUtcOffset(offsetMinutes) {
+  const sign = offsetMinutes >= 0 ? "+" : "-";
+  const absolute = Math.abs(offsetMinutes);
+  const hours = String(Math.floor(absolute / 60)).padStart(2, "0");
+  const minutes = String(absolute % 60).padStart(2, "0");
+
+  return `UTC${sign}${hours}:${minutes}`;
+}
+
+function timezoneOffsetMinutes(timeZone, referenceDate = new Date()) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  });
+
+  const parts = formatter.formatToParts(referenceDate);
+  const values = Object.create(null);
+  for (const part of parts) {
+    if (part.type !== "literal") {
+      values[part.type] = part.value;
+    }
+  }
+
+  const asUtcTimestamp = Date.UTC(
+    Number(values.year),
+    Number(values.month) - 1,
+    Number(values.day),
+    Number(values.hour),
+    Number(values.minute),
+    Number(values.second),
+  );
+
+  return Math.round((asUtcTimestamp - referenceDate.getTime()) / 60000);
+}
+
+function formatTimezoneDisplayName(timeZone) {
+  return timeZone.replace(/_/g, " ");
+}
+
+function buildTimezoneGroups(referenceDate = new Date()) {
+  let names = ["UTC"];
+
+  if (typeof Intl?.supportedValuesOf === "function") {
+    try {
+      names = Array.from(
+        new Set(["UTC", ...Intl.supportedValuesOf("timeZone")]),
+      );
+    } catch {
+      names = ["UTC"];
+    }
+  }
+
+  const options = names
+    .map((timeZone) => {
+      try {
+        const offset = timezoneOffsetMinutes(timeZone, referenceDate);
+        return {
+          value: timeZone,
+          offset,
+          region: timeZone.includes("/") ? timeZone.split("/")[0] : "Global",
+          label: `(${formatUtcOffset(offset)}) ${formatTimezoneDisplayName(
+            timeZone,
+          )}`,
+        };
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean)
+    .sort(
+      (a, b) =>
+        a.offset - b.offset ||
+        a.region.localeCompare(b.region) ||
+        a.value.localeCompare(b.value),
+    );
+
+  const map = new Map();
+  for (const option of options) {
+    if (!map.has(option.region)) {
+      map.set(option.region, []);
+    }
+
+    map.get(option.region).push(option);
+  }
+
+  return Array.from(map.entries())
+    .map(([region, values]) => ({
+      region,
+      minOffset: values[0]?.offset ?? 0,
+      options: values,
+    }))
+    .sort(
+      (a, b) => a.minOffset - b.minOffset || a.region.localeCompare(b.region),
+    );
+}
+
+function parseBackupScheduleTimes(value) {
+  const parsed = String(value ?? "")
+    .split(/[,\n]/g)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .filter((item) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(item));
+
+  return Array.from(new Set(parsed)).sort();
+}
+
+function isRecommendedBackupRetention({ daily, weekly, monthly, yearly }) {
+  return (
+    Number(daily) === RECOMMENDED_BACKUP_RETENTION.daily &&
+    Number(weekly) === RECOMMENDED_BACKUP_RETENTION.weekly &&
+    Number(monthly) === RECOMMENDED_BACKUP_RETENTION.monthly &&
+    Number(yearly) === RECOMMENDED_BACKUP_RETENTION.yearly
+  );
+}
+
+function normalizeBackupConfigSnapshot(snapshot) {
+  if (!snapshot) {
+    return null;
+  }
+
+  return {
+    backupEnabled: !!snapshot.backupEnabled,
+    backupLocalEnabled: !!snapshot.backupLocalEnabled,
+    backupLocalPath: String(snapshot.backupLocalPath ?? ""),
+    backupS3Enabled: !!snapshot.backupS3Enabled,
+    backupS3Disk: String(snapshot.backupS3Disk ?? ""),
+    backupS3Prefix: String(snapshot.backupS3Prefix ?? ""),
+    backupTimezone: String(snapshot.backupTimezone ?? ""),
+    backupScheduleTimes: parseBackupScheduleTimes(
+      snapshot.backupScheduleTimes,
+    ).join(","),
+    backupWeeklyDay: Number(snapshot.backupWeeklyDay ?? 0),
+    backupMonthlyDay: Number(snapshot.backupMonthlyDay ?? 1),
+    backupYearlyMonth: Number(snapshot.backupYearlyMonth ?? 1),
+    backupYearlyDay: Number(snapshot.backupYearlyDay ?? 1),
+    backupRetentionDaily: Number(snapshot.backupRetentionDaily ?? 0),
+    backupRetentionWeekly: Number(snapshot.backupRetentionWeekly ?? 0),
+    backupRetentionMonthly: Number(snapshot.backupRetentionMonthly ?? 0),
+    backupRetentionYearly: Number(snapshot.backupRetentionYearly ?? 0),
+    backupRetentionPreset: String(snapshot.backupRetentionPreset ?? ""),
+  };
+}
+
+function areBackupConfigSnapshotsEqual(left, right) {
+  const normalizedLeft = normalizeBackupConfigSnapshot(left);
+  const normalizedRight = normalizeBackupConfigSnapshot(right);
+
+  if (!normalizedLeft || !normalizedRight) {
+    return normalizedLeft === normalizedRight;
+  }
+
+  for (const key of Object.keys(normalizedLeft)) {
+    if (normalizedLeft[key] !== normalizedRight[key]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function formatAdminTimestamp(value) {
+  if (!value) {
+    return "Never";
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "Invalid timestamp";
+  }
+
+  return parsed.toLocaleString();
+}
 
 function getSystemTheme() {
   if (typeof window === "undefined" || !window.matchMedia) {
@@ -1005,6 +1215,7 @@ function DashboardPage({ auth, theme }) {
                     >
                       <input
                         type="checkbox"
+                        className="mt-0.5 h-4 w-4 shrink-0 self-start"
                         checked={checked}
                         onChange={(event) => {
                           if (event.target.checked) {
@@ -4267,6 +4478,25 @@ function AdminPage({ auth, theme }) {
     contactChangeRetentionDays: 90,
     milestonePurgeVisible: false,
     milestonePurgeAvailable: false,
+    backupEnabled: false,
+    backupLocalEnabled: true,
+    backupLocalPath: "",
+    backupS3Enabled: false,
+    backupS3Disk: "s3",
+    backupS3Prefix: "davvy-backups",
+    backupTimezone: "UTC",
+    backupScheduleTimes: "02:30",
+    backupWeeklyDay: 0,
+    backupMonthlyDay: 1,
+    backupYearlyMonth: 1,
+    backupYearlyDay: 1,
+    backupRetentionDaily: 7,
+    backupRetentionWeekly: 4,
+    backupRetentionMonthly: 12,
+    backupRetentionYearly: 3,
+    backupLastRunAt: null,
+    backupLastRunStatus: null,
+    backupLastRunMessage: "",
   });
   const [userForm, setUserForm] = useState({
     name: "",
@@ -4284,17 +4514,154 @@ function AdminPage({ auth, theme }) {
     useState(false);
   const [milestonePurgeSummary, setMilestonePurgeSummary] = useState("");
   const [retentionSubmitting, setRetentionSubmitting] = useState(false);
+  const [backupSaving, setBackupSaving] = useState(false);
+  const [backupRunning, setBackupRunning] = useState(false);
+  const [backupRestoring, setBackupRestoring] = useState(false);
+  const [backupRestoreMode, setBackupRestoreMode] = useState("merge");
+  const [backupRestoreDryRun, setBackupRestoreDryRun] = useState(false);
+  const [backupRestoreFile, setBackupRestoreFile] = useState(null);
+  const [backupRestoreResult, setBackupRestoreResult] = useState(null);
+  const [backupRestoreOpen, setBackupRestoreOpen] = useState(false);
+  const [backupRestoreRendered, setBackupRestoreRendered] = useState(false);
+  const [backupRunToast, setBackupRunToast] = useState(null);
+  const [backupConfigOpen, setBackupConfigOpen] = useState(false);
+  const [backupConfigRendered, setBackupConfigRendered] = useState(false);
+  const [backupAdvancedOpen, setBackupAdvancedOpen] = useState(false);
+  const [backupRetentionPreset, setBackupRetentionPreset] =
+    useState("recommended");
+  const backupConfigOpenFrameRef = useRef(null);
+  const backupRestoreOpenFrameRef = useRef(null);
+  const backupConfigSnapshotRef = useRef(null);
+
+  const captureBackupConfigSnapshot = () => ({
+    backupEnabled: state.backupEnabled,
+    backupLocalEnabled: state.backupLocalEnabled,
+    backupLocalPath: state.backupLocalPath,
+    backupS3Enabled: state.backupS3Enabled,
+    backupS3Disk: state.backupS3Disk,
+    backupS3Prefix: state.backupS3Prefix,
+    backupTimezone: state.backupTimezone,
+    backupScheduleTimes: state.backupScheduleTimes,
+    backupWeeklyDay: state.backupWeeklyDay,
+    backupMonthlyDay: state.backupMonthlyDay,
+    backupYearlyMonth: state.backupYearlyMonth,
+    backupYearlyDay: state.backupYearlyDay,
+    backupRetentionDaily: state.backupRetentionDaily,
+    backupRetentionWeekly: state.backupRetentionWeekly,
+    backupRetentionMonthly: state.backupRetentionMonthly,
+    backupRetentionYearly: state.backupRetentionYearly,
+    backupRetentionPreset,
+  });
+
+  const restoreBackupConfigSnapshot = (snapshot) => {
+    if (!snapshot) {
+      return;
+    }
+
+    const { backupRetentionPreset: nextRetentionPreset, ...snapshotState } =
+      snapshot;
+
+    setBackupRetentionPreset(nextRetentionPreset);
+    setState((prev) => ({
+      ...prev,
+      ...snapshotState,
+    }));
+  };
+
+  const closeBackupConfigDrawer = ({ discardChanges = true } = {}) => {
+    if (backupConfigOpenFrameRef.current !== null) {
+      window.cancelAnimationFrame(backupConfigOpenFrameRef.current);
+      backupConfigOpenFrameRef.current = null;
+    }
+
+    if (discardChanges) {
+      restoreBackupConfigSnapshot(backupConfigSnapshotRef.current);
+    }
+
+    backupConfigSnapshotRef.current = null;
+    setBackupAdvancedOpen(false);
+    setBackupConfigOpen(false);
+  };
+
+  const resetBackupRestoreForm = () => {
+    setBackupRestoreMode("merge");
+    setBackupRestoreDryRun(false);
+    setBackupRestoreFile(null);
+    setBackupRestoreResult(null);
+  };
+
+  const closeBackupRestoreDrawer = () => {
+    if (backupRestoreOpenFrameRef.current !== null) {
+      window.cancelAnimationFrame(backupRestoreOpenFrameRef.current);
+      backupRestoreOpenFrameRef.current = null;
+    }
+
+    setBackupRestoreOpen(false);
+  };
+
+  const openBackupConfigDrawer = () => {
+    if (backupConfigOpenFrameRef.current !== null) {
+      window.cancelAnimationFrame(backupConfigOpenFrameRef.current);
+      backupConfigOpenFrameRef.current = null;
+    }
+
+    backupConfigSnapshotRef.current = captureBackupConfigSnapshot();
+    setBackupAdvancedOpen(false);
+    setBackupConfigRendered(true);
+    setBackupConfigOpen(false);
+
+    backupConfigOpenFrameRef.current = window.requestAnimationFrame(() => {
+      backupConfigOpenFrameRef.current = null;
+      setBackupConfigOpen(true);
+    });
+  };
+
+  const openBackupRestoreDrawer = () => {
+    if (backupRestoreOpenFrameRef.current !== null) {
+      window.cancelAnimationFrame(backupRestoreOpenFrameRef.current);
+      backupRestoreOpenFrameRef.current = null;
+    }
+
+    resetBackupRestoreForm();
+    setBackupRestoreRendered(true);
+    setBackupRestoreOpen(false);
+
+    backupRestoreOpenFrameRef.current = window.requestAnimationFrame(() => {
+      backupRestoreOpenFrameRef.current = null;
+      setBackupRestoreOpen(true);
+    });
+  };
 
   const load = async () => {
     setState((prev) => ({ ...prev, loading: true, error: "" }));
 
     try {
-      const [users, resources, shares, retention] = await Promise.all([
-        api.get("/api/admin/users"),
-        api.get("/api/admin/resources"),
-        api.get("/api/admin/shares"),
-        api.get("/api/admin/settings/contact-change-retention"),
-      ]);
+      const [users, resources, shares, retention, backupSettings] =
+        await Promise.all([
+          api.get("/api/admin/users"),
+          api.get("/api/admin/resources"),
+          api.get("/api/admin/shares"),
+          api.get("/api/admin/settings/contact-change-retention"),
+          api.get("/api/admin/settings/backups"),
+        ]);
+
+      const backup = backupSettings.data ?? {};
+      const lastRun = backup.last_run ?? {};
+      const backupRetentionDaily = Number(backup.retention_daily ?? 7);
+      const backupRetentionWeekly = Number(backup.retention_weekly ?? 4);
+      const backupRetentionMonthly = Number(backup.retention_monthly ?? 12);
+      const backupRetentionYearly = Number(backup.retention_yearly ?? 3);
+
+      setBackupRetentionPreset(
+        isRecommendedBackupRetention({
+          daily: backupRetentionDaily,
+          weekly: backupRetentionWeekly,
+          monthly: backupRetentionMonthly,
+          yearly: backupRetentionYearly,
+        })
+          ? "recommended"
+          : "custom",
+      );
 
       setState((prev) => ({
         ...prev,
@@ -4305,6 +4672,27 @@ function AdminPage({ auth, theme }) {
         contactChangeRetentionDays: Number(retention.data?.days || 90),
         milestonePurgeVisible: !!resources.data?.milestone_purge_visible,
         milestonePurgeAvailable: !!resources.data?.milestone_purge_available,
+        backupEnabled: !!backup.enabled,
+        backupLocalEnabled: !!backup.local_enabled,
+        backupLocalPath: backup.local_path || "",
+        backupS3Enabled: !!backup.s3_enabled,
+        backupS3Disk: backup.s3_disk || "s3",
+        backupS3Prefix: backup.s3_prefix || "",
+        backupTimezone: backup.timezone || "UTC",
+        backupScheduleTimes: Array.isArray(backup.schedule_times)
+          ? backup.schedule_times.join(", ")
+          : "02:30",
+        backupWeeklyDay: Number(backup.weekly_day ?? 0),
+        backupMonthlyDay: Number(backup.monthly_day ?? 1),
+        backupYearlyMonth: Number(backup.yearly_month ?? 1),
+        backupYearlyDay: Number(backup.yearly_day ?? 1),
+        backupRetentionDaily,
+        backupRetentionWeekly,
+        backupRetentionMonthly,
+        backupRetentionYearly,
+        backupLastRunAt: lastRun.at || null,
+        backupLastRunStatus: lastRun.status || null,
+        backupLastRunMessage: lastRun.message || "",
       }));
     } catch (err) {
       setState((prev) => ({
@@ -4331,6 +4719,61 @@ function AdminPage({ auth, theme }) {
 
     return () => window.clearTimeout(timer);
   }, [milestonePurgeSummary]);
+
+  useEffect(() => {
+    if (!backupRunToast) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(
+      () => setBackupRunToast(null),
+      BACKUP_RUN_TOAST_AUTO_HIDE_MS,
+    );
+
+    return () => window.clearTimeout(timer);
+  }, [backupRunToast]);
+
+  useEffect(() => {
+    if (backupConfigOpen) {
+      setBackupConfigRendered(true);
+      return undefined;
+    }
+
+    const timer = window.setTimeout(
+      () => setBackupConfigRendered(false),
+      BACKUP_DRAWER_ANIMATION_MS,
+    );
+
+    return () => window.clearTimeout(timer);
+  }, [backupConfigOpen]);
+
+  useEffect(() => {
+    if (backupRestoreOpen) {
+      setBackupRestoreRendered(true);
+      return undefined;
+    }
+
+    const timer = window.setTimeout(
+      () => setBackupRestoreRendered(false),
+      BACKUP_DRAWER_ANIMATION_MS,
+    );
+
+    return () => window.clearTimeout(timer);
+  }, [backupRestoreOpen]);
+
+  useEffect(
+    () => () => {
+      if (backupConfigOpenFrameRef.current !== null) {
+        window.cancelAnimationFrame(backupConfigOpenFrameRef.current);
+      }
+      if (backupRestoreOpenFrameRef.current !== null) {
+        window.cancelAnimationFrame(backupRestoreOpenFrameRef.current);
+      }
+
+      backupConfigSnapshotRef.current = null;
+    },
+    [],
+  );
 
   const createUser = async (event) => {
     event.preventDefault();
@@ -4587,10 +5030,312 @@ function AdminPage({ auth, theme }) {
     }
   };
 
+  const saveBackupSettings = async () => {
+    const scheduleTimes = parseBackupScheduleTimes(state.backupScheduleTimes);
+    const retentionDaily =
+      backupRetentionPreset === "recommended"
+        ? RECOMMENDED_BACKUP_RETENTION.daily
+        : Number(state.backupRetentionDaily);
+    const retentionWeekly =
+      backupRetentionPreset === "recommended"
+        ? RECOMMENDED_BACKUP_RETENTION.weekly
+        : Number(state.backupRetentionWeekly);
+    const retentionMonthly =
+      backupRetentionPreset === "recommended"
+        ? RECOMMENDED_BACKUP_RETENTION.monthly
+        : Number(state.backupRetentionMonthly);
+    const retentionYearly =
+      backupRetentionPreset === "recommended"
+        ? RECOMMENDED_BACKUP_RETENTION.yearly
+        : Number(state.backupRetentionYearly);
+    if (scheduleTimes.length === 0) {
+      setState((prev) => ({
+        ...prev,
+        error: "Backup schedule must include one or more HH:MM values.",
+      }));
+      return;
+    }
+
+    if (
+      state.backupEnabled &&
+      !state.backupLocalEnabled &&
+      !state.backupS3Enabled
+    ) {
+      setState((prev) => ({
+        ...prev,
+        error:
+          "Enable at least one destination (local or S3) when backups are enabled.",
+      }));
+      return;
+    }
+
+    setBackupSaving(true);
+    setState((prev) => ({ ...prev, error: "" }));
+
+    try {
+      const response = await api.patch("/api/admin/settings/backups", {
+        enabled: !!state.backupEnabled,
+        local_enabled: !!state.backupLocalEnabled,
+        local_path: state.backupLocalPath,
+        s3_enabled: !!state.backupS3Enabled,
+        s3_disk: state.backupS3Disk,
+        s3_prefix: state.backupS3Prefix,
+        schedule_times: scheduleTimes,
+        timezone: state.backupTimezone,
+        weekly_day: Number(state.backupWeeklyDay),
+        monthly_day: Number(state.backupMonthlyDay),
+        yearly_month: Number(state.backupYearlyMonth),
+        yearly_day: Number(state.backupYearlyDay),
+        retention_daily: retentionDaily,
+        retention_weekly: retentionWeekly,
+        retention_monthly: retentionMonthly,
+        retention_yearly: retentionYearly,
+      });
+
+      const backup = response.data ?? {};
+      const lastRun = backup.last_run ?? {};
+      const nextRetentionDaily = Number(
+        backup.retention_daily ?? retentionDaily,
+      );
+      const nextRetentionWeekly = Number(
+        backup.retention_weekly ?? retentionWeekly,
+      );
+      const nextRetentionMonthly = Number(
+        backup.retention_monthly ?? retentionMonthly,
+      );
+      const nextRetentionYearly = Number(
+        backup.retention_yearly ?? retentionYearly,
+      );
+
+      setBackupRetentionPreset(
+        isRecommendedBackupRetention({
+          daily: nextRetentionDaily,
+          weekly: nextRetentionWeekly,
+          monthly: nextRetentionMonthly,
+          yearly: nextRetentionYearly,
+        })
+          ? "recommended"
+          : "custom",
+      );
+
+      setState((prev) => ({
+        ...prev,
+        backupEnabled: !!backup.enabled,
+        backupLocalEnabled: !!backup.local_enabled,
+        backupLocalPath: backup.local_path || "",
+        backupS3Enabled: !!backup.s3_enabled,
+        backupS3Disk: backup.s3_disk || "s3",
+        backupS3Prefix: backup.s3_prefix || "",
+        backupTimezone: backup.timezone || "UTC",
+        backupScheduleTimes: Array.isArray(backup.schedule_times)
+          ? backup.schedule_times.join(", ")
+          : prev.backupScheduleTimes,
+        backupWeeklyDay: Number(backup.weekly_day ?? 0),
+        backupMonthlyDay: Number(backup.monthly_day ?? 1),
+        backupYearlyMonth: Number(backup.yearly_month ?? 1),
+        backupYearlyDay: Number(backup.yearly_day ?? 1),
+        backupRetentionDaily: nextRetentionDaily,
+        backupRetentionWeekly: nextRetentionWeekly,
+        backupRetentionMonthly: nextRetentionMonthly,
+        backupRetentionYearly: nextRetentionYearly,
+        backupLastRunAt: lastRun.at || prev.backupLastRunAt,
+        backupLastRunStatus: lastRun.status || prev.backupLastRunStatus,
+        backupLastRunMessage: lastRun.message || prev.backupLastRunMessage,
+      }));
+      closeBackupConfigDrawer({ discardChanges: false });
+    } catch (err) {
+      setState((prev) => ({
+        ...prev,
+        error: extractError(err, "Unable to save backup settings."),
+      }));
+    } finally {
+      setBackupSaving(false);
+    }
+  };
+
+  const runBackupNow = async () => {
+    if (backupRunning) {
+      return;
+    }
+
+    if (!state.backupLocalEnabled && !state.backupS3Enabled) {
+      setState((prev) => ({
+        ...prev,
+        error:
+          "Configure at least one destination (local or S3) before running a backup.",
+      }));
+      return;
+    }
+
+    setBackupRunning(true);
+    setState((prev) => ({ ...prev, error: "" }));
+
+    try {
+      const response = await api.post("/api/admin/backups/run");
+      const result = response.data ?? {};
+      const nextStatus = result.status || "success";
+      const nextMessage = result.reason || "Backup completed successfully.";
+
+      setState((prev) => ({
+        ...prev,
+        backupLastRunAt: result.executed_at_utc || prev.backupLastRunAt,
+        backupLastRunStatus: nextStatus,
+        backupLastRunMessage: nextMessage,
+      }));
+      setBackupRunToast({
+        status: nextStatus,
+        message: nextMessage,
+      });
+
+      await load();
+    } catch (err) {
+      const message = extractError(err, "Unable to run backup now.");
+      setState((prev) => ({
+        ...prev,
+        error: message,
+        backupLastRunStatus: "failed",
+        backupLastRunMessage: message,
+      }));
+      setBackupRunToast({
+        status: "failed",
+        message,
+      });
+    } finally {
+      setBackupRunning(false);
+    }
+  };
+
+  const runBackupRestore = async () => {
+    if (backupRestoring) {
+      return;
+    }
+
+    if (!backupRestoreFile) {
+      setState((prev) => ({
+        ...prev,
+        error: "Select a backup ZIP archive before running restore.",
+      }));
+      return;
+    }
+
+    const confirmMessage = backupRestoreDryRun
+      ? "Run backup restore dry-run? No data will be modified."
+      : backupRestoreMode === "replace"
+        ? "Replace mode will delete existing calendars/address books for owners included in the archive before restoring. Continue?"
+        : "Run backup restore in merge mode?";
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    setBackupRestoring(true);
+    setBackupRestoreResult(null);
+    setState((prev) => ({ ...prev, error: "" }));
+
+    try {
+      const form = new FormData();
+      form.append("backup", backupRestoreFile);
+      form.append("mode", backupRestoreMode);
+      form.append("dry_run", backupRestoreDryRun ? "1" : "0");
+
+      const response = await api.post("/api/admin/backups/restore", form, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      const result = response.data ?? {};
+
+      setBackupRestoreResult(result);
+      setBackupRunToast({
+        status: result.status || "success",
+        message: result.reason || "Backup restore completed.",
+      });
+
+      if (!backupRestoreDryRun) {
+        await load();
+      }
+    } catch (err) {
+      const message = extractError(err, "Unable to restore backup archive.");
+      setState((prev) => ({
+        ...prev,
+        error: message,
+      }));
+      setBackupRunToast({
+        status: "failed",
+        message,
+      });
+    } finally {
+      setBackupRestoring(false);
+    }
+  };
+
   const resourceOptions =
     shareForm.resource_type === "calendar"
       ? state.resources.calendars
       : state.resources.address_books;
+  const backupTimezoneGroups = useMemo(() => buildTimezoneGroups(), []);
+  const backupTimezoneExistsInOptions = useMemo(
+    () =>
+      backupTimezoneGroups.some((group) =>
+        group.options.some((option) => option.value === state.backupTimezone),
+      ),
+    [backupTimezoneGroups, state.backupTimezone],
+  );
+  const backupLastRunLabel = state.backupLastRunStatus
+    ? `${state.backupLastRunStatus.toUpperCase()} at ${formatAdminTimestamp(
+        state.backupLastRunAt,
+      )}`
+    : "No backup has run yet.";
+  const backupDestinationSummary = [
+    state.backupLocalEnabled ? "Local" : null,
+    state.backupS3Enabled ? `S3 (${state.backupS3Disk})` : null,
+  ]
+    .filter(Boolean)
+    .join(" + ");
+  const backupHasDestination = !!backupDestinationSummary;
+  const backupScheduleValues = parseBackupScheduleTimes(
+    state.backupScheduleTimes,
+  );
+  const backupScheduleSummary =
+    backupScheduleValues.length === 0
+      ? `No windows (${state.backupTimezone})`
+      : backupScheduleValues.length <= 2
+        ? `${backupScheduleValues.join(", ")} (${state.backupTimezone})`
+        : `${backupScheduleValues.length} windows (${state.backupTimezone})`;
+  const backupRetentionSummary = `${Number(state.backupRetentionDaily)}d / ${Number(
+    state.backupRetentionWeekly,
+  )}w / ${Number(state.backupRetentionMonthly)}m / ${Number(
+    state.backupRetentionYearly,
+  )}y`;
+  const backupRunNowDisabled = backupRunning || !backupHasDestination;
+  const backupRunNowButtonClass = backupRunNowDisabled
+    ? "inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-400"
+    : "btn btn-outline-sm";
+  const backupRestoreSummary = backupRestoreResult?.summary ?? null;
+  const backupRestoreWarnings = Array.isArray(backupRestoreResult?.warnings)
+    ? backupRestoreResult.warnings
+    : [];
+  const backupRestoreRunDisabled = backupRestoring || !backupRestoreFile;
+  const backupRestoreRunButtonClass = backupRestoreRunDisabled
+    ? "btn-outline btn-outline-sm"
+    : "btn btn-outline-sm";
+  const backupRunToastStatus = String(
+    backupRunToast?.status || "",
+  ).toLowerCase();
+  const backupRunToastToneClass =
+    backupRunToastStatus === "failed"
+      ? "text-app-danger"
+      : backupRunToastStatus === "success"
+        ? "text-app-accent"
+        : "text-app-faint";
+  const backupConfigHasUnsavedChanges =
+    !!backupConfigSnapshotRef.current &&
+    !areBackupConfigSnapshotsEqual(
+      captureBackupConfigSnapshot(),
+      backupConfigSnapshotRef.current,
+    );
+  const backupSaveButtonClass = backupConfigHasUnsavedChanges
+    ? "btn btn-outline-sm"
+    : "btn-outline btn-outline-sm";
 
   return (
     <AppShell auth={auth} theme={theme}>
@@ -4656,6 +5401,121 @@ function AdminPage({ auth, theme }) {
             </div>
           </Field>
         </div>
+        <div className="mt-6 rounded-2xl border border-app-edge bg-app-surface p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-semibold text-app-strong">
+                Automated Backups
+              </h3>
+              <p className="mt-1 text-xs text-app-faint">
+                Rotating snapshots for calendars and address books.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                className="mr-2 inline-flex items-center gap-1 px-1 text-xs font-medium text-app-muted transition hover:text-app-strong"
+                type="button"
+                onClick={openBackupRestoreDrawer}
+              >
+                Restore
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M12 21V9" />
+                  <path d="m7 14 5-5 5 5" />
+                  <path d="M5 4h14" />
+                </svg>
+                {/* <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M1 4v6h6" />
+                  <path d="M3.51 15a9 9 0 1 0 .49-7L1 10" />
+                </svg>*/}
+              </button>
+              <button
+                className={backupRunNowButtonClass}
+                type="button"
+                onClick={runBackupNow}
+                disabled={backupRunNowDisabled}
+                title={
+                  !backupHasDestination
+                    ? "Configure at least one destination first."
+                    : undefined
+                }
+              >
+                {backupRunning ? "Running backup..." : "Run Backup Now"}
+              </button>
+              <button
+                className="btn-outline btn-outline-sm"
+                type="button"
+                onClick={openBackupConfigDrawer}
+              >
+                Configure
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full border border-app-edge bg-app-surface px-2.5 py-1 text-xs">
+              <span className="text-app-faint">Status</span>
+              <span className="font-semibold text-app-strong">
+                {state.backupEnabled ? "Enabled" : "Disabled"}
+              </span>
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-app-edge bg-app-surface px-2.5 py-1 text-xs">
+              <span className="text-app-faint">Destinations</span>
+              <span className="font-semibold text-app-strong">
+                {backupDestinationSummary || "None"}
+              </span>
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-app-edge bg-app-surface px-2.5 py-1 text-xs">
+              <span className="text-app-faint">Schedule</span>
+              <span className="font-semibold text-app-strong">
+                {backupScheduleSummary}
+              </span>
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-app-edge bg-app-surface px-2.5 py-1 text-xs">
+              <span className="text-app-faint">Retention</span>
+              <span className="font-semibold text-app-strong">
+                {backupRetentionSummary}
+              </span>
+            </span>
+          </div>
+
+          <p className="mt-3 text-xs text-app-faint">
+            Last Run: {backupLastRunLabel}
+          </p>
+          {state.backupLastRunMessage ? (
+            <p
+              className={`mt-1 text-xs ${
+                state.backupLastRunStatus === "failed"
+                  ? "text-app-danger"
+                  : state.backupLastRunStatus === "success"
+                    ? "text-app-accent"
+                    : "text-app-faint"
+              }`}
+            >
+              {state.backupLastRunMessage}
+            </p>
+          ) : null}
+        </div>
         {state.milestonePurgeVisible ? (
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <button
@@ -4690,6 +5550,590 @@ function AdminPage({ auth, theme }) {
           <p className="mt-3 text-sm text-app-danger">{state.error}</p>
         ) : null}
       </div>
+
+      {backupRunToast ? (
+        <div className="pointer-events-none fixed bottom-4 right-4 z-30 w-[min(92vw,28rem)] rounded-xl border border-app-edge bg-app-surface px-3 py-2 shadow-2xl">
+          <p
+            className={`text-[11px] font-semibold uppercase tracking-wide ${backupRunToastToneClass}`}
+          >
+            {String(backupRunToast.status || "status").toUpperCase()}
+          </p>
+          <p className="mt-1 text-sm text-app-strong">
+            {backupRunToast.message}
+          </p>
+        </div>
+      ) : null}
+
+      {backupConfigRendered ? (
+        <div
+          className={`fixed inset-0 z-40 ${
+            backupConfigOpen ? "pointer-events-auto" : "pointer-events-none"
+          }`}
+          aria-hidden={!backupConfigOpen}
+        >
+          <button
+            type="button"
+            aria-label="Close backup configuration"
+            className={`absolute inset-0 bg-black/45 transition-opacity duration-200 ease-out motion-reduce:transition-none ${
+              backupConfigOpen ? "opacity-100" : "opacity-0"
+            }`}
+            onClick={closeBackupConfigDrawer}
+            tabIndex={backupConfigOpen ? 0 : -1}
+          />
+          <div
+            className={`absolute inset-y-0 right-0 w-full max-w-2xl overflow-y-auto border-l border-app-edge bg-app-surface p-5 shadow-2xl transition-all duration-200 ease-out motion-reduce:transition-none motion-reduce:transform-none ${
+              backupConfigOpen
+                ? "translate-x-0 opacity-100"
+                : "translate-x-full opacity-0"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-xl font-semibold text-app-strong">
+                  Backup Configuration
+                </h3>
+                <p className="mt-1 text-sm text-app-muted">
+                  Configure destinations, schedule windows, and retention
+                  strategy.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn-outline btn-outline-sm"
+                onClick={closeBackupConfigDrawer}
+              >
+                Close
+              </button>
+            </div>
+
+            <section className="mt-5 rounded-2xl border border-app-edge p-4">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <AdminFeatureToggle
+                  label="Backups enabled"
+                  enabled={state.backupEnabled}
+                  onClick={() =>
+                    setState((prev) => ({
+                      ...prev,
+                      backupEnabled: !prev.backupEnabled,
+                    }))
+                  }
+                />
+                <AdminFeatureToggle
+                  label="Local destination"
+                  enabled={state.backupLocalEnabled}
+                  onClick={() =>
+                    setState((prev) => ({
+                      ...prev,
+                      backupLocalEnabled: !prev.backupLocalEnabled,
+                    }))
+                  }
+                />
+                <AdminFeatureToggle
+                  label="S3 destination"
+                  enabled={state.backupS3Enabled}
+                  onClick={() =>
+                    setState((prev) => ({
+                      ...prev,
+                      backupS3Enabled: !prev.backupS3Enabled,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <Field label="Schedule times (HH:MM, comma-separated)">
+                  <input
+                    className="input"
+                    value={state.backupScheduleTimes}
+                    onChange={(event) =>
+                      setState((prev) => ({
+                        ...prev,
+                        backupScheduleTimes: event.target.value,
+                      }))
+                    }
+                    placeholder="02:30, 14:30"
+                  />
+                </Field>
+                <Field label="Timezone">
+                  <select
+                    className="input"
+                    value={state.backupTimezone}
+                    onChange={(event) =>
+                      setState((prev) => ({
+                        ...prev,
+                        backupTimezone: event.target.value,
+                      }))
+                    }
+                  >
+                    {!backupTimezoneExistsInOptions && state.backupTimezone ? (
+                      <option value={state.backupTimezone}>
+                        {state.backupTimezone} (current)
+                      </option>
+                    ) : null}
+                    {backupTimezoneGroups.map((group) => (
+                      <optgroup key={group.region} label={group.region}>
+                        {group.options.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </Field>
+                {state.backupLocalEnabled ? (
+                  <Field label="Local backup path">
+                    <input
+                      className="input"
+                      value={state.backupLocalPath}
+                      onChange={(event) =>
+                        setState((prev) => ({
+                          ...prev,
+                          backupLocalPath: event.target.value,
+                        }))
+                      }
+                      placeholder="/var/backups/davvy"
+                    />
+                  </Field>
+                ) : null}
+                {state.backupS3Enabled ? (
+                  <Field label="S3 disk name">
+                    <input
+                      className="input"
+                      value={state.backupS3Disk}
+                      onChange={(event) =>
+                        setState((prev) => ({
+                          ...prev,
+                          backupS3Disk: event.target.value,
+                        }))
+                      }
+                      placeholder="s3"
+                    />
+                  </Field>
+                ) : null}
+                {state.backupS3Enabled ? (
+                  <Field label="S3 key prefix">
+                    <input
+                      className="input"
+                      value={state.backupS3Prefix}
+                      onChange={(event) =>
+                        setState((prev) => ({
+                          ...prev,
+                          backupS3Prefix: event.target.value,
+                        }))
+                      }
+                      placeholder="davvy-backups"
+                    />
+                  </Field>
+                ) : null}
+              </div>
+            </section>
+
+            <section className="mt-4 rounded-2xl border border-app-edge p-4">
+              <button
+                className="flex w-full items-center justify-between text-left"
+                type="button"
+                onClick={() => setBackupAdvancedOpen((prev) => !prev)}
+              >
+                <span className="text-sm font-semibold text-app-strong">
+                  Advanced
+                </span>
+                <span className="text-xs text-app-muted">
+                  {backupAdvancedOpen ? "Hide" : "Show"}
+                </span>
+              </button>
+
+              {backupAdvancedOpen ? (
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <Field label="Weekly backup day">
+                    <select
+                      className="input"
+                      value={state.backupWeeklyDay}
+                      onChange={(event) =>
+                        setState((prev) => ({
+                          ...prev,
+                          backupWeeklyDay: Number(event.target.value),
+                        }))
+                      }
+                    >
+                      {WEEKDAY_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Monthly backup day">
+                    <input
+                      className="input"
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={state.backupMonthlyDay}
+                      onChange={(event) =>
+                        setState((prev) => ({
+                          ...prev,
+                          backupMonthlyDay: event.target.value,
+                        }))
+                      }
+                    />
+                  </Field>
+                  <Field label="Yearly backup month">
+                    <select
+                      className="input"
+                      value={state.backupYearlyMonth}
+                      onChange={(event) =>
+                        setState((prev) => ({
+                          ...prev,
+                          backupYearlyMonth: Number(event.target.value),
+                        }))
+                      }
+                    >
+                      {MONTH_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Yearly backup day">
+                    <input
+                      className="input"
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={state.backupYearlyDay}
+                      onChange={(event) =>
+                        setState((prev) => ({
+                          ...prev,
+                          backupYearlyDay: event.target.value,
+                        }))
+                      }
+                    />
+                  </Field>
+
+                  <Field label="Retention strategy">
+                    <select
+                      className="input"
+                      value={backupRetentionPreset}
+                      onChange={(event) => {
+                        const preset = event.target.value;
+                        setBackupRetentionPreset(preset);
+
+                        if (preset === "recommended") {
+                          setState((prev) => ({
+                            ...prev,
+                            backupRetentionDaily:
+                              RECOMMENDED_BACKUP_RETENTION.daily,
+                            backupRetentionWeekly:
+                              RECOMMENDED_BACKUP_RETENTION.weekly,
+                            backupRetentionMonthly:
+                              RECOMMENDED_BACKUP_RETENTION.monthly,
+                            backupRetentionYearly:
+                              RECOMMENDED_BACKUP_RETENTION.yearly,
+                          }));
+                        }
+                      }}
+                    >
+                      <option value="recommended">
+                        Recommended (7/4/12/3)
+                      </option>
+                      <option value="custom">Custom</option>
+                    </select>
+                  </Field>
+
+                  {backupRetentionPreset === "custom" ? (
+                    <div className="md:col-span-2">
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <Field label="Daily retention">
+                          <input
+                            className="input"
+                            type="number"
+                            min="0"
+                            max="3650"
+                            value={state.backupRetentionDaily}
+                            onChange={(event) =>
+                              setState((prev) => ({
+                                ...prev,
+                                backupRetentionDaily: event.target.value,
+                              }))
+                            }
+                          />
+                        </Field>
+                        <Field label="Weekly retention">
+                          <input
+                            className="input"
+                            type="number"
+                            min="0"
+                            max="520"
+                            value={state.backupRetentionWeekly}
+                            onChange={(event) =>
+                              setState((prev) => ({
+                                ...prev,
+                                backupRetentionWeekly: event.target.value,
+                              }))
+                            }
+                          />
+                        </Field>
+                        <Field label="Monthly retention">
+                          <input
+                            className="input"
+                            type="number"
+                            min="0"
+                            max="240"
+                            value={state.backupRetentionMonthly}
+                            onChange={(event) =>
+                              setState((prev) => ({
+                                ...prev,
+                                backupRetentionMonthly: event.target.value,
+                              }))
+                            }
+                          />
+                        </Field>
+                        <Field label="Yearly retention">
+                          <input
+                            className="input"
+                            type="number"
+                            min="0"
+                            max="50"
+                            value={state.backupRetentionYearly}
+                            onChange={(event) =>
+                              setState((prev) => ({
+                                ...prev,
+                                backupRetentionYearly: event.target.value,
+                              }))
+                            }
+                          />
+                        </Field>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </section>
+
+            <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
+              <button
+                className="btn-outline btn-outline-sm"
+                type="button"
+                onClick={closeBackupConfigDrawer}
+              >
+                Cancel
+              </button>
+              <button
+                className={backupSaveButtonClass}
+                type="button"
+                onClick={saveBackupSettings}
+                disabled={backupSaving}
+              >
+                {backupSaving ? "Saving..." : "Save Backup Settings"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {backupRestoreRendered ? (
+        <div
+          className={`fixed inset-0 z-40 ${
+            backupRestoreOpen ? "pointer-events-auto" : "pointer-events-none"
+          }`}
+          aria-hidden={!backupRestoreOpen}
+        >
+          <button
+            type="button"
+            aria-label="Close backup restore"
+            className={`absolute inset-0 bg-black/45 transition-opacity duration-200 ease-out motion-reduce:transition-none ${
+              backupRestoreOpen ? "opacity-100" : "opacity-0"
+            }`}
+            onClick={closeBackupRestoreDrawer}
+            tabIndex={backupRestoreOpen ? 0 : -1}
+          />
+          <div
+            className={`absolute inset-y-0 right-0 w-full max-w-2xl overflow-y-auto border-l border-app-edge bg-app-surface p-5 shadow-2xl transition-all duration-200 ease-out motion-reduce:transition-none motion-reduce:transform-none ${
+              backupRestoreOpen
+                ? "translate-x-0 opacity-100"
+                : "translate-x-full opacity-0"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-xl font-semibold text-app-strong">
+                  Restore Backup Archive
+                </h3>
+                <p className="mt-1 text-sm text-app-muted">
+                  Import a generated backup ZIP into calendars and address
+                  books.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn-outline btn-outline-sm"
+                onClick={closeBackupRestoreDrawer}
+              >
+                Close
+              </button>
+            </div>
+
+            <section className="mt-5 rounded-2xl border border-app-edge p-4">
+              <div className="grid gap-3 md:grid-cols-2">
+                <Field label="Backup ZIP file">
+                  <input
+                    className="input"
+                    type="file"
+                    accept=".zip,application/zip"
+                    onChange={(event) => {
+                      const nextFile = event.target.files?.[0] ?? null;
+                      setBackupRestoreFile(nextFile);
+                    }}
+                  />
+                </Field>
+                <Field label="Restore mode">
+                  <select
+                    className="input"
+                    value={backupRestoreMode}
+                    onChange={(event) =>
+                      setBackupRestoreMode(event.target.value)
+                    }
+                  >
+                    <option value="merge">Merge (upsert)</option>
+                    <option value="replace">Replace owner data</option>
+                  </select>
+                </Field>
+              </div>
+
+              {backupRestoreFile ? (
+                <p className="mt-2 max-w-full truncate text-xs text-app-faint">
+                  Selected: {backupRestoreFile.name}
+                </p>
+              ) : null}
+
+              <label className="mt-3 inline-flex items-center gap-2 text-xs text-app-faint">
+                <input
+                  type="checkbox"
+                  checked={backupRestoreDryRun}
+                  onChange={(event) =>
+                    setBackupRestoreDryRun(!!event.target.checked)
+                  }
+                />
+                Dry run only (preview changes without writing data)
+              </label>
+
+              {backupRestoreMode === "replace" ? (
+                <p className="mt-2 text-xs text-app-danger">
+                  Replace mode deletes existing owner resources in scope before
+                  restore.
+                </p>
+              ) : null}
+            </section>
+
+            {backupRestoreResult ? (
+              <div className="mt-4 rounded-xl border border-app-edge bg-app-surface p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-app-faint">
+                  Restore Result
+                </p>
+                <p className="mt-1 text-sm text-app-strong">
+                  {backupRestoreResult.reason ||
+                    "Restore completed successfully."}
+                </p>
+
+                {backupRestoreSummary ? (
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <p className="text-xs text-app-faint">
+                      Files processed:{" "}
+                      <span className="font-semibold text-app-strong">
+                        {Number(backupRestoreSummary.files_processed || 0)}
+                      </span>
+                    </p>
+                    <p className="text-xs text-app-faint">
+                      Files skipped:{" "}
+                      <span className="font-semibold text-app-strong">
+                        {Number(backupRestoreSummary.files_skipped || 0)}
+                      </span>
+                    </p>
+                    <p className="text-xs text-app-faint">
+                      Calendars (create/update):{" "}
+                      <span className="font-semibold text-app-strong">
+                        {Number(backupRestoreSummary.calendars_created || 0)}/
+                        {Number(backupRestoreSummary.calendars_updated || 0)}
+                      </span>
+                    </p>
+                    <p className="text-xs text-app-faint">
+                      Address books (create/update):{" "}
+                      <span className="font-semibold text-app-strong">
+                        {Number(
+                          backupRestoreSummary.address_books_created || 0,
+                        )}
+                        /
+                        {Number(
+                          backupRestoreSummary.address_books_updated || 0,
+                        )}
+                      </span>
+                    </p>
+                    <p className="text-xs text-app-faint">
+                      Objects (create/update):{" "}
+                      <span className="font-semibold text-app-strong">
+                        {Number(
+                          (backupRestoreSummary.calendar_objects_created || 0) +
+                            (backupRestoreSummary.cards_created || 0),
+                        )}
+                        /
+                        {Number(
+                          (backupRestoreSummary.calendar_objects_updated || 0) +
+                            (backupRestoreSummary.cards_updated || 0),
+                        )}
+                      </span>
+                    </p>
+                    <p className="text-xs text-app-faint">
+                      Invalid resources skipped:{" "}
+                      <span className="font-semibold text-app-strong">
+                        {Number(
+                          backupRestoreSummary.resources_skipped_invalid || 0,
+                        )}
+                      </span>
+                    </p>
+                  </div>
+                ) : null}
+
+                {backupRestoreWarnings.length > 0 ? (
+                  <div className="mt-3">
+                    <p className="text-xs font-semibold text-app-faint">
+                      Warnings
+                    </p>
+                    <ul className="mt-1 list-disc space-y-1 pl-4 text-xs text-app-faint">
+                      {backupRestoreWarnings.map((warning, index) => (
+                        <li key={`${warning}-${index}`}>{warning}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
+              <button
+                className="btn-outline btn-outline-sm"
+                type="button"
+                onClick={closeBackupRestoreDrawer}
+              >
+                Cancel
+              </button>
+              <button
+                className={backupRestoreRunButtonClass}
+                type="button"
+                onClick={runBackupRestore}
+                disabled={backupRestoreRunDisabled}
+              >
+                {backupRestoring
+                  ? "Running restore..."
+                  : backupRestoreDryRun
+                    ? "Run Restore Dry-Run"
+                    : "Run Restore"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {state.loading ? (
         <FullPageState label="Loading admin data..." compact />
