@@ -5309,6 +5309,10 @@ function AdminPage({ auth, theme }) {
   const backupRestoreWarnings = Array.isArray(backupRestoreResult?.warnings)
     ? backupRestoreResult.warnings
     : [];
+  const backupRestoreRunDisabled = backupRestoring || !backupRestoreFile;
+  const backupRestoreRunButtonClass = backupRestoreRunDisabled
+    ? "btn-outline btn-outline-sm"
+    : "btn btn-outline-sm";
   const backupRunToastStatus = String(
     backupRunToast?.status || "",
   ).toLowerCase();
@@ -6110,10 +6114,10 @@ function AdminPage({ auth, theme }) {
                 Cancel
               </button>
               <button
-                className="btn-outline-accent btn-outline-sm"
+                className={backupRestoreRunButtonClass}
                 type="button"
                 onClick={runBackupRestore}
-                disabled={backupRestoring || !backupRestoreFile}
+                disabled={backupRestoreRunDisabled}
               >
                 {backupRestoring
                   ? "Running restore..."
