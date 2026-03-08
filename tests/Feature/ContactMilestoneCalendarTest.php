@@ -86,9 +86,9 @@ class ContactMilestoneCalendarTest extends TestCase
         $this->assertNotNull($birthdayObject);
         $this->assertCount(1, $anniversaryObjects);
         $this->assertStringContainsString('X-DAVVY-MILESTONE-TYPE:BIRTHDAY', $birthdayObject->data);
-        $this->assertStringContainsString('SUMMARY:Alex Rivera\'s Birthday', $birthdayObject->data);
+        $this->assertStringContainsString('SUMMARY:🎂 Alex Rivera\'s Birthday', $birthdayObject->data);
         $this->assertStringContainsString('X-DAVVY-MILESTONE-TYPE:ANNIVERSARY', $anniversaryObjects->first()->data);
-        $this->assertStringContainsString('SUMMARY:Alex Rivera Anniversary', $anniversaryObjects->first()->data);
+        $this->assertStringContainsString('SUMMARY:💍 Alex Rivera\'s Anniversary', $anniversaryObjects->first()->data);
     }
 
     public function test_contacts_marked_to_exclude_milestones_are_skipped_from_generated_events(): void
@@ -151,9 +151,9 @@ class ContactMilestoneCalendarTest extends TestCase
 
         $this->assertCount(1, $birthdayObjects);
         $this->assertCount(1, $anniversaryObjects);
-        $this->assertStringContainsString('SUMMARY:Alex Rivera\'s Birthday', $birthdayObjects->first()->data);
+        $this->assertStringContainsString('SUMMARY:🎂 Alex Rivera\'s Birthday', $birthdayObjects->first()->data);
         $this->assertStringNotContainsString('Sam Taylor', $birthdayObjects->first()->data);
-        $this->assertStringContainsString('SUMMARY:Alex Rivera Anniversary', $anniversaryObjects->first()->data);
+        $this->assertStringContainsString('SUMMARY:💍 Alex Rivera\'s Anniversary', $anniversaryObjects->first()->data);
         $this->assertStringNotContainsString('Sam Taylor', $anniversaryObjects->first()->data);
     }
 
