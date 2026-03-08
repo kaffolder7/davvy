@@ -144,9 +144,9 @@ class BackupManagementTest extends TestCase
             'backup_yearly_month' => '1',
             'backup_yearly_day' => '1',
             'backup_retention_daily' => '7',
-            'backup_retention_weekly' => '4',
-            'backup_retention_monthly' => '12',
-            'backup_retention_yearly' => '3',
+            'backup_retention_weekly' => '0',
+            'backup_retention_monthly' => '0',
+            'backup_retention_yearly' => '0',
         ]);
 
         $response = $this->actingAs($admin)
