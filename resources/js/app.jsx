@@ -3035,6 +3035,15 @@ function ContactsPage({ auth, theme }) {
                         generated milestone calendars.
                       </p>
                     </section>
+
+                    <LabeledValueEditor
+                      title="Related Name"
+                      rows={form.related_names}
+                      setRows={(rows) => updateFormField("related_names", rows)}
+                      labelOptions={RELATED_LABEL_OPTIONS}
+                      valuePlaceholder="Name"
+                      addLabel="Add related name"
+                    />
                   </div>
                 ) : null}
               </section>
@@ -3051,7 +3060,7 @@ function ContactsPage({ auth, theme }) {
                       Communication
                     </span>
                     <span className="block text-xs text-app-faint">
-                      Contact methods, addresses, and relationships.
+                      Contact methods and addresses.
                     </span>
                   </span>
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-app-edge text-xs text-app-faint">
@@ -3101,14 +3110,6 @@ function ContactsPage({ auth, theme }) {
                         addLabel="Add IM"
                       />
                     ) : null}
-                    <LabeledValueEditor
-                      title="Related Name"
-                      rows={form.related_names}
-                      setRows={(rows) => updateFormField("related_names", rows)}
-                      labelOptions={RELATED_LABEL_OPTIONS}
-                      valuePlaceholder="Name"
-                      addLabel="Add related name"
-                    />
                   </div>
                 ) : null}
               </section>
