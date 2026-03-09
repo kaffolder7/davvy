@@ -1543,11 +1543,16 @@ function useRowReorder(rows, setRows) {
       return;
     }
 
-    if (hoveredElement.getAttribute("data-reorder-group") !== activeGroupRef.current) {
+    if (
+      hoveredElement.getAttribute("data-reorder-group") !==
+      activeGroupRef.current
+    ) {
       return;
     }
 
-    const hoveredIndex = Number(hoveredElement.getAttribute("data-reorder-index"));
+    const hoveredIndex = Number(
+      hoveredElement.getAttribute("data-reorder-index"),
+    );
     if (!Number.isInteger(hoveredIndex)) {
       return;
     }
@@ -1612,7 +1617,9 @@ function useRowReorder(rows, setRows) {
 
   const isDragSource = (index) => dragFromIndex === index;
   const isDropTarget = (index) =>
-    dragFromIndex !== null && dragOverIndex === index && dragFromIndex !== index;
+    dragFromIndex !== null &&
+    dragOverIndex === index &&
+    dragFromIndex !== index;
 
   return {
     handleDragStart,
@@ -3044,7 +3051,7 @@ function ContactsPage({ auth, theme }) {
                       Communication
                     </span>
                     <span className="block text-xs text-app-faint">
-                      Contact methods, relationships, and addresses.
+                      Contact methods, addresses, and relationships.
                     </span>
                   </span>
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-app-edge text-xs text-app-faint">
@@ -3510,7 +3517,10 @@ function LabeledValueEditor({
   const safeRows = Array.isArray(rows) ? rows : [];
   const reorder = useRowReorder(safeRows, setRows);
   const rowGroup = useMemo(
-    () => `reorder-${String(title ?? "rows").toLowerCase().replace(/\s+/g, "-")}`,
+    () =>
+      `reorder-${String(title ?? "rows")
+        .toLowerCase()
+        .replace(/\s+/g, "-")}`,
     [title],
   );
 
@@ -5104,15 +5114,14 @@ function AdminPage({ auth, theme }) {
         retention,
         milestoneGeneration,
         backupSettings,
-      ] =
-        await Promise.all([
-          api.get("/api/admin/users"),
-          api.get("/api/admin/resources"),
-          api.get("/api/admin/shares"),
-          api.get("/api/admin/settings/contact-change-retention"),
-          api.get("/api/admin/settings/milestone-generation-years"),
-          api.get("/api/admin/settings/backups"),
-        ]);
+      ] = await Promise.all([
+        api.get("/api/admin/users"),
+        api.get("/api/admin/resources"),
+        api.get("/api/admin/shares"),
+        api.get("/api/admin/settings/contact-change-retention"),
+        api.get("/api/admin/settings/milestone-generation-years"),
+        api.get("/api/admin/settings/backups"),
+      ]);
 
       const backup = backupSettings.data ?? {};
       const lastRun = backup.last_run ?? {};
@@ -7353,7 +7362,9 @@ function AppShell({ auth, theme, children }) {
                 >
                   <span className="sponsor-modal-link-main">
                     <SponsorshipLinkIcon name={link.name} url={link.url} />
-                    <span className="sponsor-modal-link-label">{link.name}</span>
+                    <span className="sponsor-modal-link-label">
+                      {link.name}
+                    </span>
                   </span>
                   <svg
                     aria-hidden="true"
@@ -7381,7 +7392,11 @@ function AppShell({ auth, theme, children }) {
 function SponsorshipLinkIcon({ name, url }) {
   const [iconFailed, setIconFailed] = useState(false);
   const faviconUrl = useMemo(() => sponsorshipFaviconUrl(url), [url]);
-  const fallbackLabel = String(name ?? "").trim().slice(0, 1).toUpperCase() || "S";
+  const fallbackLabel =
+    String(name ?? "")
+      .trim()
+      .slice(0, 1)
+      .toUpperCase() || "S";
 
   if (!faviconUrl || iconFailed) {
     return (
