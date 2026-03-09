@@ -2981,7 +2981,10 @@ function ContactsPage({ auth, theme }) {
                                 placeholder="MM"
                                 value={form.birthday.month}
                                 onChange={(event) =>
-                                  updateBirthdayField("month", event.target.value)
+                                  updateBirthdayField(
+                                    "month",
+                                    event.target.value,
+                                  )
                                 }
                               />
                             </Field>
@@ -3009,7 +3012,10 @@ function ContactsPage({ auth, theme }) {
                                 placeholder="YYYY"
                                 value={form.birthday.year}
                                 onChange={(event) =>
-                                  updateBirthdayField("year", event.target.value)
+                                  updateBirthdayField(
+                                    "year",
+                                    event.target.value,
+                                  )
                                 }
                               />
                             </Field>
@@ -3023,7 +3029,7 @@ function ContactsPage({ auth, theme }) {
                           />
                         ) : null}
 
-                        <section className="rounded-2xl bg-app-surface p-3">
+                        <section className="rounded-2xl bg-app-surface pt-2 px-3">
                           <p className="text-[10px] font-semibold uppercase tracking-wide text-app-base">
                             Calendar Behavior
                           </p>
@@ -3041,8 +3047,8 @@ function ContactsPage({ auth, theme }) {
                             Exclude From Milestone Calendars
                           </label>
                           <p className="mt-1.5 text-[11px] text-app-faint">
-                            Skip Birthday and Anniversary events for this contact
-                            in generated milestone calendars.
+                            Skip Birthday and Anniversary events for this
+                            contact in generated milestone calendars.
                           </p>
                         </section>
                       </div>
