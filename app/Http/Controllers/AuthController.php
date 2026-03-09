@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\Role;
 use App\Models\User;
 use App\Services\RegistrationSettingsService;
+use App\Services\SponsorshipLinksService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,7 +14,10 @@ use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
-    public function __construct(private readonly RegistrationSettingsService $registrationSettings) {}
+    public function __construct(
+        private readonly RegistrationSettingsService $registrationSettings,
+        private readonly SponsorshipLinksService $sponsorshipLinks
+    ) {}
 
     public function register(Request $request): JsonResponse
     {
@@ -42,25 +46,15 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return response()->json([
-            'user' => $user,
-            'registration_enabled' => $this->registrationSettings->isPublicRegistrationEnabled(),
-            'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
-            'dav_compatibility_mode_enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
-            'contact_management_enabled' => $this->registrationSettings->isContactManagementEnabled(),
-            'contact_change_moderation_enabled' => $this->registrationSettings->isContactChangeModerationEnabled(),
-        ], 201);
+        return response()->json(
+            array_merge(['user' => $user], $this->publicSettingsPayload()),
+            201
+        );
     }
 
     public function publicConfig(): JsonResponse
     {
-        return response()->json([
-            'registration_enabled' => $this->registrationSettings->isPublicRegistrationEnabled(),
-            'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
-            'dav_compatibility_mode_enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
-            'contact_management_enabled' => $this->registrationSettings->isContactManagementEnabled(),
-            'contact_change_moderation_enabled' => $this->registrationSettings->isContactChangeModerationEnabled(),
-        ]);
+        return response()->json($this->publicSettingsPayload());
     }
 
     public function login(Request $request): JsonResponse
@@ -79,14 +73,9 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return response()->json([
-            'user' => $request->user(),
-            'registration_enabled' => $this->registrationSettings->isPublicRegistrationEnabled(),
-            'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
-            'dav_compatibility_mode_enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
-            'contact_management_enabled' => $this->registrationSettings->isContactManagementEnabled(),
-            'contact_change_moderation_enabled' => $this->registrationSettings->isContactChangeModerationEnabled(),
-        ]);
+        return response()->json(
+            array_merge(['user' => $request->user()], $this->publicSettingsPayload())
+        );
     }
 
     public function logout(Request $request): JsonResponse
@@ -101,14 +90,9 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json([
-            'user' => $request->user(),
-            'registration_enabled' => $this->registrationSettings->isPublicRegistrationEnabled(),
-            'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
-            'dav_compatibility_mode_enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
-            'contact_management_enabled' => $this->registrationSettings->isContactManagementEnabled(),
-            'contact_change_moderation_enabled' => $this->registrationSettings->isContactChangeModerationEnabled(),
-        ]);
+        return response()->json(
+            array_merge(['user' => $request->user()], $this->publicSettingsPayload())
+        );
     }
 
     public function changePassword(Request $request): JsonResponse
@@ -125,5 +109,17 @@ class AuthController extends Controller
         return response()->json([
             'ok' => true,
         ]);
+    }
+
+    private function publicSettingsPayload(): array
+    {
+        return [
+            'registration_enabled' => $this->registrationSettings->isPublicRegistrationEnabled(),
+            'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
+            'dav_compatibility_mode_enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
+            'contact_management_enabled' => $this->registrationSettings->isContactManagementEnabled(),
+            'contact_change_moderation_enabled' => $this->registrationSettings->isContactChangeModerationEnabled(),
+            'sponsorship' => $this->sponsorshipLinks->publicConfig(),
+        ];
     }
 }

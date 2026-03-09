@@ -144,6 +144,32 @@ const RECOMMENDED_BACKUP_RETENTION = {
   yearly: 3,
 };
 
+function parseSponsorshipConfig(rawConfig) {
+  if (!rawConfig || typeof rawConfig !== "object") {
+    return {
+      enabled: false,
+      links: [],
+    };
+  }
+
+  const links = Array.isArray(rawConfig.links)
+    ? rawConfig.links
+        .filter((item) => item && typeof item === "object")
+        .map((item) => ({
+          name: String(item.name ?? "").trim(),
+          url: String(item.url ?? "").trim(),
+        }))
+        .filter(
+          (item) => item.name !== "" && /^https?:\/\/\S+$/i.test(item.url),
+        )
+    : [];
+
+  return {
+    enabled: Boolean(rawConfig.enabled) && links.length > 0,
+    links,
+  };
+}
+
 function formatUtcOffset(offsetMinutes) {
   const sign = offsetMinutes >= 0 ? "+" : "-";
   const absolute = Math.abs(offsetMinutes);
@@ -415,6 +441,10 @@ function App() {
     davCompatibilityModeEnabled: false,
     contactManagementEnabled: false,
     contactChangeModerationEnabled: false,
+    sponsorship: {
+      enabled: false,
+      links: [],
+    },
   });
 
   const refreshAuth = async () => {
@@ -429,6 +459,7 @@ function App() {
         contactManagementEnabled: !!data.contact_management_enabled,
         contactChangeModerationEnabled:
           !!data.contact_change_moderation_enabled,
+        sponsorship: parseSponsorshipConfig(data.sponsorship),
       });
     } catch {
       try {
@@ -442,6 +473,7 @@ function App() {
           contactManagementEnabled: !!data.contact_management_enabled,
           contactChangeModerationEnabled:
             !!data.contact_change_moderation_enabled,
+          sponsorship: parseSponsorshipConfig(data.sponsorship),
         });
       } catch {
         setAuth({
@@ -452,6 +484,10 @@ function App() {
           davCompatibilityModeEnabled: false,
           contactManagementEnabled: false,
           contactChangeModerationEnabled: false,
+          sponsorship: {
+            enabled: false,
+            links: [],
+          },
         });
       }
     }
@@ -575,6 +611,7 @@ function LoginPage({ auth, theme }) {
         contactManagementEnabled: !!data.contact_management_enabled,
         contactChangeModerationEnabled:
           !!data.contact_change_moderation_enabled,
+        sponsorship: parseSponsorshipConfig(data.sponsorship),
       });
       navigate("/");
     } catch (err) {
@@ -664,6 +701,7 @@ function RegisterPage({ auth, theme }) {
         contactManagementEnabled: !!data.contact_management_enabled,
         contactChangeModerationEnabled:
           !!data.contact_change_moderation_enabled,
+        sponsorship: parseSponsorshipConfig(data.sponsorship),
       });
       navigate("/");
     } catch (err) {
@@ -6930,19 +6968,22 @@ function AppShell({ auth, theme, children }) {
   const onReviewQueuePage = location.pathname === "/review-queue";
   const [reviewQueueCount, setReviewQueueCount] = useState(0);
   const [mobileAccountMenuOpen, setMobileAccountMenuOpen] = useState(false);
+  const [sponsorModalOpen, setSponsorModalOpen] = useState(false);
+  const sponsorLinks = Array.isArray(auth.sponsorship?.links)
+    ? auth.sponsorship.links
+    : [];
+  const showSponsorButton =
+    Boolean(auth.sponsorship?.enabled) && sponsorLinks.length > 0;
 
   const logout = async () => {
     setMobileAccountMenuOpen(false);
+    setSponsorModalOpen(false);
     await api.post("/api/auth/logout");
-    auth.setAuth({
+    auth.setAuth((current) => ({
+      ...current,
       loading: false,
       user: null,
-      registrationEnabled: auth.registrationEnabled,
-      ownerShareManagementEnabled: auth.ownerShareManagementEnabled,
-      davCompatibilityModeEnabled: auth.davCompatibilityModeEnabled,
-      contactManagementEnabled: auth.contactManagementEnabled,
-      contactChangeModerationEnabled: auth.contactChangeModerationEnabled,
-    });
+    }));
     navigate("/login");
   };
 
@@ -6991,7 +7032,24 @@ function AppShell({ auth, theme, children }) {
 
   useEffect(() => {
     setMobileAccountMenuOpen(false);
+    setSponsorModalOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!sponsorModalOpen) {
+      return undefined;
+    }
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setSponsorModalOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [sponsorModalOpen]);
 
   const reviewQueueCountLabel =
     reviewQueueCount > 99 ? "99+" : String(reviewQueueCount);
@@ -7205,13 +7263,106 @@ function AppShell({ auth, theme, children }) {
         </div>
       </header>
       <div className="mt-6">{children}</div>
-      <div className="mt-6 flex justify-end">
+      <div
+        className={`mt-6 flex flex-wrap items-center gap-3 ${
+          showSponsorButton ? "justify-between" : "justify-end"
+        }`}
+      >
+        {showSponsorButton ? (
+          <button
+            type="button"
+            className="sponsor-btn"
+            onClick={() => setSponsorModalOpen(true)}
+            aria-haspopup="dialog"
+            aria-expanded={sponsorModalOpen}
+            aria-controls="sponsor-modal"
+          >
+            <svg
+              aria-hidden="true"
+              className="sponsor-btn-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
+            </svg>
+            <span>Sponsor</span>
+          </button>
+        ) : null}
         <ThemeControl
           theme={theme.theme}
           setTheme={theme.setTheme}
           className="theme-control-inline"
         />
       </div>
+
+      {showSponsorButton && sponsorModalOpen ? (
+        <div
+          className="fixed inset-0 z-50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="sponsor-modal-title"
+          id="sponsor-modal"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/50"
+            aria-label="Close sponsor links"
+            onClick={() => setSponsorModalOpen(false)}
+          />
+          <div className="surface relative mx-auto mt-[10vh] w-full max-w-md rounded-2xl p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3
+                  id="sponsor-modal-title"
+                  className="text-lg font-semibold text-app-strong"
+                >
+                  Support Davvy
+                </h3>
+                <p className="mt-1 text-sm text-app-muted">
+                  Pick a link below to sponsor the project.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn-outline btn-outline-sm"
+                onClick={() => setSponsorModalOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            <div className="mt-4 grid gap-2">
+              {sponsorLinks.map((link) => (
+                <a
+                  key={link.url}
+                  className="sponsor-modal-link"
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span>{link.name}</span>
+                  <svg
+                    aria-hidden="true"
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M7 17 17 7" />
+                    <path d="M7 7h10v10" />
+                  </svg>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

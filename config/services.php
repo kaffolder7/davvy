@@ -34,4 +34,8 @@ return [
         'retention_monthly' => (int) env('BACKUPS_RETENTION_MONTHLY', 12),
         'retention_yearly' => (int) env('BACKUPS_RETENTION_YEARLY', 3),
     ],
+    'sponsorship' => [
+        'funding_file' => base_path('.github/FUNDING.yml'),
+        'button_hidden' => (bool) env('DAVVY_HIDE_SPONSOR_BUTTON', false),
+    ],
 ];
