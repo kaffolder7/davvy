@@ -214,7 +214,7 @@ Contact write notes:
 
 Common top-level contact payload fields:
 - Name/work/personal fields: `prefix`, `first_name`, `middle_name`, `last_name`, `suffix`, `nickname`, `company`, `job_title`, `department`, `pronouns`, `pronouns_custom`, `ringtone`, `text_tone`, `phonetic_first_name`, `phonetic_last_name`, `phonetic_company`, `maiden_name`, `verification_code`, `profile`
-- Milestone behavior: `exclude_milestone_calendars`
+- Milestone behavior: `exclude_milestone_calendars`, `head_of_household` (combined anniversary title ordering), `related_names[]` (mutual spouse-like matching for combined anniversary events)
 - Structured fields:
   - `birthday` (`year`, `month`, `day`)
   - `phones[]`, `emails[]`, `urls[]` (labeled value rows)
