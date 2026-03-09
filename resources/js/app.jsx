@@ -3070,6 +3070,10 @@ function ContactsPage({ auth, theme }) {
                       valuePlaceholder="Email address"
                       addLabel="Add email"
                     />
+                    <AddressEditor
+                      rows={form.addresses}
+                      setRows={(rows) => updateFormField("addresses", rows)}
+                    />
                     <LabeledValueEditor
                       title="URL"
                       rows={form.urls}
@@ -3097,11 +3101,6 @@ function ContactsPage({ auth, theme }) {
                       labelOptions={RELATED_LABEL_OPTIONS}
                       valuePlaceholder="Name"
                       addLabel="Add related name"
-                    />
-
-                    <AddressEditor
-                      rows={form.addresses}
-                      setRows={(rows) => updateFormField("addresses", rows)}
                     />
                   </div>
                 ) : null}
