@@ -2956,84 +2956,96 @@ function ContactsPage({ auth, theme }) {
                       </label>
                     </section>
 
-                    <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
-                      <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
-                        Birthday
-                      </h3>
-                      <div className="mt-3 grid gap-3 md:grid-cols-3">
-                        <Field label="Month">
-                          <input
-                            className="input"
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            maxLength={2}
-                            placeholder="MM"
-                            value={form.birthday.month}
-                            onChange={(event) =>
-                              updateBirthdayField("month", event.target.value)
-                            }
-                          />
-                        </Field>
-                        <Field label="Day">
-                          <input
-                            className="input"
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            maxLength={2}
-                            placeholder="DD"
-                            value={form.birthday.day}
-                            onChange={(event) =>
-                              updateBirthdayField("day", event.target.value)
-                            }
-                          />
-                        </Field>
-                        <Field label="Year">
-                          <input
-                            className="input"
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            maxLength={4}
-                            placeholder="YYYY"
-                            value={form.birthday.year}
-                            onChange={(event) =>
-                              updateBirthdayField("year", event.target.value)
-                            }
-                          />
-                        </Field>
+                    <section className="rounded-2xl border border-app-accent-edge bg-app-surface p-4 ring-1 ring-teal-500/10">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h3 className="text-sm font-semibold uppercase tracking-wide text-app-accent">
+                          Milestones &amp; Dates
+                        </h3>
+                        <span className="text-xs text-app-faint">
+                          Birthday, notable dates, and calendar behavior.
+                        </span>
                       </div>
-                    </section>
+                      <div className="mt-3 space-y-3">
+                        <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
+                          <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
+                            Birthday
+                          </h3>
+                          <div className="mt-3 grid gap-3 md:grid-cols-3">
+                            <Field label="Month">
+                              <input
+                                className="input"
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                maxLength={2}
+                                placeholder="MM"
+                                value={form.birthday.month}
+                                onChange={(event) =>
+                                  updateBirthdayField("month", event.target.value)
+                                }
+                              />
+                            </Field>
+                            <Field label="Day">
+                              <input
+                                className="input"
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                maxLength={2}
+                                placeholder="DD"
+                                value={form.birthday.day}
+                                onChange={(event) =>
+                                  updateBirthdayField("day", event.target.value)
+                                }
+                              />
+                            </Field>
+                            <Field label="Year">
+                              <input
+                                className="input"
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                maxLength={4}
+                                placeholder="YYYY"
+                                value={form.birthday.year}
+                                onChange={(event) =>
+                                  updateBirthdayField("year", event.target.value)
+                                }
+                              />
+                            </Field>
+                          </div>
+                        </section>
 
-                    {isOptionalFieldVisible("dates") ? (
-                      <DateEditor
-                        rows={form.dates}
-                        setRows={(rows) => updateFormField("dates", rows)}
-                      />
-                    ) : null}
+                        {isOptionalFieldVisible("dates") ? (
+                          <DateEditor
+                            rows={form.dates}
+                            setRows={(rows) => updateFormField("dates", rows)}
+                          />
+                        ) : null}
 
-                    <section className="rounded-2xl border border-app-accent-edge bg-app-surface p-3 ring-1 ring-teal-500/10">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-app-accent">
-                        Calendar Behavior
-                      </p>
-                      <label className="inline-flex items-center gap-2 text-[13px] font-semibold leading-5 text-app-base">
-                        <input
-                          type="checkbox"
-                          checked={!!form.exclude_milestone_calendars}
-                          onChange={(event) =>
-                            updateFormField(
-                              "exclude_milestone_calendars",
-                              event.target.checked,
-                            )
-                          }
-                        />
-                        Exclude From Milestone Calendars
-                      </label>
-                      <p className="mt-1.5 text-[11px] text-app-faint">
-                        Skip Birthday and Anniversary events for this contact in
-                        generated milestone calendars.
-                      </p>
+                        <section className="rounded-2xl border border-app-edge bg-app-surface p-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-app-base">
+                            Calendar Behavior
+                          </p>
+                          <label className="inline-flex items-center gap-2 text-[13px] font-semibold leading-5 text-app-base">
+                            <input
+                              type="checkbox"
+                              checked={!!form.exclude_milestone_calendars}
+                              onChange={(event) =>
+                                updateFormField(
+                                  "exclude_milestone_calendars",
+                                  event.target.checked,
+                                )
+                              }
+                            />
+                            Exclude From Milestone Calendars
+                          </label>
+                          <p className="mt-1.5 text-[11px] text-app-faint">
+                            Skip Birthday and Anniversary events for this contact
+                            in generated milestone calendars.
+                          </p>
+                        </section>
+                      </div>
                     </section>
 
                     <LabeledValueEditor
