@@ -120,6 +120,8 @@ Runtime toggles are read from `app_settings` (with env defaults if unset):
 ### Milestone Calendar Generation
 - Optional per-address-book birthday/anniversary calendars.
 - Generated events are managed resources with stable URI patterns.
+- Anniversary events can be combined into a single couple event when two contacts share the same date and are mutually linked as spouse-like related names; otherwise, individual anniversary events are generated.
+- `head_of_household` controls combined anniversary name ordering, and missing years suppress ordinal suffixes.
 - Contacts can opt out via `exclude_milestone_calendars`.
 
 ### Apple Compatibility Mirroring

@@ -39,7 +39,7 @@ It is designed for:
 - Contact writes synchronized to vCards in assigned address books
 - CardDAV writes synchronized back into managed contacts
 - Optional contact change moderation queue for cross-owner edits (opt-in, default off for personal deployments)
-- Birthday/anniversary generated milestone calendars per address book
+- Birthday/anniversary generated milestone calendars per address book, including combined couple anniversaries when relationships are mutually linked
 - Apple compatibility mirror mode (selected sources mirrored into user's default `contacts` book)
 
 ### DAV and Interoperability 🔌
