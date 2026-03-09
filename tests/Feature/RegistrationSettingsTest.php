@@ -150,7 +150,7 @@ class RegistrationSettingsTest extends TestCase
     {
         $path = storage_path('framework/testing/funding-for-test.yml');
         @mkdir(dirname($path), 0777, true);
-        file_put_contents($path, <<<YAML
+        file_put_contents($path, <<<'YAML'
 buy_me_a_coffee: lumen.supporter
 custom:
   - https://example.com/support

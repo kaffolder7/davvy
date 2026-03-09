@@ -298,11 +298,13 @@ class SponsorshipLinksService
                 if ($rawValue === '') {
                     $parsed[$key] = [];
                     $activeListKey = $key;
+
                     continue;
                 }
 
                 $activeListKey = null;
                 $parsed[$key] = $this->parseInlineFundingValue($rawValue);
+
                 continue;
             }
 
@@ -373,11 +375,13 @@ class SponsorshipLinksService
 
             if ($char === "'" && ! $inDoubleQuote) {
                 $inSingleQuote = ! $inSingleQuote;
+
                 continue;
             }
 
             if ($char === '"' && ! $inSingleQuote) {
                 $inDoubleQuote = ! $inDoubleQuote;
+
                 continue;
             }
 
