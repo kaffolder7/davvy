@@ -145,4 +145,79 @@ class RegistrationSettingsTest extends TestCase
         $response->assertOk();
         $response->assertJsonPath('contact_change_moderation_enabled', true);
     }
+
+    public function test_public_config_includes_sponsorship_links_from_funding_file(): void
+    {
+        $path = storage_path('framework/testing/funding-for-test.yml');
+        @mkdir(dirname($path), 0777, true);
+        file_put_contents($path, <<<YAML
+buy_me_a_coffee: lumen.supporter
+custom:
+  - https://example.com/support
+YAML);
+
+        try {
+            config()->set('services.sponsorship.funding_file', $path);
+            config()->set('services.sponsorship.button_hidden', false);
+
+            $response = $this->getJson('/api/public/config');
+
+            $response->assertOk();
+            $response->assertJsonPath('sponsorship.enabled', true);
+            $response->assertJsonFragment([
+                'name' => 'Buy Me a Coffee',
+                'url' => 'https://www.buymeacoffee.com/lumen.supporter',
+            ]);
+            $response->assertJsonFragment([
+                'name' => 'Support Link (example.com)',
+                'url' => 'https://example.com/support',
+            ]);
+        } finally {
+            @unlink($path);
+        }
+    }
+
+    public function test_public_config_hides_sponsorship_links_when_button_is_hidden(): void
+    {
+        $path = storage_path('framework/testing/funding-hidden-test.yml');
+        @mkdir(dirname($path), 0777, true);
+        file_put_contents($path, "buy_me_a_coffee: lumen.supporter\n");
+
+        try {
+            config()->set('services.sponsorship.funding_file', $path);
+            config()->set('services.sponsorship.button_hidden', true);
+
+            $response = $this->getJson('/api/public/config');
+
+            $response->assertOk();
+            $response->assertJsonPath('sponsorship.enabled', false);
+            $response->assertJsonPath('sponsorship.links', []);
+        } finally {
+            @unlink($path);
+        }
+    }
+
+    public function test_authenticated_me_payload_includes_sponsorship_links(): void
+    {
+        $user = User::factory()->create();
+        $path = storage_path('framework/testing/funding-auth-test.yml');
+        @mkdir(dirname($path), 0777, true);
+        file_put_contents($path, "buy_me_a_coffee: lumen.supporter\n");
+
+        try {
+            config()->set('services.sponsorship.funding_file', $path);
+            config()->set('services.sponsorship.button_hidden', false);
+
+            $response = $this->actingAs($user)->getJson('/api/auth/me');
+
+            $response->assertOk();
+            $response->assertJsonPath('sponsorship.enabled', true);
+            $response->assertJsonFragment([
+                'name' => 'Buy Me a Coffee',
+                'url' => 'https://www.buymeacoffee.com/lumen.supporter',
+            ]);
+        } finally {
+            @unlink($path);
+        }
+    }
 }
