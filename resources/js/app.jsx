@@ -3023,7 +3023,7 @@ function ContactsPage({ auth, theme }) {
                           />
                         ) : null}
 
-                        <section className="rounded-2xl border border-app-edge bg-app-surface p-3">
+                        <section className="rounded-2xl bg-app-surface p-3">
                           <p className="text-[10px] font-semibold uppercase tracking-wide text-app-base">
                             Calendar Behavior
                           </p>
