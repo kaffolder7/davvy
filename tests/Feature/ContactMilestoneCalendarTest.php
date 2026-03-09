@@ -4,13 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\AddressBook;
 use App\Models\AppSetting;
-use App\Models\Card;
 use App\Models\Calendar;
 use App\Models\CalendarObject;
+use App\Models\Card;
 use App\Models\User;
 use App\Services\RegistrationSettingsService;
-use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -300,6 +300,169 @@ class ContactMilestoneCalendarTest extends TestCase
         $this->assertStringContainsString('SUMMARY:💍 Alex Rivera\'s Anniversary', $anniversaryData);
         $this->assertSame(0, preg_match("/SUMMARY:🎂 Alex Rivera's \\d+(?:st|nd|rd|th) Birthday/u", $birthdayData));
         $this->assertSame(0, preg_match("/SUMMARY:💍 Alex Rivera's \\d+(?:st|nd|rd|th) Anniversary/u", $anniversaryData));
+    }
+
+    public function test_anniversary_events_combine_for_mutual_spouses_and_keep_unpaired_individual_events(): void
+    {
+        $this->travelTo(Carbon::create(2026, 1, 15, 12, 0, 0, 'UTC'));
+
+        $user = User::factory()->create();
+        $addressBook = AddressBook::factory()->create([
+            'owner_id' => $user->id,
+            'display_name' => 'Family',
+            'uri' => 'family',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/api/contacts', $this->contactPayload([
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'head_of_household' => true,
+                'dates' => [
+                    [
+                        'label' => 'anniversary',
+                        'custom_label' => null,
+                        'year' => 2013,
+                        'month' => 11,
+                        'day' => 5,
+                    ],
+                ],
+                'related_names' => [
+                    ['label' => 'spouse', 'custom_label' => null, 'value' => 'Jane Doe'],
+                ],
+                'address_book_ids' => [$addressBook->id],
+            ]))
+            ->assertCreated();
+
+        $this->actingAs($user)
+            ->postJson('/api/contacts', $this->contactPayload([
+                'first_name' => 'Jane',
+                'last_name' => 'Doe',
+                'head_of_household' => false,
+                'dates' => [
+                    [
+                        'label' => 'anniversary',
+                        'custom_label' => null,
+                        'year' => null,
+                        'month' => 11,
+                        'day' => 5,
+                    ],
+                ],
+                'related_names' => [
+                    ['label' => 'wife', 'custom_label' => null, 'value' => 'John Doe'],
+                ],
+                'address_book_ids' => [$addressBook->id],
+            ]))
+            ->assertCreated();
+
+        $this->actingAs($user)
+            ->postJson('/api/contacts', $this->contactPayload([
+                'first_name' => 'Sam',
+                'last_name' => 'Taylor',
+                'dates' => [
+                    [
+                        'label' => 'anniversary',
+                        'custom_label' => null,
+                        'year' => 2010,
+                        'month' => 11,
+                        'day' => 5,
+                    ],
+                ],
+                'related_names' => [],
+                'address_book_ids' => [$addressBook->id],
+            ]))
+            ->assertCreated();
+
+        $response = $this->actingAs($user)
+            ->patchJson('/api/address-books/'.$addressBook->id.'/milestone-calendars', [
+                'birthdays_enabled' => false,
+                'anniversaries_enabled' => true,
+            ])
+            ->assertOk();
+
+        $anniversaryCalendarId = (int) $response->json('milestone_calendars.anniversaries.calendar_id');
+        $anniversaryData = CalendarObject::query()
+            ->where('calendar_id', $anniversaryCalendarId)
+            ->get()
+            ->pluck('data')
+            ->implode("\n");
+
+        $this->assertSame(6, substr_count($anniversaryData, 'BEGIN:VEVENT'));
+        $this->assertStringContainsString('SUMMARY:💍 John & Jane Doe\'s 13th Anniversary', $anniversaryData);
+        $this->assertStringContainsString('SUMMARY:💍 Sam Taylor\'s 16th Anniversary', $anniversaryData);
+        $this->assertStringNotContainsString('SUMMARY:💍 John Doe\'s 13th Anniversary', $anniversaryData);
+        $this->assertStringNotContainsString('SUMMARY:💍 Jane Doe\'s Anniversary', $anniversaryData);
+    }
+
+    public function test_anniversary_events_are_not_combined_when_spouse_links_are_not_mutual(): void
+    {
+        $this->travelTo(Carbon::create(2026, 1, 15, 12, 0, 0, 'UTC'));
+
+        $user = User::factory()->create();
+        $addressBook = AddressBook::factory()->create([
+            'owner_id' => $user->id,
+            'display_name' => 'Family',
+            'uri' => 'family',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/api/contacts', $this->contactPayload([
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'dates' => [
+                    [
+                        'label' => 'anniversary',
+                        'custom_label' => null,
+                        'year' => 2013,
+                        'month' => 11,
+                        'day' => 5,
+                    ],
+                ],
+                'related_names' => [
+                    ['label' => 'spouse', 'custom_label' => null, 'value' => 'Jane Doe'],
+                ],
+                'address_book_ids' => [$addressBook->id],
+            ]))
+            ->assertCreated();
+
+        $this->actingAs($user)
+            ->postJson('/api/contacts', $this->contactPayload([
+                'first_name' => 'Jane',
+                'last_name' => 'Doe',
+                'dates' => [
+                    [
+                        'label' => 'anniversary',
+                        'custom_label' => null,
+                        'year' => 2013,
+                        'month' => 11,
+                        'day' => 5,
+                    ],
+                ],
+                'related_names' => [
+                    ['label' => 'friend', 'custom_label' => null, 'value' => 'John Doe'],
+                ],
+                'address_book_ids' => [$addressBook->id],
+            ]))
+            ->assertCreated();
+
+        $response = $this->actingAs($user)
+            ->patchJson('/api/address-books/'.$addressBook->id.'/milestone-calendars', [
+                'birthdays_enabled' => false,
+                'anniversaries_enabled' => true,
+            ])
+            ->assertOk();
+
+        $anniversaryCalendarId = (int) $response->json('milestone_calendars.anniversaries.calendar_id');
+        $anniversaryData = CalendarObject::query()
+            ->where('calendar_id', $anniversaryCalendarId)
+            ->get()
+            ->pluck('data')
+            ->implode("\n");
+
+        $this->assertSame(6, substr_count($anniversaryData, 'BEGIN:VEVENT'));
+        $this->assertStringContainsString('SUMMARY:💍 John Doe\'s 13th Anniversary', $anniversaryData);
+        $this->assertStringContainsString('SUMMARY:💍 Jane Doe\'s 13th Anniversary', $anniversaryData);
+        $this->assertStringNotContainsString('SUMMARY:💍 John & Jane Doe\'s 13th Anniversary', $anniversaryData);
     }
 
     public function test_disabling_birthdays_stops_future_sync_updates(): void
