@@ -170,6 +170,15 @@ function parseSponsorshipConfig(rawConfig) {
   };
 }
 
+function sponsorshipFaviconUrl(targetUrl) {
+  try {
+    const host = new URL(targetUrl).hostname.replace(/^www\./i, "");
+    return host ? `https://icons.duckduckgo.com/ip3/${host}.ico` : "";
+  } catch {
+    return "";
+  }
+}
+
 function formatUtcOffset(offsetMinutes) {
   const sign = offsetMinutes >= 0 ? "+" : "-";
   const absolute = Math.abs(offsetMinutes);
@@ -7343,7 +7352,10 @@ function AppShell({ auth, theme, children }) {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <span>{link.name}</span>
+                  <span className="sponsor-modal-link-main">
+                    <SponsorshipLinkIcon name={link.name} url={link.url} />
+                    <span className="sponsor-modal-link-label">{link.name}</span>
+                  </span>
                   <svg
                     aria-hidden="true"
                     className="h-4 w-4"
@@ -7364,6 +7376,31 @@ function AppShell({ auth, theme, children }) {
         </div>
       ) : null}
     </main>
+  );
+}
+
+function SponsorshipLinkIcon({ name, url }) {
+  const [iconFailed, setIconFailed] = useState(false);
+  const faviconUrl = useMemo(() => sponsorshipFaviconUrl(url), [url]);
+  const fallbackLabel = String(name ?? "").trim().slice(0, 1).toUpperCase() || "S";
+
+  if (!faviconUrl || iconFailed) {
+    return (
+      <span className="sponsor-link-icon-fallback" aria-hidden="true">
+        {fallbackLabel}
+      </span>
+    );
+  }
+
+  return (
+    <img
+      className="sponsor-link-icon-img"
+      src={faviconUrl}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      onError={() => setIconFailed(true)}
+    />
   );
 }
 
