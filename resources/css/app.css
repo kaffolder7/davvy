@@ -224,6 +224,45 @@ body {
   box-shadow: 0 0 0 2px var(--sponsor-heart-soft);
 }
 
+.sponsor-modal-link-main {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.sponsor-modal-link-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sponsor-link-icon-img,
+.sponsor-link-icon-fallback {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  flex: 0 0 18px;
+}
+
+.sponsor-link-icon-img {
+  display: inline-block;
+  object-fit: cover;
+}
+
+.sponsor-link-icon-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--edge-strong);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-solid));
+  color: var(--text-strong);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .surface {
   background: var(--surface);
   border: 1px solid var(--edge);
