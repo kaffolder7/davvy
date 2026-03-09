@@ -6,9 +6,9 @@ use App\Enums\ShareResourceType;
 use App\Models\AddressBook;
 use App\Models\AddressBookContactMilestoneCalendar;
 use App\Models\AppSetting;
-use App\Models\Card;
 use App\Models\Calendar;
 use App\Models\CalendarObject;
+use App\Models\Card;
 use App\Models\Contact;
 use App\Models\ContactAddressBookAssignment;
 use App\Models\User;
@@ -540,6 +540,7 @@ class ContactMilestoneCalendarService
     private function desiredAnniversaryEvents(AddressBook $addressBook, int $generationYears): array
     {
         $events = [];
+        $anniversariesByDate = [];
 
         foreach ($this->contactsForAddressBook($addressBook->id) as $contact) {
             $payload = is_array($contact->payload) ? $contact->payload : [];
@@ -553,14 +554,56 @@ class ContactMilestoneCalendarService
             }
 
             $anniversaries = $this->anniversaryDates($payload);
+            if ($anniversaries === []) {
+                continue;
+            }
+
+            $contactNameKeys = $this->anniversaryContactNameKeys($contact, $payload, $contactName);
+            $relatedNameKeys = $this->anniversaryRelatedNameKeys($payload);
+            $firstName = $this->anniversaryFirstName($payload, $contactName);
+            $lastName = $this->anniversaryLastName($payload, $contactName);
+            $isHeadOfHousehold = $this->payloadBoolean($payload['head_of_household'] ?? false);
 
             foreach ($anniversaries as $anniversary) {
                 $dateParts = $anniversary['date_parts'];
-                foreach ($this->upcomingOccurrenceYears($dateParts, $generationYears) as $occurrenceYear) {
-                    $suffix = $anniversary['id'].'-'.$occurrenceYear;
+                $dateKey = $this->anniversaryDateKey($dateParts);
+
+                $anniversariesByDate[$dateKey][] = [
+                    'entry_key' => $contact->id.':'.$anniversary['id'],
+                    'contact' => $contact,
+                    'anniversary' => $anniversary,
+                    'contact_name' => $contactName,
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'is_head_of_household' => $isHeadOfHousehold,
+                    'contact_name_keys' => $contactNameKeys,
+                    'related_name_keys' => $relatedNameKeys,
+                ];
+            }
+        }
+
+        $pairedEntryKeys = [];
+
+        foreach ($anniversariesByDate as $entries) {
+            foreach ($this->anniversaryPairsForDateEntries($entries) as $pair) {
+                $left = $pair['left'];
+                $right = $pair['right'];
+
+                $pairedEntryKeys[$left['entry_key']] = true;
+                $pairedEntryKeys[$right['entry_key']] = true;
+
+                [$primary, $secondary] = $this->orderedAnniversaryPairEntries($left, $right);
+                $primaryDateParts = $primary['anniversary']['date_parts'];
+                $secondaryDateParts = $secondary['anniversary']['date_parts'];
+                $baseYear = $primaryDateParts['year'] ?? $secondaryDateParts['year'];
+
+                foreach ($this->upcomingOccurrenceYears($primaryDateParts, $generationYears) as $occurrenceYear) {
+                    $suffix = $this->anniversaryPairSuffix($left, $right, $occurrenceYear);
+                    $primaryContact = $primary['contact'];
+                    $primaryContactId = (int) $primaryContact->id;
                     $uri = $this->managedUri(
                         type: AddressBookContactMilestoneCalendar::TYPE_ANNIVERSARY,
-                        contactId: $contact->id,
+                        contactId: $primaryContactId,
                         suffix: $suffix,
                     );
 
@@ -568,11 +611,54 @@ class ContactMilestoneCalendarService
                         uid: $this->managedUid(
                             type: AddressBookContactMilestoneCalendar::TYPE_ANNIVERSARY,
                             addressBookId: $addressBook->id,
-                            contactId: $contact->id,
+                            contactId: $primaryContactId,
+                            suffix: $suffix,
+                        ),
+                        summary: $this->anniversaryPairSummary(
+                            primaryEntry: $primary,
+                            secondaryEntry: $secondary,
+                            baseYear: $baseYear,
+                            occurrenceYear: $occurrenceYear,
+                        ),
+                        year: $occurrenceYear,
+                        month: $primaryDateParts['month'],
+                        day: $primaryDateParts['day'],
+                        addressBookId: $addressBook->id,
+                        contactId: $primaryContactId,
+                        milestoneType: AddressBookContactMilestoneCalendar::TYPE_ANNIVERSARY,
+                    );
+                }
+            }
+        }
+
+        foreach ($anniversariesByDate as $entries) {
+            foreach ($entries as $entry) {
+                if (isset($pairedEntryKeys[$entry['entry_key']])) {
+                    continue;
+                }
+
+                $contact = $entry['contact'];
+                $contactId = (int) $contact->id;
+                $anniversary = $entry['anniversary'];
+                $dateParts = $anniversary['date_parts'];
+
+                foreach ($this->upcomingOccurrenceYears($dateParts, $generationYears) as $occurrenceYear) {
+                    $suffix = $anniversary['id'].'-'.$occurrenceYear;
+                    $uri = $this->managedUri(
+                        type: AddressBookContactMilestoneCalendar::TYPE_ANNIVERSARY,
+                        contactId: $contactId,
+                        suffix: $suffix,
+                    );
+
+                    $events[$uri] = $this->buildAllDayEvent(
+                        uid: $this->managedUid(
+                            type: AddressBookContactMilestoneCalendar::TYPE_ANNIVERSARY,
+                            addressBookId: $addressBook->id,
+                            contactId: $contactId,
                             suffix: $suffix,
                         ),
                         summary: $this->anniversarySummary(
-                            contactName: $contactName,
+                            contactName: $entry['contact_name'],
                             baseYear: $dateParts['year'],
                             occurrenceYear: $occurrenceYear,
                         ),
@@ -580,7 +666,7 @@ class ContactMilestoneCalendarService
                         month: $dateParts['month'],
                         day: $dateParts['day'],
                         addressBookId: $addressBook->id,
-                        contactId: $contact->id,
+                        contactId: $contactId,
                         milestoneType: AddressBookContactMilestoneCalendar::TYPE_ANNIVERSARY,
                     );
                 }
@@ -588,6 +674,282 @@ class ContactMilestoneCalendarService
         }
 
         return $events;
+    }
+
+    /**
+     * @param  array{year:?int,month:int,day:int,effective_year:int}  $dateParts
+     */
+    private function anniversaryDateKey(array $dateParts): string
+    {
+        return sprintf('%02d-%02d', $dateParts['month'], $dateParts['day']);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, bool>
+     */
+    private function anniversaryRelatedNameKeys(array $payload): array
+    {
+        $rows = is_array($payload['related_names'] ?? null) ? $payload['related_names'] : [];
+        $keys = [];
+
+        foreach ($rows as $row) {
+            if (! is_array($row) || ! $this->isSpouseLikeRelatedNameRow($row)) {
+                continue;
+            }
+
+            $key = $this->anniversaryNameKey($row['value'] ?? null);
+            if ($key === null) {
+                continue;
+            }
+
+            $keys[$key] = true;
+        }
+
+        return $keys;
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     */
+    private function isSpouseLikeRelatedNameRow(array $row): bool
+    {
+        $label = str_replace(['_', '-'], ' ', Str::lower(trim((string) ($row['label'] ?? ''))));
+        $customLabel = str_replace(['_', '-'], ' ', Str::lower(trim((string) ($row['custom_label'] ?? ''))));
+
+        if (preg_match('/\b(spouse|partner|husband|wife)\b/', $label) === 1) {
+            return true;
+        }
+
+        return preg_match('/\b(spouse|partner|husband|wife)\b/', $customLabel) === 1;
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, bool>
+     */
+    private function anniversaryContactNameKeys(Contact $contact, array $payload, string $contactName): array
+    {
+        $keys = [];
+
+        $this->addAnniversaryNameKey($keys, $contactName);
+        $this->addAnniversaryNameKey($keys, $contact->full_name);
+
+        $firstName = $this->normalizeString($payload['first_name'] ?? null);
+        $lastName = $this->normalizeString($payload['last_name'] ?? null);
+        if ($firstName !== null && $lastName !== null) {
+            $this->addAnniversaryNameKey($keys, $firstName.' '.$lastName);
+        }
+
+        return $keys;
+    }
+
+    /**
+     * @param  array<string, bool>  $keys
+     */
+    private function addAnniversaryNameKey(array &$keys, mixed $value): void
+    {
+        $key = $this->anniversaryNameKey($value);
+        if ($key === null) {
+            return;
+        }
+
+        $keys[$key] = true;
+    }
+
+    private function anniversaryNameKey(mixed $value): ?string
+    {
+        $normalized = $this->normalizeString($value);
+        if ($normalized === null) {
+            return null;
+        }
+
+        $key = Str::lower($normalized);
+        $key = preg_replace('/[^\p{L}\p{N}]+/u', ' ', $key) ?? '';
+        $key = trim(preg_replace('/\s+/', ' ', $key) ?? '');
+
+        return $key !== '' ? $key : null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function anniversaryFirstName(array $payload, string $contactName): string
+    {
+        $firstName = $this->normalizeString($payload['first_name'] ?? null);
+        if ($firstName !== null) {
+            return $firstName;
+        }
+
+        $pieces = preg_split('/\s+/', $contactName) ?: [];
+
+        return $pieces[0] ?? $contactName;
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function anniversaryLastName(array $payload, string $contactName): ?string
+    {
+        $lastName = $this->normalizeString($payload['last_name'] ?? null);
+        if ($lastName !== null) {
+            return $lastName;
+        }
+
+        $pieces = preg_split('/\s+/', $contactName) ?: [];
+        if (count($pieces) < 2) {
+            return null;
+        }
+
+        return $pieces[count($pieces) - 1];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $entries
+     * @return array<int, array{left:array<string, mixed>, right:array<string, mixed>}>
+     */
+    private function anniversaryPairsForDateEntries(array $entries): array
+    {
+        $pairs = [];
+        $available = array_fill_keys(array_keys($entries), true);
+        $entryCount = count($entries);
+
+        for ($leftIndex = 0; $leftIndex < $entryCount; $leftIndex++) {
+            if (! isset($available[$leftIndex])) {
+                continue;
+            }
+
+            $left = $entries[$leftIndex];
+            $matchedRightIndex = null;
+
+            for ($rightIndex = $leftIndex + 1; $rightIndex < $entryCount; $rightIndex++) {
+                if (! isset($available[$rightIndex])) {
+                    continue;
+                }
+
+                $right = $entries[$rightIndex];
+                if (! $this->entriesAreMutuallyMarried($left, $right)) {
+                    continue;
+                }
+
+                $matchedRightIndex = $rightIndex;
+                break;
+            }
+
+            if ($matchedRightIndex === null) {
+                continue;
+            }
+
+            $pairs[] = [
+                'left' => $left,
+                'right' => $entries[$matchedRightIndex],
+            ];
+
+            unset($available[$leftIndex], $available[$matchedRightIndex]);
+        }
+
+        return $pairs;
+    }
+
+    /**
+     * @param  array<string, mixed>  $left
+     * @param  array<string, mixed>  $right
+     */
+    private function entriesAreMutuallyMarried(array $left, array $right): bool
+    {
+        return $this->entryReferencesOtherAsSpouse($left, $right)
+            && $this->entryReferencesOtherAsSpouse($right, $left);
+    }
+
+    /**
+     * @param  array<string, mixed>  $source
+     * @param  array<string, mixed>  $target
+     */
+    private function entryReferencesOtherAsSpouse(array $source, array $target): bool
+    {
+        /** @var array<string, bool> $sourceRelatedNames */
+        $sourceRelatedNames = $source['related_name_keys'];
+        /** @var array<string, bool> $targetNameKeys */
+        $targetNameKeys = $target['contact_name_keys'];
+
+        foreach ($targetNameKeys as $nameKey => $present) {
+            if (! $present) {
+                continue;
+            }
+
+            if (isset($sourceRelatedNames[$nameKey])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<string, mixed>  $left
+     * @param  array<string, mixed>  $right
+     * @return array{0:array<string, mixed>,1:array<string, mixed>}
+     */
+    private function orderedAnniversaryPairEntries(array $left, array $right): array
+    {
+        $leftHeadOfHousehold = (bool) ($left['is_head_of_household'] ?? false);
+        $rightHeadOfHousehold = (bool) ($right['is_head_of_household'] ?? false);
+
+        if ($leftHeadOfHousehold !== $rightHeadOfHousehold) {
+            return $leftHeadOfHousehold ? [$left, $right] : [$right, $left];
+        }
+
+        $leftContactId = (int) ($left['contact']?->id ?? 0);
+        $rightContactId = (int) ($right['contact']?->id ?? 0);
+
+        return $leftContactId <= $rightContactId
+            ? [$left, $right]
+            : [$right, $left];
+    }
+
+    /**
+     * @param  array<string, mixed>  $left
+     * @param  array<string, mixed>  $right
+     */
+    private function anniversaryPairSuffix(array $left, array $right, int $occurrenceYear): string
+    {
+        $pairKeys = [
+            ((int) ($left['contact']?->id ?? 0)).'-'.((string) ($left['anniversary']['id'] ?? '0')),
+            ((int) ($right['contact']?->id ?? 0)).'-'.((string) ($right['anniversary']['id'] ?? '0')),
+        ];
+        sort($pairKeys, SORT_STRING);
+
+        return 'couple-'.implode('--', $pairKeys).'-'.$occurrenceYear;
+    }
+
+    /**
+     * @param  array<string, mixed>  $primaryEntry
+     * @param  array<string, mixed>  $secondaryEntry
+     */
+    private function anniversaryPairSummary(
+        array $primaryEntry,
+        array $secondaryEntry,
+        ?int $baseYear,
+        int $occurrenceYear,
+    ): string {
+        $primaryFirstName = trim((string) ($primaryEntry['first_name'] ?? ''));
+        $secondaryFirstName = trim((string) ($secondaryEntry['first_name'] ?? ''));
+        $primaryLastName = $this->normalizeString($primaryEntry['last_name'] ?? null);
+
+        $name = trim($primaryFirstName.' & '.$secondaryFirstName);
+        if ($primaryLastName !== null) {
+            $name = trim($name.' '.$primaryLastName);
+        }
+
+        if ($name === '') {
+            $name = trim((string) ($primaryEntry['contact_name'] ?? 'Anniversary'));
+        }
+
+        $ordinal = $this->milestoneOrdinal($baseYear, $occurrenceYear);
+
+        return $ordinal !== null
+            ? '💍 '.$name.'\'s '.$ordinal.' Anniversary'
+            : '💍 '.$name.'\'s Anniversary';
     }
 
     /**
@@ -876,6 +1238,7 @@ class ContactMilestoneCalendarService
         while ($candidateYear <= $maxYear && count($years) < $targetCount) {
             if (! checkdate($dateParts['month'], $dateParts['day'], $candidateYear)) {
                 $candidateYear++;
+
                 continue;
             }
 
@@ -886,6 +1249,7 @@ class ContactMilestoneCalendarService
             );
             if ($occurrenceDate->lt($today)) {
                 $candidateYear++;
+
                 continue;
             }
 
@@ -1004,8 +1368,11 @@ class ContactMilestoneCalendarService
      */
     private function contactExcludedFromMilestones(array $payload): bool
     {
-        $value = $payload['exclude_milestone_calendars'] ?? false;
+        return $this->payloadBoolean($payload['exclude_milestone_calendars'] ?? false);
+    }
 
+    private function payloadBoolean(mixed $value): bool
+    {
         if (is_bool($value)) {
             return $value;
         }
