@@ -1379,6 +1379,31 @@ const IM_LABEL_OPTIONS = [
   { value: "custom", label: "Custom..." },
 ];
 
+const SAVED_CUSTOM_LABEL_VALUE_PREFIX = "saved-custom:";
+const CONTACT_LABEL_FIELD_OPTIONS = {
+  phones: PHONE_LABEL_OPTIONS,
+  emails: EMAIL_LABEL_OPTIONS,
+  urls: URL_LABEL_OPTIONS,
+  addresses: ADDRESS_LABEL_OPTIONS,
+  dates: DATE_LABEL_OPTIONS,
+  related_names: RELATED_LABEL_OPTIONS,
+  instant_messages: IM_LABEL_OPTIONS,
+};
+const CONTACT_LABEL_FIELD_KEYS = Object.keys(CONTACT_LABEL_FIELD_OPTIONS);
+const CONTACT_LABEL_BUILTIN_VALUE_SETS = Object.fromEntries(
+  CONTACT_LABEL_FIELD_KEYS.map((fieldKey) => [
+    fieldKey,
+    new Set(
+      CONTACT_LABEL_FIELD_OPTIONS[fieldKey]
+        .map((option) => String(option?.value ?? "").trim().toLowerCase())
+        .filter((value) => value !== "" && value !== "custom"),
+    ),
+  ]),
+);
+const EMPTY_CONTACT_CUSTOM_LABELS = Object.fromEntries(
+  CONTACT_LABEL_FIELD_KEYS.map((fieldKey) => [fieldKey, []]),
+);
+
 const PRONOUN_OPTIONS = [
   { value: "", label: "Not set" },
   { value: "she/her", label: "she/her" },
@@ -1411,6 +1436,118 @@ const CONTACTS_PAGE_SIZE = 12;
 
 function hasTextValue(value) {
   return typeof value === "string" ? value.trim() !== "" : false;
+}
+
+function normalizeLabelValue(value) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function normalizeCustomLabelText(value) {
+  return String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function customLabelKey(value) {
+  return normalizeCustomLabelText(value).toLowerCase();
+}
+
+function savedCustomOptionValue(label) {
+  return `${SAVED_CUSTOM_LABEL_VALUE_PREFIX}${customLabelKey(label)}`;
+}
+
+function buildSavedCustomLabelsByField(contacts) {
+  const mapsByField = Object.fromEntries(
+    CONTACT_LABEL_FIELD_KEYS.map((fieldKey) => [fieldKey, new Map()]),
+  );
+
+  if (!Array.isArray(contacts) || contacts.length === 0) {
+    return EMPTY_CONTACT_CUSTOM_LABELS;
+  }
+
+  for (const contact of contacts) {
+    for (const fieldKey of CONTACT_LABEL_FIELD_KEYS) {
+      const builtInValues = CONTACT_LABEL_BUILTIN_VALUE_SETS[fieldKey];
+      const rows = Array.isArray(contact?.[fieldKey]) ? contact[fieldKey] : [];
+
+      for (const row of rows) {
+        if (!row || typeof row !== "object") {
+          continue;
+        }
+
+        const normalizedLabel = normalizeLabelValue(row?.label);
+        if (normalizedLabel !== "custom") {
+          continue;
+        }
+
+        const candidateLabel = normalizeCustomLabelText(row?.custom_label);
+
+        const candidateKey = customLabelKey(candidateLabel);
+        if (candidateKey === "" || builtInValues.has(candidateKey)) {
+          continue;
+        }
+
+        if (!mapsByField[fieldKey].has(candidateKey)) {
+          mapsByField[fieldKey].set(candidateKey, candidateLabel);
+        }
+      }
+    }
+  }
+
+  return Object.fromEntries(
+    CONTACT_LABEL_FIELD_KEYS.map((fieldKey) => [
+      fieldKey,
+      Array.from(mapsByField[fieldKey].values()).sort((left, right) =>
+        left.localeCompare(right, undefined, {
+          sensitivity: "base",
+        }),
+      ),
+    ]),
+  );
+}
+
+function buildLabelOptions(baseOptions, savedCustomLabels = []) {
+  const primaryOptions = baseOptions.filter((option) => option.value !== "custom");
+  const customOption = baseOptions.find((option) => option.value === "custom");
+  const customLabelOptions = savedCustomLabels.map((label) => ({
+    value: savedCustomOptionValue(label),
+    label,
+    saved_custom_label: label,
+    saved_custom_key: customLabelKey(label),
+  }));
+
+  if (!customOption) {
+    return [...primaryOptions, ...customLabelOptions];
+  }
+
+  return [...primaryOptions, ...customLabelOptions, customOption];
+}
+
+function resolveLabelSelectValue(row, labelOptions, fallbackValue = "other") {
+  const normalizedLabel = normalizeLabelValue(row?.label);
+
+  if (normalizedLabel === "custom") {
+    const selectedCustomKey = customLabelKey(row?.custom_label);
+    if (selectedCustomKey !== "") {
+      const customOption = labelOptions.find(
+        (option) => option.saved_custom_key === selectedCustomKey,
+      );
+      if (customOption) {
+        return customOption.value;
+      }
+    }
+
+    return "custom";
+  }
+
+  const directOption = labelOptions.find(
+    (option) => normalizeLabelValue(option.value) === normalizedLabel,
+  );
+  if (directOption) {
+    return directOption.value;
+  }
+
+  return fallbackValue;
 }
 
 function sanitizeDatePartInput(value, maxLength) {
@@ -1999,6 +2136,33 @@ function ContactsPage({ auth, theme }) {
         }),
       );
   }, [contacts, form.id]);
+
+  const savedCustomLabels = useMemo(
+    () => buildSavedCustomLabelsByField(contacts),
+    [contacts],
+  );
+
+  const labelOptions = useMemo(
+    () => ({
+      phones: buildLabelOptions(PHONE_LABEL_OPTIONS, savedCustomLabels.phones),
+      emails: buildLabelOptions(EMAIL_LABEL_OPTIONS, savedCustomLabels.emails),
+      urls: buildLabelOptions(URL_LABEL_OPTIONS, savedCustomLabels.urls),
+      addresses: buildLabelOptions(
+        ADDRESS_LABEL_OPTIONS,
+        savedCustomLabels.addresses,
+      ),
+      dates: buildLabelOptions(DATE_LABEL_OPTIONS, savedCustomLabels.dates),
+      related_names: buildLabelOptions(
+        RELATED_LABEL_OPTIONS,
+        savedCustomLabels.related_names,
+      ),
+      instant_messages: buildLabelOptions(
+        IM_LABEL_OPTIONS,
+        savedCustomLabels.instant_messages,
+      ),
+    }),
+    [savedCustomLabels],
+  );
 
   const filteredHiddenOptionalFields = useMemo(() => {
     const query = fieldSearchTerm.trim().toLowerCase();
@@ -3075,6 +3239,7 @@ function ContactsPage({ auth, theme }) {
                           <DateEditor
                             rows={form.dates}
                             setRows={(rows) => updateFormField("dates", rows)}
+                            labelOptions={labelOptions.dates}
                           />
                         ) : null}
 
@@ -3107,6 +3272,7 @@ function ContactsPage({ auth, theme }) {
                       rows={form.related_names}
                       setRows={(rows) => updateFormField("related_names", rows)}
                       contactOptions={relatedNameOptions}
+                      labelOptions={labelOptions.related_names}
                     />
                   </div>
                 ) : null}
@@ -3138,7 +3304,7 @@ function ContactsPage({ auth, theme }) {
                       title="Phone"
                       rows={form.phones}
                       setRows={(rows) => updateFormField("phones", rows)}
-                      labelOptions={PHONE_LABEL_OPTIONS}
+                      labelOptions={labelOptions.phones}
                       valuePlaceholder="Phone number"
                       addLabel="Add phone"
                     />
@@ -3146,19 +3312,20 @@ function ContactsPage({ auth, theme }) {
                       title="Email"
                       rows={form.emails}
                       setRows={(rows) => updateFormField("emails", rows)}
-                      labelOptions={EMAIL_LABEL_OPTIONS}
+                      labelOptions={labelOptions.emails}
                       valuePlaceholder="Email address"
                       addLabel="Add email"
                     />
                     <AddressEditor
                       rows={form.addresses}
                       setRows={(rows) => updateFormField("addresses", rows)}
+                      labelOptions={labelOptions.addresses}
                     />
                     <LabeledValueEditor
                       title="URL"
                       rows={form.urls}
                       setRows={(rows) => updateFormField("urls", rows)}
-                      labelOptions={URL_LABEL_OPTIONS}
+                      labelOptions={labelOptions.urls}
                       valuePlaceholder="https://example.com"
                       addLabel="Add URL"
                     />
@@ -3169,7 +3336,7 @@ function ContactsPage({ auth, theme }) {
                         setRows={(rows) =>
                           updateFormField("instant_messages", rows)
                         }
-                        labelOptions={IM_LABEL_OPTIONS}
+                        labelOptions={labelOptions.instant_messages}
                         valuePlaceholder="im:username@example.com"
                         addLabel="Add IM"
                       />
@@ -3580,6 +3747,14 @@ function LabeledValueEditor({
   addLabel,
 }) {
   const safeRows = Array.isArray(rows) ? rows : [];
+  const safeLabelOptions =
+    Array.isArray(labelOptions) && labelOptions.length > 0
+      ? labelOptions
+      : [
+          { value: "other", label: "Other" },
+          { value: "custom", label: "Custom..." },
+        ];
+  const defaultLabelValue = safeLabelOptions[0]?.value || "other";
   const reorder = useRowReorder(safeRows, setRows);
   const rowGroup = useMemo(
     () =>
@@ -3590,8 +3765,15 @@ function LabeledValueEditor({
   );
 
   const updateRow = (index, field, value) => {
+    const patch =
+      typeof field === "string"
+        ? { [field]: value }
+        : field && typeof field === "object"
+          ? field
+          : {};
+
     const nextRows = safeRows.map((row, rowIndex) =>
-      rowIndex === index ? { ...row, [field]: value } : row,
+      rowIndex === index ? { ...row, ...patch } : row,
     );
     setRows(nextRows);
   };
@@ -3599,12 +3781,39 @@ function LabeledValueEditor({
   const addRow = () => {
     setRows([
       ...safeRows,
-      createEmptyLabeledValue(labelOptions[0]?.value || "other"),
+      createEmptyLabeledValue(defaultLabelValue),
     ]);
   };
 
   const removeRow = (index) => {
     setRows(safeRows.filter((_, rowIndex) => rowIndex !== index));
+  };
+
+  const updateLabel = (index, nextValue) => {
+    const selectedOption = safeLabelOptions.find(
+      (option) => option.value === nextValue,
+    );
+
+    if (selectedOption?.saved_custom_label) {
+      updateRow(index, {
+        label: "custom",
+        custom_label: selectedOption.saved_custom_label,
+      });
+      return;
+    }
+
+    if (nextValue === "custom") {
+      updateRow(index, {
+        label: "custom",
+        custom_label: safeRows[index]?.custom_label ?? "",
+      });
+      return;
+    }
+
+    updateRow(index, {
+      label: nextValue,
+      custom_label: "",
+    });
   };
 
   return (
@@ -3643,12 +3852,14 @@ function LabeledValueEditor({
                 <div className="grid items-center gap-2 md:grid-cols-[12rem_1fr_auto]">
                   <select
                     className="input"
-                    value={row.label ?? "other"}
-                    onChange={(event) =>
-                      updateRow(index, "label", event.target.value)
-                    }
+                    value={resolveLabelSelectValue(
+                      row,
+                      safeLabelOptions,
+                      defaultLabelValue,
+                    )}
+                    onChange={(event) => updateLabel(index, event.target.value)}
                   >
-                    {labelOptions.map((option) => (
+                    {safeLabelOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
@@ -3697,8 +3908,12 @@ function LabeledValueEditor({
   );
 }
 
-function RelatedNameEditor({ rows, setRows, contactOptions }) {
+function RelatedNameEditor({ rows, setRows, contactOptions, labelOptions }) {
   const safeRows = Array.isArray(rows) ? rows : [];
+  const safeLabelOptions =
+    Array.isArray(labelOptions) && labelOptions.length > 0
+      ? labelOptions
+      : RELATED_LABEL_OPTIONS;
   const safeContactOptions = Array.isArray(contactOptions) ? contactOptions : [];
   const reorder = useRowReorder(safeRows, setRows);
   const rowGroup = "reorder-related-name";
@@ -3718,6 +3933,33 @@ function RelatedNameEditor({ rows, setRows, contactOptions }) {
         rowIndex === index ? { ...row, ...patch } : row,
       ),
     );
+  };
+
+  const updateLabel = (index, nextValue) => {
+    const selectedOption = safeLabelOptions.find(
+      (option) => option.value === nextValue,
+    );
+
+    if (selectedOption?.saved_custom_label) {
+      updateRow(index, {
+        label: "custom",
+        custom_label: selectedOption.saved_custom_label,
+      });
+      return;
+    }
+
+    if (nextValue === "custom") {
+      updateRow(index, {
+        label: "custom",
+        custom_label: safeRows[index]?.custom_label ?? "",
+      });
+      return;
+    }
+
+    updateRow(index, {
+      label: nextValue,
+      custom_label: "",
+    });
   };
 
   const addRow = () => {
@@ -3790,12 +4032,10 @@ function RelatedNameEditor({ rows, setRows, contactOptions }) {
                 <div className="grid items-center gap-2 md:grid-cols-[12rem_1fr_auto]">
                   <select
                     className="input"
-                    value={row.label ?? "other"}
-                    onChange={(event) =>
-                      updateRow(index, { label: event.target.value })
-                    }
+                    value={resolveLabelSelectValue(row, safeLabelOptions, "other")}
+                    onChange={(event) => updateLabel(index, event.target.value)}
                   >
-                    {RELATED_LABEL_OPTIONS.map((option) => (
+                    {safeLabelOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
@@ -3916,15 +4156,26 @@ function RelatedNameEditor({ rows, setRows, contactOptions }) {
   );
 }
 
-function AddressEditor({ rows, setRows }) {
+function AddressEditor({ rows, setRows, labelOptions }) {
   const safeRows = Array.isArray(rows) ? rows : [];
+  const safeLabelOptions =
+    Array.isArray(labelOptions) && labelOptions.length > 0
+      ? labelOptions
+      : ADDRESS_LABEL_OPTIONS;
   const reorder = useRowReorder(safeRows, setRows);
   const rowGroup = "reorder-address";
 
   const updateRow = (index, field, value) => {
+    const patch =
+      typeof field === "string"
+        ? { [field]: value }
+        : field && typeof field === "object"
+          ? field
+          : {};
+
     setRows(
       safeRows.map((row, rowIndex) =>
-        rowIndex === index ? { ...row, [field]: value } : row,
+        rowIndex === index ? { ...row, ...patch } : row,
       ),
     );
   };
@@ -3935,6 +4186,33 @@ function AddressEditor({ rows, setRows }) {
 
   const removeRow = (index) => {
     setRows(safeRows.filter((_, rowIndex) => rowIndex !== index));
+  };
+
+  const updateLabel = (index, nextValue) => {
+    const selectedOption = safeLabelOptions.find(
+      (option) => option.value === nextValue,
+    );
+
+    if (selectedOption?.saved_custom_label) {
+      updateRow(index, {
+        label: "custom",
+        custom_label: selectedOption.saved_custom_label,
+      });
+      return;
+    }
+
+    if (nextValue === "custom") {
+      updateRow(index, {
+        label: "custom",
+        custom_label: safeRows[index]?.custom_label ?? "",
+      });
+      return;
+    }
+
+    updateRow(index, {
+      label: nextValue,
+      custom_label: "",
+    });
   };
 
   return (
@@ -3973,12 +4251,10 @@ function AddressEditor({ rows, setRows }) {
                 <div className="grid items-center gap-2 md:grid-cols-[12rem_1fr_auto]">
                   <select
                     className="input"
-                    value={row.label ?? "home"}
-                    onChange={(event) =>
-                      updateRow(index, "label", event.target.value)
-                    }
+                    value={resolveLabelSelectValue(row, safeLabelOptions, "home")}
+                    onChange={(event) => updateLabel(index, event.target.value)}
                   >
-                    {ADDRESS_LABEL_OPTIONS.map((option) => (
+                    {safeLabelOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
@@ -4061,14 +4337,75 @@ function AddressEditor({ rows, setRows }) {
   );
 }
 
-function DateEditor({ rows, setRows }) {
+function DateEditor({ rows, setRows, labelOptions }) {
   const safeRows = Array.isArray(rows) ? rows : [];
+  const safeLabelOptions =
+    Array.isArray(labelOptions) && labelOptions.length > 0
+      ? labelOptions
+      : DATE_LABEL_OPTIONS;
 
   const updateRow = (index, field, value) => {
+    if (field === "label" || field === "custom_label") {
+      setRows(
+        safeRows.map((row, rowIndex) =>
+          rowIndex === index ? { ...row, [field]: value } : row,
+        ),
+      );
+      return;
+    }
+
     const normalizedValue = normalizeDatePartInput(field, value);
     setRows(
       safeRows.map((row, rowIndex) =>
         rowIndex === index ? { ...row, [field]: normalizedValue } : row,
+      ),
+    );
+  };
+
+  const updateLabel = (index, nextValue) => {
+    const selectedOption = safeLabelOptions.find(
+      (option) => option.value === nextValue,
+    );
+
+    if (selectedOption?.saved_custom_label) {
+      setRows(
+        safeRows.map((row, rowIndex) =>
+          rowIndex === index
+            ? {
+                ...row,
+                label: "custom",
+                custom_label: selectedOption.saved_custom_label,
+              }
+            : row,
+        ),
+      );
+      return;
+    }
+
+    if (nextValue === "custom") {
+      setRows(
+        safeRows.map((row, rowIndex) =>
+          rowIndex === index
+            ? {
+                ...row,
+                label: "custom",
+                custom_label: row?.custom_label ?? "",
+              }
+            : row,
+        ),
+      );
+      return;
+    }
+
+    setRows(
+      safeRows.map((row, rowIndex) =>
+        rowIndex === index
+          ? {
+              ...row,
+              label: nextValue,
+              custom_label: "",
+            }
+          : row,
       ),
     );
   };
@@ -4107,12 +4444,10 @@ function DateEditor({ rows, setRows }) {
               <div className="grid gap-3 md:grid-cols-[12rem_1fr_auto]">
                 <select
                   className="input"
-                  value={row.label ?? "other"}
-                  onChange={(event) =>
-                    updateRow(index, "label", event.target.value)
-                  }
+                  value={resolveLabelSelectValue(row, safeLabelOptions, "other")}
+                  onChange={(event) => updateLabel(index, event.target.value)}
                 >
-                  {DATE_LABEL_OPTIONS.map((option) => (
+                  {safeLabelOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
