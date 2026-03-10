@@ -19,7 +19,9 @@ This directory contains a GitHub Pages-friendly landing site for Davvy.
 - Landing page URL will be `https://<user>.github.io/<repo>/landing/`.
 
 2. Publish only this folder with Actions
-- Use a Pages workflow that uploads `docs/landing` as the artifact.
+- Use `.github/workflows/pages-landing.yml`, which uploads `docs/landing` as the artifact.
+- In GitHub repo settings, set Pages source to `GitHub Actions`.
+- This workflow deploys only on pushes to `main` that modify `docs/landing/**` (or manual dispatch).
 
 ## Local Preview
 
