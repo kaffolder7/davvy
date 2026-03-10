@@ -41,6 +41,7 @@ class ContactVCardService
         'assistant',
         'friend',
     ];
+
     private const RELATED_CONTACT_ID_PARAMETER = 'X-DAVVY-RELATED-CONTACT-ID';
 
     public function displayName(array $payload): string
