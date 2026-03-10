@@ -195,6 +195,205 @@ class ContactManagementTest extends TestCase
             ->assertJsonValidationErrors(['related_names.0.related_contact_id']);
     }
 
+    public function test_linked_related_name_rows_sync_bidirectionally_and_remove_when_unlinked(): void
+    {
+        $user = User::factory()->create();
+        $book = AddressBook::factory()->create(['owner_id' => $user->id, 'uri' => 'family-sync']);
+
+        $parent = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Pat',
+            'last_name' => 'Morgan',
+            'related_names' => [],
+            'address_book_ids' => [$book->id],
+        ]));
+        $parent->assertCreated();
+        $parentId = (int) $parent->json('id');
+        $parentName = (string) $parent->json('display_name');
+
+        $child = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Riley',
+            'last_name' => 'Morgan',
+            'related_names' => [],
+            'address_book_ids' => [$book->id],
+        ]));
+        $child->assertCreated();
+        $childId = (int) $child->json('id');
+
+        $this->actingAs($user)
+            ->patchJson('/api/contacts/'.$parentId, $this->payload([
+                'first_name' => 'Pat',
+                'last_name' => 'Morgan',
+                'related_names' => [
+                    [
+                        'label' => 'son',
+                        'custom_label' => null,
+                        'value' => 'Riley Morgan',
+                        'related_contact_id' => $childId,
+                    ],
+                ],
+                'address_book_ids' => [$book->id],
+            ]))
+            ->assertOk();
+
+        $childPayload = Contact::query()->findOrFail($childId)->payload;
+        $this->assertSame(
+            $parentId,
+            $childPayload['related_names'][0]['related_contact_id'] ?? null,
+        );
+        $this->assertSame('parent', $childPayload['related_names'][0]['label'] ?? null);
+        $this->assertSame($parentName, $childPayload['related_names'][0]['value'] ?? null);
+
+        $this->actingAs($user)
+            ->patchJson('/api/contacts/'.$parentId, $this->payload([
+                'first_name' => 'Pat',
+                'last_name' => 'Morgan',
+                'related_names' => [],
+                'address_book_ids' => [$book->id],
+            ]))
+            ->assertOk();
+
+        $childPayloadAfterUnlink = Contact::query()->findOrFail($childId)->payload;
+        $this->assertSame([], $childPayloadAfterUnlink['related_names'] ?? null);
+    }
+
+    public function test_editing_either_side_updates_inverse_label_on_related_contact(): void
+    {
+        $user = User::factory()->create();
+        $book = AddressBook::factory()->create(['owner_id' => $user->id, 'uri' => 'family-sync-2']);
+
+        $alex = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Alex',
+            'last_name' => 'Casey',
+            'related_names' => [],
+            'address_book_ids' => [$book->id],
+        ]));
+        $alex->assertCreated();
+        $alexId = (int) $alex->json('id');
+
+        $jamie = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Jamie',
+            'last_name' => 'Casey',
+            'related_names' => [],
+            'address_book_ids' => [$book->id],
+        ]));
+        $jamie->assertCreated();
+        $jamieId = (int) $jamie->json('id');
+
+        $this->actingAs($user)
+            ->patchJson('/api/contacts/'.$alexId, $this->payload([
+                'first_name' => 'Alex',
+                'last_name' => 'Casey',
+                'related_names' => [
+                    [
+                        'label' => 'partner',
+                        'custom_label' => null,
+                        'value' => 'Jamie Casey',
+                        'related_contact_id' => $jamieId,
+                    ],
+                ],
+                'address_book_ids' => [$book->id],
+            ]))
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->patchJson('/api/contacts/'.$jamieId, $this->payload([
+                'first_name' => 'Jamie',
+                'last_name' => 'Casey',
+                'related_names' => [
+                    [
+                        'label' => 'wife',
+                        'custom_label' => null,
+                        'value' => 'Alex Casey',
+                        'related_contact_id' => $alexId,
+                    ],
+                ],
+                'address_book_ids' => [$book->id],
+            ]))
+            ->assertOk();
+
+        $alexPayload = Contact::query()->findOrFail($alexId)->payload;
+        $this->assertSame(
+            $jamieId,
+            $alexPayload['related_names'][0]['related_contact_id'] ?? null,
+        );
+        $this->assertSame('spouse', $alexPayload['related_names'][0]['label'] ?? null);
+    }
+
+    public function test_parent_child_specific_overrides_are_not_replaced_by_generic_inverse_labels(): void
+    {
+        $user = User::factory()->create();
+        $book = AddressBook::factory()->create(['owner_id' => $user->id, 'uri' => 'family-sync-overrides']);
+
+        $father = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Chris',
+            'last_name' => 'Morgan',
+            'related_names' => [],
+            'address_book_ids' => [$book->id],
+        ]));
+        $father->assertCreated();
+        $fatherId = (int) $father->json('id');
+
+        $son = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Riley',
+            'last_name' => 'Morgan',
+            'related_names' => [],
+            'address_book_ids' => [$book->id],
+        ]));
+        $son->assertCreated();
+        $sonId = (int) $son->json('id');
+
+        $this->actingAs($user)
+            ->patchJson('/api/contacts/'.$sonId, $this->payload([
+                'first_name' => 'Riley',
+                'last_name' => 'Morgan',
+                'related_names' => [[
+                    'label' => 'father',
+                    'custom_label' => null,
+                    'value' => 'Chris Morgan',
+                    'related_contact_id' => $fatherId,
+                ]],
+                'address_book_ids' => [$book->id],
+            ]))
+            ->assertOk();
+
+        $fatherPayload = Contact::query()->findOrFail($fatherId)->payload;
+        $this->assertSame('child', $fatherPayload['related_names'][0]['label'] ?? null);
+
+        $this->actingAs($user)
+            ->patchJson('/api/contacts/'.$fatherId, $this->payload([
+                'first_name' => 'Chris',
+                'last_name' => 'Morgan',
+                'related_names' => [[
+                    'label' => 'son',
+                    'custom_label' => null,
+                    'value' => 'Riley Morgan',
+                    'related_contact_id' => $sonId,
+                ]],
+                'address_book_ids' => [$book->id],
+            ]))
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->patchJson('/api/contacts/'.$sonId, $this->payload([
+                'first_name' => 'Riley',
+                'last_name' => 'Morgan',
+                'related_names' => [[
+                    'label' => 'father',
+                    'custom_label' => null,
+                    'value' => 'Chris Morgan',
+                    'related_contact_id' => $fatherId,
+                ]],
+                'address_book_ids' => [$book->id],
+            ]))
+            ->assertOk();
+
+        $fatherPayloadAfter = Contact::query()->findOrFail($fatherId)->payload;
+        $sonPayloadAfter = Contact::query()->findOrFail($sonId)->payload;
+
+        $this->assertSame('son', $fatherPayloadAfter['related_names'][0]['label'] ?? null);
+        $this->assertSame('father', $sonPayloadAfter['related_names'][0]['label'] ?? null);
+    }
+
     public function test_contact_can_opt_out_of_milestone_calendar_generation(): void
     {
         $user = User::factory()->create();

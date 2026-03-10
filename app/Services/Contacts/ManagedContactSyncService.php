@@ -38,6 +38,8 @@ class ManagedContactSyncService
         $hintContactId = $this->toInteger($parsed['managed_contact_id'] ?? null);
         $hintOwnerId = $this->toInteger($parsed['managed_owner_id'] ?? null);
 
+        $relatedAddressBookIds = [];
+
         DB::transaction(function () use (
             $addressBook,
             $card,
@@ -46,7 +48,8 @@ class ManagedContactSyncService
             $payload,
             $fullName,
             $hintContactId,
-            $hintOwnerId
+            $hintOwnerId,
+            &$relatedAddressBookIds
         ): void {
             $assignment = ContactAddressBookAssignment::query()
                 ->with('contact')
@@ -64,6 +67,7 @@ class ManagedContactSyncService
 
             $assignmentContact = $assignment?->contact;
             $targetContact = null;
+            $previousPayload = [];
 
             if ($assignmentContact && $assignmentContact->owner_id === $ownerId) {
                 $targetContact = $assignmentContact;
@@ -99,6 +103,8 @@ class ManagedContactSyncService
                     'payload' => $payload,
                 ]);
             } else {
+                $previousPayload = is_array($targetContact->payload) ? $targetContact->payload : [];
+
                 if ($targetContact->uid !== $uid) {
                     $conflict = Contact::query()
                         ->where('owner_id', $ownerId)
@@ -161,9 +167,15 @@ class ManagedContactSyncService
             if ($oldContactId !== null && $oldContactId !== $targetContact->id) {
                 $this->deleteContactIfOrphaned($oldContactId);
             }
+
+            $relatedAddressBookIds = $this->contactService()
+                ->syncBidirectionalRelatedNamesForContact($targetContact, $previousPayload);
         });
 
-        $this->syncMilestoneCalendarsForAddressBooks([$addressBook->id]);
+        $this->syncMilestoneCalendarsForAddressBooks([
+            $addressBook->id,
+            ...(is_array($relatedAddressBookIds) ? $relatedAddressBookIds : []),
+        ]);
     }
 
     public function syncCardDeleted(Card $card): void
@@ -173,8 +185,13 @@ class ManagedContactSyncService
         }
 
         $affectedAddressBookId = null;
+        $relatedAddressBookIds = [];
 
-        DB::transaction(function () use ($card, &$affectedAddressBookId): void {
+        DB::transaction(function () use (
+            $card,
+            &$affectedAddressBookId,
+            &$relatedAddressBookIds
+        ): void {
             $assignment = ContactAddressBookAssignment::query()
                 ->where('card_id', $card->id)
                 ->first();
@@ -186,23 +203,39 @@ class ManagedContactSyncService
             $affectedAddressBookId = (int) $assignment->address_book_id;
             $contactId = (int) $assignment->contact_id;
             $assignment->delete();
-            $this->deleteContactIfOrphaned($contactId);
+            $relatedAddressBookIds = $this->deleteContactIfOrphaned($contactId);
         });
 
         if ($affectedAddressBookId !== null) {
-            $this->syncMilestoneCalendarsForAddressBooks([$affectedAddressBookId]);
+            $this->syncMilestoneCalendarsForAddressBooks([
+                $affectedAddressBookId,
+                ...(is_array($relatedAddressBookIds) ? $relatedAddressBookIds : []),
+            ]);
         }
     }
 
-    private function deleteContactIfOrphaned(int $contactId): void
+    /**
+     * @return array<int, int>
+     */
+    private function deleteContactIfOrphaned(int $contactId): array
     {
         $hasAssignments = ContactAddressBookAssignment::query()
             ->where('contact_id', $contactId)
             ->exists();
 
-        if (! $hasAssignments) {
-            Contact::query()->where('id', $contactId)->delete();
+        if ($hasAssignments) {
+            return [];
         }
+
+        $contact = Contact::query()->find($contactId);
+        if (! $contact) {
+            return [];
+        }
+
+        $relatedAddressBookIds = $this->contactService()->removeBidirectionalRelatedNamesForContact($contact);
+        $contact->delete();
+
+        return $relatedAddressBookIds;
     }
 
     private function schemaAvailable(): bool
@@ -236,6 +269,14 @@ class ManagedContactSyncService
         $normalized = trim((string) ($value ?? ''));
 
         return $normalized === '' ? null : $normalized;
+    }
+
+    private function contactService(): ContactService
+    {
+        /** @var ContactService $service */
+        $service = app(ContactService::class);
+
+        return $service;
     }
 
     /**

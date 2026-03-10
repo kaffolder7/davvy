@@ -32,44 +32,71 @@ class ContactVCardService
         'homepage' => ['HOME'],
     ];
 
-    private const RELATED_LABELS = [
-        'spouse',
-        'partner',
-        'parent',
-        'child',
-        'sibling',
-        'assistant',
-        'friend',
-    ];
-
     private const RELATED_LABEL_TYPE_MAP = [
         'spouse' => ['SPOUSE'],
+        'husband' => ['SPOUSE'],
+        'wife' => ['SPOUSE'],
         'partner' => ['PARTNER'],
+        'boyfriend' => ['PARTNER'],
+        'girlfriend' => ['PARTNER'],
+        'fiance' => ['PARTNER'],
+        'fiancee' => ['PARTNER'],
         'parent' => ['PARENT'],
+        'father' => ['PARENT'],
+        'mother' => ['PARENT'],
+        'mom' => ['PARENT'],
+        'dad' => ['PARENT'],
         'child' => ['CHILD'],
+        'son' => ['CHILD'],
+        'daughter' => ['CHILD'],
+        'stepson' => ['CHILD'],
+        'stepdaughter' => ['CHILD'],
         'sibling' => ['SIBLING'],
+        'brother' => ['SIBLING'],
+        'sister' => ['SIBLING'],
         'assistant' => ['ASSISTANT'],
         'friend' => ['FRIEND'],
         'other' => ['OTHER'],
     ];
 
-    private const RELATED_CUSTOM_LABEL_TYPE_SYNONYMS = [
-        'son' => 'CHILD',
-        'daughter' => 'CHILD',
-        'stepson' => 'CHILD',
-        'stepdaughter' => 'CHILD',
-        'father' => 'PARENT',
-        'mother' => 'PARENT',
-        'mom' => 'PARENT',
-        'dad' => 'PARENT',
-        'brother' => 'SIBLING',
-        'sister' => 'SIBLING',
-        'husband' => 'SPOUSE',
-        'wife' => 'SPOUSE',
-        'boyfriend' => 'PARTNER',
-        'girlfriend' => 'PARTNER',
-        'fiance' => 'PARTNER',
-        'fiancee' => 'PARTNER',
+    private const RELATED_LABEL_ALIASES = [
+        'spouse' => 'spouse',
+        'husband' => 'husband',
+        'wife' => 'wife',
+        'partner' => 'partner',
+        'boyfriend' => 'boyfriend',
+        'girlfriend' => 'girlfriend',
+        'fiance' => 'fiance',
+        'fiancee' => 'fiancee',
+        'parent' => 'parent',
+        'father' => 'father',
+        'mother' => 'mother',
+        'mom' => 'mom',
+        'dad' => 'dad',
+        'child' => 'child',
+        'son' => 'son',
+        'daughter' => 'daughter',
+        'stepson' => 'stepson',
+        'step son' => 'stepson',
+        'stepdaughter' => 'stepdaughter',
+        'step daughter' => 'stepdaughter',
+        'sibling' => 'sibling',
+        'brother' => 'brother',
+        'sister' => 'sister',
+        'assistant' => 'assistant',
+        'friend' => 'friend',
+        'other' => 'other',
+    ];
+
+    private const RELATED_TYPE_LABEL_MAP = [
+        'SPOUSE' => 'spouse',
+        'PARTNER' => 'partner',
+        'PARENT' => 'parent',
+        'CHILD' => 'child',
+        'SIBLING' => 'sibling',
+        'ASSISTANT' => 'assistant',
+        'FRIEND' => 'friend',
+        'OTHER' => 'other',
     ];
 
     private const RELATED_CONTACT_ID_PARAMETER = 'X-DAVVY-RELATED-CONTACT-ID';
@@ -265,7 +292,7 @@ class ContactVCardService
                 $property[self::RELATED_CONTACT_ID_PARAMETER] = (string) $relatedContactId;
             }
 
-            $customLabel = $this->cleanString($row['custom_label'] ?? null);
+            $customLabel = $this->relatedPropertyCustomLabelForRow($row);
             if ($customLabel !== null) {
                 $property['X-ABLabel'] = $customLabel;
             }
@@ -817,13 +844,19 @@ class ContactVCardService
     {
         $customLabel = $this->propertyParameterValue($property, 'X-ABLabel');
         if ($customLabel !== null) {
+            $token = $this->normalizeRelatedLabelToken($customLabel);
+            if ($token !== null && array_key_exists($token, self::RELATED_LABEL_TYPE_MAP)) {
+                return [$token, null];
+            }
+
             return ['custom', $customLabel];
         }
 
         $types = $this->propertyTypes($property);
-        foreach (self::RELATED_LABELS as $candidate) {
-            if (in_array(strtoupper($candidate), $types, true)) {
-                return [$candidate, null];
+        foreach ($types as $type) {
+            $normalizedType = strtoupper((string) $type);
+            if (array_key_exists($normalizedType, self::RELATED_TYPE_LABEL_MAP)) {
+                return [self::RELATED_TYPE_LABEL_MAP[$normalizedType], null];
             }
         }
 
@@ -929,7 +962,10 @@ class ContactVCardService
      */
     private function relatedTypesForLabel(mixed $label): array
     {
-        $normalized = strtolower((string) $label);
+        $normalized = $this->normalizeRelatedLabelToken($label);
+        if ($normalized === null) {
+            return [];
+        }
 
         return self::RELATED_LABEL_TYPE_MAP[$normalized] ?? [];
     }
@@ -955,12 +991,56 @@ class ContactVCardService
 
     private function relatedTypeFromCustomLabel(mixed $customLabel): ?string
     {
-        $normalized = strtolower(trim((string) ($customLabel ?? '')));
+        $types = $this->relatedTypesForLabel($customLabel);
+        if ($types === []) {
+            return null;
+        }
+
+        return $types[0];
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     */
+    private function relatedPropertyCustomLabelForRow(array $row): ?string
+    {
+        $customLabel = $this->cleanString($row['custom_label'] ?? null);
+        if ($customLabel !== null) {
+            return $customLabel;
+        }
+
+        $token = $this->normalizeRelatedLabelToken($row['label'] ?? null);
+        if ($token === null) {
+            return null;
+        }
+
+        $types = self::RELATED_LABEL_TYPE_MAP[$token] ?? [];
+        if ($types === []) {
+            return null;
+        }
+
+        $canonical = self::RELATED_TYPE_LABEL_MAP[$types[0]] ?? null;
+        if ($canonical === null || $canonical === $token) {
+            return null;
+        }
+
+        return $token;
+    }
+
+    private function normalizeRelatedLabelToken(mixed $value): ?string
+    {
+        $normalized = strtolower(trim((string) ($value ?? '')));
         if ($normalized === '') {
             return null;
         }
 
-        return self::RELATED_CUSTOM_LABEL_TYPE_SYNONYMS[$normalized] ?? null;
+        $normalized = str_replace(['_', '-'], ' ', $normalized);
+        $normalized = trim(preg_replace('/\s+/', ' ', $normalized) ?? '');
+        if ($normalized === '') {
+            return null;
+        }
+
+        return self::RELATED_LABEL_ALIASES[$normalized] ?? null;
     }
 
     private function customLabelOrLabel(array $row): string
