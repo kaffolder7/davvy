@@ -1,37 +1,17 @@
 have_fun: false
 
+memory_config:
+  disabled: false
+
 code_review:
   disable: false
-  comment_severity_threshold: MEDIUM
-  max_review_comments: 20
+  comment_severity_threshold: LOW
+  max_review_comments: -1
 
   pull_request_opened:
     help: false
-    summary: false
+    summary: true
     code_review: true
+    include_drafts: true
 
-  pull_request_review_comment:
-    help: false
-
-  path_instructions:
-    - path: "app/**"
-      instructions: |
-        Prioritize issues that can cause security, authorization, data integrity,
-        or backward-compatibility regressions.
-        Ignore naming and style-only suggestions unless they hide a real defect.
-
-    - path: "resources/**"
-      instructions: |
-        Prioritize behavior regressions, accessibility issues, and API contract
-        mismatches between frontend and backend.
-        Ignore visual preference suggestions unless they break usability.
-
-    - path: "docs/**"
-      instructions: |
-        Prioritize factual correctness, command accuracy, and broken links.
-        Ignore purely editorial rewrites unless wording causes ambiguity.
-
-    - path: ".github/workflows/**"
-      instructions: |
-        Prioritize CI reliability, least-privilege permissions, and secret handling.
-        Ignore style-only YAML refactors that do not change behavior or safety.
+ignore_patterns: []
