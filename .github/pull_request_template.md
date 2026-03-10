@@ -2,17 +2,15 @@
 
 Describe what this PR changes and why.
 
-## Validation
-
-- [ ] I ran relevant tests locally.
-- [ ] I updated docs (if needed).
-
 ## Tests
 
 If this PR changes backend behavior, routes, migrations, or models,
 please ensure relevant tests are updated or added.
 
-The automated reviewer will flag backend changes without test updates.
+## Validation
+
+- [ ] I ran relevant tests locally.
+- [ ] I updated docs (if needed).
 
 ## Legal
 
