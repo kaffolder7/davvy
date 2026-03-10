@@ -33,7 +33,11 @@ class ContactController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        [$payload, $addressBookIds] = $this->validatedInput($request);
+        [$payload, $addressBookIds] = $this->validatedInput(
+            request: $request,
+            currentContactId: null,
+            ownerId: (int) $request->user()->id,
+        );
 
         $contact = $this->contactService->create(
             actor: $request->user(),
@@ -47,7 +51,11 @@ class ContactController extends Controller
     public function update(Request $request, int $contact): JsonResponse
     {
         $model = Contact::query()->findOrFail($contact);
-        [$payload, $addressBookIds] = $this->validatedInput($request, (int) $model->id);
+        [$payload, $addressBookIds] = $this->validatedInput(
+            request: $request,
+            currentContactId: (int) $model->id,
+            ownerId: (int) $model->owner_id,
+        );
 
         $queued = $this->changeRequestService->enqueueWebUpdateIfNeeded(
             actor: $request->user(),
@@ -101,7 +109,11 @@ class ContactController extends Controller
     /**
      * @return array{0: array<string,mixed>, 1: array<int, int>}
      */
-    private function validatedInput(Request $request, ?int $currentContactId = null): array
+    private function validatedInput(
+        Request $request,
+        ?int $currentContactId = null,
+        ?int $ownerId = null,
+    ): array
     {
         $data = $request->validate([
             'prefix' => ['nullable', 'string', 'max:100'],
@@ -172,6 +184,7 @@ class ContactController extends Controller
             request: $request,
             rows: is_array($data['related_names'] ?? null) ? $data['related_names'] : [],
             currentContactId: $currentContactId,
+            ownerId: $ownerId,
         );
 
         $payload = [
@@ -310,6 +323,7 @@ class ContactController extends Controller
         Request $request,
         array $rows,
         ?int $currentContactId,
+        ?int $ownerId,
     ): array {
         $requestedByIndex = collect($rows)
             ->map(fn (mixed $row): mixed => is_array($row) ? $row : null)
@@ -353,6 +367,14 @@ class ContactController extends Controller
                 throw ValidationException::withMessages([
                     'related_names.'.$index.'.related_contact_id' => [
                         'Select a valid contact from your contacts list.',
+                    ],
+                ]);
+            }
+
+            if ($ownerId !== null && (int) $contact->owner_id !== $ownerId) {
+                throw ValidationException::withMessages([
+                    'related_names.'.$index.'.related_contact_id' => [
+                        'Related contacts must belong to the same contact owner.',
                     ],
                 ]);
             }

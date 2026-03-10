@@ -211,6 +211,83 @@ class ContactCardDavSyncTest extends TestCase
         $this->assertSame($partnerName, $payload['related_names'][0]['value'] ?? null);
     }
 
+    public function test_related_name_synonym_label_round_trips_through_carddav(): void
+    {
+        $user = User::factory()->create();
+        $addressBook = AddressBook::factory()->create([
+            'owner_id' => $user->id,
+            'uri' => 'related-synonym-roundtrip',
+        ]);
+
+        $child = $this->actingAs($user)->postJson('/api/contacts', [
+            'first_name' => 'Riley',
+            'last_name' => 'Morgan',
+            'company' => null,
+            'address_book_ids' => [$addressBook->id],
+            'phones' => [],
+            'emails' => [],
+            'urls' => [],
+            'addresses' => [],
+            'dates' => [],
+            'related_names' => [],
+            'instant_messages' => [],
+        ]);
+        $child->assertCreated();
+        $childId = (int) $child->json('id');
+        $childName = (string) $child->json('display_name');
+
+        $parent = $this->actingAs($user)->postJson('/api/contacts', [
+            'first_name' => 'Pat',
+            'last_name' => 'Morgan',
+            'company' => null,
+            'address_book_ids' => [$addressBook->id],
+            'phones' => [],
+            'emails' => [],
+            'urls' => [],
+            'addresses' => [],
+            'dates' => [],
+            'related_names' => [
+                [
+                    'label' => 'son',
+                    'custom_label' => null,
+                    'value' => 'Will be replaced',
+                    'related_contact_id' => $childId,
+                ],
+            ],
+            'instant_messages' => [],
+        ]);
+        $parent->assertCreated();
+
+        $parentId = (int) $parent->json('id');
+
+        $assignment = ContactAddressBookAssignment::query()
+            ->where('contact_id', $parentId)
+            ->where('address_book_id', $addressBook->id)
+            ->firstOrFail();
+        $card = Card::query()->findOrFail($assignment->card_id);
+        $cardData = (string) $card->data;
+
+        $this->assertStringContainsString('RELATED;TYPE=CHILD', $cardData);
+        $this->assertStringContainsString('X-ABLABEL=son', $cardData);
+        $this->assertStringContainsString(
+            'X-DAVVY-RELATED-CONTACT-ID='.$childId,
+            $cardData,
+        );
+
+        app(DavRequestContext::class)->setAuthenticatedUser($user);
+        app(LaravelCardDavBackend::class)->updateCard(
+            $addressBook->id,
+            (string) $assignment->card_uri,
+            $cardData,
+        );
+
+        $payload = Contact::query()->findOrFail($parentId)->payload;
+        $this->assertSame('son', $payload['related_names'][0]['label'] ?? null);
+        $this->assertSame(null, $payload['related_names'][0]['custom_label'] ?? null);
+        $this->assertSame($childId, $payload['related_names'][0]['related_contact_id'] ?? null);
+        $this->assertSame($childName, $payload['related_names'][0]['value'] ?? null);
+    }
+
     public function test_deleting_card_via_carddav_removes_orphaned_managed_contact(): void
     {
         $user = User::factory()->create();
