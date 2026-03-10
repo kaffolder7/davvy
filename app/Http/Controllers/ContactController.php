@@ -46,8 +46,8 @@ class ContactController extends Controller
 
     public function update(Request $request, int $contact): JsonResponse
     {
-        [$payload, $addressBookIds] = $this->validatedInput($request);
         $model = Contact::query()->findOrFail($contact);
+        [$payload, $addressBookIds] = $this->validatedInput($request, (int) $model->id);
 
         $queued = $this->changeRequestService->enqueueWebUpdateIfNeeded(
             actor: $request->user(),
@@ -101,7 +101,7 @@ class ContactController extends Controller
     /**
      * @return array{0: array<string,mixed>, 1: array<int, int>}
      */
-    private function validatedInput(Request $request): array
+    private function validatedInput(Request $request, ?int $currentContactId = null): array
     {
         $data = $request->validate([
             'prefix' => ['nullable', 'string', 'max:100'],
@@ -159,6 +159,7 @@ class ContactController extends Controller
             'related_names.*.label' => ['nullable', 'string', 'max:64'],
             'related_names.*.custom_label' => ['nullable', 'string', 'max:100'],
             'related_names.*.value' => ['nullable', 'string', 'max:255'],
+            'related_names.*.related_contact_id' => ['nullable', 'integer', 'min:1'],
             'instant_messages' => ['nullable', 'array'],
             'instant_messages.*.label' => ['nullable', 'string', 'max:64'],
             'instant_messages.*.custom_label' => ['nullable', 'string', 'max:100'],
@@ -166,6 +167,12 @@ class ContactController extends Controller
             'address_book_ids' => ['required', 'array', 'min:1'],
             'address_book_ids.*' => ['integer', 'min:1'],
         ]);
+
+        $relatedContactDisplayNames = $this->resolveRelatedContactDisplayNames(
+            request: $request,
+            rows: is_array($data['related_names'] ?? null) ? $data['related_names'] : [],
+            currentContactId: $currentContactId,
+        );
 
         $payload = [
             'prefix' => $this->normalizeString($data['prefix'] ?? null),
@@ -195,7 +202,10 @@ class ContactController extends Controller
             'urls' => $this->normalizeValueRows($data['urls'] ?? []),
             'addresses' => $this->normalizeAddressRows($data['addresses'] ?? []),
             'dates' => $this->normalizeDateRows($data['dates'] ?? []),
-            'related_names' => $this->normalizeValueRows($data['related_names'] ?? []),
+            'related_names' => $this->normalizeRelatedNameRows(
+                $data['related_names'] ?? [],
+                $relatedContactDisplayNames,
+            ),
             'instant_messages' => $this->normalizeValueRows($data['instant_messages'] ?? []),
         ];
 
@@ -263,6 +273,94 @@ class ContactController extends Controller
             ->filter(fn (array $row): bool => $row['value'] !== '')
             ->values()
             ->all();
+    }
+
+    /**
+     * @param  array<int, mixed>  $rows
+     * @param  array<int, string>  $relatedContactDisplayNames
+     * @return array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>
+     */
+    private function normalizeRelatedNameRows(array $rows, array $relatedContactDisplayNames): array
+    {
+        return collect($rows)
+            ->filter(fn (mixed $row): bool => is_array($row))
+            ->map(function (array $row) use ($relatedContactDisplayNames): array {
+                $relatedContactId = $this->normalizeInt($row['related_contact_id'] ?? null);
+                $resolvedName = $relatedContactId !== null
+                    ? ($relatedContactDisplayNames[$relatedContactId] ?? null)
+                    : null;
+
+                return [
+                    'label' => strtolower($this->normalizeString($row['label'] ?? null) ?? 'other'),
+                    'custom_label' => $this->normalizeString($row['custom_label'] ?? null),
+                    'value' => $resolvedName ?? $this->normalizeString($row['value'] ?? null) ?? '',
+                    'related_contact_id' => $resolvedName !== null ? $relatedContactId : null,
+                ];
+            })
+            ->filter(fn (array $row): bool => $row['value'] !== '')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array<int, mixed>  $rows
+     * @return array<int, string>
+     */
+    private function resolveRelatedContactDisplayNames(
+        Request $request,
+        array $rows,
+        ?int $currentContactId,
+    ): array {
+        $requestedByIndex = collect($rows)
+            ->map(fn (mixed $row): mixed => is_array($row) ? $row : null)
+            ->filter(fn (mixed $row): bool => is_array($row))
+            ->map(function (array $row, int $index): array {
+                return [
+                    'index' => $index,
+                    'related_contact_id' => $this->normalizeInt($row['related_contact_id'] ?? null),
+                ];
+            })
+            ->filter(fn (array $entry): bool => $entry['related_contact_id'] !== null)
+            ->values();
+
+        if ($requestedByIndex->isEmpty()) {
+            return [];
+        }
+
+        foreach ($requestedByIndex as $entry) {
+            $relatedContactId = (int) $entry['related_contact_id'];
+            if ($currentContactId !== null && $relatedContactId === $currentContactId) {
+                throw ValidationException::withMessages([
+                    'related_names.'.$entry['index'].'.related_contact_id' => [
+                        'A contact cannot reference itself as a related name.',
+                    ],
+                ]);
+            }
+        }
+
+        $writableContactsById = $this->contactService
+            ->contactsFor($request->user())
+            ->keyBy('id');
+
+        $displayNames = [];
+        foreach ($requestedByIndex as $entry) {
+            $index = (int) $entry['index'];
+            $relatedContactId = (int) $entry['related_contact_id'];
+            /** @var Contact|null $contact */
+            $contact = $writableContactsById->get($relatedContactId);
+
+            if ($contact === null) {
+                throw ValidationException::withMessages([
+                    'related_names.'.$index.'.related_contact_id' => [
+                        'Select a valid contact from your contacts list.',
+                    ],
+                ]);
+            }
+
+            $displayNames[$relatedContactId] = $contact->full_name ?: 'Unnamed Contact';
+        }
+
+        return $displayNames;
     }
 
     /**

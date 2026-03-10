@@ -108,6 +108,93 @@ class ContactManagementTest extends TestCase
         $this->assertSame([$bookB->id, $bookC->id], $assignedBookIds);
     }
 
+    public function test_related_name_can_link_to_existing_contact_by_id(): void
+    {
+        $user = User::factory()->create();
+        $book = AddressBook::factory()->create(['owner_id' => $user->id, 'uri' => 'family-link']);
+
+        $partner = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'prefix' => '',
+            'first_name' => 'Jamie',
+            'middle_name' => '',
+            'last_name' => 'Rowe',
+            'suffix' => '',
+            'nickname' => '',
+            'company' => '',
+            'related_names' => [],
+            'address_book_ids' => [$book->id],
+        ]));
+        $partner->assertCreated();
+
+        $partnerId = (int) $partner->json('id');
+        $partnerName = (string) $partner->json('display_name');
+
+        $created = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Alex',
+            'last_name' => 'Rivera',
+            'related_names' => [],
+            'address_book_ids' => [$book->id],
+        ]));
+        $created->assertCreated();
+
+        $contactId = (int) $created->json('id');
+
+        $this->actingAs($user)
+            ->patchJson('/api/contacts/'.$contactId, $this->payload([
+                'first_name' => 'Alex',
+                'last_name' => 'Rivera',
+                'related_names' => [
+                    [
+                        'label' => 'spouse',
+                        'custom_label' => null,
+                        'value' => 'Will be replaced',
+                        'related_contact_id' => $partnerId,
+                    ],
+                ],
+                'address_book_ids' => [$book->id],
+            ]))
+            ->assertOk()
+            ->assertJsonPath('related_names.0.related_contact_id', $partnerId)
+            ->assertJsonPath('related_names.0.value', $partnerName);
+
+        $payload = Contact::query()->findOrFail($contactId)->payload;
+        $this->assertSame($partnerId, $payload['related_names'][0]['related_contact_id'] ?? null);
+        $this->assertSame($partnerName, $payload['related_names'][0]['value'] ?? null);
+    }
+
+    public function test_related_name_cannot_reference_same_contact_id(): void
+    {
+        $user = User::factory()->create();
+        $book = AddressBook::factory()->create(['owner_id' => $user->id, 'uri' => 'self-link']);
+
+        $created = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Alex',
+            'last_name' => 'Rivera',
+            'related_names' => [],
+            'address_book_ids' => [$book->id],
+        ]));
+        $created->assertCreated();
+
+        $contactId = (int) $created->json('id');
+
+        $this->actingAs($user)
+            ->patchJson('/api/contacts/'.$contactId, $this->payload([
+                'first_name' => 'Alex',
+                'last_name' => 'Rivera',
+                'related_names' => [
+                    [
+                        'label' => 'spouse',
+                        'custom_label' => null,
+                        'value' => 'Alex Rivera',
+                        'related_contact_id' => $contactId,
+                    ],
+                ],
+                'address_book_ids' => [$book->id],
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['related_names.0.related_contact_id']);
+    }
+
     public function test_contact_can_opt_out_of_milestone_calendar_generation(): void
     {
         $user = User::factory()->create();

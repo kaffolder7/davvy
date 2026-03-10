@@ -41,6 +41,7 @@ class ContactVCardService
         'assistant',
         'friend',
     ];
+    private const RELATED_CONTACT_ID_PARAMETER = 'X-DAVVY-RELATED-CONTACT-ID';
 
     public function displayName(array $payload): string
     {
@@ -226,6 +227,11 @@ class ContactVCardService
             $types = $this->typesForSimpleLabel($row['label'] ?? null);
             if ($types !== []) {
                 $property['TYPE'] = implode(',', $types);
+            }
+
+            $relatedContactId = $this->toInteger($row['related_contact_id'] ?? null);
+            if ($relatedContactId !== null && $relatedContactId > 0) {
+                $property[self::RELATED_CONTACT_ID_PARAMETER] = (string) $relatedContactId;
             }
 
             $customLabel = $this->cleanString($row['custom_label'] ?? null);
@@ -457,10 +463,16 @@ class ContactVCardService
             }
 
             [$label, $customLabel] = $this->relatedLabelForProperty($property);
+            $relatedContactId = $this->toInteger(
+                $this->propertyParameterValue($property, self::RELATED_CONTACT_ID_PARAMETER),
+            );
             $payload['related_names'][] = [
                 'label' => $label,
                 'custom_label' => $customLabel,
                 'value' => $value,
+                'related_contact_id' => $relatedContactId !== null && $relatedContactId > 0
+                    ? $relatedContactId
+                    : null,
             ];
         }
 

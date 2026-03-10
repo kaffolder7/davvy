@@ -704,6 +704,11 @@ class ContactMilestoneCalendarService
             }
 
             $keys[$key] = true;
+
+            $relatedContactKey = $this->anniversaryContactIdKey($row['related_contact_id'] ?? null);
+            if ($relatedContactKey !== null) {
+                $keys[$relatedContactKey] = true;
+            }
         }
 
         return $keys;
@@ -732,6 +737,11 @@ class ContactMilestoneCalendarService
     {
         $keys = [];
 
+        $contactIdKey = $this->anniversaryContactIdKey($contact->id);
+        if ($contactIdKey !== null) {
+            $keys[$contactIdKey] = true;
+        }
+
         $this->addAnniversaryNameKey($keys, $contactName);
         $this->addAnniversaryNameKey($keys, $contact->full_name);
 
@@ -742,6 +752,16 @@ class ContactMilestoneCalendarService
         }
 
         return $keys;
+    }
+
+    private function anniversaryContactIdKey(mixed $value): ?string
+    {
+        $contactId = $this->toInteger($value);
+        if ($contactId === null || $contactId <= 0) {
+            return null;
+        }
+
+        return 'id:'.$contactId;
     }
 
     /**
