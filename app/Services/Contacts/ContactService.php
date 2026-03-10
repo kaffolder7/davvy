@@ -115,8 +115,12 @@ class ContactService
         'grand parent' => 'grandparent',
         'grandfather' => 'grandfather',
         'grand father' => 'grandfather',
+        'grandpa' => 'grandfather',
+        'grand pa' => 'grandfather',
         'grandmother' => 'grandmother',
         'grand mother' => 'grandmother',
+        'grandma' => 'grandmother',
+        'grand ma' => 'grandmother',
         'grandchild' => 'grandchild',
         'grand child' => 'grandchild',
         'grandson' => 'grandson',
@@ -234,6 +238,49 @@ class ContactService
 
     private const RELATED_SPOUSE_PROPAGATION_CANONICAL_LABELS = [
         'child_in_law',
+    ];
+
+    private const RELATED_INVERSE_GENDERED_VARIANTS = [
+        'parent' => [
+            'male' => 'father',
+            'female' => 'mother',
+        ],
+        'child' => [
+            'male' => 'son',
+            'female' => 'daughter',
+        ],
+        'sibling' => [
+            'male' => 'brother',
+            'female' => 'sister',
+        ],
+        'parent_in_law' => [
+            'male' => 'father_in_law',
+            'female' => 'mother_in_law',
+        ],
+        'child_in_law' => [
+            'male' => 'son_in_law',
+            'female' => 'daughter_in_law',
+        ],
+        'sibling_in_law' => [
+            'male' => 'brother_in_law',
+            'female' => 'sister_in_law',
+        ],
+        'aunt_uncle' => [
+            'male' => 'uncle',
+            'female' => 'aunt',
+        ],
+        'niece_nephew' => [
+            'male' => 'nephew',
+            'female' => 'niece',
+        ],
+        'grandparent' => [
+            'male' => 'grandfather',
+            'female' => 'grandmother',
+        ],
+        'grandchild' => [
+            'male' => 'grandson',
+            'female' => 'granddaughter',
+        ],
     ];
 
     public function __construct(
@@ -1175,7 +1222,10 @@ class ContactService
         array $sourceRow,
         string $sourceDisplayName,
     ): array {
-        $inverse = $this->inverseLabelForRelatedRow($sourceRow);
+        $inverse = $this->inverseLabelForRelatedRow(
+            sourceContact: $sourceContact,
+            row: $sourceRow,
+        );
         $reciprocalRow = [
             'label' => $inverse['label'],
             'custom_label' => $inverse['custom_label'],
@@ -1224,6 +1274,15 @@ class ContactService
         [$existingToken] = $this->relatedLabelTokenAndDisplay($existingRow);
         [$incomingToken] = $this->relatedLabelTokenAndDisplay($incomingRow);
 
+        if ($this->shouldPreserveExistingWhenIncomingIsOther($existingRow, $existingToken, $incomingToken)) {
+            return [
+                'label' => $existingRow['label'],
+                'custom_label' => $existingRow['custom_label'],
+                'value' => $incomingRow['value'],
+                'related_contact_id' => $incomingRow['related_contact_id'],
+            ];
+        }
+
         if (! $this->shouldPreserveExistingSpecificReciprocalLabel($existingToken, $incomingToken)) {
             return $incomingRow;
         }
@@ -1258,6 +1317,90 @@ class ContactService
         $existingIsSpecific = $existingToken !== $existingCanonical;
 
         return $incomingIsGeneric && $existingIsSpecific;
+    }
+
+    /**
+     * Preserve richer reciprocal labels when the incoming update is only "other".
+     *
+     * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $existingRow
+     */
+    private function shouldPreserveExistingWhenIncomingIsOther(
+        array $existingRow,
+        ?string $existingToken,
+        ?string $incomingToken,
+    ): bool {
+        if ($incomingToken !== 'other') {
+            return false;
+        }
+
+        if ($existingToken !== null && $existingToken !== 'other') {
+            return true;
+        }
+
+        $existingLabel = strtolower($this->normalizeString($existingRow['label'] ?? null) ?? 'other');
+        if ($existingLabel !== 'custom') {
+            return false;
+        }
+
+        $customLabel = $this->normalizeString($existingRow['custom_label'] ?? null);
+        if ($customLabel === null) {
+            return false;
+        }
+
+        $customToken = $this->normalizeRelatedLabelToken($customLabel);
+
+        return $customToken !== 'other';
+    }
+
+    private function genderAwareInverseToken(string $inverseToken, Contact $sourceContact): string
+    {
+        $variants = self::RELATED_INVERSE_GENDERED_VARIANTS[$inverseToken] ?? null;
+        if (! is_array($variants)) {
+            return $inverseToken;
+        }
+
+        $gender = $this->inferredGenderForContact($sourceContact);
+        if ($gender === null) {
+            return $inverseToken;
+        }
+
+        return $variants[$gender] ?? $inverseToken;
+    }
+
+    private function inferredGenderForContact(Contact $contact): ?string
+    {
+        $payload = is_array($contact->payload) ? $contact->payload : [];
+        $pronouns = $this->normalizeString($payload['pronouns_custom'] ?? null)
+            ?? $this->normalizeString($payload['pronouns'] ?? null);
+
+        return $this->inferredGenderFromPronouns($pronouns);
+    }
+
+    private function inferredGenderFromPronouns(?string $value): ?string
+    {
+        $normalized = strtolower(trim((string) ($value ?? '')));
+        if ($normalized === '') {
+            return null;
+        }
+
+        $tokens = preg_split('/[^a-z]+/', $normalized, -1, PREG_SPLIT_NO_EMPTY);
+        if (! is_array($tokens) || $tokens === []) {
+            return null;
+        }
+
+        $tokenSet = array_flip($tokens);
+        $hasMale = isset($tokenSet['he']) || isset($tokenSet['him']) || isset($tokenSet['his']);
+        $hasFemale = isset($tokenSet['she']) || isset($tokenSet['her']) || isset($tokenSet['hers']);
+
+        if ($hasMale && ! $hasFemale) {
+            return 'male';
+        }
+
+        if ($hasFemale && ! $hasMale) {
+            return 'female';
+        }
+
+        return null;
     }
 
     /**
@@ -1320,7 +1463,7 @@ class ContactService
      * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $row
      * @return array{label:string, custom_label:?string}
      */
-    private function inverseLabelForRelatedRow(array $row): array
+    private function inverseLabelForRelatedRow(Contact $sourceContact, array $row): array
     {
         [$token, $displayLabel] = $this->relatedLabelTokenAndDisplay($row);
         if ($token === null) {
@@ -1331,6 +1474,7 @@ class ContactService
         }
 
         $inverseToken = self::RELATED_INVERSE_LABELS[$token] ?? $token;
+        $inverseToken = $this->genderAwareInverseToken($inverseToken, $sourceContact);
         if (in_array($inverseToken, self::RELATED_SUPPORTED_LABELS, true)) {
             return [
                 'label' => $inverseToken,
