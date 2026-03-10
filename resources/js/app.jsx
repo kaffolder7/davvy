@@ -2568,9 +2568,17 @@ function ContactsPage({ auth, theme }) {
                       {contact.display_name}
                     </p>
                     <p className="mt-1 text-xs text-app-faint">
-                      {Array.isArray(contact.address_books)
-                        ? `${contact.address_books.length} address book(s)`
-                        : "0 address books"}
+                      {(() => {
+                        const addressBookCount = Array.isArray(
+                          contact.address_books,
+                        )
+                          ? contact.address_books.length
+                          : 0;
+
+                        return `${addressBookCount} address book${
+                          addressBookCount === 1 ? "" : "s"
+                        }`;
+                      })()}
                     </p>
                   </button>
                 ))
