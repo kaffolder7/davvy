@@ -597,12 +597,14 @@ class ContactService
 
             if ($relatedContactId === (int) $sourceContact->id) {
                 $currentRows[$index]['related_contact_id'] = null;
+
                 continue;
             }
 
             if (array_key_exists($relatedContactId, $linkedRowIndices)) {
                 // Keep only the first linked row per target contact; later duplicates become free-text.
                 $currentRows[$index]['related_contact_id'] = null;
+
                 continue;
             }
 
@@ -1125,7 +1127,6 @@ class ContactService
     }
 
     /**
-     * @param  mixed  $rows
      * @return array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>
      */
     private function normalizeRelatedRowsForSync(mixed $rows): array
