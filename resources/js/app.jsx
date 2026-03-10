@@ -1391,13 +1391,49 @@ const RELATED_LABEL_DERIVED_VALUES = new Set([
   "daughter",
   "stepson",
   "stepdaughter",
+  "parent_in_law",
+  "father_in_law",
+  "mother_in_law",
+  "child_in_law",
+  "son_in_law",
+  "daughter_in_law",
   "sibling",
   "brother",
   "sister",
+  "sibling_in_law",
+  "brother_in_law",
+  "sister_in_law",
+  "aunt_uncle",
+  "aunt",
+  "uncle",
+  "niece_nephew",
+  "niece",
+  "nephew",
+  "grandparent",
+  "grandfather",
+  "grandmother",
+  "grandchild",
+  "grandson",
+  "granddaughter",
+  "cousin",
   "assistant",
   "friend",
   "other",
 ]);
+
+const RELATED_LABEL_DISPLAY_OVERRIDES = {
+  parent_in_law: "Parent-in-Law",
+  father_in_law: "Father-in-Law",
+  mother_in_law: "Mother-in-Law",
+  child_in_law: "Child-in-Law",
+  son_in_law: "Son-in-Law",
+  daughter_in_law: "Daughter-in-Law",
+  sibling_in_law: "Sibling-in-Law",
+  brother_in_law: "Brother-in-Law",
+  sister_in_law: "Sister-in-Law",
+  aunt_uncle: "Aunt/Uncle",
+  niece_nephew: "Niece/Nephew",
+};
 
 const IM_LABEL_OPTIONS = [
   { value: "home", label: "Home" },
@@ -1554,6 +1590,10 @@ function formatRelatedLabelOptionLabel(value) {
   const normalized = normalizeLabelValue(value);
   if (!normalized) {
     return "";
+  }
+
+  if (RELATED_LABEL_DISPLAY_OVERRIDES[normalized]) {
+    return RELATED_LABEL_DISPLAY_OVERRIDES[normalized];
   }
 
   return normalized

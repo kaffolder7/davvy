@@ -268,7 +268,7 @@ class ContactCardDavSyncTest extends TestCase
         $cardData = (string) $card->data;
 
         $this->assertStringContainsString('RELATED;TYPE=CHILD', $cardData);
-        $this->assertStringContainsString('X-ABLABEL=son', $cardData);
+        $this->assertStringContainsString('X-ABLABEL=Son', $cardData);
         $this->assertStringContainsString(
             'X-DAVVY-RELATED-CONTACT-ID='.$childId,
             $cardData,

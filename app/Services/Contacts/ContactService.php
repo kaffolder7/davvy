@@ -40,9 +40,31 @@ class ContactService
         'daughter',
         'stepson',
         'stepdaughter',
+        'parent_in_law',
+        'father_in_law',
+        'mother_in_law',
+        'child_in_law',
+        'son_in_law',
+        'daughter_in_law',
         'sibling',
         'brother',
         'sister',
+        'sibling_in_law',
+        'brother_in_law',
+        'sister_in_law',
+        'aunt_uncle',
+        'aunt',
+        'uncle',
+        'niece_nephew',
+        'niece',
+        'nephew',
+        'grandparent',
+        'grandfather',
+        'grandmother',
+        'grandchild',
+        'grandson',
+        'granddaughter',
+        'cousin',
         'assistant',
         'friend',
         'other',
@@ -69,9 +91,39 @@ class ContactService
         'step son' => 'stepson',
         'stepdaughter' => 'stepdaughter',
         'step daughter' => 'stepdaughter',
+        'parent in law' => 'parent_in_law',
+        'father in law' => 'father_in_law',
+        'mother in law' => 'mother_in_law',
+        'child in law' => 'child_in_law',
+        'son in law' => 'son_in_law',
+        'daughter in law' => 'daughter_in_law',
         'sibling' => 'sibling',
         'brother' => 'brother',
         'sister' => 'sister',
+        'sibling in law' => 'sibling_in_law',
+        'brother in law' => 'brother_in_law',
+        'sister in law' => 'sister_in_law',
+        'aunt uncle' => 'aunt_uncle',
+        'aunt or uncle' => 'aunt_uncle',
+        'aunt' => 'aunt',
+        'uncle' => 'uncle',
+        'niece nephew' => 'niece_nephew',
+        'niece or nephew' => 'niece_nephew',
+        'niece' => 'niece',
+        'nephew' => 'nephew',
+        'grandparent' => 'grandparent',
+        'grand parent' => 'grandparent',
+        'grandfather' => 'grandfather',
+        'grand father' => 'grandfather',
+        'grandmother' => 'grandmother',
+        'grand mother' => 'grandmother',
+        'grandchild' => 'grandchild',
+        'grand child' => 'grandchild',
+        'grandson' => 'grandson',
+        'grand son' => 'grandson',
+        'granddaughter' => 'granddaughter',
+        'grand daughter' => 'granddaughter',
+        'cousin' => 'cousin',
         'assistant' => 'assistant',
         'friend' => 'friend',
         'other' => 'other',
@@ -96,9 +148,31 @@ class ContactService
         'daughter' => 'parent',
         'stepson' => 'parent',
         'stepdaughter' => 'parent',
+        'parent_in_law' => 'child_in_law',
+        'father_in_law' => 'child_in_law',
+        'mother_in_law' => 'child_in_law',
+        'child_in_law' => 'parent_in_law',
+        'son_in_law' => 'parent_in_law',
+        'daughter_in_law' => 'parent_in_law',
         'sibling' => 'sibling',
         'brother' => 'sibling',
         'sister' => 'sibling',
+        'sibling_in_law' => 'sibling_in_law',
+        'brother_in_law' => 'sibling_in_law',
+        'sister_in_law' => 'sibling_in_law',
+        'aunt_uncle' => 'niece_nephew',
+        'aunt' => 'niece_nephew',
+        'uncle' => 'niece_nephew',
+        'niece_nephew' => 'aunt_uncle',
+        'niece' => 'aunt_uncle',
+        'nephew' => 'aunt_uncle',
+        'grandparent' => 'grandchild',
+        'grandfather' => 'grandchild',
+        'grandmother' => 'grandchild',
+        'grandchild' => 'grandparent',
+        'grandson' => 'grandparent',
+        'granddaughter' => 'grandparent',
+        'cousin' => 'cousin',
         'assistant' => 'assistant',
         'friend' => 'friend',
         'other' => 'other',
@@ -123,12 +197,43 @@ class ContactService
         'daughter' => 'child',
         'stepson' => 'child',
         'stepdaughter' => 'child',
+        'parent_in_law' => 'parent_in_law',
+        'father_in_law' => 'parent_in_law',
+        'mother_in_law' => 'parent_in_law',
+        'child_in_law' => 'child_in_law',
+        'son_in_law' => 'child_in_law',
+        'daughter_in_law' => 'child_in_law',
         'sibling' => 'sibling',
         'brother' => 'sibling',
         'sister' => 'sibling',
+        'sibling_in_law' => 'sibling_in_law',
+        'brother_in_law' => 'sibling_in_law',
+        'sister_in_law' => 'sibling_in_law',
+        'aunt_uncle' => 'aunt_uncle',
+        'aunt' => 'aunt_uncle',
+        'uncle' => 'aunt_uncle',
+        'niece_nephew' => 'niece_nephew',
+        'niece' => 'niece_nephew',
+        'nephew' => 'niece_nephew',
+        'grandparent' => 'grandparent',
+        'grandfather' => 'grandparent',
+        'grandmother' => 'grandparent',
+        'grandchild' => 'grandchild',
+        'grandson' => 'grandchild',
+        'granddaughter' => 'grandchild',
+        'cousin' => 'cousin',
         'assistant' => 'assistant',
         'friend' => 'friend',
         'other' => 'other',
+    ];
+
+    private const RELATED_SPOUSE_CANONICAL_LABELS = [
+        'spouse',
+        'partner',
+    ];
+
+    private const RELATED_SPOUSE_PROPAGATION_CANONICAL_LABELS = [
+        'child_in_law',
     ];
 
     public function __construct(
@@ -586,6 +691,108 @@ class ContactService
                 ...$affectedAddressBookIds,
                 ...$this->addressBookIdsForContact($targetContact),
             ];
+        }
+
+        $spouseContactIds = [];
+        $propagatedRows = [];
+        foreach ($activeLinkedRowsByContactId as $relatedContactId => $sourceRow) {
+            $canonical = $this->canonicalRelatedLabelForRow($sourceRow);
+            if ($canonical === null) {
+                continue;
+            }
+
+            if (in_array($canonical, self::RELATED_SPOUSE_CANONICAL_LABELS, true)) {
+                $spouseContactIds[$relatedContactId] = $relatedContactId;
+            }
+
+            if (in_array($canonical, self::RELATED_SPOUSE_PROPAGATION_CANONICAL_LABELS, true)) {
+                $propagatedRows[$relatedContactId] = $sourceRow;
+            }
+        }
+
+        if ($spouseContactIds !== [] && $propagatedRows !== []) {
+            foreach (array_values($spouseContactIds) as $spouseContactId) {
+                /** @var Contact|null $spouseContact */
+                $spouseContact = $targetContacts->get($spouseContactId);
+                if ($spouseContact === null || (int) $spouseContact->owner_id !== (int) $sourceContact->owner_id) {
+                    continue;
+                }
+
+                $spousePayload = is_array($spouseContact->payload) ? $spouseContact->payload : [];
+                $spouseRows = $this->normalizeRelatedRowsForSync($spousePayload['related_names'] ?? []);
+                $spouseDisplayName = trim((string) ($spouseContact->full_name ?: 'Unnamed Contact'));
+
+                foreach ($propagatedRows as $targetId => $propagatedSourceRow) {
+                    if ($targetId === $spouseContactId || $targetId === (int) $sourceContact->id) {
+                        continue;
+                    }
+
+                    /** @var Contact|null $propagatedTargetContact */
+                    $propagatedTargetContact = $targetContacts->get($targetId);
+                    if (
+                        $propagatedTargetContact === null
+                        || (int) $propagatedTargetContact->owner_id !== (int) $sourceContact->owner_id
+                    ) {
+                        continue;
+                    }
+
+                    $mirroredRow = [
+                        'label' => $propagatedSourceRow['label'],
+                        'custom_label' => $propagatedSourceRow['custom_label'],
+                        'value' => $propagatedSourceRow['value'],
+                        'related_contact_id' => $targetId,
+                    ];
+
+                    $nextSpouseRows = $this->upsertMirroredRelatedRow(
+                        targetRows: $spouseRows,
+                        incomingRow: $mirroredRow,
+                    );
+                    if (! $this->relatedRowsEqual($spouseRows, $nextSpouseRows)) {
+                        $spouseRows = $nextSpouseRows;
+                    }
+
+                    $propagatedTargetPayload = is_array($propagatedTargetContact->payload)
+                        ? $propagatedTargetContact->payload
+                        : [];
+                    $propagatedTargetRows = $this->normalizeRelatedRowsForSync(
+                        $propagatedTargetPayload['related_names'] ?? []
+                    );
+                    $nextPropagatedTargetRows = $this->upsertReciprocalRelatedRow(
+                        targetRows: $propagatedTargetRows,
+                        sourceContact: $spouseContact,
+                        sourceRow: $mirroredRow,
+                        sourceDisplayName: $spouseDisplayName,
+                    );
+
+                    if ($this->relatedRowsEqual($propagatedTargetRows, $nextPropagatedTargetRows)) {
+                        continue;
+                    }
+
+                    $propagatedTargetPayload['related_names'] = $nextPropagatedTargetRows;
+                    $propagatedTargetContact->payload = $propagatedTargetPayload;
+                    $propagatedTargetContact->save();
+
+                    $this->syncAssignmentsForExistingContact($propagatedTargetContact);
+                    $affectedAddressBookIds = [
+                        ...$affectedAddressBookIds,
+                        ...$this->addressBookIdsForContact($propagatedTargetContact),
+                    ];
+                }
+
+                if ($this->relatedRowsEqual($spouseRows, $spousePayload['related_names'] ?? [])) {
+                    continue;
+                }
+
+                $spousePayload['related_names'] = $spouseRows;
+                $spouseContact->payload = $spousePayload;
+                $spouseContact->save();
+
+                $this->syncAssignmentsForExistingContact($spouseContact);
+                $affectedAddressBookIds = [
+                    ...$affectedAddressBookIds,
+                    ...$this->addressBookIdsForContact($spouseContact),
+                ];
+            }
         }
 
         $removedTargetIds = array_diff($previousLinkedIds, array_keys($activeLinkedRowsByContactId));
@@ -1054,6 +1261,62 @@ class ContactService
 
     /**
      * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $row
+     */
+    private function canonicalRelatedLabelForRow(array $row): ?string
+    {
+        [$token] = $this->relatedLabelTokenAndDisplay($row);
+        if ($token === null) {
+            return null;
+        }
+
+        return self::RELATED_CANONICAL_LABELS[$token] ?? null;
+    }
+
+    /**
+     * @param  array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>  $targetRows
+     * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $incomingRow
+     * @return array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>
+     */
+    private function upsertMirroredRelatedRow(array $targetRows, array $incomingRow): array
+    {
+        $incomingRelatedContactId = $incomingRow['related_contact_id'] ?? null;
+        if ($incomingRelatedContactId === null || $incomingRelatedContactId <= 0) {
+            return array_values($targetRows);
+        }
+
+        $matchingIndices = collect($targetRows)
+            ->map(fn (array $row, int $index): array => ['row' => $row, 'index' => $index])
+            ->filter(fn (array $item): bool => ($item['row']['related_contact_id'] ?? null) === $incomingRelatedContactId)
+            ->pluck('index')
+            ->values()
+            ->all();
+
+        if ($matchingIndices === []) {
+            $targetRows[] = $incomingRow;
+
+            return array_values($targetRows);
+        }
+
+        $primaryIndex = (int) $matchingIndices[0];
+        $existingRow = $targetRows[$primaryIndex];
+        $targetRows[$primaryIndex] = $this->mergedReciprocalRow(
+            existingRow: $existingRow,
+            incomingRow: $incomingRow,
+        );
+
+        $duplicateIndices = array_slice($matchingIndices, 1);
+        if ($duplicateIndices !== []) {
+            $targetRows = collect($targetRows)
+                ->reject(fn (array $row, int $index): bool => in_array($index, $duplicateIndices, true))
+                ->values()
+                ->all();
+        }
+
+        return array_values($targetRows);
+    }
+
+    /**
+     * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $row
      * @return array{label:string, custom_label:?string}
      */
     private function inverseLabelForRelatedRow(array $row): array
@@ -1112,7 +1375,7 @@ class ContactService
             return null;
         }
 
-        $normalized = str_replace(['_', '-'], ' ', $normalized);
+        $normalized = str_replace(['_', '-', '/', '&'], ' ', $normalized);
         $normalized = trim(preg_replace('/\s+/', ' ', $normalized) ?? '');
         if ($normalized === '') {
             return null;
