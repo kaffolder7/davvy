@@ -1471,6 +1471,11 @@ function normalizeDateRowsForPayload(rows) {
   }));
 }
 
+function normalizePositiveInt(value) {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
 function moveArrayItem(items, fromIndex, toIndex) {
   if (!Array.isArray(items) || items.length === 0) {
     return [];
@@ -1764,6 +1769,10 @@ function createEmptyLabeledValue(label = "other") {
   return { label, custom_label: "", value: "" };
 }
 
+function createEmptyRelatedName(label = "other") {
+  return { label, custom_label: "", value: "", related_contact_id: null };
+}
+
 function createEmptyAddress(label = "home") {
   return {
     label,
@@ -1810,7 +1819,7 @@ function createEmptyContactForm(defaultAddressBookIds = []) {
     urls: [createEmptyLabeledValue("homepage")],
     addresses: [createEmptyAddress("home")],
     dates: [createEmptyDate("anniversary")],
-    related_names: [createEmptyLabeledValue("other")],
+    related_names: [createEmptyRelatedName("other")],
     instant_messages: [createEmptyLabeledValue("other")],
     address_book_ids: defaultAddressBookIds,
   };
@@ -1873,6 +1882,19 @@ function hydrateContactForm(contact, defaultAddressBookIds = []) {
     }));
   };
 
+  const nonEmptyRelatedNames = (rows) => {
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return [createEmptyRelatedName("other")];
+    }
+
+    return rows.map((row) => ({
+      label: row?.label ?? "other",
+      custom_label: row?.custom_label ?? "",
+      value: row?.value ?? "",
+      related_contact_id: normalizePositiveInt(row?.related_contact_id),
+    }));
+  };
+
   const addressBookIds =
     Array.isArray(contact.address_book_ids) &&
     contact.address_book_ids.length > 0
@@ -1911,9 +1933,7 @@ function hydrateContactForm(contact, defaultAddressBookIds = []) {
     urls: nonEmptyRows(contact.urls, () => createEmptyLabeledValue("homepage")),
     addresses: nonEmptyAddresses(contact.addresses),
     dates: nonEmptyDates(contact.dates),
-    related_names: nonEmptyRows(contact.related_names, () =>
-      createEmptyLabeledValue("other"),
-    ),
+    related_names: nonEmptyRelatedNames(contact.related_names),
     instant_messages: nonEmptyRows(contact.instant_messages, () =>
       createEmptyLabeledValue("other"),
     ),
@@ -1958,6 +1978,27 @@ function ContactsPage({ auth, theme }) {
       ),
     [visibleOptionalFields],
   );
+
+  const relatedNameOptions = useMemo(() => {
+    const activeContactId = normalizePositiveInt(form.id);
+
+    return contacts
+      .map((contact) => ({
+        id: normalizePositiveInt(contact?.id),
+        display_name: String(contact?.display_name ?? "").trim(),
+      }))
+      .filter(
+        (contact) =>
+          contact.id !== null &&
+          contact.display_name !== "" &&
+          contact.id !== activeContactId,
+      )
+      .sort((left, right) =>
+        left.display_name.localeCompare(right.display_name, undefined, {
+          sensitivity: "base",
+        }),
+      );
+  }, [contacts, form.id]);
 
   const filteredHiddenOptionalFields = useMemo(() => {
     const query = fieldSearchTerm.trim().toLowerCase();
@@ -3054,13 +3095,10 @@ function ContactsPage({ auth, theme }) {
                       </div>
                     </section>
 
-                    <LabeledValueEditor
-                      title="Related Name"
+                    <RelatedNameEditor
                       rows={form.related_names}
                       setRows={(rows) => updateFormField("related_names", rows)}
-                      labelOptions={RELATED_LABEL_OPTIONS}
-                      valuePlaceholder="Name"
-                      addLabel="Add related name"
+                      contactOptions={relatedNameOptions}
                     />
                   </div>
                 ) : null}
@@ -3638,6 +3676,225 @@ function LabeledValueEditor({
                     value={row.custom_label ?? ""}
                     onChange={(event) =>
                       updateRow(index, "custom_label", event.target.value)
+                    }
+                    placeholder="Custom label"
+                  />
+                ) : null}
+              </div>
+            );
+          })
+        )}
+      </div>
+    </section>
+  );
+}
+
+function RelatedNameEditor({ rows, setRows, contactOptions }) {
+  const safeRows = Array.isArray(rows) ? rows : [];
+  const safeContactOptions = Array.isArray(contactOptions) ? contactOptions : [];
+  const reorder = useRowReorder(safeRows, setRows);
+  const rowGroup = "reorder-related-name";
+  const [pickerRowIndex, setPickerRowIndex] = useState(null);
+
+  useEffect(() => {
+    if (pickerRowIndex === null || pickerRowIndex < safeRows.length) {
+      return;
+    }
+
+    setPickerRowIndex(null);
+  }, [pickerRowIndex, safeRows.length]);
+
+  const updateRow = (index, patch) => {
+    setRows(
+      safeRows.map((row, rowIndex) =>
+        rowIndex === index ? { ...row, ...patch } : row,
+      ),
+    );
+  };
+
+  const addRow = () => {
+    setRows([...safeRows, createEmptyRelatedName("other")]);
+  };
+
+  const removeRow = (index) => {
+    setRows(safeRows.filter((_, rowIndex) => rowIndex !== index));
+  };
+
+  const matchingContactOptions = (value) => {
+    const query = String(value ?? "").trim().toLowerCase();
+    if (!query) {
+      return safeContactOptions;
+    }
+
+    return safeContactOptions.filter((contact) =>
+      contact.display_name.toLowerCase().includes(query),
+    );
+  };
+
+  const selectContactOption = (index, option) => {
+    updateRow(index, {
+      value: option.display_name,
+      related_contact_id: option.id,
+    });
+    setPickerRowIndex(null);
+  };
+
+  return (
+    <section className="rounded-2xl border border-app-edge bg-app-surface p-4">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-app-base">
+          Related Name
+        </h3>
+        <button
+          className="btn-outline btn-outline-sm"
+          type="button"
+          onClick={addRow}
+        >
+          Add related name
+        </button>
+      </div>
+      <div className="mt-3 space-y-3">
+        {safeRows.length === 0 ? (
+          <p className="text-sm text-app-faint">No related names.</p>
+        ) : (
+          safeRows.map((row, index) => {
+            const rowIsDragSource = reorder.isDragSource(index);
+            const rowIsDropTarget = reorder.isDropTarget(index);
+            const isPickerOpen = pickerRowIndex === index;
+            const optionListId = `related-name-combobox-list-${index}`;
+            const options = matchingContactOptions(row?.value);
+            const selectedRelatedId = normalizePositiveInt(row?.related_contact_id);
+            const selectedContact = safeContactOptions.find(
+              (option) => option.id === selectedRelatedId,
+            );
+
+            return (
+              <div
+                key={`related-name-${index}`}
+                data-reorder-index={index}
+                data-reorder-group={rowGroup}
+                className={`group/row rounded-xl border px-2 py-3 transition ${
+                  rowIsDropTarget
+                    ? "border-app-accent-edge ring-1 ring-teal-500/30"
+                    : "border-app-edge"
+                } ${rowIsDragSource ? "opacity-70" : ""}`}
+              >
+                <div className="grid items-center gap-2 md:grid-cols-[12rem_1fr_auto]">
+                  <select
+                    className="input"
+                    value={row.label ?? "other"}
+                    onChange={(event) =>
+                      updateRow(index, { label: event.target.value })
+                    }
+                  >
+                    {RELATED_LABEL_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="relative">
+                    <input
+                      className="input"
+                      value={row.value ?? ""}
+                      onFocus={() => setPickerRowIndex(index)}
+                      onChange={(event) => {
+                        updateRow(index, {
+                          value: event.target.value,
+                          related_contact_id: null,
+                        });
+                        setPickerRowIndex(index);
+                      }}
+                      onBlur={() => {
+                        window.setTimeout(() => {
+                          setPickerRowIndex((previous) =>
+                            previous === index ? null : previous,
+                          );
+                        }, 80);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Escape") {
+                          setPickerRowIndex(null);
+                          return;
+                        }
+
+                        if (
+                          event.key === "Enter" &&
+                          isPickerOpen &&
+                          options.length > 0
+                        ) {
+                          event.preventDefault();
+                          selectContactOption(index, options[0]);
+                        }
+                      }}
+                      placeholder="Name"
+                      role="combobox"
+                      aria-autocomplete="list"
+                      aria-expanded={isPickerOpen}
+                      aria-controls={optionListId}
+                    />
+                    {isPickerOpen ? (
+                      <div
+                        id={optionListId}
+                        className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-app-edge bg-app-surface p-1 shadow-lg backdrop-blur"
+                      >
+                        {options.length === 0 ? (
+                          <p className="px-2 py-2 text-sm text-app-faint">
+                            No matching contacts. Keep typing to use a custom
+                            name.
+                          </p>
+                        ) : (
+                          options.map((option) => {
+                            const isSelected = option.id === selectedRelatedId;
+                            return (
+                              <button
+                                key={option.id}
+                                className={`mb-1 block w-full rounded-lg border px-2.5 py-2 text-left text-sm transition last:mb-0 ${
+                                  isSelected
+                                    ? "border-app-accent-edge bg-app-surface text-app-strong ring-1 ring-teal-500/30"
+                                    : "border-transparent text-app-base hover:border-app-edge hover:bg-app-surface"
+                                }`}
+                                type="button"
+                                onMouseDown={(event) => {
+                                  event.preventDefault();
+                                  selectContactOption(index, option);
+                                }}
+                              >
+                                {option.display_name}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="self-center">
+                    <RowReorderControls
+                      rowLabel="Related Name"
+                      rowGroup={rowGroup}
+                      rowIndex={index}
+                      rowCount={safeRows.length}
+                      onDragStart={reorder.handleDragStart}
+                      onDragMove={reorder.handleDragMove}
+                      onDragEnd={reorder.completeDrag}
+                      onDragCancel={reorder.completeDrag}
+                      onMoveUp={reorder.moveRowUp}
+                      onMoveDown={reorder.moveRowDown}
+                      onRemove={removeRow}
+                    />
+                  </div>
+                </div>
+                {selectedContact ? (
+                  <p className="mt-1.5 text-[11px] text-app-faint">
+                    Linked to contact #{selectedContact.id}.
+                  </p>
+                ) : null}
+                {row.label === "custom" ? (
+                  <input
+                    className="input mt-2"
+                    value={row.custom_label ?? ""}
+                    onChange={(event) =>
+                      updateRow(index, { custom_label: event.target.value })
                     }
                     placeholder="Custom label"
                   />
