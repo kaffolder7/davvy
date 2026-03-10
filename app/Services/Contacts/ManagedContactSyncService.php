@@ -17,8 +17,11 @@ class ManagedContactSyncService
         private readonly ContactMilestoneCalendarService $milestoneCalendarService,
     ) {}
 
-    public function syncCardUpsert(AddressBook $addressBook, Card $card, ?User $actor = null): void
-    {
+    public function syncCardUpsert(
+        AddressBook $addressBook,
+        Card $card,
+        ?User $actor = null,
+    ): void {
         if (! $this->schemaAvailable()) {
             return;
         }
@@ -28,14 +31,20 @@ class ManagedContactSyncService
             return;
         }
 
-        $uid = $this->cleanString($card->uid) ?? $this->cleanString($parsed['uid'] ?? null);
+        $uid =
+            $this->cleanString($card->uid) ??
+            $this->cleanString($parsed['uid'] ?? null);
         if ($uid === null) {
             return;
         }
 
-        $payload = is_array($parsed['payload'] ?? null) ? $parsed['payload'] : [];
+        $payload = is_array($parsed['payload'] ?? null)
+            ? $parsed['payload']
+            : [];
         $fullName = $this->vCardService->displayName($payload);
-        $hintContactId = $this->toInteger($parsed['managed_contact_id'] ?? null);
+        $hintContactId = $this->toInteger(
+            $parsed['managed_contact_id'] ?? null,
+        );
         $hintOwnerId = $this->toInteger($parsed['managed_owner_id'] ?? null);
 
         $relatedAddressBookIds = [];
@@ -49,17 +58,16 @@ class ManagedContactSyncService
             $fullName,
             $hintContactId,
             $hintOwnerId,
-            &$relatedAddressBookIds
+            &$relatedAddressBookIds,
         ): void {
             $assignment = ContactAddressBookAssignment::query()
                 ->with('contact')
                 ->where('card_id', $card->id)
                 ->first();
 
-            $ownerId = $assignment?->contact?->owner_id
-                ?? $hintOwnerId
-                ?? $actor?->id
-                ?? $addressBook->owner_id;
+            $ownerId =
+                $assignment?->contact?->owner_id ??
+                ($hintOwnerId ?? ($actor?->id ?? $addressBook->owner_id));
 
             if ($ownerId === null) {
                 return;
@@ -69,7 +77,10 @@ class ManagedContactSyncService
             $targetContact = null;
             $previousPayload = [];
 
-            if ($assignmentContact && $assignmentContact->owner_id === $ownerId) {
+            if (
+                $assignmentContact &&
+                $assignmentContact->owner_id === $ownerId
+            ) {
                 $targetContact = $assignmentContact;
             }
 
@@ -103,7 +114,9 @@ class ManagedContactSyncService
                     'payload' => $payload,
                 ]);
             } else {
-                $previousPayload = is_array($targetContact->payload) ? $targetContact->payload : [];
+                $previousPayload = is_array($targetContact->payload)
+                    ? $targetContact->payload
+                    : [];
 
                 if ($targetContact->uid !== $uid) {
                     $conflict = Contact::query()
@@ -164,17 +177,22 @@ class ManagedContactSyncService
                 }
             }
 
-            if ($oldContactId !== null && $oldContactId !== $targetContact->id) {
+            if (
+                $oldContactId !== null &&
+                $oldContactId !== $targetContact->id
+            ) {
                 $this->deleteContactIfOrphaned($oldContactId);
             }
 
-            $relatedAddressBookIds = $this->contactService()
-                ->syncBidirectionalRelatedNamesForContact($targetContact, $previousPayload);
+            $relatedAddressBookIds = $this->contactService()->syncBidirectionalRelatedNamesForContact(
+                $targetContact,
+                $previousPayload,
+            );
         });
 
         $this->syncMilestoneCalendarsForAddressBooks([
             $addressBook->id,
-            ...(is_array($relatedAddressBookIds) ? $relatedAddressBookIds : []),
+            ...is_array($relatedAddressBookIds) ? $relatedAddressBookIds : [],
         ]);
     }
 
@@ -190,7 +208,7 @@ class ManagedContactSyncService
         DB::transaction(function () use (
             $card,
             &$affectedAddressBookId,
-            &$relatedAddressBookIds
+            &$relatedAddressBookIds,
         ): void {
             $assignment = ContactAddressBookAssignment::query()
                 ->where('card_id', $card->id)
@@ -209,7 +227,9 @@ class ManagedContactSyncService
         if ($affectedAddressBookId !== null) {
             $this->syncMilestoneCalendarsForAddressBooks([
                 $affectedAddressBookId,
-                ...(is_array($relatedAddressBookIds) ? $relatedAddressBookIds : []),
+                ...is_array($relatedAddressBookIds)
+                    ? $relatedAddressBookIds
+                    : [],
             ]);
         }
     }
@@ -232,7 +252,9 @@ class ManagedContactSyncService
             return [];
         }
 
-        $relatedAddressBookIds = $this->contactService()->removeBidirectionalRelatedNamesForContact($contact);
+        $relatedAddressBookIds = $this->contactService()->removeBidirectionalRelatedNamesForContact(
+            $contact,
+        );
         $contact->delete();
 
         return $relatedAddressBookIds;
@@ -240,7 +262,8 @@ class ManagedContactSyncService
 
     private function schemaAvailable(): bool
     {
-        return Schema::hasTable('contacts') && Schema::hasTable('contact_address_book_assignments');
+        return Schema::hasTable('contacts') &&
+            Schema::hasTable('contact_address_book_assignments');
     }
 
     private function toInteger(mixed $value): ?int
@@ -282,10 +305,13 @@ class ManagedContactSyncService
     /**
      * @param  array<int, int>  $addressBookIds
      */
-    private function syncMilestoneCalendarsForAddressBooks(array $addressBookIds): void
-    {
+    private function syncMilestoneCalendarsForAddressBooks(
+        array $addressBookIds,
+    ): void {
         try {
-            $this->milestoneCalendarService->syncAddressBooksByIds($addressBookIds);
+            $this->milestoneCalendarService->syncAddressBooksByIds(
+                $addressBookIds,
+            );
         } catch (\Throwable $exception) {
             report($exception);
         }
