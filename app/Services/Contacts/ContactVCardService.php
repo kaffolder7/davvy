@@ -51,9 +51,31 @@ class ContactVCardService
         'daughter' => ['CHILD'],
         'stepson' => ['CHILD'],
         'stepdaughter' => ['CHILD'],
+        'parent_in_law' => ['KIN'],
+        'father_in_law' => ['KIN'],
+        'mother_in_law' => ['KIN'],
+        'child_in_law' => ['KIN'],
+        'son_in_law' => ['KIN'],
+        'daughter_in_law' => ['KIN'],
         'sibling' => ['SIBLING'],
         'brother' => ['SIBLING'],
         'sister' => ['SIBLING'],
+        'sibling_in_law' => ['KIN'],
+        'brother_in_law' => ['KIN'],
+        'sister_in_law' => ['KIN'],
+        'aunt_uncle' => ['KIN'],
+        'aunt' => ['KIN'],
+        'uncle' => ['KIN'],
+        'niece_nephew' => ['KIN'],
+        'niece' => ['KIN'],
+        'nephew' => ['KIN'],
+        'grandparent' => ['KIN'],
+        'grandfather' => ['KIN'],
+        'grandmother' => ['KIN'],
+        'grandchild' => ['KIN'],
+        'grandson' => ['KIN'],
+        'granddaughter' => ['KIN'],
+        'cousin' => ['KIN'],
         'assistant' => ['ASSISTANT'],
         'friend' => ['FRIEND'],
         'other' => ['OTHER'],
@@ -80,12 +102,83 @@ class ContactVCardService
         'step son' => 'stepson',
         'stepdaughter' => 'stepdaughter',
         'step daughter' => 'stepdaughter',
+        'parent in law' => 'parent_in_law',
+        'father in law' => 'father_in_law',
+        'mother in law' => 'mother_in_law',
+        'child in law' => 'child_in_law',
+        'son in law' => 'son_in_law',
+        'daughter in law' => 'daughter_in_law',
         'sibling' => 'sibling',
         'brother' => 'brother',
         'sister' => 'sister',
+        'sibling in law' => 'sibling_in_law',
+        'brother in law' => 'brother_in_law',
+        'sister in law' => 'sister_in_law',
+        'aunt uncle' => 'aunt_uncle',
+        'aunt or uncle' => 'aunt_uncle',
+        'aunt' => 'aunt',
+        'uncle' => 'uncle',
+        'niece nephew' => 'niece_nephew',
+        'niece or nephew' => 'niece_nephew',
+        'niece' => 'niece',
+        'nephew' => 'nephew',
+        'grandparent' => 'grandparent',
+        'grand parent' => 'grandparent',
+        'grandfather' => 'grandfather',
+        'grand father' => 'grandfather',
+        'grandmother' => 'grandmother',
+        'grand mother' => 'grandmother',
+        'grandchild' => 'grandchild',
+        'grand child' => 'grandchild',
+        'grandson' => 'grandson',
+        'grand son' => 'grandson',
+        'granddaughter' => 'granddaughter',
+        'grand daughter' => 'granddaughter',
+        'cousin' => 'cousin',
         'assistant' => 'assistant',
         'friend' => 'friend',
         'other' => 'other',
+    ];
+
+    private const RELATED_TOKEN_DISPLAY_LABELS = [
+        'husband' => 'Husband',
+        'wife' => 'Wife',
+        'boyfriend' => 'Boyfriend',
+        'girlfriend' => 'Girlfriend',
+        'fiance' => 'Fiance',
+        'fiancee' => 'Fiancee',
+        'father' => 'Father',
+        'mother' => 'Mother',
+        'mom' => 'Mom',
+        'dad' => 'Dad',
+        'son' => 'Son',
+        'daughter' => 'Daughter',
+        'stepson' => 'Stepson',
+        'stepdaughter' => 'Stepdaughter',
+        'brother' => 'Brother',
+        'sister' => 'Sister',
+        'parent_in_law' => 'Parent-in-Law',
+        'father_in_law' => 'Father-in-Law',
+        'mother_in_law' => 'Mother-in-Law',
+        'child_in_law' => 'Child-in-Law',
+        'son_in_law' => 'Son-in-Law',
+        'daughter_in_law' => 'Daughter-in-Law',
+        'sibling_in_law' => 'Sibling-in-Law',
+        'brother_in_law' => 'Brother-in-Law',
+        'sister_in_law' => 'Sister-in-Law',
+        'aunt_uncle' => 'Aunt/Uncle',
+        'aunt' => 'Aunt',
+        'uncle' => 'Uncle',
+        'niece_nephew' => 'Niece/Nephew',
+        'niece' => 'Niece',
+        'nephew' => 'Nephew',
+        'grandparent' => 'Grandparent',
+        'grandfather' => 'Grandfather',
+        'grandmother' => 'Grandmother',
+        'grandchild' => 'Grandchild',
+        'grandson' => 'Grandson',
+        'granddaughter' => 'Granddaughter',
+        'cousin' => 'Cousin',
     ];
 
     private const RELATED_TYPE_LABEL_MAP = [
@@ -97,6 +190,7 @@ class ContactVCardService
         'ASSISTANT' => 'assistant',
         'FRIEND' => 'friend',
         'OTHER' => 'other',
+        'KIN' => 'other',
     ];
 
     private const RELATED_CONTACT_ID_PARAMETER = 'X-DAVVY-RELATED-CONTACT-ID';
@@ -1024,7 +1118,16 @@ class ContactVCardService
             return null;
         }
 
-        return $token;
+        return $this->relatedDisplayLabelForToken($token);
+    }
+
+    private function relatedDisplayLabelForToken(string $token): string
+    {
+        if (array_key_exists($token, self::RELATED_TOKEN_DISPLAY_LABELS)) {
+            return self::RELATED_TOKEN_DISPLAY_LABELS[$token];
+        }
+
+        return ucwords(str_replace('_', ' ', $token));
     }
 
     private function normalizeRelatedLabelToken(mixed $value): ?string
@@ -1034,7 +1137,7 @@ class ContactVCardService
             return null;
         }
 
-        $normalized = str_replace(['_', '-'], ' ', $normalized);
+        $normalized = str_replace(['_', '-', '/', '&'], ' ', $normalized);
         $normalized = trim(preg_replace('/\s+/', ' ', $normalized) ?? '');
         if ($normalized === '') {
             return null;

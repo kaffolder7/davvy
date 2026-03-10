@@ -394,6 +394,158 @@ class ContactManagementTest extends TestCase
         $this->assertSame('father', $sonPayloadAfter['related_names'][0]['label'] ?? null);
     }
 
+    public function test_in_law_specific_overrides_are_not_replaced_by_generic_inverse_labels(): void
+    {
+        $user = User::factory()->create();
+        $book = AddressBook::factory()->create(['owner_id' => $user->id, 'uri' => 'in-law-sync-overrides']);
+
+        $motherInLaw = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Melanie',
+            'last_name' => 'Hargrove',
+            'related_names' => [],
+            'address_book_ids' => [$book->id],
+        ]));
+        $motherInLaw->assertCreated();
+        $motherInLawId = (int) $motherInLaw->json('id');
+
+        $daughterInLaw = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Melissa',
+            'last_name' => 'Hargrove',
+            'related_names' => [],
+            'address_book_ids' => [$book->id],
+        ]));
+        $daughterInLaw->assertCreated();
+        $daughterInLawId = (int) $daughterInLaw->json('id');
+
+        $this->actingAs($user)
+            ->patchJson('/api/contacts/'.$daughterInLawId, $this->payload([
+                'first_name' => 'Melissa',
+                'last_name' => 'Hargrove',
+                'related_names' => [[
+                    'label' => 'mother_in_law',
+                    'custom_label' => null,
+                    'value' => 'Marisol Hargrove',
+                    'related_contact_id' => $motherInLawId,
+                ]],
+                'address_book_ids' => [$book->id],
+            ]))
+            ->assertOk();
+
+        $motherPayload = Contact::query()->findOrFail($motherInLawId)->payload;
+        $this->assertSame('child_in_law', $motherPayload['related_names'][0]['label'] ?? null);
+
+        $this->actingAs($user)
+            ->patchJson('/api/contacts/'.$motherInLawId, $this->payload([
+                'first_name' => 'Melanie',
+                'last_name' => 'Hargrove',
+                'related_names' => [[
+                    'label' => 'daughter_in_law',
+                    'custom_label' => null,
+                    'value' => 'Talia Hargrove',
+                    'related_contact_id' => $daughterInLawId,
+                ]],
+                'address_book_ids' => [$book->id],
+            ]))
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->patchJson('/api/contacts/'.$daughterInLawId, $this->payload([
+                'first_name' => 'Melissa',
+                'last_name' => 'Hargrove',
+                'related_names' => [[
+                    'label' => 'mother_in_law',
+                    'custom_label' => null,
+                    'value' => 'Marisol Hargrove',
+                    'related_contact_id' => $motherInLawId,
+                ]],
+                'address_book_ids' => [$book->id],
+            ]))
+            ->assertOk();
+
+        $motherPayloadAfter = Contact::query()->findOrFail($motherInLawId)->payload;
+        $daughterPayloadAfter = Contact::query()->findOrFail($daughterInLawId)->payload;
+
+        $this->assertSame('daughter_in_law', $motherPayloadAfter['related_names'][0]['label'] ?? null);
+        $this->assertSame('mother_in_law', $daughterPayloadAfter['related_names'][0]['label'] ?? null);
+    }
+
+    public function test_child_in_law_relationship_propagates_to_spouse_contact(): void
+    {
+        $user = User::factory()->create();
+        $book = AddressBook::factory()->create(['owner_id' => $user->id, 'uri' => 'in-law-spouse-propagation']);
+
+        $father = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Dennis',
+            'last_name' => 'Hargrove',
+            'related_names' => [],
+            'address_book_ids' => [$book->id],
+        ]));
+        $father->assertCreated();
+        $fatherId = (int) $father->json('id');
+
+        $mother = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Melanie',
+            'last_name' => 'Hargrove',
+            'related_names' => [],
+            'address_book_ids' => [$book->id],
+        ]));
+        $mother->assertCreated();
+        $motherId = (int) $mother->json('id');
+
+        $daughterInLaw = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Melissa',
+            'last_name' => 'Hargrove',
+            'related_names' => [],
+            'address_book_ids' => [$book->id],
+        ]));
+        $daughterInLaw->assertCreated();
+        $daughterInLawId = (int) $daughterInLaw->json('id');
+
+        $this->actingAs($user)
+            ->patchJson('/api/contacts/'.$fatherId, $this->payload([
+                'first_name' => 'Dennis',
+                'last_name' => 'Hargrove',
+                'related_names' => [
+                    [
+                        'label' => 'spouse',
+                        'custom_label' => null,
+                        'value' => 'Marisol Hargrove',
+                        'related_contact_id' => $motherId,
+                    ],
+                    [
+                        'label' => 'daughter_in_law',
+                        'custom_label' => null,
+                        'value' => 'Talia Hargrove',
+                        'related_contact_id' => $daughterInLawId,
+                    ],
+                ],
+                'address_book_ids' => [$book->id],
+            ]))
+            ->assertOk();
+
+        $motherPayload = Contact::query()->findOrFail($motherId)->payload;
+        $daughterPayload = Contact::query()->findOrFail($daughterInLawId)->payload;
+
+        $motherRelatedRows = collect($motherPayload['related_names'] ?? []);
+        $spouseMirroredRow = $motherRelatedRows->first(
+            fn (mixed $row): bool => is_array($row)
+                && (int) ($row['related_contact_id'] ?? 0) === $daughterInLawId
+        );
+
+        $this->assertIsArray($spouseMirroredRow);
+        $this->assertSame('daughter_in_law', $spouseMirroredRow['label'] ?? null);
+
+        $daughterRelatedRows = collect($daughterPayload['related_names'] ?? [])
+            ->filter(fn (mixed $row): bool => is_array($row))
+            ->mapWithKeys(fn (array $row): array => [
+                (int) ($row['related_contact_id'] ?? 0) => $row['label'] ?? null,
+            ])
+            ->all();
+
+        $this->assertSame('parent_in_law', $daughterRelatedRows[$fatherId] ?? null);
+        $this->assertSame('parent_in_law', $daughterRelatedRows[$motherId] ?? null);
+    }
+
     public function test_contact_can_opt_out_of_milestone_calendar_generation(): void
     {
         $user = User::factory()->create();
