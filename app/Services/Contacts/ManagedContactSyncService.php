@@ -181,13 +181,19 @@ class ManagedContactSyncService
                 $oldContactId !== null &&
                 $oldContactId !== $targetContact->id
             ) {
-                $this->deleteContactIfOrphaned($oldContactId);
+                $relatedAddressBookIds = [
+                    ...$relatedAddressBookIds,
+                    ...$this->deleteContactIfOrphaned($oldContactId),
+                ];
             }
 
-            $relatedAddressBookIds = $this->contactService()->syncBidirectionalRelatedNamesForContact(
-                $targetContact,
-                $previousPayload,
-            );
+            $relatedAddressBookIds = [
+                ...$relatedAddressBookIds,
+                ...$this->contactService()->syncBidirectionalRelatedNamesForContact(
+                    $targetContact,
+                    $previousPayload,
+                ),
+            ];
         });
 
         $this->syncMilestoneCalendarsForAddressBooks([

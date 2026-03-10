@@ -7,10 +7,13 @@ use App\Models\Card;
 use App\Models\Contact;
 use App\Models\ContactAddressBookAssignment;
 use App\Models\User;
+use App\Services\Contacts\ContactMilestoneCalendarService;
+use App\Services\Contacts\ManagedContactSyncService;
 use App\Services\Dav\Backends\LaravelCardDavBackend;
 use App\Services\DavRequestContext;
 use App\Services\RegistrationSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery\MockInterface;
 use Tests\TestCase;
 
 class ContactCardDavSyncTest extends TestCase
@@ -286,6 +289,140 @@ class ContactCardDavSyncTest extends TestCase
         $this->assertSame(null, $payload['related_names'][0]['custom_label'] ?? null);
         $this->assertSame($childId, $payload['related_names'][0]['related_contact_id'] ?? null);
         $this->assertSame($childName, $payload['related_names'][0]['value'] ?? null);
+    }
+
+    public function test_reassigning_card_updates_milestones_for_orphan_cleanup_related_contacts(): void
+    {
+        $user = User::factory()->create();
+        $bookA = AddressBook::factory()->create([
+            'owner_id' => $user->id,
+            'uri' => 'reassign-source-book',
+        ]);
+        $bookB = AddressBook::factory()->create([
+            'owner_id' => $user->id,
+            'uri' => 'reassign-related-book',
+        ]);
+
+        $target = $this->actingAs($user)->postJson('/api/contacts', [
+            'first_name' => 'Target',
+            'last_name' => 'Contact',
+            'company' => null,
+            'address_book_ids' => [$bookB->id],
+            'phones' => [],
+            'emails' => [],
+            'urls' => [],
+            'addresses' => [],
+            'dates' => [],
+            'related_names' => [],
+            'instant_messages' => [],
+        ]);
+        $target->assertCreated();
+        $targetId = (int) $target->json('id');
+        $targetUid = (string) $target->json('uid');
+
+        $linked = $this->actingAs($user)->postJson('/api/contacts', [
+            'first_name' => 'Linked',
+            'last_name' => 'Relative',
+            'company' => null,
+            'address_book_ids' => [$bookB->id],
+            'phones' => [],
+            'emails' => [],
+            'urls' => [],
+            'addresses' => [],
+            'dates' => [],
+            'related_names' => [],
+            'instant_messages' => [],
+        ]);
+        $linked->assertCreated();
+        $linkedId = (int) $linked->json('id');
+        $linkedName = (string) $linked->json('display_name');
+
+        $old = $this->actingAs($user)->postJson('/api/contacts', [
+            'first_name' => 'Old',
+            'last_name' => 'Contact',
+            'company' => null,
+            'address_book_ids' => [$bookA->id],
+            'phones' => [],
+            'emails' => [],
+            'urls' => [],
+            'addresses' => [],
+            'dates' => [],
+            'related_names' => [],
+            'instant_messages' => [],
+        ]);
+        $old->assertCreated();
+        $oldId = (int) $old->json('id');
+
+        $this->actingAs($user)->patchJson('/api/contacts/'.$oldId, [
+            'first_name' => 'Old',
+            'last_name' => 'Contact',
+            'company' => null,
+            'address_book_ids' => [$bookA->id],
+            'phones' => [],
+            'emails' => [],
+            'urls' => [],
+            'addresses' => [],
+            'dates' => [],
+            'related_names' => [[
+                'label' => 'friend',
+                'custom_label' => null,
+                'value' => $linkedName,
+                'related_contact_id' => $linkedId,
+            ]],
+            'instant_messages' => [],
+        ])->assertOk();
+
+        $assignment = ContactAddressBookAssignment::query()
+            ->where('contact_id', $oldId)
+            ->where('address_book_id', $bookA->id)
+            ->firstOrFail();
+        $card = Card::query()->findOrFail($assignment->card_id);
+        $cardData = "BEGIN:VCARD\nVERSION:4.0\nFN:Target Contact\nN:Contact;Target;;;\nUID:{$targetUid}\nEND:VCARD";
+        $card->update([
+            'uid' => $targetUid,
+            'etag' => md5($cardData),
+            'size' => strlen($cardData),
+            'data' => $cardData,
+        ]);
+
+        $capturedSyncIds = [];
+        $this->mock(ContactMilestoneCalendarService::class, function (MockInterface $mock) use (&$capturedSyncIds): void {
+            $mock->shouldReceive('syncAddressBooksByIds')
+                ->once()
+                ->withArgs(function (array $addressBookIds) use (&$capturedSyncIds): bool {
+                    $capturedSyncIds = $addressBookIds;
+
+                    return true;
+                });
+        });
+
+        app(ManagedContactSyncService::class)->syncCardUpsert(
+            $bookA->fresh(),
+            $card->fresh(),
+            $user,
+        );
+
+        $this->assertDatabaseMissing('contacts', ['id' => $oldId]);
+        $this->assertDatabaseHas('contact_address_book_assignments', [
+            'contact_id' => $targetId,
+            'address_book_id' => $bookA->id,
+            'card_id' => $card->id,
+        ]);
+
+        $linkedPayload = Contact::query()->findOrFail($linkedId)->payload;
+        $linkedRelatedRows = is_array($linkedPayload['related_names'] ?? null)
+            ? $linkedPayload['related_names']
+            : [];
+        $this->assertSame([], $linkedRelatedRows);
+
+        $normalizedSyncIds = collect($capturedSyncIds)
+            ->map(fn (mixed $id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $this->assertContains($bookA->id, $normalizedSyncIds);
+        $this->assertContains($bookB->id, $normalizedSyncIds);
     }
 
     public function test_deleting_card_via_carddav_removes_orphaned_managed_contact(): void
