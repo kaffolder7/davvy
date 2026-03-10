@@ -21,6 +21,116 @@ use Illuminate\Validation\ValidationException;
 
 class ContactService
 {
+    private const RELATED_SUPPORTED_LABELS = [
+        'spouse',
+        'husband',
+        'wife',
+        'partner',
+        'boyfriend',
+        'girlfriend',
+        'fiance',
+        'fiancee',
+        'parent',
+        'father',
+        'mother',
+        'dad',
+        'mom',
+        'child',
+        'son',
+        'daughter',
+        'stepson',
+        'stepdaughter',
+        'sibling',
+        'brother',
+        'sister',
+        'assistant',
+        'friend',
+        'other',
+    ];
+
+    private const RELATED_LABEL_ALIASES = [
+        'spouse' => 'spouse',
+        'husband' => 'husband',
+        'wife' => 'wife',
+        'partner' => 'partner',
+        'boyfriend' => 'boyfriend',
+        'girlfriend' => 'girlfriend',
+        'fiance' => 'fiance',
+        'fiancee' => 'fiancee',
+        'parent' => 'parent',
+        'father' => 'father',
+        'mother' => 'mother',
+        'dad' => 'dad',
+        'mom' => 'mom',
+        'child' => 'child',
+        'son' => 'son',
+        'daughter' => 'daughter',
+        'stepson' => 'stepson',
+        'step son' => 'stepson',
+        'stepdaughter' => 'stepdaughter',
+        'step daughter' => 'stepdaughter',
+        'sibling' => 'sibling',
+        'brother' => 'brother',
+        'sister' => 'sister',
+        'assistant' => 'assistant',
+        'friend' => 'friend',
+        'other' => 'other',
+    ];
+
+    private const RELATED_INVERSE_LABELS = [
+        'spouse' => 'spouse',
+        'husband' => 'spouse',
+        'wife' => 'spouse',
+        'partner' => 'partner',
+        'boyfriend' => 'partner',
+        'girlfriend' => 'partner',
+        'fiance' => 'partner',
+        'fiancee' => 'partner',
+        'parent' => 'child',
+        'father' => 'child',
+        'mother' => 'child',
+        'dad' => 'child',
+        'mom' => 'child',
+        'child' => 'parent',
+        'son' => 'parent',
+        'daughter' => 'parent',
+        'stepson' => 'parent',
+        'stepdaughter' => 'parent',
+        'sibling' => 'sibling',
+        'brother' => 'sibling',
+        'sister' => 'sibling',
+        'assistant' => 'assistant',
+        'friend' => 'friend',
+        'other' => 'other',
+    ];
+
+    private const RELATED_CANONICAL_LABELS = [
+        'spouse' => 'spouse',
+        'husband' => 'spouse',
+        'wife' => 'spouse',
+        'partner' => 'partner',
+        'boyfriend' => 'partner',
+        'girlfriend' => 'partner',
+        'fiance' => 'partner',
+        'fiancee' => 'partner',
+        'parent' => 'parent',
+        'father' => 'parent',
+        'mother' => 'parent',
+        'dad' => 'parent',
+        'mom' => 'parent',
+        'child' => 'child',
+        'son' => 'child',
+        'daughter' => 'child',
+        'stepson' => 'child',
+        'stepdaughter' => 'child',
+        'sibling' => 'sibling',
+        'brother' => 'sibling',
+        'sister' => 'sibling',
+        'assistant' => 'assistant',
+        'friend' => 'friend',
+        'other' => 'other',
+    ];
+
     public function __construct(
         private readonly ContactVCardService $vCardService,
         private readonly ResourceAccessService $accessService,
@@ -145,7 +255,7 @@ class ContactService
     {
         $addressBooks = $this->writableAddressBookModels($actor, $addressBookIds);
 
-        $created = DB::transaction(function () use ($actor, $payload, $addressBooks): Contact {
+        $createdResult = DB::transaction(function () use ($actor, $payload, $addressBooks): array {
             $contact = Contact::query()->create([
                 'owner_id' => $actor->id,
                 'uid' => (string) Str::uuid(),
@@ -155,14 +265,24 @@ class ContactService
 
             $this->syncAssignments($contact, $addressBooks);
 
-            return $contact->fresh(['assignments.addressBook']);
+            $relatedAddressBookIds = $this->syncBidirectionalRelatedNamesForContact($contact, []);
+
+            return [
+                'contact' => $contact->fresh(['assignments.addressBook']),
+                'related_address_book_ids' => $relatedAddressBookIds,
+            ];
         });
 
         $this->syncMilestoneCalendarsForAddressBooks(
-            $addressBooks->pluck('id')->map(fn (mixed $id): int => (int) $id)->all(),
+            [
+                ...$addressBooks->pluck('id')->map(fn (mixed $id): int => (int) $id)->all(),
+                ...(is_array($createdResult['related_address_book_ids'] ?? null)
+                    ? $createdResult['related_address_book_ids']
+                    : []),
+            ],
         );
 
-        return $created;
+        return $createdResult['contact'];
     }
 
     /**
@@ -293,9 +413,15 @@ class ContactService
      */
     private function persistContactUpdate(Contact $contact, array $payload, Collection $addressBooks): Contact
     {
+        $previousPayload = is_array($contact->payload) ? $contact->payload : [];
         $currentAddressBookIds = $this->addressBookIdsForContact($contact);
 
-        $updated = DB::transaction(function () use ($contact, $payload, $addressBooks): Contact {
+        $updatedResult = DB::transaction(function () use (
+            $contact,
+            $payload,
+            $addressBooks,
+            $previousPayload
+        ): array {
             $contact->update([
                 'full_name' => $this->vCardService->displayName($payload),
                 'payload' => $payload,
@@ -303,22 +429,33 @@ class ContactService
 
             $this->syncAssignments($contact, $addressBooks);
 
-            return $contact->fresh(['assignments.addressBook']);
+            $relatedAddressBookIds = $this->syncBidirectionalRelatedNamesForContact($contact, $previousPayload);
+
+            return [
+                'contact' => $contact->fresh(['assignments.addressBook']),
+                'related_address_book_ids' => $relatedAddressBookIds,
+            ];
         });
 
         $this->syncMilestoneCalendarsForAddressBooks([
             ...$currentAddressBookIds,
             ...$addressBooks->pluck('id')->map(fn (mixed $id): int => (int) $id)->all(),
+            ...(is_array($updatedResult['related_address_book_ids'] ?? null)
+                ? $updatedResult['related_address_book_ids']
+                : []),
         ]);
 
-        return $updated;
+        return $updatedResult['contact'];
     }
 
     private function destroyContact(Contact $contact): void
     {
         $assignedAddressBookIds = $this->addressBookIdsForContact($contact);
+        $relatedAddressBookIds = [];
 
-        DB::transaction(function () use ($contact): void {
+        DB::transaction(function () use ($contact, &$relatedAddressBookIds): void {
+            $relatedAddressBookIds = $this->removeBidirectionalRelatedNamesForContact($contact);
+
             $assignments = $contact->assignments()->with(['card', 'addressBook'])->get();
 
             foreach ($assignments as $assignment) {
@@ -329,7 +466,214 @@ class ContactService
             $contact->delete();
         });
 
-        $this->syncMilestoneCalendarsForAddressBooks($assignedAddressBookIds);
+        $this->syncMilestoneCalendarsForAddressBooks([
+            ...$assignedAddressBookIds,
+            ...$relatedAddressBookIds,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $previousPayload
+     * @return array<int, int>
+     */
+    public function syncBidirectionalRelatedNamesForContact(Contact $sourceContact, array $previousPayload = []): array
+    {
+        $sourcePayload = is_array($sourceContact->payload) ? $sourceContact->payload : [];
+        $currentRows = $this->normalizeRelatedRowsForSync($sourcePayload['related_names'] ?? []);
+        $previousRows = $this->normalizeRelatedRowsForSync($previousPayload['related_names'] ?? []);
+        $previousLinkedIds = $this->linkedRelatedContactIds($previousRows);
+
+        $linkedRowIndices = [];
+        foreach ($currentRows as $index => $row) {
+            $relatedContactId = $row['related_contact_id'];
+            if ($relatedContactId === null || $relatedContactId <= 0) {
+                continue;
+            }
+
+            if ($relatedContactId === (int) $sourceContact->id) {
+                $currentRows[$index]['related_contact_id'] = null;
+                continue;
+            }
+
+            if (array_key_exists($relatedContactId, $linkedRowIndices)) {
+                // Keep only the first linked row per target contact; later duplicates become free-text.
+                $currentRows[$index]['related_contact_id'] = null;
+                continue;
+            }
+
+            $linkedRowIndices[$relatedContactId] = $index;
+        }
+
+        $targetContacts = Contact::query()
+            ->whereIn('id', array_keys($linkedRowIndices))
+            ->get()
+            ->keyBy('id');
+
+        foreach ($linkedRowIndices as $relatedContactId => $index) {
+            /** @var Contact|null $targetContact */
+            $targetContact = $targetContacts->get($relatedContactId);
+            if ($targetContact === null || (int) $targetContact->owner_id !== (int) $sourceContact->owner_id) {
+                $currentRows[$index]['related_contact_id'] = null;
+
+                continue;
+            }
+
+            $targetName = trim((string) ($targetContact->full_name ?: 'Unnamed Contact'));
+            if ($currentRows[$index]['value'] !== $targetName) {
+                $currentRows[$index]['value'] = $targetName;
+            }
+        }
+
+        $activeLinkedRowsByContactId = [];
+        foreach ($currentRows as $row) {
+            $relatedContactId = $row['related_contact_id'];
+            if ($relatedContactId === null || $relatedContactId <= 0) {
+                continue;
+            }
+
+            /** @var Contact|null $targetContact */
+            $targetContact = $targetContacts->get($relatedContactId);
+            if ($targetContact === null || (int) $targetContact->owner_id !== (int) $sourceContact->owner_id) {
+                continue;
+            }
+
+            if (! array_key_exists($relatedContactId, $activeLinkedRowsByContactId)) {
+                $activeLinkedRowsByContactId[$relatedContactId] = $row;
+            }
+        }
+
+        $affectedAddressBookIds = [];
+        if (! $this->relatedRowsEqual($currentRows, $sourcePayload['related_names'] ?? [])) {
+            $sourcePayload['related_names'] = $currentRows;
+            $sourceContact->payload = $sourcePayload;
+            $sourceContact->save();
+
+            $this->syncAssignmentsForExistingContact($sourceContact);
+            $affectedAddressBookIds = [
+                ...$affectedAddressBookIds,
+                ...$this->addressBookIdsForContact($sourceContact),
+            ];
+        }
+
+        $sourceDisplayName = trim((string) ($sourceContact->full_name ?: 'Unnamed Contact'));
+
+        foreach ($activeLinkedRowsByContactId as $relatedContactId => $sourceRow) {
+            /** @var Contact|null $targetContact */
+            $targetContact = $targetContacts->get($relatedContactId);
+            if ($targetContact === null || (int) $targetContact->owner_id !== (int) $sourceContact->owner_id) {
+                continue;
+            }
+
+            $targetPayload = is_array($targetContact->payload) ? $targetContact->payload : [];
+            $targetRows = $this->normalizeRelatedRowsForSync($targetPayload['related_names'] ?? []);
+            $nextTargetRows = $this->upsertReciprocalRelatedRow(
+                targetRows: $targetRows,
+                sourceContact: $sourceContact,
+                sourceRow: $sourceRow,
+                sourceDisplayName: $sourceDisplayName,
+            );
+
+            if ($this->relatedRowsEqual($targetRows, $nextTargetRows)) {
+                continue;
+            }
+
+            $targetPayload['related_names'] = $nextTargetRows;
+            $targetContact->payload = $targetPayload;
+            $targetContact->save();
+
+            $this->syncAssignmentsForExistingContact($targetContact);
+            $affectedAddressBookIds = [
+                ...$affectedAddressBookIds,
+                ...$this->addressBookIdsForContact($targetContact),
+            ];
+        }
+
+        $removedTargetIds = array_diff($previousLinkedIds, array_keys($activeLinkedRowsByContactId));
+        if ($removedTargetIds !== []) {
+            Contact::query()
+                ->whereIn('id', $removedTargetIds)
+                ->where('owner_id', $sourceContact->owner_id)
+                ->get()
+                ->each(function (Contact $targetContact) use (&$affectedAddressBookIds, $sourceContact): void {
+                    $targetPayload = is_array($targetContact->payload) ? $targetContact->payload : [];
+                    $targetRows = $this->normalizeRelatedRowsForSync($targetPayload['related_names'] ?? []);
+                    $nextTargetRows = array_values(array_filter(
+                        $targetRows,
+                        fn (array $row): bool => $row['related_contact_id'] !== (int) $sourceContact->id
+                    ));
+
+                    if ($this->relatedRowsEqual($targetRows, $nextTargetRows)) {
+                        return;
+                    }
+
+                    $targetPayload['related_names'] = $nextTargetRows;
+                    $targetContact->payload = $targetPayload;
+                    $targetContact->save();
+
+                    $this->syncAssignmentsForExistingContact($targetContact);
+                    $affectedAddressBookIds = [
+                        ...$affectedAddressBookIds,
+                        ...$this->addressBookIdsForContact($targetContact),
+                    ];
+                });
+        }
+
+        return collect($affectedAddressBookIds)
+            ->map(fn (mixed $id): int => (int) $id)
+            ->filter(fn (int $id): bool => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    public function removeBidirectionalRelatedNamesForContact(Contact $contact): array
+    {
+        $payload = is_array($contact->payload) ? $contact->payload : [];
+        $rows = $this->normalizeRelatedRowsForSync($payload['related_names'] ?? []);
+        $linkedIds = $this->linkedRelatedContactIds($rows);
+
+        if ($linkedIds === []) {
+            return [];
+        }
+
+        $affectedAddressBookIds = [];
+
+        Contact::query()
+            ->whereIn('id', $linkedIds)
+            ->where('owner_id', $contact->owner_id)
+            ->get()
+            ->each(function (Contact $targetContact) use (&$affectedAddressBookIds, $contact): void {
+                $targetPayload = is_array($targetContact->payload) ? $targetContact->payload : [];
+                $targetRows = $this->normalizeRelatedRowsForSync($targetPayload['related_names'] ?? []);
+                $nextTargetRows = array_values(array_filter(
+                    $targetRows,
+                    fn (array $row): bool => $row['related_contact_id'] !== (int) $contact->id
+                ));
+
+                if ($this->relatedRowsEqual($targetRows, $nextTargetRows)) {
+                    return;
+                }
+
+                $targetPayload['related_names'] = $nextTargetRows;
+                $targetContact->payload = $targetPayload;
+                $targetContact->save();
+
+                $this->syncAssignmentsForExistingContact($targetContact);
+                $affectedAddressBookIds = [
+                    ...$affectedAddressBookIds,
+                    ...$this->addressBookIdsForContact($targetContact),
+                ];
+            });
+
+        return collect($affectedAddressBookIds)
+            ->map(fn (mixed $id): int => (int) $id)
+            ->filter(fn (int $id): bool => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**
@@ -547,6 +891,270 @@ class ContactService
         }
 
         return $query->exists();
+    }
+
+    private function syncAssignmentsForExistingContact(Contact $contact): void
+    {
+        $addressBookIds = $this->addressBookIdsForContact($contact);
+        if ($addressBookIds === []) {
+            return;
+        }
+
+        $addressBooksById = AddressBook::query()
+            ->whereIn('id', $addressBookIds)
+            ->get()
+            ->keyBy('id');
+
+        $orderedAddressBooks = collect($addressBookIds)
+            ->map(fn (int $id): ?AddressBook => $addressBooksById->get($id))
+            ->filter(fn (?AddressBook $book): bool => $book !== null)
+            ->values();
+
+        if ($orderedAddressBooks->isEmpty()) {
+            return;
+        }
+
+        $this->syncAssignments($contact, $orderedAddressBooks);
+    }
+
+    /**
+     * @param  mixed  $rows
+     * @return array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>
+     */
+    private function normalizeRelatedRowsForSync(mixed $rows): array
+    {
+        if (! is_array($rows)) {
+            return [];
+        }
+
+        return collect($rows)
+            ->filter(fn (mixed $row): bool => is_array($row))
+            ->map(function (array $row): array {
+                return [
+                    'label' => strtolower($this->normalizeString($row['label'] ?? null) ?? 'other'),
+                    'custom_label' => $this->normalizeString($row['custom_label'] ?? null),
+                    'value' => $this->normalizeString($row['value'] ?? null) ?? '',
+                    'related_contact_id' => $this->normalizeInt($row['related_contact_id'] ?? null),
+                ];
+            })
+            ->filter(fn (array $row): bool => $row['value'] !== '' || $row['related_contact_id'] !== null)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>  $rows
+     * @return array<int, int>
+     */
+    private function linkedRelatedContactIds(array $rows): array
+    {
+        return collect($rows)
+            ->map(fn (array $row): ?int => $row['related_contact_id'])
+            ->filter(fn (?int $id): bool => $id !== null && $id > 0)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>  $targetRows
+     * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $sourceRow
+     * @return array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>
+     */
+    private function upsertReciprocalRelatedRow(
+        array $targetRows,
+        Contact $sourceContact,
+        array $sourceRow,
+        string $sourceDisplayName,
+    ): array {
+        $inverse = $this->inverseLabelForRelatedRow($sourceRow);
+        $reciprocalRow = [
+            'label' => $inverse['label'],
+            'custom_label' => $inverse['custom_label'],
+            'value' => $sourceDisplayName,
+            'related_contact_id' => (int) $sourceContact->id,
+        ];
+
+        $matchingIndices = collect($targetRows)
+            ->map(fn (array $row, int $index): array => ['row' => $row, 'index' => $index])
+            ->filter(fn (array $item): bool => ($item['row']['related_contact_id'] ?? null) === (int) $sourceContact->id)
+            ->pluck('index')
+            ->values()
+            ->all();
+
+        if ($matchingIndices === []) {
+            $targetRows[] = $reciprocalRow;
+
+            return array_values($targetRows);
+        }
+
+        $primaryIndex = (int) $matchingIndices[0];
+        $existingRow = $targetRows[$primaryIndex];
+        $targetRows[$primaryIndex] = $this->mergedReciprocalRow(
+            existingRow: $existingRow,
+            incomingRow: $reciprocalRow,
+        );
+
+        $duplicateIndices = array_slice($matchingIndices, 1);
+        if ($duplicateIndices !== []) {
+            $targetRows = collect($targetRows)
+                ->reject(fn (array $row, int $index): bool => in_array($index, $duplicateIndices, true))
+                ->values()
+                ->all();
+        }
+
+        return array_values($targetRows);
+    }
+
+    /**
+     * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $existingRow
+     * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $incomingRow
+     * @return array{label:string, custom_label:?string, value:string, related_contact_id:?int}
+     */
+    private function mergedReciprocalRow(array $existingRow, array $incomingRow): array
+    {
+        [$existingToken] = $this->relatedLabelTokenAndDisplay($existingRow);
+        [$incomingToken] = $this->relatedLabelTokenAndDisplay($incomingRow);
+
+        if (! $this->shouldPreserveExistingSpecificReciprocalLabel($existingToken, $incomingToken)) {
+            return $incomingRow;
+        }
+
+        return [
+            'label' => $existingRow['label'],
+            'custom_label' => $existingRow['custom_label'],
+            'value' => $incomingRow['value'],
+            'related_contact_id' => $incomingRow['related_contact_id'],
+        ];
+    }
+
+    private function shouldPreserveExistingSpecificReciprocalLabel(
+        ?string $existingToken,
+        ?string $incomingToken,
+    ): bool {
+        if ($existingToken === null || $incomingToken === null) {
+            return false;
+        }
+
+        $existingCanonical = self::RELATED_CANONICAL_LABELS[$existingToken] ?? null;
+        $incomingCanonical = self::RELATED_CANONICAL_LABELS[$incomingToken] ?? null;
+        if ($existingCanonical === null || $incomingCanonical === null) {
+            return false;
+        }
+
+        if ($existingCanonical !== $incomingCanonical) {
+            return false;
+        }
+
+        $incomingIsGeneric = $incomingToken === $incomingCanonical;
+        $existingIsSpecific = $existingToken !== $existingCanonical;
+
+        return $incomingIsGeneric && $existingIsSpecific;
+    }
+
+    /**
+     * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $row
+     * @return array{label:string, custom_label:?string}
+     */
+    private function inverseLabelForRelatedRow(array $row): array
+    {
+        [$token, $displayLabel] = $this->relatedLabelTokenAndDisplay($row);
+        if ($token === null) {
+            return [
+                'label' => 'custom',
+                'custom_label' => $displayLabel,
+            ];
+        }
+
+        $inverseToken = self::RELATED_INVERSE_LABELS[$token] ?? $token;
+        if (in_array($inverseToken, self::RELATED_SUPPORTED_LABELS, true)) {
+            return [
+                'label' => $inverseToken,
+                'custom_label' => null,
+            ];
+        }
+
+        return [
+            'label' => 'custom',
+            'custom_label' => $displayLabel,
+        ];
+    }
+
+    /**
+     * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $row
+     * @return array{0:?string,1:?string}
+     */
+    private function relatedLabelTokenAndDisplay(array $row): array
+    {
+        $label = strtolower($this->normalizeString($row['label'] ?? null) ?? 'other');
+        if ($label === 'custom') {
+            $customLabel = $this->normalizeString($row['custom_label'] ?? null);
+            if ($customLabel === null) {
+                return [null, null];
+            }
+
+            return [
+                $this->normalizeRelatedLabelToken($customLabel),
+                $customLabel,
+            ];
+        }
+
+        return [
+            $this->normalizeRelatedLabelToken($label) ?? $label,
+            $label,
+        ];
+    }
+
+    private function normalizeRelatedLabelToken(?string $value): ?string
+    {
+        $normalized = strtolower(trim((string) ($value ?? '')));
+        if ($normalized === '') {
+            return null;
+        }
+
+        $normalized = str_replace(['_', '-'], ' ', $normalized);
+        $normalized = trim(preg_replace('/\s+/', ' ', $normalized) ?? '');
+        if ($normalized === '') {
+            return null;
+        }
+
+        return self::RELATED_LABEL_ALIASES[$normalized] ?? null;
+    }
+
+    /**
+     * @param  array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>  $leftRows
+     */
+    private function relatedRowsEqual(array $leftRows, mixed $rightRows): bool
+    {
+        return $leftRows === $this->normalizeRelatedRowsForSync($rightRows);
+    }
+
+    private function normalizeString(mixed $value): ?string
+    {
+        if (! is_scalar($value) && $value !== null) {
+            return null;
+        }
+
+        $normalized = trim((string) ($value ?? ''));
+
+        return $normalized !== '' ? $normalized : null;
+    }
+
+    private function normalizeInt(mixed $value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_string($value) && preg_match('/^-?\d+$/', $value) === 1) {
+            return (int) $value;
+        }
+
+        return null;
     }
 
     /**
