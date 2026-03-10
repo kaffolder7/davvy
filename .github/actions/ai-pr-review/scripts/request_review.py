@@ -1,11 +1,11 @@
 import json
 import os
-import subprocess
 import sys
+import urllib.error
 import urllib.request
 from pathlib import Path
 
-OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "").strip()
 PR_TITLE = os.environ["PR_TITLE"]
 PR_NUMBER = os.environ["PR_NUMBER"]
 REPO = os.environ["REPO"]
@@ -181,19 +181,91 @@ def validate_findings_json(raw_text: str) -> dict:
     return parsed
 
 
+def write_fallback_output(summary: str) -> None:
+    payload = {"summary": summary, "findings": []}
+    serialized = json.dumps(payload, indent=2)
+    Path("findings_raw.json").write_text(serialized)
+    Path("findings.json").write_text(serialized)
+
+
+def extract_openai_error_message(exc: urllib.error.HTTPError) -> str:
+    try:
+        raw = exc.read().decode("utf-8", errors="replace")
+    except Exception:
+        return ""
+
+    if not raw:
+        return ""
+
+    try:
+        parsed = json.loads(raw)
+        message = parsed.get("error", {}).get("message")
+        if message:
+            return str(message)
+    except Exception:
+        pass
+
+    return raw.strip()
+
+
 def main() -> None:
     user_input = build_user_input()
     Path("system_prompt.txt").write_text(SYSTEM_PROMPT)
     Path("user_input.txt").write_text(user_input)
 
-    raw_output = call_openai(SYSTEM_PROMPT, user_input)
+    if not OPENAI_API_KEY:
+        summary = (
+            "Skipped AI review because OPENAI_API_KEY is not configured in this workflow run."
+        )
+        write_fallback_output(summary)
+        print(summary, file=sys.stderr)
+        return
+
+    try:
+        raw_output = call_openai(SYSTEM_PROMPT, user_input)
+    except urllib.error.HTTPError as exc:
+        detail = extract_openai_error_message(exc)
+        if exc.code == 401:
+            summary = (
+                "Skipped AI review because OpenAI authentication failed (HTTP 401). "
+                "Check OPENAI_API_KEY in repository or organization secrets."
+            )
+        else:
+            summary = f"Skipped AI review because the OpenAI request failed (HTTP {exc.code})."
+
+        write_fallback_output(summary)
+        print(summary, file=sys.stderr)
+        if detail:
+            Path("openai_error.txt").write_text(detail)
+            print("OpenAI error detail captured in openai_error.txt.", file=sys.stderr)
+        return
+    except Exception as exc:
+        summary = (
+            "Skipped AI review because the OpenAI request failed before completion: "
+            f"{type(exc).__name__}."
+        )
+        write_fallback_output(summary)
+        print(summary, file=sys.stderr)
+        return
 
     if not raw_output:
-        raise RuntimeError("No model output returned.")
+        summary = "Skipped AI review because OpenAI returned an empty response."
+        write_fallback_output(summary)
+        print(summary, file=sys.stderr)
+        return
 
     Path("findings_raw.json").write_text(raw_output)
 
-    parsed = validate_findings_json(raw_output)
+    try:
+        parsed = validate_findings_json(raw_output)
+    except Exception:
+        summary = (
+            "Skipped AI review because OpenAI returned output that was not valid JSON."
+        )
+        write_fallback_output(summary)
+        print(summary, file=sys.stderr)
+        return
+
     Path("findings.json").write_text(json.dumps(parsed, indent=2))
 
 
