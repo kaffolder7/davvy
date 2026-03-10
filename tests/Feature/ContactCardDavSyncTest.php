@@ -170,6 +170,12 @@ class ContactCardDavSyncTest extends TestCase
                     'value' => 'Melissa Kay Affolder',
                     'related_contact_id' => null,
                 ],
+                [
+                    'label' => 'custom',
+                    'custom_label' => 'Son',
+                    'value' => 'Kyle Dennis Affolder',
+                    'related_contact_id' => null,
+                ],
             ],
             'instant_messages' => [],
         ]);
@@ -188,6 +194,10 @@ class ContactCardDavSyncTest extends TestCase
         );
         $this->assertStringContainsString('RELATED;TYPE=SPOUSE', (string) $card->data);
         $this->assertStringContainsString('X-ABLABEL=Daughter-in-Law', (string) $card->data);
+        $this->assertStringContainsString(
+            'RELATED;TYPE=CHILD;X-ABLABEL=Son:Kyle Dennis Affolder',
+            (string) $card->data,
+        );
 
         app(DavRequestContext::class)->setAuthenticatedUser($user);
         app(LaravelCardDavBackend::class)->updateCard(
