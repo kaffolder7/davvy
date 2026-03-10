@@ -42,6 +42,17 @@ class ContactVCardService
         'friend',
     ];
 
+    private const RELATED_LABEL_TYPE_MAP = [
+        'spouse' => ['SPOUSE'],
+        'partner' => ['PARTNER'],
+        'parent' => ['PARENT'],
+        'child' => ['CHILD'],
+        'sibling' => ['SIBLING'],
+        'assistant' => ['ASSISTANT'],
+        'friend' => ['FRIEND'],
+        'other' => ['OTHER'],
+    ];
+
     private const RELATED_CONTACT_ID_PARAMETER = 'X-DAVVY-RELATED-CONTACT-ID';
 
     public function displayName(array $payload): string
@@ -225,7 +236,7 @@ class ContactVCardService
             }
 
             $property = $vCard->add('RELATED', $value);
-            $types = $this->typesForSimpleLabel($row['label'] ?? null);
+            $types = $this->relatedTypesForLabel($row['label'] ?? null);
             if ($types !== []) {
                 $property['TYPE'] = implode(',', $types);
             }
@@ -892,6 +903,16 @@ class ContactVCardService
         $normalized = strtolower((string) $label);
 
         return self::SIMPLE_LABEL_TYPE_MAP[$normalized] ?? [];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function relatedTypesForLabel(mixed $label): array
+    {
+        $normalized = strtolower((string) $label);
+
+        return self::RELATED_LABEL_TYPE_MAP[$normalized] ?? [];
     }
 
     private function customLabelOrLabel(array $row): string
