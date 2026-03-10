@@ -53,6 +53,25 @@ class ContactVCardService
         'other' => ['OTHER'],
     ];
 
+    private const RELATED_CUSTOM_LABEL_TYPE_SYNONYMS = [
+        'son' => 'CHILD',
+        'daughter' => 'CHILD',
+        'stepson' => 'CHILD',
+        'stepdaughter' => 'CHILD',
+        'father' => 'PARENT',
+        'mother' => 'PARENT',
+        'mom' => 'PARENT',
+        'dad' => 'PARENT',
+        'brother' => 'SIBLING',
+        'sister' => 'SIBLING',
+        'husband' => 'SPOUSE',
+        'wife' => 'SPOUSE',
+        'boyfriend' => 'PARTNER',
+        'girlfriend' => 'PARTNER',
+        'fiance' => 'PARTNER',
+        'fiancee' => 'PARTNER',
+    ];
+
     private const RELATED_CONTACT_ID_PARAMETER = 'X-DAVVY-RELATED-CONTACT-ID';
 
     public function displayName(array $payload): string
@@ -236,7 +255,7 @@ class ContactVCardService
             }
 
             $property = $vCard->add('RELATED', $value);
-            $types = $this->relatedTypesForLabel($row['label'] ?? null);
+            $types = $this->relatedTypesForRow($row);
             if ($types !== []) {
                 $property['TYPE'] = implode(',', $types);
             }
@@ -913,6 +932,35 @@ class ContactVCardService
         $normalized = strtolower((string) $label);
 
         return self::RELATED_LABEL_TYPE_MAP[$normalized] ?? [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     * @return array<int, string>
+     */
+    private function relatedTypesForRow(array $row): array
+    {
+        $types = $this->relatedTypesForLabel($row['label'] ?? null);
+        if ($types !== []) {
+            return $types;
+        }
+
+        $customLabelType = $this->relatedTypeFromCustomLabel($row['custom_label'] ?? null);
+        if ($customLabelType !== null) {
+            return [$customLabelType];
+        }
+
+        return [];
+    }
+
+    private function relatedTypeFromCustomLabel(mixed $customLabel): ?string
+    {
+        $normalized = strtolower(trim((string) ($customLabel ?? '')));
+        if ($normalized === '') {
+            return null;
+        }
+
+        return self::RELATED_CUSTOM_LABEL_TYPE_SYNONYMS[$normalized] ?? null;
     }
 
     private function customLabelOrLabel(array $row): string
