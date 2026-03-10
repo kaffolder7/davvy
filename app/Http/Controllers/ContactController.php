@@ -113,8 +113,7 @@ class ContactController extends Controller
         Request $request,
         ?int $currentContactId = null,
         ?int $ownerId = null,
-    ): array
-    {
+    ): array {
         $data = $request->validate([
             'prefix' => ['nullable', 'string', 'max:100'],
             'first_name' => ['nullable', 'string', 'max:150'],
