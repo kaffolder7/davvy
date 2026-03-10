@@ -1411,7 +1411,9 @@ const RELATED_LABEL_DERIVED_VALUES = new Set([
   "nephew",
   "grandparent",
   "grandfather",
+  "grandpa",
   "grandmother",
+  "grandma",
   "grandchild",
   "grandson",
   "granddaughter",
@@ -1433,6 +1435,8 @@ const RELATED_LABEL_DISPLAY_OVERRIDES = {
   sister_in_law: "Sister-in-Law",
   aunt_uncle: "Aunt/Uncle",
   niece_nephew: "Niece/Nephew",
+  grandpa: "Grandpa",
+  grandma: "Grandma",
 };
 
 const IM_LABEL_OPTIONS = [
@@ -3423,7 +3427,24 @@ function ContactsPage({ auth, theme }) {
 
                     <RelatedNameEditor
                       rows={form.related_names}
-                      setRows={(rows) => updateFormField("related_names", rows)}
+                      setRows={(nextRowsOrUpdater) =>
+                        setForm((previousForm) => {
+                          const currentRows = Array.isArray(
+                            previousForm.related_names,
+                          )
+                            ? previousForm.related_names
+                            : [];
+                          const nextRows =
+                            typeof nextRowsOrUpdater === "function"
+                              ? nextRowsOrUpdater(currentRows)
+                              : nextRowsOrUpdater;
+
+                          return {
+                            ...previousForm,
+                            related_names: nextRows,
+                          };
+                        })
+                      }
                       contactOptions={relatedNameOptions}
                       labelOptions={labelOptions.related_names}
                     />
@@ -4084,9 +4105,24 @@ function RelatedNameEditor({ rows, setRows, contactOptions, labelOptions }) {
   const suggestionKeyFor = (index, rowValue, contactId) =>
     `${index}:${String(rowValue ?? "").trim().toLowerCase()}:${contactId}`;
 
+  const updateRows = (nextRowsOrUpdater) => {
+    if (typeof nextRowsOrUpdater === "function") {
+      setRows((previousRows) => {
+        const normalizedPreviousRows = Array.isArray(previousRows)
+          ? previousRows
+          : [];
+
+        return nextRowsOrUpdater(normalizedPreviousRows);
+      });
+      return;
+    }
+
+    setRows(nextRowsOrUpdater);
+  };
+
   const updateRow = (index, patch) => {
-    setRows(
-      safeRows.map((row, rowIndex) =>
+    updateRows((previousRows) =>
+      previousRows.map((row, rowIndex) =>
         rowIndex === index ? { ...row, ...patch } : row,
       ),
     );
@@ -4120,11 +4156,16 @@ function RelatedNameEditor({ rows, setRows, contactOptions, labelOptions }) {
   };
 
   const addRow = () => {
-    setRows([...safeRows, createEmptyRelatedName("other")]);
+    updateRows((previousRows) => [
+      ...previousRows,
+      createEmptyRelatedName("other"),
+    ]);
   };
 
   const removeRow = (index) => {
-    setRows(safeRows.filter((_, rowIndex) => rowIndex !== index));
+    updateRows((previousRows) =>
+      previousRows.filter((_, rowIndex) => rowIndex !== index),
+    );
   };
 
   const matchingContactOptions = (value) => {
