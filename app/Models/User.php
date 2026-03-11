@@ -53,7 +53,7 @@ class User extends Authenticatable
     protected static function booted(): void
     {
         static::created(function (User $user): void {
-            if ($user->is_approved) {
+            if ($user->is_approved !== false) {
                 app(DefaultResourceProvisioner::class)->provisionFor($user);
             }
         });
