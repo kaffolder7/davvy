@@ -22,11 +22,8 @@ import RowReorderControls from "./components/contacts/RowReorderControls";
 import RelatedNameEditorComponent from "./components/contacts/RelatedNameEditor";
 import { useRowReorder } from "./components/contacts/useRowReorder";
 import ResourcePanelComponent from "./components/dashboard/ResourcePanel";
-import {
-  formatQueueTimestamp,
-  queueOperationLabel,
-  queueStatusLabel,
-} from "./components/queue/queueDisplayUtils";
+import ContactChangeEditModal from "./components/queue/ContactChangeEditModal";
+import ContactChangeRequestCard from "./components/queue/ContactChangeRequestCard";
 
 function fileStem(value, fallback = "export") {
   const stem = String(value ?? "")
@@ -4110,148 +4107,29 @@ function ContactChangeQueuePage({ auth, theme }) {
             </div>
           ) : (
             rows.map((row) => (
-              <article
+              <ContactChangeRequestCard
                 key={row.id}
-                className={`surface rounded-2xl p-4 ${
-                  row.status === "manual_merge_needed"
-                    ? "border border-app-warn-edge bg-app-warn-surface"
-                    : ""
-                }`}
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-app-faint">
-                      #{row.id} • Group {row.group_uuid}
-                    </p>
-                    <h3 className="text-lg font-semibold text-app-strong">
-                      {row.contact?.display_name || "Unnamed Contact"} (
-                      {queueOperationLabel(row.operation)})
-                    </h3>
-                    <p className="mt-1 text-xs text-app-muted">
-                      Status: {queueStatusLabel(row.status)} • Requested{" "}
-                      {formatQueueTimestamp(row.created_at)}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {(row.status === "pending" ||
-                      row.status === "manual_merge_needed") && (
-                      <>
-                        {row.operation === "update" ? (
-                          <button
-                            className="btn-outline btn-outline-sm"
-                            type="button"
-                            disabled={submitting}
-                            onClick={() => openEditDialog(row)}
-                          >
-                            Edit & Approve
-                          </button>
-                        ) : null}
-                        <button
-                          className="btn-outline btn-outline-sm"
-                          type="button"
-                          disabled={submitting}
-                          onClick={() => approveRow(row)}
-                        >
-                          Approve
-                        </button>
-                        <button
-                          className="btn-outline btn-outline-sm text-app-danger"
-                          type="button"
-                          disabled={submitting}
-                          onClick={() => denyRow(row)}
-                        >
-                          Deny
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mt-3 grid gap-2 text-sm text-app-base md:grid-cols-2">
-                  <p>
-                    Requester: {row.requester?.name} ({row.requester?.email})
-                  </p>
-                  <p>
-                    Approval Owner: {row.approval_owner?.name} (
-                    {row.approval_owner?.email})
-                  </p>
-                  <p>Source: {row.source}</p>
-                  <p>
-                    Reviewer:{" "}
-                    {row.reviewer
-                      ? `${row.reviewer.name} (${row.reviewer.email})`
-                      : "Not reviewed yet"}
-                  </p>
-                </div>
-
-                {Array.isArray(row.changed_fields) &&
-                row.changed_fields.length > 0 ? (
-                  <p className="mt-2 text-xs text-app-muted">
-                    Changed fields: {row.changed_fields.join(", ")}
-                  </p>
-                ) : null}
-
-                {row.status_reason ? (
-                  <p className="mt-2 text-sm text-app-danger">
-                    {row.status_reason}
-                  </p>
-                ) : null}
-              </article>
+                row={row}
+                submitting={submitting}
+                onOpenEdit={openEditDialog}
+                onApprove={approveRow}
+                onDeny={denyRow}
+              />
             ))
           )}
         </section>
       )}
 
-      {editingRow ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="surface w-full max-w-3xl rounded-2xl p-5">
-            <h3 className="text-lg font-semibold text-app-strong">
-              Edit Request #{editingRow.id} Before Approve
-            </h3>
-            <p className="mt-1 text-sm text-app-muted">
-              Adjust payload/address book IDs, then approve this queued request.
-            </p>
-
-            <div className="mt-4 grid gap-3">
-              <Field label="Resolved Payload JSON">
-                <textarea
-                  className="input min-h-[14rem] font-mono text-xs"
-                  value={editPayloadText}
-                  onChange={(event) => setEditPayloadText(event.target.value)}
-                />
-              </Field>
-              <Field label="Resolved Address Book IDs JSON Array">
-                <textarea
-                  className="input min-h-[6rem] font-mono text-xs"
-                  value={editAddressBookIdsText}
-                  onChange={(event) =>
-                    setEditAddressBookIdsText(event.target.value)
-                  }
-                />
-              </Field>
-            </div>
-
-            <div className="mt-4 flex flex-wrap justify-end gap-2">
-              <button
-                className="btn-outline btn-outline-sm"
-                type="button"
-                onClick={closeEditDialog}
-                disabled={submitting}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn"
-                type="button"
-                onClick={submitEditAndApprove}
-                disabled={submitting}
-              >
-                {submitting ? "Approving..." : "Save Edits & Approve"}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <ContactChangeEditModal
+        row={editingRow}
+        payloadText={editPayloadText}
+        onPayloadTextChange={setEditPayloadText}
+        addressBookIdsText={editAddressBookIdsText}
+        onAddressBookIdsTextChange={setEditAddressBookIdsText}
+        onCancel={closeEditDialog}
+        onSubmit={submitEditAndApprove}
+        submitting={submitting}
+      />
     </AppShell>
   );
 }
