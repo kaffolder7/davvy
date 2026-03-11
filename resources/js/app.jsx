@@ -23,6 +23,10 @@ import LabeledValueEditorComponent from "./components/contacts/LabeledValueEdito
 import RowReorderControls from "./components/contacts/RowReorderControls";
 import RelatedNameEditorComponent from "./components/contacts/RelatedNameEditor";
 import {
+  CONTACTS_PAGE_SIZE,
+  PRONOUN_OPTIONS,
+} from "./components/contacts/contactConfig";
+import {
   ADDRESS_LABEL_OPTIONS,
   DATE_LABEL_OPTIONS,
   EMAIL_LABEL_OPTIONS,
@@ -520,17 +524,6 @@ function DashboardPage({ auth, theme }) {
     />
   );
 }
-
-const PRONOUN_OPTIONS = [
-  { value: "", label: "Not set" },
-  { value: "she/her", label: "she/her" },
-  { value: "he/him", label: "he/him" },
-  { value: "they/them", label: "they/them" },
-  { value: "xe/xem", label: "xe/xem" },
-  { value: "custom", label: "Custom..." },
-];
-
-const CONTACTS_PAGE_SIZE = 12;
 
 function ContactsPage({ auth, theme }) {
   return (
