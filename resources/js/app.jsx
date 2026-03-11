@@ -1372,6 +1372,73 @@ const RELATED_LABEL_OPTIONS = [
   { value: "custom", label: "Custom..." },
 ];
 
+const RELATED_LABEL_DERIVED_VALUES = new Set([
+  "spouse",
+  "husband",
+  "wife",
+  "partner",
+  "boyfriend",
+  "girlfriend",
+  "fiance",
+  "fiancee",
+  "parent",
+  "father",
+  "mother",
+  "dad",
+  "mom",
+  "child",
+  "son",
+  "daughter",
+  "stepson",
+  "stepdaughter",
+  "parent_in_law",
+  "father_in_law",
+  "mother_in_law",
+  "child_in_law",
+  "son_in_law",
+  "daughter_in_law",
+  "sibling",
+  "brother",
+  "sister",
+  "sibling_in_law",
+  "brother_in_law",
+  "sister_in_law",
+  "aunt_uncle",
+  "aunt",
+  "uncle",
+  "niece_nephew",
+  "niece",
+  "nephew",
+  "grandparent",
+  "grandfather",
+  "grandpa",
+  "grandmother",
+  "grandma",
+  "grandchild",
+  "grandson",
+  "granddaughter",
+  "cousin",
+  "assistant",
+  "friend",
+  "other",
+]);
+
+const RELATED_LABEL_DISPLAY_OVERRIDES = {
+  parent_in_law: "Parent-in-Law",
+  father_in_law: "Father-in-Law",
+  mother_in_law: "Mother-in-Law",
+  child_in_law: "Child-in-Law",
+  son_in_law: "Son-in-Law",
+  daughter_in_law: "Daughter-in-Law",
+  sibling_in_law: "Sibling-in-Law",
+  brother_in_law: "Brother-in-Law",
+  sister_in_law: "Sister-in-Law",
+  aunt_uncle: "Aunt/Uncle",
+  niece_nephew: "Niece/Nephew",
+  grandpa: "Grandpa",
+  grandma: "Grandma",
+};
+
 const IM_LABEL_OPTIONS = [
   { value: "home", label: "Home" },
   { value: "work", label: "Work" },
@@ -1521,6 +1588,96 @@ function buildLabelOptions(baseOptions, savedCustomLabels = []) {
   }
 
   return [...primaryOptions, ...customLabelOptions, customOption];
+}
+
+function formatRelatedLabelOptionLabel(value) {
+  const normalized = normalizeLabelValue(value);
+  if (!normalized) {
+    return "";
+  }
+
+  if (RELATED_LABEL_DISPLAY_OVERRIDES[normalized]) {
+    return RELATED_LABEL_DISPLAY_OVERRIDES[normalized];
+  }
+
+  return normalized
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function buildDerivedRelatedLabelOptions(contacts) {
+  if (!Array.isArray(contacts) || contacts.length === 0) {
+    return [];
+  }
+
+  const builtInValues = CONTACT_LABEL_BUILTIN_VALUE_SETS.related_names ?? new Set();
+  const derivedValues = new Set();
+
+  for (const contact of contacts) {
+    const rows = Array.isArray(contact?.related_names) ? contact.related_names : [];
+
+    for (const row of rows) {
+      const normalizedLabel = normalizeLabelValue(row?.label);
+      if (
+        normalizedLabel === "" ||
+        normalizedLabel === "custom" ||
+        builtInValues.has(normalizedLabel) ||
+        !RELATED_LABEL_DERIVED_VALUES.has(normalizedLabel)
+      ) {
+        continue;
+      }
+
+      derivedValues.add(normalizedLabel);
+    }
+  }
+
+  return Array.from(derivedValues)
+    .sort((left, right) =>
+      left.localeCompare(right, undefined, {
+        sensitivity: "base",
+      }),
+    )
+    .map((value) => ({
+      value,
+      label: formatRelatedLabelOptionLabel(value),
+    }));
+}
+
+function buildRelatedNameLabelOptions(contacts, savedCustomLabels = []) {
+  const baseOptions = buildLabelOptions(RELATED_LABEL_OPTIONS, savedCustomLabels);
+  const derivedOptions = buildDerivedRelatedLabelOptions(contacts);
+  if (derivedOptions.length === 0) {
+    return baseOptions;
+  }
+
+  const customOption = baseOptions.find(
+    (option) => normalizeLabelValue(option?.value) === "custom",
+  );
+  const nonCustomOptions = baseOptions.filter(
+    (option) => normalizeLabelValue(option?.value) !== "custom",
+  );
+  const existingValues = new Set(
+    nonCustomOptions.map((option) => normalizeLabelValue(option?.value)),
+  );
+  const dedupedDerivedOptions = derivedOptions.filter(
+    (option) => !existingValues.has(normalizeLabelValue(option?.value)),
+  );
+  const dedupedDerivedKeys = new Set(
+    dedupedDerivedOptions.map((option) => normalizeLabelValue(option?.value)),
+  );
+  const dedupedOptions = nonCustomOptions.filter(
+    (option) =>
+      !option?.saved_custom_key ||
+      !dedupedDerivedKeys.has(normalizeLabelValue(option.saved_custom_key)),
+  );
+
+  if (!customOption) {
+    return [...dedupedOptions, ...dedupedDerivedOptions];
+  }
+
+  return [...dedupedOptions, ...dedupedDerivedOptions, customOption];
 }
 
 function resolveLabelSelectValue(row, labelOptions, fallbackValue = "other") {
@@ -2152,8 +2309,8 @@ function ContactsPage({ auth, theme }) {
         savedCustomLabels.addresses,
       ),
       dates: buildLabelOptions(DATE_LABEL_OPTIONS, savedCustomLabels.dates),
-      related_names: buildLabelOptions(
-        RELATED_LABEL_OPTIONS,
+      related_names: buildRelatedNameLabelOptions(
+        contacts,
         savedCustomLabels.related_names,
       ),
       instant_messages: buildLabelOptions(
@@ -2161,7 +2318,7 @@ function ContactsPage({ auth, theme }) {
         savedCustomLabels.instant_messages,
       ),
     }),
-    [savedCustomLabels],
+    [contacts, savedCustomLabels],
   );
 
   const filteredHiddenOptionalFields = useMemo(() => {
@@ -3270,7 +3427,24 @@ function ContactsPage({ auth, theme }) {
 
                     <RelatedNameEditor
                       rows={form.related_names}
-                      setRows={(rows) => updateFormField("related_names", rows)}
+                      setRows={(nextRowsOrUpdater) =>
+                        setForm((previousForm) => {
+                          const currentRows = Array.isArray(
+                            previousForm.related_names,
+                          )
+                            ? previousForm.related_names
+                            : [];
+                          const nextRows =
+                            typeof nextRowsOrUpdater === "function"
+                              ? nextRowsOrUpdater(currentRows)
+                              : nextRowsOrUpdater;
+
+                          return {
+                            ...previousForm,
+                            related_names: nextRows,
+                          };
+                        })
+                      }
                       contactOptions={relatedNameOptions}
                       labelOptions={labelOptions.related_names}
                     />
@@ -3918,6 +4092,7 @@ function RelatedNameEditor({ rows, setRows, contactOptions, labelOptions }) {
   const reorder = useRowReorder(safeRows, setRows);
   const rowGroup = "reorder-related-name";
   const [pickerRowIndex, setPickerRowIndex] = useState(null);
+  const [dismissedSuggestions, setDismissedSuggestions] = useState({});
 
   useEffect(() => {
     if (pickerRowIndex === null || pickerRowIndex < safeRows.length) {
@@ -3927,9 +4102,27 @@ function RelatedNameEditor({ rows, setRows, contactOptions, labelOptions }) {
     setPickerRowIndex(null);
   }, [pickerRowIndex, safeRows.length]);
 
+  const suggestionKeyFor = (index, rowValue, contactId) =>
+    `${index}:${String(rowValue ?? "").trim().toLowerCase()}:${contactId}`;
+
+  const updateRows = (nextRowsOrUpdater) => {
+    if (typeof nextRowsOrUpdater === "function") {
+      setRows((previousRows) => {
+        const normalizedPreviousRows = Array.isArray(previousRows)
+          ? previousRows
+          : [];
+
+        return nextRowsOrUpdater(normalizedPreviousRows);
+      });
+      return;
+    }
+
+    setRows(nextRowsOrUpdater);
+  };
+
   const updateRow = (index, patch) => {
-    setRows(
-      safeRows.map((row, rowIndex) =>
+    updateRows((previousRows) =>
+      previousRows.map((row, rowIndex) =>
         rowIndex === index ? { ...row, ...patch } : row,
       ),
     );
@@ -3963,11 +4156,16 @@ function RelatedNameEditor({ rows, setRows, contactOptions, labelOptions }) {
   };
 
   const addRow = () => {
-    setRows([...safeRows, createEmptyRelatedName("other")]);
+    updateRows((previousRows) => [
+      ...previousRows,
+      createEmptyRelatedName("other"),
+    ]);
   };
 
   const removeRow = (index) => {
-    setRows(safeRows.filter((_, rowIndex) => rowIndex !== index));
+    updateRows((previousRows) =>
+      previousRows.filter((_, rowIndex) => rowIndex !== index),
+    );
   };
 
   const matchingContactOptions = (value) => {
@@ -3982,11 +4180,42 @@ function RelatedNameEditor({ rows, setRows, contactOptions, labelOptions }) {
   };
 
   const selectContactOption = (index, option) => {
+    const rowValue = safeRows[index]?.value ?? "";
     updateRow(index, {
       value: option.display_name,
       related_contact_id: option.id,
     });
+    setDismissedSuggestions((previous) => {
+      const key = suggestionKeyFor(index, rowValue, option.id);
+      if (!previous[key]) {
+        return previous;
+      }
+
+      const next = { ...previous };
+      delete next[key];
+      return next;
+    });
     setPickerRowIndex(null);
+  };
+
+  const exactMatchSuggestion = (row) => {
+    if (normalizePositiveInt(row?.related_contact_id) !== null) {
+      return null;
+    }
+
+    const candidate = String(row?.value ?? "").trim();
+    if (!candidate) {
+      return null;
+    }
+
+    const matches = safeContactOptions.filter(
+      (contact) =>
+        contact.display_name.localeCompare(candidate, undefined, {
+          sensitivity: "base",
+        }) === 0,
+    );
+
+    return matches.length === 1 ? matches[0] : null;
   };
 
   return (
@@ -4017,6 +4246,13 @@ function RelatedNameEditor({ rows, setRows, contactOptions, labelOptions }) {
             const selectedContact = safeContactOptions.find(
               (option) => option.id === selectedRelatedId,
             );
+            const suggestedContact = exactMatchSuggestion(row);
+            const suggestionKey =
+              suggestedContact !== null
+                ? suggestionKeyFor(index, row?.value, suggestedContact.id)
+                : null;
+            const suggestionDismissed =
+              suggestionKey !== null && dismissedSuggestions[suggestionKey];
 
             return (
               <div
@@ -4136,6 +4372,35 @@ function RelatedNameEditor({ rows, setRows, contactOptions, labelOptions }) {
                   <p className="mt-1.5 text-[11px] text-app-faint">
                     Linked to contact #{selectedContact.id}.
                   </p>
+                ) : null}
+                {!selectedContact &&
+                suggestedContact &&
+                !suggestionDismissed ? (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    <p className="text-[11px] text-app-faint">
+                      Match found: {suggestedContact.display_name}
+                    </p>
+                    <button
+                      className="btn-outline btn-outline-sm"
+                      type="button"
+                      onClick={() => selectContactOption(index, suggestedContact)}
+                    >
+                      Link
+                    </button>
+                    <button
+                      className="btn-outline btn-outline-sm"
+                      type="button"
+                      onClick={() =>
+                        setDismissedSuggestions((previous) =>
+                          suggestionKey === null
+                            ? previous
+                            : { ...previous, [suggestionKey]: true },
+                        )
+                      }
+                    >
+                      Dismiss
+                    </button>
+                  </div>
                 ) : null}
                 {row.label === "custom" ? (
                   <input

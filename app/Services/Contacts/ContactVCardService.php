@@ -32,44 +32,169 @@ class ContactVCardService
         'homepage' => ['HOME'],
     ];
 
-    private const RELATED_LABELS = [
-        'spouse',
-        'partner',
-        'parent',
-        'child',
-        'sibling',
-        'assistant',
-        'friend',
-    ];
-
     private const RELATED_LABEL_TYPE_MAP = [
         'spouse' => ['SPOUSE'],
+        'husband' => ['SPOUSE'],
+        'wife' => ['SPOUSE'],
         'partner' => ['PARTNER'],
+        'boyfriend' => ['PARTNER'],
+        'girlfriend' => ['PARTNER'],
+        'fiance' => ['PARTNER'],
+        'fiancee' => ['PARTNER'],
         'parent' => ['PARENT'],
+        'father' => ['PARENT'],
+        'mother' => ['PARENT'],
+        'mom' => ['PARENT'],
+        'dad' => ['PARENT'],
         'child' => ['CHILD'],
+        'son' => ['CHILD'],
+        'daughter' => ['CHILD'],
+        'stepson' => ['CHILD'],
+        'stepdaughter' => ['CHILD'],
+        'parent_in_law' => ['KIN'],
+        'father_in_law' => ['KIN'],
+        'mother_in_law' => ['KIN'],
+        'child_in_law' => ['KIN'],
+        'son_in_law' => ['KIN'],
+        'daughter_in_law' => ['KIN'],
         'sibling' => ['SIBLING'],
+        'brother' => ['SIBLING'],
+        'sister' => ['SIBLING'],
+        'sibling_in_law' => ['KIN'],
+        'brother_in_law' => ['KIN'],
+        'sister_in_law' => ['KIN'],
+        'aunt_uncle' => ['KIN'],
+        'aunt' => ['KIN'],
+        'uncle' => ['KIN'],
+        'niece_nephew' => ['KIN'],
+        'niece' => ['KIN'],
+        'nephew' => ['KIN'],
+        'grandparent' => ['KIN'],
+        'grandfather' => ['KIN'],
+        'grandmother' => ['KIN'],
+        'grandchild' => ['KIN'],
+        'grandson' => ['KIN'],
+        'granddaughter' => ['KIN'],
+        'cousin' => ['KIN'],
         'assistant' => ['ASSISTANT'],
         'friend' => ['FRIEND'],
         'other' => ['OTHER'],
     ];
 
-    private const RELATED_CUSTOM_LABEL_TYPE_SYNONYMS = [
-        'son' => 'CHILD',
-        'daughter' => 'CHILD',
-        'stepson' => 'CHILD',
-        'stepdaughter' => 'CHILD',
-        'father' => 'PARENT',
-        'mother' => 'PARENT',
-        'mom' => 'PARENT',
-        'dad' => 'PARENT',
-        'brother' => 'SIBLING',
-        'sister' => 'SIBLING',
-        'husband' => 'SPOUSE',
-        'wife' => 'SPOUSE',
-        'boyfriend' => 'PARTNER',
-        'girlfriend' => 'PARTNER',
-        'fiance' => 'PARTNER',
-        'fiancee' => 'PARTNER',
+    private const RELATED_LABEL_ALIASES = [
+        'spouse' => 'spouse',
+        'husband' => 'husband',
+        'wife' => 'wife',
+        'partner' => 'partner',
+        'boyfriend' => 'boyfriend',
+        'girlfriend' => 'girlfriend',
+        'fiance' => 'fiance',
+        'fiancee' => 'fiancee',
+        'parent' => 'parent',
+        'father' => 'father',
+        'mother' => 'mother',
+        'mom' => 'mom',
+        'dad' => 'dad',
+        'child' => 'child',
+        'son' => 'son',
+        'daughter' => 'daughter',
+        'stepson' => 'stepson',
+        'step son' => 'stepson',
+        'stepdaughter' => 'stepdaughter',
+        'step daughter' => 'stepdaughter',
+        'parent in law' => 'parent_in_law',
+        'father in law' => 'father_in_law',
+        'mother in law' => 'mother_in_law',
+        'child in law' => 'child_in_law',
+        'son in law' => 'son_in_law',
+        'daughter in law' => 'daughter_in_law',
+        'sibling' => 'sibling',
+        'brother' => 'brother',
+        'sister' => 'sister',
+        'sibling in law' => 'sibling_in_law',
+        'brother in law' => 'brother_in_law',
+        'sister in law' => 'sister_in_law',
+        'aunt uncle' => 'aunt_uncle',
+        'aunt or uncle' => 'aunt_uncle',
+        'aunt' => 'aunt',
+        'uncle' => 'uncle',
+        'niece nephew' => 'niece_nephew',
+        'niece or nephew' => 'niece_nephew',
+        'niece' => 'niece',
+        'nephew' => 'nephew',
+        'grandparent' => 'grandparent',
+        'grand parent' => 'grandparent',
+        'grandfather' => 'grandfather',
+        'grand father' => 'grandfather',
+        'grandpa' => 'grandfather',
+        'grand pa' => 'grandfather',
+        'grandmother' => 'grandmother',
+        'grand mother' => 'grandmother',
+        'grandma' => 'grandmother',
+        'grand ma' => 'grandmother',
+        'grandchild' => 'grandchild',
+        'grand child' => 'grandchild',
+        'grandson' => 'grandson',
+        'grand son' => 'grandson',
+        'granddaughter' => 'granddaughter',
+        'grand daughter' => 'granddaughter',
+        'cousin' => 'cousin',
+        'assistant' => 'assistant',
+        'friend' => 'friend',
+        'other' => 'other',
+    ];
+
+    private const RELATED_TOKEN_DISPLAY_LABELS = [
+        'husband' => 'Husband',
+        'wife' => 'Wife',
+        'boyfriend' => 'Boyfriend',
+        'girlfriend' => 'Girlfriend',
+        'fiance' => 'Fiance',
+        'fiancee' => 'Fiancee',
+        'father' => 'Father',
+        'mother' => 'Mother',
+        'mom' => 'Mom',
+        'dad' => 'Dad',
+        'son' => 'Son',
+        'daughter' => 'Daughter',
+        'stepson' => 'Stepson',
+        'stepdaughter' => 'Stepdaughter',
+        'brother' => 'Brother',
+        'sister' => 'Sister',
+        'parent_in_law' => 'Parent-in-Law',
+        'father_in_law' => 'Father-in-Law',
+        'mother_in_law' => 'Mother-in-Law',
+        'child_in_law' => 'Child-in-Law',
+        'son_in_law' => 'Son-in-Law',
+        'daughter_in_law' => 'Daughter-in-Law',
+        'sibling_in_law' => 'Sibling-in-Law',
+        'brother_in_law' => 'Brother-in-Law',
+        'sister_in_law' => 'Sister-in-Law',
+        'aunt_uncle' => 'Aunt/Uncle',
+        'aunt' => 'Aunt',
+        'uncle' => 'Uncle',
+        'niece_nephew' => 'Niece/Nephew',
+        'niece' => 'Niece',
+        'nephew' => 'Nephew',
+        'grandparent' => 'Grandparent',
+        'grandfather' => 'Grandfather',
+        'grandmother' => 'Grandmother',
+        'grandchild' => 'Grandchild',
+        'grandson' => 'Grandson',
+        'granddaughter' => 'Granddaughter',
+        'cousin' => 'Cousin',
+    ];
+
+    private const RELATED_TYPE_LABEL_MAP = [
+        'SPOUSE' => 'spouse',
+        'PARTNER' => 'partner',
+        'PARENT' => 'parent',
+        'CHILD' => 'child',
+        'SIBLING' => 'sibling',
+        'ASSISTANT' => 'assistant',
+        'FRIEND' => 'friend',
+        'OTHER' => 'other',
+        'KIN' => 'other',
     ];
 
     private const RELATED_CONTACT_ID_PARAMETER = 'X-DAVVY-RELATED-CONTACT-ID';
@@ -265,7 +390,7 @@ class ContactVCardService
                 $property[self::RELATED_CONTACT_ID_PARAMETER] = (string) $relatedContactId;
             }
 
-            $customLabel = $this->cleanString($row['custom_label'] ?? null);
+            $customLabel = $this->relatedPropertyCustomLabelForRow($row);
             if ($customLabel !== null) {
                 $property['X-ABLabel'] = $customLabel;
             }
@@ -817,13 +942,19 @@ class ContactVCardService
     {
         $customLabel = $this->propertyParameterValue($property, 'X-ABLabel');
         if ($customLabel !== null) {
+            $token = $this->normalizeRelatedLabelToken($customLabel);
+            if ($token !== null && array_key_exists($token, self::RELATED_LABEL_TYPE_MAP)) {
+                return [$token, null];
+            }
+
             return ['custom', $customLabel];
         }
 
         $types = $this->propertyTypes($property);
-        foreach (self::RELATED_LABELS as $candidate) {
-            if (in_array(strtoupper($candidate), $types, true)) {
-                return [$candidate, null];
+        foreach ($types as $type) {
+            $normalizedType = strtoupper((string) $type);
+            if (array_key_exists($normalizedType, self::RELATED_TYPE_LABEL_MAP)) {
+                return [self::RELATED_TYPE_LABEL_MAP[$normalizedType], null];
             }
         }
 
@@ -929,7 +1060,10 @@ class ContactVCardService
      */
     private function relatedTypesForLabel(mixed $label): array
     {
-        $normalized = strtolower((string) $label);
+        $normalized = $this->normalizeRelatedLabelToken($label);
+        if ($normalized === null) {
+            return [];
+        }
 
         return self::RELATED_LABEL_TYPE_MAP[$normalized] ?? [];
     }
@@ -955,12 +1089,65 @@ class ContactVCardService
 
     private function relatedTypeFromCustomLabel(mixed $customLabel): ?string
     {
-        $normalized = strtolower(trim((string) ($customLabel ?? '')));
+        $types = $this->relatedTypesForLabel($customLabel);
+        if ($types === []) {
+            return null;
+        }
+
+        return $types[0];
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     */
+    private function relatedPropertyCustomLabelForRow(array $row): ?string
+    {
+        $customLabel = $this->cleanString($row['custom_label'] ?? null);
+        if ($customLabel !== null) {
+            return $customLabel;
+        }
+
+        $token = $this->normalizeRelatedLabelToken($row['label'] ?? null);
+        if ($token === null) {
+            return null;
+        }
+
+        $types = self::RELATED_LABEL_TYPE_MAP[$token] ?? [];
+        if ($types === []) {
+            return null;
+        }
+
+        $canonical = self::RELATED_TYPE_LABEL_MAP[$types[0]] ?? null;
+        if ($canonical === null || $canonical === $token) {
+            return null;
+        }
+
+        return $this->relatedDisplayLabelForToken($token);
+    }
+
+    private function relatedDisplayLabelForToken(string $token): string
+    {
+        if (array_key_exists($token, self::RELATED_TOKEN_DISPLAY_LABELS)) {
+            return self::RELATED_TOKEN_DISPLAY_LABELS[$token];
+        }
+
+        return ucwords(str_replace('_', ' ', $token));
+    }
+
+    private function normalizeRelatedLabelToken(mixed $value): ?string
+    {
+        $normalized = strtolower(trim((string) ($value ?? '')));
         if ($normalized === '') {
             return null;
         }
 
-        return self::RELATED_CUSTOM_LABEL_TYPE_SYNONYMS[$normalized] ?? null;
+        $normalized = str_replace(['_', '-', '/', '&'], ' ', $normalized);
+        $normalized = trim(preg_replace('/\s+/', ' ', $normalized) ?? '');
+        if ($normalized === '') {
+            return null;
+        }
+
+        return self::RELATED_LABEL_ALIASES[$normalized] ?? null;
     }
 
     private function customLabelOrLabel(array $row): string
