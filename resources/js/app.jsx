@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import AdminFeatureToggleComponent from "./components/admin/AdminFeatureToggle";
 import AdminPageComponent from "./components/admin/AdminPage";
+import AuthShellComponent from "./components/auth/AuthShell";
 import LoginPageComponent from "./components/auth/LoginPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import RegisterPageComponent from "./components/auth/RegisterPage";
@@ -26,7 +27,10 @@ import ResourcePanelComponent from "./components/dashboard/ResourcePanel";
 import DashboardPageComponent from "./components/dashboard/DashboardPage";
 import ContactChangeQueuePageComponent from "./components/queue/ContactChangeQueuePage";
 import AppShellComponent from "./components/layout/AppShell";
+import SponsorshipLinkIcon from "./components/layout/SponsorshipLinkIcon";
 import ProfilePageComponent from "./components/profile/ProfilePage";
+import ThemeControl from "./components/theme/ThemeControl";
+import useThemePreference from "./components/theme/useThemePreference";
 
 function fileStem(value, fallback = "export") {
   const stem = String(value ?? "")
@@ -126,8 +130,6 @@ async function downloadExport(url, fallbackName) {
   window.URL.revokeObjectURL(objectUrl);
 }
 
-const THEME_STORAGE_KEY = "davvy-theme";
-const VALID_THEMES = new Set(["system", "light", "dark"]);
 const MILESTONE_PURGE_SUMMARY_AUTO_HIDE_MS = 6000;
 const BACKUP_RUN_TOAST_AUTO_HIDE_MS = 3200;
 const BACKUP_DRAWER_ANIMATION_MS = 220;
@@ -185,15 +187,6 @@ function parseSponsorshipConfig(rawConfig) {
     enabled: Boolean(rawConfig.enabled) && links.length > 0,
     links,
   };
-}
-
-function sponsorshipFaviconUrl(targetUrl) {
-  try {
-    const host = new URL(targetUrl).hostname.replace(/^www\./i, "");
-    return host ? `https://icons.duckduckgo.com/ip3/${host}.ico` : "";
-  } catch {
-    return "";
-  }
 }
 
 function formatUtcOffset(offsetMinutes) {
@@ -375,88 +368,6 @@ function formatAdminTimestamp(value) {
   return parsed.toLocaleString();
 }
 
-function getSystemTheme() {
-  if (typeof window === "undefined" || !window.matchMedia) {
-    return "light";
-  }
-
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
-}
-
-function normalizeTheme(value) {
-  return VALID_THEMES.has(value) ? value : "system";
-}
-
-function resolveTheme(theme) {
-  return theme === "system" ? getSystemTheme() : theme;
-}
-
-function applyTheme(theme) {
-  if (typeof document === "undefined") {
-    return;
-  }
-
-  const resolved = resolveTheme(theme);
-  const root = document.documentElement;
-
-  root.classList.toggle("dark", resolved === "dark");
-  root.dataset.theme = resolved;
-  root.style.colorScheme = resolved;
-}
-
-function useThemePreference() {
-  const [theme, setTheme] = useState(() => {
-    if (typeof window === "undefined") {
-      return "system";
-    }
-
-    try {
-      return normalizeTheme(window.localStorage.getItem(THEME_STORAGE_KEY));
-    } catch {
-      return "system";
-    }
-  });
-
-  useEffect(() => {
-    applyTheme(theme);
-
-    if (theme !== "system" || !window.matchMedia) {
-      return undefined;
-    }
-
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const syncTheme = () => applyTheme("system");
-
-    if (media.addEventListener) {
-      media.addEventListener("change", syncTheme);
-      return () => media.removeEventListener("change", syncTheme);
-    }
-
-    media.addListener(syncTheme);
-    return () => media.removeListener(syncTheme);
-  }, [theme]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    try {
-      if (theme === "system") {
-        window.localStorage.removeItem(THEME_STORAGE_KEY);
-      } else {
-        window.localStorage.setItem(THEME_STORAGE_KEY, theme);
-      }
-    } catch {
-      // Ignore storage failures.
-    }
-  }, [theme]);
-
-  return { theme, setTheme };
-}
-
 function App() {
   const theme = useThemePreference();
   const { auth, value } = useAuthState({
@@ -539,7 +450,7 @@ function LoginPage({ auth, theme }) {
       api={api}
       extractError={extractError}
       parseSponsorshipConfig={parseSponsorshipConfig}
-      AuthShell={AuthShell}
+      AuthShell={AuthShellComponent}
       Field={Field}
     />
   );
@@ -553,7 +464,7 @@ function RegisterPage({ auth, theme }) {
       api={api}
       extractError={extractError}
       parseSponsorshipConfig={parseSponsorshipConfig}
-      AuthShell={AuthShell}
+      AuthShell={AuthShellComponent}
       Field={Field}
     />
   );
@@ -1604,101 +1515,6 @@ function AppShell({ auth, theme, children }) {
   );
 }
 
-function SponsorshipLinkIcon({ name, url }) {
-  const [iconFailed, setIconFailed] = useState(false);
-  const faviconUrl = useMemo(() => sponsorshipFaviconUrl(url), [url]);
-  const fallbackLabel =
-    String(name ?? "")
-      .trim()
-      .slice(0, 1)
-      .toUpperCase() || "S";
-
-  if (!faviconUrl || iconFailed) {
-    return (
-      <span className="sponsor-link-icon-fallback" aria-hidden="true">
-        {fallbackLabel}
-      </span>
-    );
-  }
-
-  return (
-    <img
-      className="sponsor-link-icon-img"
-      src={faviconUrl}
-      alt=""
-      loading="lazy"
-      decoding="async"
-      onError={() => setIconFailed(true)}
-    />
-  );
-}
-
-function ThemeControl({ theme, setTheme, className = "" }) {
-  const resolvedTheme = resolveTheme(theme);
-  const isDark = resolvedTheme === "dark";
-  const systemTheme = getSystemTheme();
-  const targetTheme = isDark ? "light" : "dark";
-  const nextTheme = targetTheme === systemTheme ? "system" : targetTheme;
-  const toggleLabel = isDark ? "Switch to light theme" : "Switch to dark theme";
-
-  return (
-    <div className={`theme-control ${className}`.trim()}>
-      <button
-        type="button"
-        className={`theme-control-toggle ${isDark ? "theme-control-toggle-dark" : ""}`.trim()}
-        onClick={() => setTheme(nextTheme)}
-        aria-pressed={isDark}
-        aria-label={toggleLabel}
-        title={toggleLabel}
-      >
-        {isDark ? (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
-            aria-hidden="true"
-            focusable="false"
-            className="theme-control-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="12" cy="12" r="5" />
-            <line x1="12" y1="1" x2="12" y2="3" />
-            <line x1="12" y1="21" x2="12" y2="23" />
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-            <line x1="1" y1="12" x2="3" y2="12" />
-            <line x1="21" y1="12" x2="23" y2="12" />
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-          </svg>
-        ) : (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
-            aria-hidden="true"
-            focusable="false"
-            className="theme-control-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" />
-          </svg>
-        )}
-      </button>
-    </div>
-  );
-}
-
 function PermissionBadge({ permission }) {
   if (permission === "admin") {
     return <span className="pill pill-admin">Admin</span>;
@@ -1815,40 +1631,6 @@ function ChevronRightIcon({ className }) {
     >
       <path d="m9 6 6 6-6 6" />
     </svg>
-  );
-}
-
-function AuthShell({
-  theme,
-  title,
-  subtitle,
-  children,
-  themeControlPlacement = "inline",
-}) {
-  return (
-    <main className="mx-auto flex min-h-screen max-w-md items-center px-4 py-10">
-      <section className="surface fade-up w-full rounded-3xl p-8">
-        <h1 className="text-3xl font-bold text-app-strong">{title}</h1>
-        <p className="mt-2 text-sm text-app-muted">{subtitle}</p>
-        <div className="mt-6">{children}</div>
-        {themeControlPlacement === "inline" ? (
-          <div className="mt-6 flex justify-center sm:justify-end">
-            <ThemeControl
-              theme={theme.theme}
-              setTheme={theme.setTheme}
-              className="theme-control-inline"
-            />
-          </div>
-        ) : null}
-      </section>
-      {themeControlPlacement === "window-bottom-right" ? (
-        <ThemeControl
-          theme={theme.theme}
-          setTheme={theme.setTheme}
-          className="theme-control-window-bottom-right"
-        />
-      ) : null}
-    </main>
   );
 }
 
