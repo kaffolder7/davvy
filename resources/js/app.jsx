@@ -25,6 +25,12 @@ import CopyableResourceUriComponent from "./components/common/CopyableResourceUr
 import FieldComponent from "./components/common/Field";
 import InfoCardComponent from "./components/common/InfoCard";
 import { api, extractError } from "./lib/api";
+import {
+  buildDavCollectionUrl,
+  copyTextToClipboard,
+  downloadExport,
+  fileStem,
+} from "./lib/browserDavUtils";
 import AddressBookMilestoneControlsComponent from "./components/contacts/AddressBookMilestoneControls";
 import AddressEditorComponent from "./components/contacts/AddressEditor";
 import ContactEditorHideFieldModalComponent from "./components/contacts/ContactEditorHideFieldModal";
@@ -81,135 +87,10 @@ import ProfilePageComponent from "./components/profile/ProfilePage";
 import ThemeControl from "./components/theme/ThemeControl";
 import useThemePreference from "./components/theme/useThemePreference";
 
-function fileStem(value, fallback = "export") {
-  const stem = String(value ?? "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-+)|(-+$)/g, "");
-
-  return stem || fallback;
-}
-
-function parseDispositionFilename(header) {
-  if (!header) {
-    return null;
-  }
-
-  const utf8Match = header.match(/filename\*=UTF-8''([^;]+)/i);
-  if (utf8Match?.[1]) {
-    try {
-      return decodeURIComponent(utf8Match[1]);
-    } catch {
-      return utf8Match[1];
-    }
-  }
-
-  const standardMatch = header.match(/filename="?([^";]+)"?/i);
-  return standardMatch?.[1] ?? null;
-}
-
-async function copyTextToClipboard(value) {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(value);
-    return;
-  }
-
-  const textarea = document.createElement("textarea");
-  textarea.value = value;
-  textarea.setAttribute("readonly", "");
-  textarea.style.position = "absolute";
-  textarea.style.left = "-9999px";
-  document.body.appendChild(textarea);
-  textarea.select();
-  const copied = document.execCommand("copy");
-  document.body.removeChild(textarea);
-
-  if (!copied) {
-    throw new Error("copy-failed");
-  }
-}
-
-function buildDavCollectionUrl(resourceKind, principalId, resourceUri) {
-  const collectionRoot =
-    resourceKind === "calendar" ? "calendars" : "addressbooks";
-  const normalizedUri = String(resourceUri ?? "")
-    .trim()
-    .replace(/^\/+/, "")
-    .replace(/\/+$/, "");
-
-  return `${window.location.origin}/dav/${collectionRoot}/${principalId}/${normalizedUri}`;
-}
-
-async function downloadExport(url, fallbackName) {
-  const response = await fetch(url, {
-    credentials: "include",
-    headers: {
-      "X-Requested-With": "XMLHttpRequest",
-    },
-  });
-
-  if (!response.ok) {
-    let message = "Unable to download export.";
-
-    try {
-      const payload = await response.json();
-      if (typeof payload?.message === "string" && payload.message) {
-        message = payload.message;
-      }
-    } catch {
-      // ignore parsing issues and use fallback message
-    }
-
-    throw new Error(message);
-  }
-
-  const blob = await response.blob();
-  const fileName =
-    parseDispositionFilename(response.headers.get("content-disposition")) ||
-    fallbackName;
-
-  const objectUrl = window.URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = objectUrl;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(objectUrl);
-}
-
-function parseSponsorshipConfig(rawConfig) {
-  if (!rawConfig || typeof rawConfig !== "object") {
-    return {
-      enabled: false,
-      links: [],
-    };
-  }
-
-  const links = Array.isArray(rawConfig.links)
-    ? rawConfig.links
-        .filter((item) => item && typeof item === "object")
-        .map((item) => ({
-          name: String(item.name ?? "").trim(),
-          url: String(item.url ?? "").trim(),
-        }))
-        .filter(
-          (item) => item.name !== "" && /^https?:\/\/\S+$/i.test(item.url),
-        )
-    : [];
-
-  return {
-    enabled: Boolean(rawConfig.enabled) && links.length > 0,
-    links,
-  };
-}
-
 function App() {
   const theme = useThemePreference();
   const { auth, value } = useAuthState({
     api,
-    parseSponsorshipConfig,
   });
 
   if (auth.loading) {
@@ -286,7 +167,6 @@ function LoginPage({ auth, theme }) {
       theme={theme}
       api={api}
       extractError={extractError}
-      parseSponsorshipConfig={parseSponsorshipConfig}
       AuthShell={AuthShellComponent}
       Field={Field}
     />
@@ -300,7 +180,6 @@ function RegisterPage({ auth, theme }) {
       theme={theme}
       api={api}
       extractError={extractError}
-      parseSponsorshipConfig={parseSponsorshipConfig}
       AuthShell={AuthShellComponent}
       Field={Field}
     />

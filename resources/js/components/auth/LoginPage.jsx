@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import { buildAuthStateFromPayload } from "./authStateMapper";
 
 export default function LoginPage({
   auth,
   theme,
   api,
   extractError,
-  parseSponsorshipConfig,
   AuthShell,
   Field,
 }) {
@@ -26,17 +26,7 @@ export default function LoginPage({
 
     try {
       const { data } = await api.post("/api/auth/login", form);
-      auth.setAuth({
-        loading: false,
-        user: data.user,
-        registrationEnabled: !!data.registration_enabled,
-        ownerShareManagementEnabled: !!data.owner_share_management_enabled,
-        davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
-        contactManagementEnabled: !!data.contact_management_enabled,
-        contactChangeModerationEnabled:
-          !!data.contact_change_moderation_enabled,
-        sponsorship: parseSponsorshipConfig(data.sponsorship),
-      });
+      auth.setAuth(buildAuthStateFromPayload(data, { user: data.user }));
       navigate("/");
     } catch (err) {
       setError(extractError(err, "Unable to sign in."));
