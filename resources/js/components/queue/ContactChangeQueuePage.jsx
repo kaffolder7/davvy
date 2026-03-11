@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ContactChangeEditModal from "./ContactChangeEditModal";
 import ContactChangeRequestCard from "./ContactChangeRequestCard";
 
@@ -21,6 +21,7 @@ export default function ContactChangeQueuePage({
   const [editingRow, setEditingRow] = useState(null);
   const [editPayloadText, setEditPayloadText] = useState("");
   const [editAddressBookIdsText, setEditAddressBookIdsText] = useState("");
+  const hasInitializedSearchEffect = useRef(false);
 
   const loadQueue = async ({ withLoading = true } = {}) => {
     if (withLoading) {
@@ -60,6 +61,11 @@ export default function ContactChangeQueuePage({
   }, [statusFilter, operationFilter]);
 
   useEffect(() => {
+    if (!hasInitializedSearchEffect.current) {
+      hasInitializedSearchEffect.current = true;
+      return undefined;
+    }
+
     const timer = window.setTimeout(() => {
       void loadQueue({ withLoading: false });
     }, 260);
