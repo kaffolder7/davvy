@@ -29,6 +29,7 @@ function buildProps(overrides = {}) {
     auth: {
       user: null,
       registrationEnabled: true,
+      registrationApprovalRequired: false,
       setAuth: vi.fn(),
     },
     theme: {
@@ -43,6 +44,7 @@ function buildProps(overrides = {}) {
             role: "user",
           },
           registration_enabled: true,
+          registration_approval_required: false,
           owner_share_management_enabled: false,
           dav_compatibility_mode_enabled: false,
           contact_management_enabled: true,
@@ -79,6 +81,7 @@ describe("RegisterPage", () => {
       auth: {
         user: null,
         registrationEnabled: false,
+        registrationApprovalRequired: false,
         setAuth: vi.fn(),
       },
     });
@@ -116,6 +119,7 @@ describe("RegisterPage", () => {
           role: "user",
         },
         registrationEnabled: true,
+        registrationApprovalRequired: false,
         ownerShareManagementEnabled: false,
         davCompatibilityModeEnabled: false,
         contactManagementEnabled: true,
@@ -149,6 +153,52 @@ describe("RegisterPage", () => {
 
     expect(await screen.findByText("Registration failed.")).toBeInTheDocument();
     expect(props.extractError).toHaveBeenCalledWith(err, "Unable to register.");
+    expect(props.auth.setAuth).not.toHaveBeenCalled();
+  });
+
+  it("shows pending approval message when registration approval is required", async () => {
+    const user = userEvent.setup();
+    const props = buildProps({
+      auth: {
+        user: null,
+        registrationEnabled: true,
+        registrationApprovalRequired: true,
+        setAuth: vi.fn(),
+      },
+      api: {
+        post: vi.fn().mockResolvedValue({
+          data: {
+            registration_pending_approval: true,
+            message:
+              "Registration submitted. An administrator must approve your account before you can sign in.",
+            registration_enabled: true,
+            registration_approval_required: true,
+            owner_share_management_enabled: false,
+            dav_compatibility_mode_enabled: false,
+            contact_management_enabled: true,
+            contact_change_moderation_enabled: false,
+            sponsorship: {
+              enabled: false,
+              links: [],
+            },
+          },
+        }),
+      },
+    });
+
+    renderPage(props);
+
+    await user.type(screen.getByLabelText("Name"), "Pending User");
+    await user.type(screen.getByLabelText("Email"), "pending@example.com");
+    await user.type(screen.getByLabelText("Password"), "secret123");
+    await user.type(screen.getByLabelText("Confirm Password"), "secret123");
+    await user.click(screen.getByRole("button", { name: "Register" }));
+
+    expect(
+      await screen.findByText(
+        "Registration submitted. An administrator must approve your account before you can sign in.",
+      ),
+    ).toBeInTheDocument();
     expect(props.auth.setAuth).not.toHaveBeenCalled();
   });
 });

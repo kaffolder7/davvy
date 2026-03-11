@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Toast from "../common/Toast";
 
 export default function AdminPage({
   auth,
@@ -11,6 +12,7 @@ export default function AdminPage({
   FullPageState,
   Field,
   PermissionBadge,
+  CheckIcon,
   buildTimezoneGroups,
   parseBackupScheduleTimes,
   isRecommendedBackupRetention,
@@ -30,6 +32,7 @@ export default function AdminPage({
     resources: { calendars: [], address_books: [] },
     error: "",
     registrationEnabled: auth.registrationEnabled,
+    registrationApprovalRequired: auth.registrationApprovalRequired,
     ownerShareManagementEnabled: auth.ownerShareManagementEnabled,
     davCompatibilityModeEnabled: auth.davCompatibilityModeEnabled,
     contactManagementEnabled: auth.contactManagementEnabled,
@@ -359,6 +362,18 @@ export default function AdminPage({
     }
   };
 
+  const approveUser = async (userId) => {
+    try {
+      await api.patch(`/api/admin/users/${userId}/approve`);
+      await load();
+    } catch (err) {
+      setState((prev) => ({
+        ...prev,
+        error: extractError(err, "Unable to approve user."),
+      }));
+    }
+  };
+
   const saveShare = async (event) => {
     event.preventDefault();
     try {
@@ -398,15 +413,69 @@ export default function AdminPage({
       setState((prev) => ({
         ...prev,
         registrationEnabled: !!response.data.enabled,
+        registrationApprovalRequired: !!response.data.require_approval,
       }));
       auth.setAuth((prev) => ({
         ...prev,
         registrationEnabled: !!response.data.enabled,
+        registrationApprovalRequired: !!response.data.require_approval,
       }));
     } catch (err) {
       setState((prev) => ({
         ...prev,
         error: extractError(err, "Unable to update registration setting."),
+      }));
+    }
+  };
+
+  const toggleRegistrationApproval = async () => {
+    const next = !state.registrationApprovalRequired;
+    let approvePending = false;
+
+    if (!next) {
+      const pendingCount = state.users.filter(
+        (user) => user?.is_approved === false,
+      ).length;
+
+      if (pendingCount > 0) {
+        approvePending = window.confirm(
+          `Disable registration approval requirement?\n\n${pendingCount} account(s) are pending approval.\n\nClick OK to approve all pending accounts now, or Cancel to leave them pending.`,
+        );
+      }
+    }
+
+    try {
+      const response = await api.patch(
+        "/api/admin/settings/registration-approval",
+        {
+          enabled: next,
+        },
+      );
+      setState((prev) => ({
+        ...prev,
+        registrationApprovalRequired: !!response.data.enabled,
+      }));
+      auth.setAuth((prev) => ({
+        ...prev,
+        registrationApprovalRequired: !!response.data.enabled,
+      }));
+
+      if (!next && approvePending) {
+        const bulkApproval = await api.patch("/api/admin/users/approve-pending");
+        const approvedCount = Number(bulkApproval.data?.approved_count ?? 0);
+        setBackupRunToast({
+          status: "success",
+          message: `Approved ${approvedCount} pending account(s).`,
+        });
+        await load();
+      }
+    } catch (err) {
+      setState((prev) => ({
+        ...prev,
+        error: extractError(
+          err,
+          "Unable to update registration approval setting.",
+        ),
       }));
     }
   };
@@ -926,15 +995,6 @@ export default function AdminPage({
   const backupRestoreRunButtonClass = backupRestoreRunDisabled
     ? "btn-outline btn-outline-sm"
     : "btn btn-outline-sm";
-  const backupRunToastStatus = String(
-    backupRunToast?.status || "",
-  ).toLowerCase();
-  const backupRunToastToneClass =
-    backupRunToastStatus === "failed"
-      ? "text-app-danger"
-      : backupRunToastStatus === "success"
-        ? "text-app-accent"
-        : "text-app-faint";
   const backupConfigHasUnsavedChanges =
     !!backupConfigSnapshotRef.current &&
     !areBackupConfigSnapshotsEqual(
@@ -956,6 +1016,11 @@ export default function AdminPage({
             label="Public registration"
             enabled={state.registrationEnabled}
             onClick={toggleRegistration}
+          />
+          <AdminFeatureToggle
+            label="Require registration approval"
+            enabled={state.registrationApprovalRequired}
+            onClick={toggleRegistrationApproval}
           />
           <AdminFeatureToggle
             label="Owner sharing"
@@ -1191,16 +1256,10 @@ export default function AdminPage({
       </div>
 
       {backupRunToast ? (
-        <div className="pointer-events-none fixed bottom-4 right-4 z-30 w-[min(92vw,28rem)] rounded-xl border border-app-edge bg-app-surface px-3 py-2 shadow-2xl">
-          <p
-            className={`text-[11px] font-semibold uppercase tracking-wide ${backupRunToastToneClass}`}
-          >
-            {String(backupRunToast.status || "status").toUpperCase()}
-          </p>
-          <p className="mt-1 text-sm text-app-strong">
-            {backupRunToast.message}
-          </p>
-        </div>
+        <Toast
+          status={backupRunToast.status}
+          message={backupRunToast.message}
+        />
       ) : null}
 
       {backupConfigRendered ? (
@@ -1826,19 +1885,42 @@ export default function AdminPage({
             </form>
 
             <div className="mt-5 space-y-2">
-              {state.users.map((user) => (
-                <div
-                  key={user.id}
-                  className="rounded-xl border border-app-edge bg-app-surface p-3 text-sm"
-                >
-                  <p className="font-semibold text-app-strong">{user.name}</p>
-                  <p className="text-app-muted">{user.email}</p>
-                  <p className="text-xs text-app-faint">
-                    Role: {user.role} | Calendars: {user.calendars_count} |
-                    Address books: {user.address_books_count}
-                  </p>
-                </div>
-              ))}
+              {state.users.map((user) => {
+                const isApproved = user.is_approved !== false;
+
+                return (
+                  <div
+                    key={user.id}
+                    className="rounded-xl border border-app-edge bg-app-surface p-3 text-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="font-semibold text-app-strong">{user.name}</p>
+                      {!isApproved ? (
+                        <button
+                          className="btn-outline btn-outline-sm inline-flex items-center gap-1"
+                          type="button"
+                          onClick={() => approveUser(user.id)}
+                        >
+                          <span>Approve</span>
+                          {CheckIcon ? (
+                            <CheckIcon className="h-3.5 w-3.5" />
+                          ) : null}
+                        </button>
+                      ) : null}
+                    </div>
+                    <p className="text-app-muted">{user.email}</p>
+                    <p className="text-xs text-app-faint">
+                      Role: {user.role} | Calendars: {user.calendars_count} |
+                      Address books: {user.address_books_count}
+                    </p>
+                    {!isApproved ? (
+                      <p className="text-xs text-app-faint">
+                        Status: pending approval
+                      </p>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
           </section>
 

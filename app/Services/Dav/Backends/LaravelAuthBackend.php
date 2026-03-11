@@ -47,7 +47,7 @@ class LaravelAuthBackend extends AbstractBasic
         $normalizedUsername = Str::lower(trim($username));
         $user = User::query()->where('email', $normalizedUsername)->first();
 
-        if (! $user || ! Hash::check($password, $user->password)) {
+        if (! $user || ! $user->is_approved || ! Hash::check($password, $user->password)) {
             return null;
         }
 

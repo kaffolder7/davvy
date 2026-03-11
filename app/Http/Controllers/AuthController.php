@@ -36,12 +36,27 @@ class AuthController extends Controller
             'password' => ['required', 'confirmed', Password::min(8)],
         ]);
 
+        $approvalRequired = $this->registrationSettings->isPublicRegistrationApprovalRequired();
+
         $user = User::query()->create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => $data['password'],
             'role' => Role::Regular,
+            'is_approved' => ! $approvalRequired,
+            'approved_at' => $approvalRequired ? null : now(),
+            'approved_by' => null,
         ]);
+
+        if ($approvalRequired) {
+            return response()->json(
+                array_merge([
+                    'registration_pending_approval' => true,
+                    'message' => 'Registration submitted. An administrator must approve your account before you can sign in.',
+                ], $this->publicSettingsPayload()),
+                202
+            );
+        }
 
         Auth::login($user);
         $request->session()->regenerate();
@@ -71,10 +86,22 @@ class AuthController extends Controller
             ], 422);
         }
 
+        $user = $request->user();
+
+        if (! $user || ! $user->is_approved) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return response()->json([
+                'message' => 'Your account is pending administrator approval.',
+            ], 403);
+        }
+
         $request->session()->regenerate();
 
         return response()->json(
-            array_merge(['user' => $request->user()], $this->publicSettingsPayload())
+            array_merge(['user' => $user], $this->publicSettingsPayload())
         );
     }
 
@@ -115,6 +142,7 @@ class AuthController extends Controller
     {
         return [
             'registration_enabled' => $this->registrationSettings->isPublicRegistrationEnabled(),
+            'registration_approval_required' => $this->registrationSettings->isPublicRegistrationApprovalRequired(),
             'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
             'dav_compatibility_mode_enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
             'contact_management_enabled' => $this->registrationSettings->isContactManagementEnabled(),

@@ -88,6 +88,30 @@ class WellKnownDavRouteTest extends TestCase
         $this->assertStringContainsString('/dav/principals/'.$user->id.'/', (string) $response->getContent());
     }
 
+    public function test_dav_basic_auth_rejects_unapproved_users(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'pending-principal@example.test',
+            'password' => 'password1234',
+            'is_approved' => false,
+            'approved_at' => null,
+            'approved_by' => null,
+        ]);
+
+        $response = $this->call(
+            method: 'PROPFIND',
+            uri: '/dav',
+            server: [
+                'HTTP_AUTHORIZATION' => 'Basic '.base64_encode($user->email.':password1234'),
+                'HTTP_DEPTH' => '0',
+                'CONTENT_TYPE' => 'application/xml; charset=utf-8',
+            ],
+            content: '<?xml version="1.0" encoding="utf-8"?><d:propfind xmlns:d="DAV:"><d:prop><d:current-user-principal/></d:prop></d:propfind>',
+        );
+
+        $this->assertSame(401, $response->getStatusCode());
+    }
+
     public function test_authenticated_principal_propfind_returns_stable_resource_id(): void
     {
         $user = User::factory()->create([
