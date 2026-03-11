@@ -29,6 +29,7 @@ function buildProps(overrides = {}) {
     auth: {
       user: null,
       registrationEnabled: true,
+      registrationApprovalRequired: false,
       setAuth: vi.fn(),
     },
     theme: {
@@ -43,6 +44,7 @@ function buildProps(overrides = {}) {
             role: "admin",
           },
           registration_enabled: true,
+          registration_approval_required: false,
           owner_share_management_enabled: true,
           dav_compatibility_mode_enabled: false,
           contact_management_enabled: true,
@@ -98,6 +100,7 @@ describe("LoginPage", () => {
           role: "admin",
         },
         registrationEnabled: true,
+        registrationApprovalRequired: false,
         ownerShareManagementEnabled: true,
         davCompatibilityModeEnabled: false,
         contactManagementEnabled: true,

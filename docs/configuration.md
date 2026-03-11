@@ -48,6 +48,7 @@ When an `app_settings` key exists, it overrides env defaults.
 | Variable | Default | Notes |
 | --- | --- | --- |
 | `ENABLE_PUBLIC_REGISTRATION` | `false` | Env default only; setting is generally managed in DB/admin UI |
+| `ENABLE_PUBLIC_REGISTRATION_REQUIRE_APPROVAL` | `false` | Env fallback only; first admin enable of public registration defaults this setting to `true` unless already set |
 | `ENABLE_OWNER_SHARE_MANAGEMENT` | `true` | Seeds/initial default for owner sharing |
 | `ENABLE_DAV_COMPATIBILITY_MODE` | `false` | Strict DAV validation is default |
 | `ENABLE_CONTACT_MANAGEMENT` | `false` | Enables managed contacts UI/API |
