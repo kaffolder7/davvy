@@ -1366,6 +1366,119 @@ class ContactManagementTest extends TestCase
             ->assertCreated();
     }
 
+    public function test_related_name_link_rejects_contact_from_different_owner_on_create(): void
+    {
+        $owner = User::factory()->create();
+        $otherOwner = User::factory()->create();
+
+        $ownerBook = AddressBook::factory()->create([
+            'owner_id' => $owner->id,
+            'uri' => 'owner-family',
+        ]);
+        $otherBook = AddressBook::factory()->create([
+            'owner_id' => $otherOwner->id,
+            'uri' => 'other-family',
+            'is_sharable' => true,
+        ]);
+
+        $ownerContact = $this->actingAs($owner)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Owner',
+            'last_name' => 'Contact',
+            'related_names' => [],
+            'address_book_ids' => [$ownerBook->id],
+        ]));
+        $ownerContact->assertCreated();
+
+        $otherContact = $this->actingAs($otherOwner)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Other',
+            'last_name' => 'Contact',
+            'related_names' => [],
+            'address_book_ids' => [$otherBook->id],
+        ]));
+        $otherContact->assertCreated();
+        $otherContactId = (int) $otherContact->json('id');
+
+        ResourceShare::query()->create([
+            'resource_type' => ShareResourceType::AddressBook,
+            'resource_id' => $otherBook->id,
+            'owner_id' => $otherOwner->id,
+            'shared_with_id' => $owner->id,
+            'permission' => SharePermission::Editor,
+        ]);
+
+        $this->actingAs($owner)
+            ->postJson('/api/contacts', $this->payload([
+                'first_name' => 'Primary',
+                'last_name' => 'Person',
+                'related_names' => [[
+                    'label' => 'friend',
+                    'custom_label' => null,
+                    'value' => 'Other Contact',
+                    'related_contact_id' => $otherContactId,
+                ]],
+                'address_book_ids' => [$ownerBook->id],
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['related_names.0.related_contact_id']);
+    }
+
+    public function test_related_name_link_rejects_contact_from_different_owner_on_update(): void
+    {
+        $owner = User::factory()->create();
+        $otherOwner = User::factory()->create();
+
+        $ownerBook = AddressBook::factory()->create([
+            'owner_id' => $owner->id,
+            'uri' => 'owner-update-family',
+        ]);
+        $otherBook = AddressBook::factory()->create([
+            'owner_id' => $otherOwner->id,
+            'uri' => 'other-update-family',
+            'is_sharable' => true,
+        ]);
+
+        $ownerContact = $this->actingAs($owner)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Owner',
+            'last_name' => 'Primary',
+            'related_names' => [],
+            'address_book_ids' => [$ownerBook->id],
+        ]));
+        $ownerContact->assertCreated();
+        $ownerContactId = (int) $ownerContact->json('id');
+
+        $otherContact = $this->actingAs($otherOwner)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Other',
+            'last_name' => 'Person',
+            'related_names' => [],
+            'address_book_ids' => [$otherBook->id],
+        ]));
+        $otherContact->assertCreated();
+        $otherContactId = (int) $otherContact->json('id');
+
+        ResourceShare::query()->create([
+            'resource_type' => ShareResourceType::AddressBook,
+            'resource_id' => $otherBook->id,
+            'owner_id' => $otherOwner->id,
+            'shared_with_id' => $owner->id,
+            'permission' => SharePermission::Editor,
+        ]);
+
+        $this->actingAs($owner)
+            ->patchJson('/api/contacts/'.$ownerContactId, $this->payload([
+                'first_name' => 'Owner',
+                'last_name' => 'Primary',
+                'related_names' => [[
+                    'label' => 'friend',
+                    'custom_label' => null,
+                    'value' => 'Other Person',
+                    'related_contact_id' => $otherContactId,
+                ]],
+                'address_book_ids' => [$ownerBook->id],
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['related_names.0.related_contact_id']);
+    }
+
     public function test_deleting_contact_removes_associated_cards(): void
     {
         $user = User::factory()->create();
