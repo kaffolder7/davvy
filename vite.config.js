@@ -40,5 +40,9 @@ export default defineConfig(({ mode }) => {
           }
         : {}),
     },
+    test: {
+      environment: 'jsdom',
+      setupFiles: ['./resources/js/test/setupTests.js'],
+    },
   };
 });
