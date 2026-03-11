@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Toast from "../common/Toast";
 
 export default function AdminPage({
   auth,
@@ -994,15 +995,6 @@ export default function AdminPage({
   const backupRestoreRunButtonClass = backupRestoreRunDisabled
     ? "btn-outline btn-outline-sm"
     : "btn btn-outline-sm";
-  const backupRunToastStatus = String(
-    backupRunToast?.status || "",
-  ).toLowerCase();
-  const backupRunToastToneClass =
-    backupRunToastStatus === "failed"
-      ? "text-app-danger"
-      : backupRunToastStatus === "success"
-        ? "text-app-accent"
-        : "text-app-faint";
   const backupConfigHasUnsavedChanges =
     !!backupConfigSnapshotRef.current &&
     !areBackupConfigSnapshotsEqual(
@@ -1264,16 +1256,10 @@ export default function AdminPage({
       </div>
 
       {backupRunToast ? (
-        <div className="pointer-events-none fixed bottom-4 right-4 z-30 w-[min(92vw,28rem)] rounded-xl border border-app-edge bg-app-surface px-3 py-2 shadow-2xl">
-          <p
-            className={`text-[11px] font-semibold uppercase tracking-wide ${backupRunToastToneClass}`}
-          >
-            {String(backupRunToast.status || "status").toUpperCase()}
-          </p>
-          <p className="mt-1 text-sm text-app-strong">
-            {backupRunToast.message}
-          </p>
-        </div>
+        <Toast
+          status={backupRunToast.status}
+          message={backupRunToast.message}
+        />
       ) : null}
 
       {backupConfigRendered ? (
