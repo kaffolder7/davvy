@@ -1,8 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect x="6" y="6" width="52" height="52" rx="14" fill="#ffeecf"/>
-  <path d="M22 34l12-10 10 8" fill="none" stroke="#0f172a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="22" cy="34" r="6" fill="#d8f2ee" stroke="#0f172a" stroke-width="3"/>
-  <circle cx="34" cy="24" r="6" fill="#d8f2ee" stroke="#0f172a" stroke-width="3"/>
-  <circle cx="44" cy="32" r="6" fill="#d8f2ee" stroke="#0f172a" stroke-width="3"/>
-  <path d="M24 44h16" stroke="#0f172a" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 52 52">
+    <defs>
+        <style>
+        .st0{fill:#ffeecf}
+        .st1{fill:#0f172a}
+        .st2{fill:#d8f2ee}
+        .st3{fill:#0f172a}
+
+        @media (prefers-color-scheme: dark) {
+            .st0{fill:#0f172a}
+            .st1{fill:#d8f2ee}
+            .st2{fill:#1f2937}
+            .st3{fill:#ffeecf}
+        }
+
+        @media (prefers-color-scheme: light) {
+            .st0{fill:#ffeecf}
+            .st1{fill:#0f172a}
+            .st2{fill:#d8f2ee}
+            .st3{fill:#0f172a}
+        }
+        </style>
+    </defs>
+    <path d="M0 0h52v52H0z" class="st0"/><path d="M16 30c-.57 0-1.14-.25-1.54-.72a2 2 0 0 1 .26-2.82l12-10a1.99 1.99 0 0 1 2.53-.02l10 8a2 2 0 0 1 .31 2.81 2 2 0 0 1-2.81.31l-8.73-6.98-10.75 8.95c-.37.31-.83.46-1.28.46Z" class="st3"/><circle cx="16" cy="28" r="6" class="st2"/><path d="M16 35.5c-4.14 0-7.5-3.36-7.5-7.5s3.36-7.5 7.5-7.5 7.5 3.36 7.5 7.5-3.36 7.5-7.5 7.5m0-12c-2.48 0-4.5 2.02-4.5 4.5s2.02 4.5 4.5 4.5 4.5-2.02 4.5-4.5-2.02-4.5-4.5-4.5" class="st1"/><circle cx="28" cy="18" r="6" class="st2"/><path d="M28 25.5c-4.14 0-7.5-3.36-7.5-7.5s3.36-7.5 7.5-7.5 7.5 3.36 7.5 7.5-3.36 7.5-7.5 7.5m0-12c-2.48 0-4.5 2.02-4.5 4.5s2.02 4.5 4.5 4.5 4.5-2.02 4.5-4.5-2.02-4.5-4.5-4.5" class="st1"/><circle cx="38" cy="26" r="6" class="st2"/><path d="M38 33.5c-4.14 0-7.5-3.36-7.5-7.5s3.36-7.5 7.5-7.5 7.5 3.36 7.5 7.5-3.36 7.5-7.5 7.5m0-12c-2.48 0-4.5 2.02-4.5 4.5s2.02 4.5 4.5 4.5 4.5-2.02 4.5-4.5-2.02-4.5-4.5-4.5" class="st1"/><g style="isolation:isolate;opacity:.95"><path d="M18 38h16"/><path d="M34 40H18c-1.1 0-2-.9-2-2s.9-2 2-2h16c1.1 0 2 .9 2 2s-.9 2-2 2" class="st3"/></g>
 </svg>
