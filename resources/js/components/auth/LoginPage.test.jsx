@@ -55,10 +55,6 @@ function buildProps(overrides = {}) {
       }),
     },
     extractError: vi.fn((_, fallback) => fallback),
-    parseSponsorshipConfig: vi.fn(() => ({
-      enabled: true,
-      links: [{ name: "GitHub Sponsors", url: "https://example.com" }],
-    })),
     AuthShell: AuthShellStub,
     Field: FieldStub,
     ...overrides,
@@ -94,10 +90,6 @@ describe("LoginPage", () => {
         password: "secret123",
       }),
     );
-    expect(props.parseSponsorshipConfig).toHaveBeenCalledWith({
-      enabled: true,
-      links: [{ name: "GitHub Sponsors", url: "https://example.com" }],
-    });
     expect(props.auth.setAuth).toHaveBeenCalledWith(
       expect.objectContaining({
         loading: false,
@@ -110,6 +102,10 @@ describe("LoginPage", () => {
         davCompatibilityModeEnabled: false,
         contactManagementEnabled: true,
         contactChangeModerationEnabled: true,
+        sponsorship: {
+          enabled: true,
+          links: [{ name: "GitHub Sponsors", url: "https://example.com" }],
+        },
       }),
     );
     expect(screen.getByText("Dashboard Home")).toBeInTheDocument();
