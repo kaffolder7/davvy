@@ -21,8 +21,11 @@ import RowReorderControls from "./components/contacts/RowReorderControls";
 import RelatedNameEditorComponent from "./components/contacts/RelatedNameEditor";
 import { useRowReorder } from "./components/contacts/useRowReorder";
 import ResourcePanelComponent from "./components/dashboard/ResourcePanel";
+import DashboardOverviewCardsComponent from "./components/dashboard/DashboardOverviewCards";
+import DashboardSharingPanelComponent from "./components/dashboard/DashboardSharingPanel";
 import ContactChangeQueuePageComponent from "./components/queue/ContactChangeQueuePage";
 import AppShellComponent from "./components/layout/AppShell";
+import ProfilePageComponent from "./components/profile/ProfilePage";
 
 function fileStem(value, fallback = "export") {
   const stem = String(value ?? "")
@@ -1003,24 +1006,7 @@ function DashboardPage({ auth, theme }) {
           </p>
         </div>
       ) : null}
-      <section className="fade-up grid gap-4 md:grid-cols-3">
-        <InfoCard
-          title="DAV Endpoint"
-          value={`${window.location.origin}/dav`}
-          helper="Use this URL in client connection settings."
-          copyable
-        />
-        <InfoCard
-          title="Principal"
-          value={`principals/${auth.user.id}`}
-          helper="Autodiscovery may resolve this automatically."
-        />
-        <InfoCard
-          title="Role"
-          value={auth.user.role.toUpperCase()}
-          helper="Admins can manage users and cross-user sharing."
-        />
-      </section>
+      <DashboardOverviewCardsComponent auth={auth} InfoCard={InfoCard} />
 
       {error ? (
         <div className="surface mt-4 rounded-2xl p-3 text-sm text-app-danger">
@@ -1105,110 +1091,16 @@ function DashboardPage({ auth, theme }) {
       ) : null}
 
       {!loading && data.sharing.can_manage ? (
-        <section className="surface mt-6 rounded-3xl p-6">
-          <h2 className="text-xl font-semibold text-app-strong">
-            Share Your Resources
-          </h2>
-          <p className="mt-1 text-sm text-app-muted">
-            Grant read-only, editor, or admin access for resources you own and
-            marked as sharable. Admin access includes collection delete rights.
-          </p>
-          <form className="mt-4 grid gap-3 md:grid-cols-4" onSubmit={saveShare}>
-            <select
-              className="input"
-              value={shareForm.resource_type}
-              onChange={(event) =>
-                setShareForm({
-                  ...shareForm,
-                  resource_type: event.target.value,
-                  resource_id: "",
-                })
-              }
-            >
-              <option value="calendar">Calendar</option>
-              <option value="address_book">Address Book</option>
-            </select>
-            <select
-              className="input"
-              value={shareForm.resource_id}
-              onChange={(event) =>
-                setShareForm({ ...shareForm, resource_id: event.target.value })
-              }
-              required
-            >
-              <option value="">Select sharable resource</option>
-              {shareableResourceOptions.map((resource) => (
-                <option key={resource.id} value={resource.id}>
-                  {resource.display_name}
-                </option>
-              ))}
-            </select>
-            <select
-              className="input"
-              value={shareForm.shared_with_id}
-              onChange={(event) =>
-                setShareForm({
-                  ...shareForm,
-                  shared_with_id: event.target.value,
-                })
-              }
-              required
-            >
-              <option value="">Select user</option>
-              {data.sharing.targets.map((target) => (
-                <option key={target.id} value={target.id}>
-                  {target.name} ({target.email})
-                </option>
-              ))}
-            </select>
-            <div className="flex gap-2">
-              <select
-                className="input"
-                value={shareForm.permission}
-                onChange={(event) =>
-                  setShareForm({ ...shareForm, permission: event.target.value })
-                }
-              >
-                <option value="read_only">General (read-only)</option>
-                <option value="editor">Full edit (no delete)</option>
-                <option value="admin">Admin (full edit + delete)</option>
-              </select>
-              <button className="btn" type="submit">
-                Share
-              </button>
-            </div>
-          </form>
-
-          <div className="mt-5 space-y-2">
-            {data.sharing.outgoing.length === 0 ? (
-              <p className="text-sm text-app-faint">No outgoing shares yet.</p>
-            ) : (
-              data.sharing.outgoing.map((share) => (
-                <div
-                  key={share.id}
-                  className="rounded-xl border border-app-edge bg-app-surface p-3 text-sm"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold text-app-strong">
-                      {share.resource_type} #{share.resource_id}
-                    </p>
-                    <PermissionBadge permission={share.permission} />
-                  </div>
-                  <p className="text-app-muted">
-                    Shared with: {share.shared_with?.name} (
-                    {share.shared_with?.email})
-                  </p>
-                  <button
-                    className="mt-2 text-xs font-semibold text-app-danger"
-                    onClick={() => deleteShare(share.id)}
-                  >
-                    Revoke
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
+        <DashboardSharingPanelComponent
+          shareForm={shareForm}
+          setShareForm={setShareForm}
+          shareableResourceOptions={shareableResourceOptions}
+          targets={data.sharing.targets}
+          outgoing={data.sharing.outgoing}
+          onSaveShare={saveShare}
+          onDeleteShare={deleteShare}
+          PermissionBadge={PermissionBadge}
+        />
       ) : null}
 
       {!loading ? (
@@ -5729,131 +5621,16 @@ function AdminPage({ auth, theme }) {
 }
 
 function ProfilePage({ auth, theme }) {
-  const [passwordSubmitting, setPasswordSubmitting] = useState(false);
-  const [passwordError, setPasswordError] = useState("");
-  const [passwordSuccess, setPasswordSuccess] = useState("");
-  const [passwordForm, setPasswordForm] = useState({
-    current_password: "",
-    password: "",
-    password_confirmation: "",
-  });
-
-  const changePassword = async (event) => {
-    event.preventDefault();
-    setPasswordSubmitting(true);
-    setPasswordError("");
-    setPasswordSuccess("");
-
-    try {
-      await api.patch("/api/auth/password", passwordForm);
-      setPasswordSuccess(
-        "Password updated. Use your new password for app login and DAV clients.",
-      );
-      setPasswordForm({
-        current_password: "",
-        password: "",
-        password_confirmation: "",
-      });
-    } catch (err) {
-      setPasswordError(extractError(err, "Unable to update password."));
-    } finally {
-      setPasswordSubmitting(false);
-    }
-  };
-
   return (
-    <AppShell auth={auth} theme={theme}>
-      <section className="fade-up grid gap-4 md:grid-cols-3">
-        <InfoCard
-          title="Name"
-          value={auth.user.name}
-          helper="Displayed to other users when sharing resources."
-        />
-        <InfoCard
-          title="Email"
-          value={auth.user.email}
-          helper="Used for web sign-in and DAV clients."
-        />
-        <InfoCard
-          title="Role"
-          value={auth.user.role.toUpperCase()}
-          helper="Access level for administrative features."
-        />
-      </section>
-
-      <section className="surface mt-6 rounded-3xl p-6">
-        <h2 className="text-xl font-semibold text-app-strong">
-          Change Password
-        </h2>
-        <p className="mt-1 text-sm text-app-muted">
-          Change your password for both web access and DAV client connections.
-        </p>
-        <form
-          className="mt-4 grid gap-3 md:grid-cols-3"
-          onSubmit={changePassword}
-        >
-          <Field label="Current password">
-            <input
-              className="input"
-              type="password"
-              value={passwordForm.current_password}
-              onChange={(event) =>
-                setPasswordForm({
-                  ...passwordForm,
-                  current_password: event.target.value,
-                })
-              }
-              required
-            />
-          </Field>
-          <Field label="New password">
-            <input
-              className="input"
-              type="password"
-              value={passwordForm.password}
-              onChange={(event) =>
-                setPasswordForm({
-                  ...passwordForm,
-                  password: event.target.value,
-                })
-              }
-              required
-            />
-          </Field>
-          <Field label="Confirm new password">
-            <input
-              className="input"
-              type="password"
-              value={passwordForm.password_confirmation}
-              onChange={(event) =>
-                setPasswordForm({
-                  ...passwordForm,
-                  password_confirmation: event.target.value,
-                })
-              }
-              required
-            />
-          </Field>
-
-          {passwordError ? (
-            <p className="md:col-span-3 text-sm text-app-danger">
-              {passwordError}
-            </p>
-          ) : null}
-          {passwordSuccess ? (
-            <p className="md:col-span-3 text-sm text-app-accent">
-              {passwordSuccess}
-            </p>
-          ) : null}
-
-          <div className="md:col-span-3 flex flex-wrap items-center gap-2">
-            <button className="btn" disabled={passwordSubmitting} type="submit">
-              {passwordSubmitting ? "Updating password..." : "Update Password"}
-            </button>
-          </div>
-        </form>
-      </section>
-    </AppShell>
+    <ProfilePageComponent
+      auth={auth}
+      theme={theme}
+      api={api}
+      extractError={extractError}
+      AppShell={AppShell}
+      InfoCard={InfoCard}
+      Field={Field}
+    />
   );
 }
 
