@@ -9,7 +9,7 @@ This directory contains a GitHub Pages-friendly landing site for Davvy.
 - `styles.css`: Shared styling (aligned with Davvy app tokens)
 - `script.js`: Shared theme toggle logic (same `davvy-theme` key)
 - `favicon.svg`: Brand icon
-- `SpaceGrotesk-VariableFont_wght.ttf`: Optional local font asset (currently unused by the landing pages)
+- `SpaceGrotesk-VariableFont_wght.(ttf/woff2)`: Local font asset
 
 ## GitHub Pages Options
 

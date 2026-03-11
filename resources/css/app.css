@@ -5,8 +5,11 @@
   font-style: normal;
   font-weight: 400 500 700;
   font-display: swap;
-  src: url("../fonts/space-grotesk/SpaceGrotesk-VariableFont_wght.ttf")
-    format("truetype");
+  src:
+    url("../fonts/space-grotesk/SpaceGrotesk-VariableFont_wght.woff2")
+      format("woff2"),
+    url("../fonts/space-grotesk/SpaceGrotesk-VariableFont_wght.ttf")
+      format("truetype");
 }
 
 :root {
