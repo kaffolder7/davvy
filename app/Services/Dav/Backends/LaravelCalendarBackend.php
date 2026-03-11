@@ -130,6 +130,11 @@ class LaravelCalendarBackend extends AbstractBackend implements \Sabre\CalDAV\Ba
 
         $this->assertDeletableCalendar($calendar);
 
+        ResourceShare::query()
+            ->where('resource_type', ShareResourceType::Calendar)
+            ->where('resource_id', $calendar->id)
+            ->delete();
+
         $calendar->delete();
     }
 
