@@ -1607,7 +1607,7 @@ function formatRelatedLabelOptionLabel(value) {
     .join(" ");
 }
 
-function buildDerivedRelatedLabelOptions(contacts) {
+export function buildDerivedRelatedLabelOptions(contacts) {
   if (!Array.isArray(contacts) || contacts.length === 0) {
     return [];
   }
@@ -1645,7 +1645,7 @@ function buildDerivedRelatedLabelOptions(contacts) {
     }));
 }
 
-function buildRelatedNameLabelOptions(contacts, savedCustomLabels = []) {
+export function buildRelatedNameLabelOptions(contacts, savedCustomLabels = []) {
   const baseOptions = buildLabelOptions(RELATED_LABEL_OPTIONS, savedCustomLabels);
   const derivedOptions = buildDerivedRelatedLabelOptions(contacts);
   if (derivedOptions.length === 0) {
@@ -4082,7 +4082,7 @@ function LabeledValueEditor({
   );
 }
 
-function RelatedNameEditor({ rows, setRows, contactOptions, labelOptions }) {
+export function RelatedNameEditor({ rows, setRows, contactOptions, labelOptions }) {
   const safeRows = Array.isArray(rows) ? rows : [];
   const safeLabelOptions =
     Array.isArray(labelOptions) && labelOptions.length > 0
