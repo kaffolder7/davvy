@@ -4,15 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Enums\ShareResourceType;
 use App\Models\Calendar;
-use App\Models\ResourceShare;
 use App\Services\Dav\DavSyncService;
+use App\Services\ResourceDeletionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class CalendarController extends Controller
 {
-    public function __construct(private readonly DavSyncService $syncService) {}
+    public function __construct(
+        private readonly DavSyncService $syncService,
+        private readonly ResourceDeletionService $resourceDeletion,
+    ) {}
 
     public function store(Request $request): JsonResponse
     {
@@ -68,12 +71,7 @@ class CalendarController extends Controller
             abort(422, 'Default calendars cannot be deleted.');
         }
 
-        ResourceShare::query()
-            ->where('resource_type', ShareResourceType::Calendar->value)
-            ->where('resource_id', $calendar->id)
-            ->delete();
-
-        $calendar->delete();
+        $this->resourceDeletion->deleteCalendar($calendar);
 
         return response()->json(['ok' => true]);
     }

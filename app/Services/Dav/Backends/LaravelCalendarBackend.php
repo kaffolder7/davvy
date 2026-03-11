@@ -11,6 +11,7 @@ use App\Services\Dav\DavSyncService;
 use App\Services\Dav\IcsValidator;
 use App\Services\DavRequestContext;
 use App\Services\PrincipalUriService;
+use App\Services\ResourceDeletionService;
 use App\Services\ResourceAccessService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
@@ -30,6 +31,7 @@ class LaravelCalendarBackend extends AbstractBackend implements \Sabre\CalDAV\Ba
         private readonly DavRequestContext $davContext,
         private readonly IcsValidator $icsValidator,
         private readonly DavSyncService $syncService,
+        private readonly ResourceDeletionService $resourceDeletion,
     ) {}
 
     public function getCalendarsForUser($principalUri): array
@@ -130,12 +132,7 @@ class LaravelCalendarBackend extends AbstractBackend implements \Sabre\CalDAV\Ba
 
         $this->assertDeletableCalendar($calendar);
 
-        ResourceShare::query()
-            ->where('resource_type', ShareResourceType::Calendar)
-            ->where('resource_id', $calendar->id)
-            ->delete();
-
-        $calendar->delete();
+        $this->resourceDeletion->deleteCalendar($calendar);
     }
 
     public function getCalendarObjects($calendarId): array

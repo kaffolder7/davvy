@@ -15,6 +15,7 @@ use App\Services\Dav\DavSyncService;
 use App\Services\Dav\VCardValidator;
 use App\Services\DavRequestContext;
 use App\Services\PrincipalUriService;
+use App\Services\ResourceDeletionService;
 use App\Services\ResourceAccessService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
@@ -39,6 +40,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
         private readonly ManagedContactSyncService $managedContactSync,
         private readonly ContactMilestoneCalendarService $milestoneCalendarService,
         private readonly ContactChangeRequestService $changeRequestService,
+        private readonly ResourceDeletionService $resourceDeletion,
     ) {}
 
     public function getAddressBooksForUser($principalUri): array
@@ -128,14 +130,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
 
         $this->assertDeletableAddressBook($addressBook);
 
-        $this->milestoneCalendarService->handleAddressBookDeleted($addressBook);
-        $this->mirrorService->handleSourceAddressBookDeleted($addressBook->id);
-        $this->managedContactSync->syncAddressBookDeleted($addressBook);
-        ResourceShare::query()
-            ->where('resource_type', ShareResourceType::AddressBook)
-            ->where('resource_id', $addressBook->id)
-            ->delete();
-        $addressBook->delete();
+        $this->resourceDeletion->deleteAddressBook($addressBook);
     }
 
     public function getCards($addressBookId): array
