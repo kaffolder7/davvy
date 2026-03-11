@@ -36,6 +36,9 @@ class AdminUserManagementTest extends TestCase
 
         $createdUser = User::query()->where('email', 'managed@example.com')->firstOrFail();
 
+        $this->assertTrue((bool) $createdUser->is_approved);
+        $this->assertSame($admin->id, $createdUser->approved_by);
+        $this->assertNotNull($createdUser->approved_at);
         $this->assertDatabaseHas('calendars', ['owner_id' => $createdUser->id, 'is_default' => true]);
         $this->assertDatabaseHas('address_books', ['owner_id' => $createdUser->id, 'is_default' => true]);
     }
@@ -100,6 +103,103 @@ class AdminUserManagementTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('enabled', false);
+    }
+
+    public function test_enabling_public_registration_defaults_approval_requirement_on_first_toggle(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this
+            ->actingAs($admin)
+            ->patchJson('/api/admin/settings/registration', [
+                'enabled' => true,
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('enabled', true);
+        $response->assertJsonPath('require_approval', true);
+    }
+
+    public function test_admin_can_toggle_registration_approval_setting(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this
+            ->actingAs($admin)
+            ->patchJson('/api/admin/settings/registration-approval', [
+                'enabled' => true,
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('enabled', true);
+    }
+
+    public function test_approving_pending_user_marks_user_approved_and_provisions_defaults(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $pendingUser = User::factory()->create([
+            'is_approved' => false,
+            'approved_at' => null,
+            'approved_by' => null,
+        ]);
+
+        $this->assertDatabaseMissing('calendars', ['owner_id' => $pendingUser->id, 'is_default' => true]);
+        $this->assertDatabaseMissing('address_books', ['owner_id' => $pendingUser->id, 'is_default' => true]);
+
+        $this->actingAs($admin)
+            ->patchJson('/api/admin/users/'.$pendingUser->id.'/approve')
+            ->assertOk()
+            ->assertJsonPath('is_approved', true);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $pendingUser->id,
+            'is_approved' => true,
+            'approved_by' => $admin->id,
+        ]);
+        $this->assertDatabaseHas('calendars', ['owner_id' => $pendingUser->id, 'is_default' => true]);
+        $this->assertDatabaseHas('address_books', ['owner_id' => $pendingUser->id, 'is_default' => true]);
+    }
+
+    public function test_admin_can_bulk_approve_pending_users(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $firstPending = User::factory()->create([
+            'is_approved' => false,
+            'approved_at' => null,
+            'approved_by' => null,
+        ]);
+        $secondPending = User::factory()->create([
+            'is_approved' => false,
+            'approved_at' => null,
+            'approved_by' => null,
+        ]);
+        User::factory()->create([
+            'is_approved' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->patchJson('/api/admin/users/approve-pending')
+            ->assertOk()
+            ->assertJsonPath('approved_count', 2);
+
+        foreach ([$firstPending, $secondPending] as $pendingUser) {
+            $this->assertDatabaseHas('users', [
+                'id' => $pendingUser->id,
+                'is_approved' => true,
+                'approved_by' => $admin->id,
+            ]);
+            $this->assertDatabaseHas('calendars', ['owner_id' => $pendingUser->id, 'is_default' => true]);
+            $this->assertDatabaseHas('address_books', ['owner_id' => $pendingUser->id, 'is_default' => true]);
+        }
+    }
+
+    public function test_regular_user_cannot_bulk_approve_pending_users(): void
+    {
+        $regular = User::factory()->create();
+
+        $this->actingAs($regular)
+            ->patchJson('/api/admin/users/approve-pending')
+            ->assertForbidden();
     }
 
     public function test_admin_can_toggle_dav_compatibility_mode_setting(): void

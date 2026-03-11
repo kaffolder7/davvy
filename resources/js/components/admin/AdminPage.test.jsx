@@ -36,21 +36,25 @@ const RECOMMENDED_BACKUP_RETENTION = {
   yearly: 3,
 };
 
-function buildApi() {
+function buildApi({ users } = {}) {
+  const usersData = Array.isArray(users)
+    ? users
+    : [
+        {
+          id: 2,
+          name: "Admin",
+          email: "admin@example.com",
+          role: "admin",
+          calendars_count: 1,
+          address_books_count: 1,
+        },
+      ];
+
   const get = vi.fn((url) => {
     if (url === "/api/admin/users") {
       return Promise.resolve({
         data: {
-          data: [
-            {
-              id: 2,
-              name: "Admin",
-              email: "admin@example.com",
-              role: "admin",
-              calendars_count: 1,
-              address_books_count: 1,
-            },
-          ],
+          data: usersData,
         },
       });
     }
@@ -111,7 +115,20 @@ function buildApi() {
 
   const patch = vi.fn((url, payload) => {
     if (url === "/api/admin/settings/registration") {
+      return Promise.resolve({
+        data: {
+          enabled: !!payload.enabled,
+          require_approval: !!payload.enabled,
+        },
+      });
+    }
+
+    if (url === "/api/admin/settings/registration-approval") {
       return Promise.resolve({ data: { enabled: !!payload.enabled } });
+    }
+
+    if (url === "/api/admin/users/approve-pending") {
+      return Promise.resolve({ data: { approved_count: 1 } });
     }
 
     if (url === "/api/admin/settings/contact-change-retention") {
@@ -137,6 +154,7 @@ function buildProps(overrides = {}) {
       role: "admin",
     },
     registrationEnabled: false,
+    registrationApprovalRequired: false,
     ownerShareManagementEnabled: false,
     davCompatibilityModeEnabled: false,
     contactManagementEnabled: true,
@@ -233,6 +251,17 @@ describe("AdminPage", () => {
 
     expect(props.auth.setAuth).toHaveBeenCalledTimes(1);
 
+    await user.click(
+      screen.getByRole("button", { name: /require registration approval/i }),
+    );
+
+    await waitFor(() =>
+      expect(props.api.patch).toHaveBeenCalledWith(
+        "/api/admin/settings/registration-approval",
+        { enabled: false },
+      ),
+    );
+
     const retentionInput = screen.getAllByRole("spinbutton")[0];
     await user.clear(retentionInput);
     await user.type(retentionInput, "120");
@@ -244,5 +273,68 @@ describe("AdminPage", () => {
         { days: 120 },
       ),
     );
+  });
+
+  it("optionally bulk-approves pending users when disabling registration approval", async () => {
+    const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const props = buildProps({
+      auth: {
+        user: {
+          id: 1,
+          name: "Owner",
+          role: "admin",
+        },
+        registrationEnabled: true,
+        registrationApprovalRequired: true,
+        ownerShareManagementEnabled: false,
+        davCompatibilityModeEnabled: false,
+        contactManagementEnabled: true,
+        contactChangeModerationEnabled: true,
+        setAuth: vi.fn(),
+      },
+      api: buildApi({
+        users: [
+          {
+            id: 3,
+            name: "Pending User",
+            email: "pending@example.com",
+            role: "regular",
+            is_approved: false,
+            calendars_count: 0,
+            address_books_count: 0,
+          },
+        ],
+      }),
+    });
+
+    render(<AdminPage {...props} />);
+
+    await waitFor(() =>
+      expect(props.api.get).toHaveBeenCalledWith("/api/admin/users"),
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /require registration approval/i }),
+    );
+
+    await waitFor(() =>
+      expect(props.api.patch).toHaveBeenCalledWith(
+        "/api/admin/settings/registration-approval",
+        { enabled: false },
+      ),
+    );
+
+    await waitFor(() =>
+      expect(props.api.patch).toHaveBeenCalledWith(
+        "/api/admin/users/approve-pending",
+      ),
+    );
+
+    expect(
+      await screen.findByText("Approved 1 pending account(s)."),
+    ).toBeInTheDocument();
+    expect(confirmSpy).toHaveBeenCalledTimes(1);
+    confirmSpy.mockRestore();
   });
 });
