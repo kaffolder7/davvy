@@ -506,6 +506,7 @@ class AdminController extends Controller
         $mode = (string) ($data['mode'] ?? 'merge');
         $dryRun = filter_var($request->input('dry_run', false), FILTER_VALIDATE_BOOLEAN);
         $fallbackOwnerId = array_key_exists('fallback_owner_id', $data)
+            && $data['fallback_owner_id'] !== null
             ? (int) $data['fallback_owner_id']
             : (int) $request->user()->id;
 

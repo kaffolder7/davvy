@@ -7,7 +7,11 @@ use App\Models\AppSetting;
 use App\Models\Calendar;
 use App\Models\CalendarObject;
 use App\Models\Card;
+use App\Models\Contact;
+use App\Models\ContactAddressBookAssignment;
 use App\Models\User;
+use App\Services\Dav\Backends\LaravelCardDavBackend;
+use App\Services\DavRequestContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Config;
@@ -309,6 +313,109 @@ class BackupManagementTest extends TestCase
         $this->assertGreaterThan(0, AddressBook::query()->count());
         $this->assertGreaterThan(0, CalendarObject::query()->count());
         $this->assertGreaterThan(0, Card::query()->count());
+    }
+
+    public function test_admin_restore_endpoint_treats_null_fallback_owner_id_as_current_admin(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $this->seedBackupData();
+
+        $archivePath = $this->createBackupArchiveAt(
+            directory: storage_path('framework/testing/backups-restore-null-fallback'),
+            date: [2026, 3, 9, 2, 30, 0],
+        );
+
+        $archivedOwnerId = (int) Calendar::query()
+            ->where('uri', 'household-calendar')
+            ->value('owner_id');
+        $this->assertNotSame($admin->id, $archivedOwnerId);
+
+        CalendarObject::query()->delete();
+        Card::query()->delete();
+        Calendar::query()->delete();
+        AddressBook::query()->delete();
+        User::query()->whereKey($archivedOwnerId)->delete();
+
+        $this->assertDatabaseMissing('users', ['id' => $archivedOwnerId]);
+
+        $upload = UploadedFile::fake()->createWithContent(
+            'restore.zip',
+            (string) file_get_contents($archivePath),
+        );
+
+        $this->actingAs($admin)
+            ->post('/api/admin/backups/restore', [
+                'backup' => $upload,
+                'mode' => 'merge',
+                'dry_run' => '0',
+                'fallback_owner_id' => null,
+            ])
+            ->assertOk()
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('summary.fallback_owner_id', $admin->id);
+
+        $this->assertGreaterThan(0, Calendar::query()->where('owner_id', $admin->id)->count());
+        $this->assertGreaterThan(0, AddressBook::query()->where('owner_id', $admin->id)->count());
+    }
+
+    public function test_replace_restore_removes_contacts_orphaned_by_address_book_deletion(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $this->seedBackupData();
+
+        $archivePath = $this->createBackupArchiveAt(
+            directory: storage_path('framework/testing/backups-restore-replace-contact-cleanup'),
+            date: [2026, 3, 10, 2, 30, 0],
+        );
+
+        $ownerId = (int) Calendar::query()
+            ->where('uri', 'household-calendar')
+            ->value('owner_id');
+        $owner = User::query()->findOrFail($ownerId);
+
+        $extraAddressBook = AddressBook::factory()->create([
+            'owner_id' => $owner->id,
+            'uri' => 'replace-cleanup-extra-book',
+            'display_name' => 'Replace Cleanup Extra Book',
+        ]);
+
+        app(DavRequestContext::class)->setAuthenticatedUser($owner);
+        app(LaravelCardDavBackend::class)->createCard(
+            $extraAddressBook->id,
+            'replace-cleanup-extra-card.vcf',
+            "BEGIN:VCARD\nVERSION:4.0\nFN:Replace Cleanup Contact\nN:Contact;Cleanup Replace;;;\nUID:replace-cleanup-extra-uid\nEMAIL:replace.cleanup.extra@example.com\nEND:VCARD"
+        );
+
+        $extraCard = Card::query()
+            ->where('address_book_id', $extraAddressBook->id)
+            ->where('uri', 'replace-cleanup-extra-card.vcf')
+            ->firstOrFail();
+        $extraAssignment = ContactAddressBookAssignment::query()
+            ->where('card_id', $extraCard->id)
+            ->firstOrFail();
+        $extraContactId = (int) $extraAssignment->contact_id;
+
+        $this->assertDatabaseHas('contacts', ['id' => $extraContactId]);
+
+        $upload = UploadedFile::fake()->createWithContent(
+            'restore.zip',
+            (string) file_get_contents($archivePath),
+        );
+
+        $this->actingAs($admin)
+            ->post('/api/admin/backups/restore', [
+                'backup' => $upload,
+                'mode' => 'replace',
+                'dry_run' => '0',
+            ])
+            ->assertOk()
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('mode', 'replace');
+
+        $this->assertDatabaseMissing('address_books', ['id' => $extraAddressBook->id]);
+        $this->assertDatabaseMissing('contacts', ['id' => $extraContactId]);
+        $this->assertDatabaseMissing('contact_address_book_assignments', ['id' => $extraAssignment->id]);
+        $this->assertNotNull(Contact::query()->where('owner_id', $owner->id)->first());
     }
 
     public function test_backup_restore_command_supports_dry_run_then_apply(): void

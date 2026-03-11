@@ -6,6 +6,7 @@ use App\Enums\ShareResourceType;
 use App\Models\AddressBook;
 use App\Services\AddressBookMirrorService;
 use App\Services\Contacts\ContactMilestoneCalendarService;
+use App\Services\Contacts\ManagedContactSyncService;
 use App\Services\Dav\DavSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ class AddressBookController extends Controller
         private readonly DavSyncService $syncService,
         private readonly AddressBookMirrorService $mirrorService,
         private readonly ContactMilestoneCalendarService $milestoneCalendarService,
+        private readonly ManagedContactSyncService $managedContactSync,
     ) {}
 
     public function store(Request $request): JsonResponse
@@ -73,6 +75,7 @@ class AddressBookController extends Controller
 
         $this->milestoneCalendarService->handleAddressBookDeleted($addressBook);
         $this->mirrorService->handleSourceAddressBookDeleted($addressBook->id);
+        $this->managedContactSync->syncAddressBookDeleted($addressBook);
         $addressBook->delete();
 
         return response()->json(['ok' => true]);
