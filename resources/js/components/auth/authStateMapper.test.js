@@ -12,6 +12,7 @@ describe("authStateMapper", () => {
       loading: true,
       user: null,
       registrationEnabled: false,
+      registrationApprovalRequired: false,
       ownerShareManagementEnabled: false,
       davCompatibilityModeEnabled: false,
       contactManagementEnabled: false,
@@ -26,6 +27,7 @@ describe("authStateMapper", () => {
       loading: false,
       user: null,
       registrationEnabled: false,
+      registrationApprovalRequired: false,
       ownerShareManagementEnabled: false,
       davCompatibilityModeEnabled: false,
       contactManagementEnabled: false,
@@ -68,6 +70,7 @@ describe("authStateMapper", () => {
       buildAuthStateFromPayload(
         {
           registration_enabled: 1,
+          registration_approval_required: 1,
           owner_share_management_enabled: true,
           dav_compatibility_mode_enabled: 0,
           contact_management_enabled: true,
@@ -83,6 +86,7 @@ describe("authStateMapper", () => {
       loading: false,
       user: { id: 8, role: "admin" },
       registrationEnabled: true,
+      registrationApprovalRequired: true,
       ownerShareManagementEnabled: true,
       davCompatibilityModeEnabled: false,
       contactManagementEnabled: true,

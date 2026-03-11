@@ -440,6 +440,7 @@ function AdminPage({ auth, theme }) {
       FullPageState={FullPageState}
       Field={Field}
       PermissionBadge={PermissionBadge}
+      CheckIcon={CheckIcon}
       buildTimezoneGroups={buildTimezoneGroups}
       parseBackupScheduleTimes={parseBackupScheduleTimes}
       isRecommendedBackupRetention={isRecommendedBackupRetention}

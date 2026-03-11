@@ -23,7 +23,7 @@ class RegistrationSettingsTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_registration_creates_default_calendar_and_address_book_when_enabled(): void
+    public function test_registration_creates_pending_account_without_session_when_approval_is_required(): void
     {
         app(RegistrationSettingsService::class)->setPublicRegistrationEnabled(true);
 
@@ -34,10 +34,40 @@ class RegistrationSettingsTest extends TestCase
             'password_confirmation' => 'Password123!',
         ]);
 
+        $response->assertStatus(202);
+        $response->assertJsonPath('registration_pending_approval', true);
+        $response->assertJsonPath('registration_approval_required', true);
+
+        $user = User::query()->where('email', 'new-user@example.com')->firstOrFail();
+
+        $this->assertFalse($user->is_approved);
+        $this->assertGuest();
+        $this->assertDatabaseCount('calendars', 0);
+        $this->assertDatabaseCount('address_books', 0);
+    }
+
+    public function test_registration_creates_default_calendar_and_address_book_when_approval_requirement_is_disabled(): void
+    {
+        $settings = app(RegistrationSettingsService::class);
+        $settings->setPublicRegistrationEnabled(true);
+        $settings->setPublicRegistrationApprovalRequired(false);
+
+        $response = $this->postJson('/api/auth/register', [
+            'name' => 'New User',
+            'email' => 'new-user@example.com',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+        ]);
+
         $response->assertCreated();
+        $response->assertJsonPath('registration_approval_required', false);
 
-        $userId = $response->json('user.id');
+        $userId = (int) $response->json('user.id');
 
+        $this->assertDatabaseHas('users', [
+            'id' => $userId,
+            'is_approved' => true,
+        ]);
         $this->assertDatabaseCount('calendars', 1);
         $this->assertDatabaseCount('address_books', 1);
         $this->assertDatabaseHas('calendars', [
@@ -52,7 +82,9 @@ class RegistrationSettingsTest extends TestCase
 
     public function test_registration_normalizes_email_and_rejects_case_variant_duplicates(): void
     {
-        app(RegistrationSettingsService::class)->setPublicRegistrationEnabled(true);
+        $settings = app(RegistrationSettingsService::class);
+        $settings->setPublicRegistrationEnabled(true);
+        $settings->setPublicRegistrationApprovalRequired(false);
 
         $first = $this->postJson('/api/auth/register', [
             'name' => 'Mixed Case',
@@ -94,6 +126,35 @@ class RegistrationSettingsTest extends TestCase
         $response->assertJsonPath('user.id', $user->id);
     }
 
+    public function test_login_rejects_unapproved_accounts(): void
+    {
+        User::factory()->create([
+            'email' => 'pending@example.com',
+            'password' => 'Password123!',
+            'is_approved' => false,
+            'approved_at' => null,
+            'approved_by' => null,
+        ]);
+
+        $response = $this->postJson('/api/auth/login', [
+            'email' => 'pending@example.com',
+            'password' => 'Password123!',
+        ]);
+
+        $response->assertStatus(403);
+        $response->assertJsonPath('message', 'Your account is pending administrator approval.');
+    }
+
+    public function test_public_config_includes_registration_approval_setting(): void
+    {
+        app(RegistrationSettingsService::class)->setPublicRegistrationApprovalRequired(true);
+
+        $response = $this->getJson('/api/public/config');
+
+        $response->assertOk();
+        $response->assertJsonPath('registration_approval_required', true);
+    }
+
     public function test_public_config_includes_dav_compatibility_mode_setting(): void
     {
         app(RegistrationSettingsService::class)->setDavCompatibilityModeEnabled(true);
@@ -133,6 +194,17 @@ class RegistrationSettingsTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('contact_management_enabled', true);
+    }
+
+    public function test_authenticated_me_payload_includes_registration_approval_setting(): void
+    {
+        $user = User::factory()->create();
+        app(RegistrationSettingsService::class)->setPublicRegistrationApprovalRequired(true);
+
+        $response = $this->actingAs($user)->getJson('/api/auth/me');
+
+        $response->assertOk();
+        $response->assertJsonPath('registration_approval_required', true);
     }
 
     public function test_authenticated_me_payload_includes_contact_change_moderation_setting(): void

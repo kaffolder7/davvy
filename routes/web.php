@@ -90,8 +90,11 @@ Route::middleware('auth')->group(function (): void {
     Route::middleware('admin')->group(function (): void {
         Route::get('/api/admin/users', [AdminController::class, 'users']);
         Route::post('/api/admin/users', [AdminController::class, 'createUser']);
+        Route::patch('/api/admin/users/approve-pending', [AdminController::class, 'approvePendingUsers']);
+        Route::patch('/api/admin/users/{user}/approve', [AdminController::class, 'approveUser']);
         Route::get('/api/admin/resources', [AdminController::class, 'sharableResources']);
         Route::patch('/api/admin/settings/registration', [AdminController::class, 'setRegistrationSetting']);
+        Route::patch('/api/admin/settings/registration-approval', [AdminController::class, 'setRegistrationApprovalSetting']);
         Route::patch('/api/admin/settings/owner-share-management', [AdminController::class, 'setOwnerShareManagementSetting']);
         Route::patch('/api/admin/settings/dav-compatibility-mode', [AdminController::class, 'setDavCompatibilityModeSetting']);
         Route::patch('/api/admin/settings/contact-management', [AdminController::class, 'setContactManagementSetting']);

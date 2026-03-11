@@ -6,7 +6,8 @@ This guide covers day-to-day Davvy usage in the web UI.
 
 - Open the app URL and sign in with email/password.
 - If public registration is enabled, a registration link appears on the login page.
-- New users automatically receive:
+- If registration approval is required, newly registered users must be approved by an admin before they can sign in.
+- Approved users automatically receive:
   - one default calendar
   - one default address book (`contacts`)
 
@@ -115,6 +116,7 @@ Important:
 Admins can:
 - Toggle feature flags:
   - public registration
+  - require registration approval
   - owner sharing
   - DAV compatibility mode
   - contact management
