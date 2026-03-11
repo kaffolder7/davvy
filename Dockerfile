@@ -43,7 +43,7 @@ COPY docker ./docker
 COPY docker/php/conf.d/zz-davvy-production.ini /usr/local/etc/php/conf.d/zz-davvy-production.ini
 COPY docker/php-fpm/zz-davvy-pool.conf /usr/local/etc/php-fpm.d/zz-davvy-pool.conf
 COPY public ./public
-COPY resources ./resources
+COPY resources/views ./resources/views
 COPY routes ./routes
 COPY --from=vendor-prod /app/vendor ./vendor
 

@@ -19,6 +19,18 @@ storage/framework/testing
 .env.*
 !.env.example
 
+# Frontend test sources are not needed for production image builds.
+**/*.test.js
+**/*.test.jsx
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.js
+**/*.spec.jsx
+**/*.spec.ts
+**/*.spec.tsx
+**/__tests__/
+resources/js/test/
+
 docs
 debug
 *.backup*
