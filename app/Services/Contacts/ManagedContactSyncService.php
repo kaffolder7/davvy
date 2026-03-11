@@ -15,7 +15,6 @@ class ManagedContactSyncService
     public function __construct(
         private readonly ContactVCardService $vCardService,
         private readonly ContactMilestoneCalendarService $milestoneCalendarService,
-        private readonly ContactService $contactService,
     ) {}
 
     public function syncCardUpsert(
@@ -190,7 +189,7 @@ class ManagedContactSyncService
 
             $relatedAddressBookIds = [
                 ...$relatedAddressBookIds,
-                ...$this->contactService->syncBidirectionalRelatedNamesForContact(
+                ...$this->contactService()->syncBidirectionalRelatedNamesForContact(
                     $targetContact,
                     $previousPayload,
                 ),
@@ -259,12 +258,17 @@ class ManagedContactSyncService
             return [];
         }
 
-        $relatedAddressBookIds = $this->contactService->removeBidirectionalRelatedNamesForContact(
+        $relatedAddressBookIds = $this->contactService()->removeBidirectionalRelatedNamesForContact(
             $contact,
         );
         $contact->delete();
 
         return $relatedAddressBookIds;
+    }
+
+    private function contactService(): ContactService
+    {
+        return app(ContactService::class);
     }
 
     private function schemaAvailable(): bool
