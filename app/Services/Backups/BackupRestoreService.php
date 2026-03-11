@@ -187,9 +187,12 @@ class BackupRestoreService
                         ->where('owner_id', $ownerId)
                         ->pluck('id')
                         ->all();
-                    $addressBookIds = AddressBook::query()
+                    $addressBooks = AddressBook::query()
                         ->where('owner_id', $ownerId)
+                        ->get();
+                    $addressBookIds = $addressBooks
                         ->pluck('id')
+                        ->map(fn (mixed $id): int => (int) $id)
                         ->all();
 
                     if ($calendarIds !== []) {
@@ -222,6 +225,10 @@ class BackupRestoreService
                             ->where('resource_type', ShareResourceType::AddressBook->value)
                             ->whereIn('resource_id', $addressBookIds)
                             ->delete();
+                    }
+
+                    foreach ($addressBooks as $addressBook) {
+                        $this->managedContactSync->syncAddressBookDeleted($addressBook);
                     }
 
                     AddressBook::query()->where('owner_id', $ownerId)->delete();

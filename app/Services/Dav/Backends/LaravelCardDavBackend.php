@@ -130,6 +130,7 @@ class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Ba
 
         $this->milestoneCalendarService->handleAddressBookDeleted($addressBook);
         $this->mirrorService->handleSourceAddressBookDeleted($addressBook->id);
+        $this->managedContactSync->syncAddressBookDeleted($addressBook);
         $addressBook->delete();
     }
 
