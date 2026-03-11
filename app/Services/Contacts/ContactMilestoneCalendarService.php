@@ -722,11 +722,11 @@ class ContactMilestoneCalendarService
         $label = str_replace(['_', '-'], ' ', Str::lower(trim((string) ($row['label'] ?? ''))));
         $customLabel = str_replace(['_', '-'], ' ', Str::lower(trim((string) ($row['custom_label'] ?? ''))));
 
-        if (preg_match('/\b(spouse|partner|husband|wife)\b/', $label) === 1) {
+        if (preg_match('/\b(spouse|partner|husband|wife|boyfriend|girlfriend|fiance|fiancee)\b/', $label) === 1) {
             return true;
         }
 
-        return preg_match('/\b(spouse|partner|husband|wife)\b/', $customLabel) === 1;
+        return preg_match('/\b(spouse|partner|husband|wife|boyfriend|girlfriend|fiance|fiancee)\b/', $customLabel) === 1;
     }
 
     /**
