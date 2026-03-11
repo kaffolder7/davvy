@@ -27,6 +27,7 @@ describe("useAuthState", () => {
     await waitFor(() =>
       expect(api.get).toHaveBeenCalledWith("/api/auth/me"),
     );
+    await waitFor(() => expect(result.current.auth.loading).toBe(false));
 
     expect(parseSponsorshipConfig).toHaveBeenCalledTimes(1);
     expect(result.current.auth).toEqual(
