@@ -281,6 +281,37 @@ Body:
 
 Admin-created users are marked approved immediately.
 
+#### `DELETE /api/admin/users/{user}`
+Delete a user account.
+
+Body:
+- `confirmation_email` (required): must match the currently authenticated admin email (case-insensitive)
+- `transfer_owner_id` (optional): target user ID to receive owned resources before deletion
+
+Behavior:
+- Without `transfer_owner_id`: deletes the account and owned data.
+- With `transfer_owner_id`: transfers ownership of calendars, address books, and contacts to target user, then deletes the source account.
+- During transfer, conflicting calendar/address-book URIs are suffixed (`-1`, `-2`, ...), and at most one default calendar/address book remains for the target owner.
+- Shares for transferred resources are re-owned by the transfer target; shares where target user was already the recipient are removed.
+
+Delete guards (`422`):
+- typed confirmation email does not match current admin
+- admin attempts to delete own account
+- target account is the last remaining admin
+- `transfer_owner_id` equals deleted user ID
+- contact UID conflicts exist between source and transfer target
+
+Response:
+- `ok`
+- `deleted_user_id`
+- `transferred_to_user_id` (`null` when no transfer requested)
+- `transferred`:
+  - `calendars`
+  - `address_books`
+  - `contacts`
+  - `shares_reassigned`
+  - `shares_removed`
+
 #### `PATCH /api/admin/users/{user}/approve`
 Approve a pending user account.
 
