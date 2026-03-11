@@ -634,6 +634,7 @@ class ContactService
         $currentRows = $this->normalizeRelatedRowsForSync($sourcePayload['related_names'] ?? []);
         $previousRows = $this->normalizeRelatedRowsForSync($previousPayload['related_names'] ?? []);
         $previousLinkedIds = $this->linkedRelatedContactIds($previousRows);
+        $previousActiveLinkedRowsByContactId = $this->ownerScopedLinkedRowsByContactId($sourceContact, $previousRows);
 
         $linkedRowIndices = [];
         foreach ($currentRows as $index => $row) {
@@ -742,22 +743,9 @@ class ContactService
             ];
         }
 
-        $spouseContactIds = [];
-        $propagatedRows = [];
-        foreach ($activeLinkedRowsByContactId as $relatedContactId => $sourceRow) {
-            $canonical = $this->canonicalRelatedLabelForRow($sourceRow);
-            if ($canonical === null) {
-                continue;
-            }
-
-            if (in_array($canonical, self::RELATED_SPOUSE_CANONICAL_LABELS, true)) {
-                $spouseContactIds[$relatedContactId] = $relatedContactId;
-            }
-
-            if (in_array($canonical, self::RELATED_SPOUSE_PROPAGATION_CANONICAL_LABELS, true)) {
-                $propagatedRows[$relatedContactId] = $sourceRow;
-            }
-        }
+        $propagationInputs = $this->spousePropagationInputsFromLinkedRows($activeLinkedRowsByContactId);
+        $spouseContactIds = $propagationInputs['spouse_contact_ids'];
+        $propagatedRows = $propagationInputs['propagated_rows'];
 
         if ($spouseContactIds !== [] && $propagatedRows !== []) {
             foreach (array_values($spouseContactIds) as $spouseContactId) {
@@ -844,6 +832,15 @@ class ContactService
             }
         }
 
+        $affectedAddressBookIds = [
+            ...$affectedAddressBookIds,
+            ...$this->removeStaleSpousePropagationRows(
+                sourceContact: $sourceContact,
+                previousLinkedRowsByContactId: $previousActiveLinkedRowsByContactId,
+                currentLinkedRowsByContactId: $activeLinkedRowsByContactId,
+            ),
+        ];
+
         $removedTargetIds = array_diff($previousLinkedIds, array_keys($activeLinkedRowsByContactId));
         if ($removedTargetIds !== []) {
             Contact::query()
@@ -890,12 +887,17 @@ class ContactService
         $payload = is_array($contact->payload) ? $contact->payload : [];
         $rows = $this->normalizeRelatedRowsForSync($payload['related_names'] ?? []);
         $linkedIds = $this->linkedRelatedContactIds($rows);
+        $activeLinkedRowsByContactId = $this->ownerScopedLinkedRowsByContactId($contact, $rows);
 
         if ($linkedIds === []) {
             return [];
         }
 
-        $affectedAddressBookIds = [];
+        $affectedAddressBookIds = $this->removeStaleSpousePropagationRows(
+            sourceContact: $contact,
+            previousLinkedRowsByContactId: $activeLinkedRowsByContactId,
+            currentLinkedRowsByContactId: [],
+        );
 
         Contact::query()
             ->whereIn('id', $linkedIds)
@@ -1209,6 +1211,292 @@ class ContactService
             ->unique()
             ->values()
             ->all();
+    }
+
+    /**
+     * @param  array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>  $rows
+     * @return array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>
+     */
+    private function ownerScopedLinkedRowsByContactId(Contact $sourceContact, array $rows): array
+    {
+        $linkedRowsByContactId = [];
+
+        foreach ($rows as $row) {
+            $relatedContactId = $row['related_contact_id'];
+            if ($relatedContactId === null || $relatedContactId <= 0) {
+                continue;
+            }
+
+            if ($relatedContactId === (int) $sourceContact->id) {
+                continue;
+            }
+
+            if (! array_key_exists($relatedContactId, $linkedRowsByContactId)) {
+                $linkedRowsByContactId[$relatedContactId] = $row;
+            }
+        }
+
+        if ($linkedRowsByContactId === []) {
+            return [];
+        }
+
+        $allowedIds = Contact::query()
+            ->whereIn('id', array_keys($linkedRowsByContactId))
+            ->where('owner_id', $sourceContact->owner_id)
+            ->pluck('id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->all();
+
+        if ($allowedIds === []) {
+            return [];
+        }
+
+        return array_intersect_key($linkedRowsByContactId, array_flip($allowedIds));
+    }
+
+    /**
+     * @param  array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>  $linkedRowsByContactId
+     * @return array{
+     *   spouse_contact_ids:array<int, int>,
+     *   propagated_rows:array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>
+     * }
+     */
+    private function spousePropagationInputsFromLinkedRows(array $linkedRowsByContactId): array
+    {
+        $spouseContactIds = [];
+        $propagatedRows = [];
+
+        foreach ($linkedRowsByContactId as $relatedContactId => $sourceRow) {
+            $canonical = $this->canonicalRelatedLabelForRow($sourceRow);
+            if ($canonical === null) {
+                continue;
+            }
+
+            if (in_array($canonical, self::RELATED_SPOUSE_CANONICAL_LABELS, true)) {
+                $spouseContactIds[(int) $relatedContactId] = (int) $relatedContactId;
+            }
+
+            if (in_array($canonical, self::RELATED_SPOUSE_PROPAGATION_CANONICAL_LABELS, true)) {
+                $propagatedRows[(int) $relatedContactId] = $sourceRow;
+            }
+        }
+
+        return [
+            'spouse_contact_ids' => $spouseContactIds,
+            'propagated_rows' => $propagatedRows,
+        ];
+    }
+
+    /**
+     * @param  array<int, int>  $spouseContactIds
+     * @param  array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>  $propagatedRows
+     * @return array<string, array{
+     *   spouse_contact_id:int,
+     *   target_contact_id:int,
+     *   source_row:array{label:string, custom_label:?string, value:string, related_contact_id:?int}
+     * }>
+     */
+    private function spousePropagationPairs(
+        int $sourceContactId,
+        array $spouseContactIds,
+        array $propagatedRows,
+    ): array {
+        $pairs = [];
+
+        foreach (array_values($spouseContactIds) as $spouseContactId) {
+            foreach ($propagatedRows as $targetContactId => $sourceRow) {
+                $targetContactId = (int) $targetContactId;
+
+                if ($targetContactId === $spouseContactId || $targetContactId === $sourceContactId) {
+                    continue;
+                }
+
+                $pairKey = $spouseContactId.':'.$targetContactId;
+                if (! array_key_exists($pairKey, $pairs)) {
+                    $pairs[$pairKey] = [
+                        'spouse_contact_id' => $spouseContactId,
+                        'target_contact_id' => $targetContactId,
+                        'source_row' => $sourceRow,
+                    ];
+                }
+            }
+        }
+
+        return $pairs;
+    }
+
+    /**
+     * @param  array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>  $previousLinkedRowsByContactId
+     * @param  array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>  $currentLinkedRowsByContactId
+     * @return array<int, int>
+     */
+    private function removeStaleSpousePropagationRows(
+        Contact $sourceContact,
+        array $previousLinkedRowsByContactId,
+        array $currentLinkedRowsByContactId,
+    ): array {
+        $previousInputs = $this->spousePropagationInputsFromLinkedRows($previousLinkedRowsByContactId);
+        $currentInputs = $this->spousePropagationInputsFromLinkedRows($currentLinkedRowsByContactId);
+
+        $previousPairs = $this->spousePropagationPairs(
+            sourceContactId: (int) $sourceContact->id,
+            spouseContactIds: $previousInputs['spouse_contact_ids'],
+            propagatedRows: $previousInputs['propagated_rows'],
+        );
+        if ($previousPairs === []) {
+            return [];
+        }
+
+        $currentPairs = $this->spousePropagationPairs(
+            sourceContactId: (int) $sourceContact->id,
+            spouseContactIds: $currentInputs['spouse_contact_ids'],
+            propagatedRows: $currentInputs['propagated_rows'],
+        );
+
+        $stalePairKeys = array_diff(array_keys($previousPairs), array_keys($currentPairs));
+        if ($stalePairKeys === []) {
+            return [];
+        }
+
+        $stalePairs = collect($stalePairKeys)
+            ->map(fn (string $pairKey): array => $previousPairs[$pairKey])
+            ->values()
+            ->all();
+
+        $contactsById = Contact::query()
+            ->whereIn(
+                'id',
+                collect($stalePairs)
+                    ->flatMap(fn (array $pair): array => [
+                        (int) $pair['spouse_contact_id'],
+                        (int) $pair['target_contact_id'],
+                    ])
+                    ->unique()
+                    ->values()
+                    ->all(),
+            )
+            ->where('owner_id', $sourceContact->owner_id)
+            ->get()
+            ->keyBy('id');
+
+        $affectedAddressBookIds = [];
+
+        foreach ($stalePairs as $pair) {
+            $spouseContactId = (int) $pair['spouse_contact_id'];
+            $targetContactId = (int) $pair['target_contact_id'];
+            $sourceRow = $pair['source_row'];
+
+            /** @var Contact|null $spouseContact */
+            $spouseContact = $contactsById->get($spouseContactId);
+            /** @var Contact|null $targetContact */
+            $targetContact = $contactsById->get($targetContactId);
+
+            $expectedSpouseCanonical = $this->canonicalRelatedLabelForRow($sourceRow);
+            if ($spouseContact !== null && $expectedSpouseCanonical !== null) {
+                $this->removeRelatedRowsForDerivedPair(
+                    $spouseContact,
+                    $targetContactId,
+                    $expectedSpouseCanonical,
+                    $affectedAddressBookIds,
+                );
+            }
+
+            $expectedTargetCanonical = $this->inverseCanonicalForPropagationRow(
+                sourceRow: $sourceRow,
+                spouseContact: $spouseContact,
+                targetContactId: $targetContactId,
+            );
+            if ($targetContact !== null && $expectedTargetCanonical !== null) {
+                $this->removeRelatedRowsForDerivedPair(
+                    $targetContact,
+                    $spouseContactId,
+                    $expectedTargetCanonical,
+                    $affectedAddressBookIds,
+                );
+            }
+        }
+
+        return collect($affectedAddressBookIds)
+            ->map(fn (mixed $id): int => (int) $id)
+            ->filter(fn (int $id): bool => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $sourceRow
+     */
+    private function inverseCanonicalForPropagationRow(
+        array $sourceRow,
+        ?Contact $spouseContact,
+        int $targetContactId,
+    ): ?string {
+        $mirroredRow = [
+            'label' => $sourceRow['label'],
+            'custom_label' => $sourceRow['custom_label'],
+            'value' => $sourceRow['value'],
+            'related_contact_id' => $targetContactId,
+        ];
+
+        if ($spouseContact !== null) {
+            $inverse = $this->inverseLabelForRelatedRow($spouseContact, $mirroredRow);
+
+            return $this->canonicalRelatedLabelForRow([
+                'label' => $inverse['label'],
+                'custom_label' => $inverse['custom_label'],
+                'value' => '',
+                'related_contact_id' => (int) $spouseContact->id,
+            ]);
+        }
+
+        [$token] = $this->relatedLabelTokenAndDisplay($mirroredRow);
+        if ($token === null) {
+            return null;
+        }
+
+        $inverseToken = self::RELATED_INVERSE_LABELS[$token] ?? $token;
+
+        return self::RELATED_CANONICAL_LABELS[$inverseToken] ?? null;
+    }
+
+    /**
+     * @param  array<int, int>  $affectedAddressBookIds
+     */
+    private function removeRelatedRowsForDerivedPair(
+        Contact $contact,
+        int $relatedContactId,
+        string $expectedCanonicalLabel,
+        array &$affectedAddressBookIds,
+    ): void {
+        $payload = is_array($contact->payload) ? $contact->payload : [];
+        $rows = $this->normalizeRelatedRowsForSync($payload['related_names'] ?? []);
+        $nextRows = array_values(array_filter($rows, function (array $row) use (
+            $relatedContactId,
+            $expectedCanonicalLabel
+        ): bool {
+            if (($row['related_contact_id'] ?? null) !== $relatedContactId) {
+                return true;
+            }
+
+            $rowCanonical = $this->canonicalRelatedLabelForRow($row);
+
+            return $rowCanonical !== $expectedCanonicalLabel;
+        }));
+
+        if ($this->relatedRowsEqual($rows, $nextRows)) {
+            return;
+        }
+
+        $payload['related_names'] = $nextRows;
+        $contact->payload = $payload;
+        $contact->save();
+
+        $this->syncAssignmentsForExistingContact($contact);
+        $affectedAddressBookIds = [
+            ...$affectedAddressBookIds,
+            ...$this->addressBookIdsForContact($contact),
+        ];
     }
 
     /**

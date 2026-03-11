@@ -596,6 +596,90 @@ class ContactManagementTest extends TestCase
         $this->assertSame('parent_in_law', $daughterRelatedRows[$motherId] ?? null);
     }
 
+    public function test_removing_child_in_law_link_cleans_up_spouse_propagated_relationships(): void
+    {
+        $user = User::factory()->create();
+        $book = AddressBook::factory()->create(['owner_id' => $user->id, 'uri' => 'in-law-spouse-propagation-cleanup']);
+
+        $father = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Dennis',
+            'last_name' => 'Affolder',
+            'related_names' => [],
+            'address_book_ids' => [$book->id],
+        ]));
+        $father->assertCreated();
+        $fatherId = (int) $father->json('id');
+
+        $mother = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Melanie',
+            'last_name' => 'Affolder',
+            'related_names' => [],
+            'address_book_ids' => [$book->id],
+        ]));
+        $mother->assertCreated();
+        $motherId = (int) $mother->json('id');
+
+        $daughterInLaw = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
+            'first_name' => 'Melissa',
+            'last_name' => 'Affolder',
+            'related_names' => [],
+            'address_book_ids' => [$book->id],
+        ]));
+        $daughterInLaw->assertCreated();
+        $daughterInLawId = (int) $daughterInLaw->json('id');
+
+        $this->actingAs($user)
+            ->patchJson('/api/contacts/'.$fatherId, $this->payload([
+                'first_name' => 'Dennis',
+                'last_name' => 'Affolder',
+                'related_names' => [
+                    [
+                        'label' => 'spouse',
+                        'custom_label' => null,
+                        'value' => 'Melanie Affolder',
+                        'related_contact_id' => $motherId,
+                    ],
+                    [
+                        'label' => 'daughter_in_law',
+                        'custom_label' => null,
+                        'value' => 'Melissa Affolder',
+                        'related_contact_id' => $daughterInLawId,
+                    ],
+                ],
+                'address_book_ids' => [$book->id],
+            ]))
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->patchJson('/api/contacts/'.$fatherId, $this->payload([
+                'first_name' => 'Dennis',
+                'last_name' => 'Affolder',
+                'related_names' => [
+                    [
+                        'label' => 'spouse',
+                        'custom_label' => null,
+                        'value' => 'Melanie Affolder',
+                        'related_contact_id' => $motherId,
+                    ],
+                ],
+                'address_book_ids' => [$book->id],
+            ]))
+            ->assertOk();
+
+        $motherPayload = Contact::query()->findOrFail($motherId)->payload;
+        $daughterPayload = Contact::query()->findOrFail($daughterInLawId)->payload;
+
+        $motherHasDaughterInLawRelation = collect($motherPayload['related_names'] ?? [])
+            ->filter(fn (mixed $row): bool => is_array($row))
+            ->contains(fn (array $row): bool => (int) ($row['related_contact_id'] ?? 0) === $daughterInLawId);
+        $daughterHasMotherInLawRelation = collect($daughterPayload['related_names'] ?? [])
+            ->filter(fn (mixed $row): bool => is_array($row))
+            ->contains(fn (array $row): bool => (int) ($row['related_contact_id'] ?? 0) === $motherId);
+
+        $this->assertFalse($motherHasDaughterInLawRelation);
+        $this->assertFalse($daughterHasMotherInLawRelation);
+    }
+
     public function test_niece_nephew_gender_matrix_bidirectional_inverse_mapping(): void
     {
         $cases = [
