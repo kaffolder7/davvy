@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\ShareResourceType;
 use App\Models\AddressBook;
+use App\Models\ResourceShare;
 use App\Services\AddressBookMirrorService;
 use App\Services\Contacts\ContactMilestoneCalendarService;
 use App\Services\Contacts\ManagedContactSyncService;
@@ -76,6 +77,10 @@ class AddressBookController extends Controller
         $this->milestoneCalendarService->handleAddressBookDeleted($addressBook);
         $this->mirrorService->handleSourceAddressBookDeleted($addressBook->id);
         $this->managedContactSync->syncAddressBookDeleted($addressBook);
+        ResourceShare::query()
+            ->where('resource_type', ShareResourceType::AddressBook->value)
+            ->where('resource_id', $addressBook->id)
+            ->delete();
         $addressBook->delete();
 
         return response()->json(['ok' => true]);
