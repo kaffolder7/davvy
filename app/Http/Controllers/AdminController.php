@@ -61,9 +61,49 @@ class AdminController extends Controller
             'email' => $data['email'],
             'password' => $data['password'],
             'role' => Role::from($data['role']),
+            'is_approved' => true,
+            'approved_at' => now(),
+            'approved_by' => $request->user()?->id,
         ]);
 
         return response()->json($user, 201);
+    }
+
+    public function approveUser(Request $request, User $user): JsonResponse
+    {
+        if (! $user->is_approved) {
+            $user->update([
+                'is_approved' => true,
+                'approved_at' => now(),
+                'approved_by' => $request->user()?->id,
+            ]);
+        }
+
+        return response()->json($user->fresh());
+    }
+
+    public function approvePendingUsers(Request $request): JsonResponse
+    {
+        $actorId = $request->user()?->id;
+        $approvedCount = 0;
+
+        User::query()
+            ->where('is_approved', false)
+            ->orderBy('id')
+            ->get()
+            ->each(function (User $pendingUser) use (&$approvedCount, $actorId): void {
+                $pendingUser->update([
+                    'is_approved' => true,
+                    'approved_at' => now(),
+                    'approved_by' => $actorId,
+                ]);
+
+                $approvedCount++;
+            });
+
+        return response()->json([
+            'approved_count' => $approvedCount,
+        ]);
     }
 
     public function sharableResources(): JsonResponse
@@ -125,6 +165,23 @@ class AdminController extends Controller
 
         return response()->json([
             'enabled' => $this->registrationSettings->isPublicRegistrationEnabled(),
+            'require_approval' => $this->registrationSettings->isPublicRegistrationApprovalRequired(),
+        ]);
+    }
+
+    public function setRegistrationApprovalSetting(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'enabled' => ['required', 'boolean'],
+        ]);
+
+        $this->registrationSettings->setPublicRegistrationApprovalRequired(
+            enabled: (bool) $data['enabled'],
+            actor: $request->user()
+        );
+
+        return response()->json([
+            'enabled' => $this->registrationSettings->isPublicRegistrationApprovalRequired(),
         ]);
     }
 

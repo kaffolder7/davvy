@@ -18,6 +18,29 @@ class RegistrationSettingsService
             ['key' => 'public_registration_enabled'],
             ['value' => $enabled ? 'true' : 'false', 'updated_by' => $actor?->id]
         );
+
+        if (
+            $enabled
+            && ! AppSetting::query()->whereKey('public_registration_require_approval')->exists()
+        ) {
+            AppSetting::query()->updateOrCreate(
+                ['key' => 'public_registration_require_approval'],
+                ['value' => 'true', 'updated_by' => $actor?->id]
+            );
+        }
+    }
+
+    public function isPublicRegistrationApprovalRequired(): bool
+    {
+        return AppSetting::publicRegistrationApprovalRequired();
+    }
+
+    public function setPublicRegistrationApprovalRequired(bool $enabled, ?User $actor = null): void
+    {
+        AppSetting::query()->updateOrCreate(
+            ['key' => 'public_registration_require_approval'],
+            ['value' => $enabled ? 'true' : 'false', 'updated_by' => $actor?->id]
+        );
     }
 
     public function isOwnerShareManagementEnabled(): bool

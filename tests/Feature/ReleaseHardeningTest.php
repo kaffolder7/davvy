@@ -91,7 +91,9 @@ class ReleaseHardeningTest extends TestCase
 
     public function test_registration_endpoint_is_rate_limited(): void
     {
-        app(RegistrationSettingsService::class)->setPublicRegistrationEnabled(true);
+        $settings = app(RegistrationSettingsService::class);
+        $settings->setPublicRegistrationEnabled(true);
+        $settings->setPublicRegistrationApprovalRequired(true);
 
         for ($attempt = 0; $attempt < 5; $attempt++) {
             $this->postJson('/api/auth/register', [
@@ -99,7 +101,7 @@ class ReleaseHardeningTest extends TestCase
                 'email' => "rate-limited-{$attempt}@example.com",
                 'password' => 'Password123!',
                 'password_confirmation' => 'Password123!',
-            ])->assertCreated();
+            ])->assertStatus(202);
         }
 
         $this->postJson('/api/auth/register', [

@@ -22,6 +22,9 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'is_approved',
+        'approved_at',
+        'approved_by',
     ];
 
     protected $hidden = [
@@ -35,6 +38,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => Role::class,
+            'is_approved' => 'bool',
+            'approved_at' => 'datetime',
         ];
     }
 
@@ -48,7 +53,15 @@ class User extends Authenticatable
     protected static function booted(): void
     {
         static::created(function (User $user): void {
-            app(DefaultResourceProvisioner::class)->provisionFor($user);
+            if ($user->is_approved) {
+                app(DefaultResourceProvisioner::class)->provisionFor($user);
+            }
+        });
+
+        static::updated(function (User $user): void {
+            if ($user->wasChanged('is_approved') && $user->is_approved) {
+                app(DefaultResourceProvisioner::class)->provisionFor($user);
+            }
         });
     }
 
