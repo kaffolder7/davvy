@@ -1913,9 +1913,11 @@ export default function AdminPage({
                       Role: {user.role} | Calendars: {user.calendars_count} |
                       Address books: {user.address_books_count}
                     </p>
-                    <p className="text-xs text-app-faint">
-                      Status: {isApproved ? "approved" : "pending approval"}
-                    </p>
+                    {!isApproved ? (
+                      <p className="text-xs text-app-faint">
+                        Status: pending approval
+                      </p>
+                    ) : null}
                   </div>
                 );
               })}
