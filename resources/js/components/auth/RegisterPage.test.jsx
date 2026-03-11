@@ -55,10 +55,6 @@ function buildProps(overrides = {}) {
       }),
     },
     extractError: vi.fn((_, fallback) => fallback),
-    parseSponsorshipConfig: vi.fn(() => ({
-      enabled: false,
-      links: [],
-    })),
     AuthShell: AuthShellStub,
     Field: FieldStub,
     ...overrides,
@@ -112,10 +108,6 @@ describe("RegisterPage", () => {
         password_confirmation: "secret123",
       }),
     );
-    expect(props.parseSponsorshipConfig).toHaveBeenCalledWith({
-      enabled: false,
-      links: [],
-    });
     expect(props.auth.setAuth).toHaveBeenCalledWith(
       expect.objectContaining({
         loading: false,
@@ -128,6 +120,10 @@ describe("RegisterPage", () => {
         davCompatibilityModeEnabled: false,
         contactManagementEnabled: true,
         contactChangeModerationEnabled: false,
+        sponsorship: {
+          enabled: false,
+          links: [],
+        },
       }),
     );
     expect(screen.getByText("Dashboard Home")).toBeInTheDocument();

@@ -4,8 +4,6 @@ import useAuthState from "./useAuthState";
 
 describe("useAuthState", () => {
   it("loads auth state from /api/auth/me", async () => {
-    const sponsorship = { enabled: true, links: [{ name: "GitHub" }] };
-    const parseSponsorshipConfig = vi.fn().mockReturnValue(sponsorship);
     const api = {
       get: vi.fn().mockResolvedValue({
         data: {
@@ -15,21 +13,21 @@ describe("useAuthState", () => {
           dav_compatibility_mode_enabled: true,
           contact_management_enabled: true,
           contact_change_moderation_enabled: false,
-          sponsorship: { enabled: true, links: [{ name: "GitHub" }] },
+          sponsorship: {
+            enabled: true,
+            links: [{ name: "GitHub", url: "https://example.com" }],
+          },
         },
       }),
     };
 
-    const { result } = renderHook(() =>
-      useAuthState({ api, parseSponsorshipConfig }),
-    );
+    const { result } = renderHook(() => useAuthState({ api }));
 
     await waitFor(() =>
       expect(api.get).toHaveBeenCalledWith("/api/auth/me"),
     );
     await waitFor(() => expect(result.current.auth.loading).toBe(false));
 
-    expect(parseSponsorshipConfig).toHaveBeenCalledTimes(1);
     expect(result.current.auth).toEqual(
       expect.objectContaining({
         loading: false,
@@ -39,7 +37,10 @@ describe("useAuthState", () => {
         davCompatibilityModeEnabled: true,
         contactManagementEnabled: true,
         contactChangeModerationEnabled: false,
-        sponsorship,
+        sponsorship: {
+          enabled: true,
+          links: [{ name: "GitHub", url: "https://example.com" }],
+        },
       }),
     );
 
@@ -51,8 +52,6 @@ describe("useAuthState", () => {
   });
 
   it("falls back to /api/public/config when /api/auth/me fails", async () => {
-    const sponsorship = { enabled: false, links: [] };
-    const parseSponsorshipConfig = vi.fn().mockReturnValue(sponsorship);
     const api = {
       get: vi
         .fn()
@@ -69,9 +68,7 @@ describe("useAuthState", () => {
         }),
     };
 
-    const { result } = renderHook(() =>
-      useAuthState({ api, parseSponsorshipConfig }),
-    );
+    const { result } = renderHook(() => useAuthState({ api }));
 
     await waitFor(() =>
       expect(api.get).toHaveBeenNthCalledWith(2, "/api/public/config"),
@@ -86,20 +83,20 @@ describe("useAuthState", () => {
         davCompatibilityModeEnabled: true,
         contactManagementEnabled: false,
         contactChangeModerationEnabled: true,
-        sponsorship,
+        sponsorship: {
+          enabled: false,
+          links: [],
+        },
       }),
     );
   });
 
   it("returns default disabled state when both auth endpoints fail", async () => {
-    const parseSponsorshipConfig = vi.fn();
     const api = {
       get: vi.fn().mockRejectedValue(new Error("network")),
     };
 
-    const { result } = renderHook(() =>
-      useAuthState({ api, parseSponsorshipConfig }),
-    );
+    const { result } = renderHook(() => useAuthState({ api }));
 
     await waitFor(() => expect(result.current.auth.loading).toBe(false));
 
@@ -118,6 +115,5 @@ describe("useAuthState", () => {
         },
       }),
     );
-    expect(parseSponsorshipConfig).not.toHaveBeenCalled();
   });
 });
