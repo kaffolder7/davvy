@@ -1,15 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  BrowserRouter,
-  Link,
-  Navigate,
-  Route,
-  Routes,
-  useNavigate,
-} from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import AdminFeatureToggleComponent from "./components/admin/AdminFeatureToggle";
 import AdminPageComponent from "./components/admin/AdminPage";
+import LoginPageComponent from "./components/auth/LoginPage";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import RegisterPageComponent from "./components/auth/RegisterPage";
 import useAuthState from "./components/auth/useAuthState";
 import CopyableResourceUriComponent from "./components/common/CopyableResourceUri";
 import FieldComponent from "./components/common/Field";
@@ -535,201 +531,31 @@ function App() {
   );
 }
 
-function ProtectedRoute({ auth, adminOnly = false, children }) {
-  if (!auth.user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (adminOnly && auth.user.role !== "admin") {
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
-}
-
 function LoginPage({ auth, theme }) {
-  const navigate = useNavigate();
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  if (auth.user) {
-    return <Navigate to="/" replace />;
-  }
-
-  const submit = async (event) => {
-    event.preventDefault();
-    setSubmitting(true);
-    setError("");
-
-    try {
-      const { data } = await api.post("/api/auth/login", form);
-      auth.setAuth({
-        loading: false,
-        user: data.user,
-        registrationEnabled: !!data.registration_enabled,
-        ownerShareManagementEnabled: !!data.owner_share_management_enabled,
-        davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
-        contactManagementEnabled: !!data.contact_management_enabled,
-        contactChangeModerationEnabled:
-          !!data.contact_change_moderation_enabled,
-        sponsorship: parseSponsorshipConfig(data.sponsorship),
-      });
-      navigate("/");
-    } catch (err) {
-      setError(extractError(err, "Unable to sign in."));
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   return (
-    <AuthShell
+    <LoginPageComponent
+      auth={auth}
       theme={theme}
-      themeControlPlacement="window-bottom-right"
-      title="Welcome Back"
-      subtitle="Sign in to manage your CalDAV and CardDAV resources."
-    >
-      <form className="space-y-4" onSubmit={submit}>
-        <Field label="Email">
-          <input
-            className="input"
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            required
-          />
-        </Field>
-        <Field label="Password">
-          <input
-            className="input"
-            type="password"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            required
-          />
-        </Field>
-        {error ? <p className="text-sm text-app-danger">{error}</p> : null}
-        <button className="btn w-full" disabled={submitting}>
-          {submitting ? "Signing in..." : "Sign In"}
-        </button>
-      </form>
-      <p className="mt-5 text-sm text-app-muted">
-        Need an account?{" "}
-        {auth.registrationEnabled ? (
-          <Link to="/register" className="font-semibold text-app-accent">
-            Register here
-          </Link>
-        ) : (
-          "Public sign-up is disabled by administrators."
-        )}
-      </p>
-    </AuthShell>
+      api={api}
+      extractError={extractError}
+      parseSponsorshipConfig={parseSponsorshipConfig}
+      AuthShell={AuthShell}
+      Field={Field}
+    />
   );
 }
 
 function RegisterPage({ auth, theme }) {
-  const navigate = useNavigate();
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    password_confirmation: "",
-  });
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  if (auth.user) {
-    return <Navigate to="/" replace />;
-  }
-
-  if (!auth.registrationEnabled) {
-    return <Navigate to="/login" replace />;
-  }
-
-  const submit = async (event) => {
-    event.preventDefault();
-    setSubmitting(true);
-    setError("");
-
-    try {
-      const { data } = await api.post("/api/auth/register", form);
-      auth.setAuth({
-        loading: false,
-        user: data.user,
-        registrationEnabled: !!data.registration_enabled,
-        ownerShareManagementEnabled: !!data.owner_share_management_enabled,
-        davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
-        contactManagementEnabled: !!data.contact_management_enabled,
-        contactChangeModerationEnabled:
-          !!data.contact_change_moderation_enabled,
-        sponsorship: parseSponsorshipConfig(data.sponsorship),
-      });
-      navigate("/");
-    } catch (err) {
-      setError(extractError(err, "Unable to register."));
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   return (
-    <AuthShell
+    <RegisterPageComponent
+      auth={auth}
       theme={theme}
-      themeControlPlacement="window-bottom-right"
-      title="Create Account"
-      subtitle="Your default calendar and address book are generated automatically."
-    >
-      <form className="space-y-4" onSubmit={submit}>
-        <Field label="Name">
-          <input
-            className="input"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            required
-          />
-        </Field>
-        <Field label="Email">
-          <input
-            className="input"
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            required
-          />
-        </Field>
-        <Field label="Password">
-          <input
-            className="input"
-            type="password"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            required
-          />
-        </Field>
-        <Field label="Confirm Password">
-          <input
-            className="input"
-            type="password"
-            value={form.password_confirmation}
-            onChange={(e) =>
-              setForm({ ...form, password_confirmation: e.target.value })
-            }
-            required
-          />
-        </Field>
-        {error ? <p className="text-sm text-app-danger">{error}</p> : null}
-        <button className="btn w-full" disabled={submitting}>
-          {submitting ? "Creating account..." : "Register"}
-        </button>
-      </form>
-      <p className="mt-5 text-sm text-app-muted">
-        Already registered?{" "}
-        <Link to="/login" className="font-semibold text-app-accent">
-          Sign in
-        </Link>
-      </p>
-    </AuthShell>
+      api={api}
+      extractError={extractError}
+      parseSponsorshipConfig={parseSponsorshipConfig}
+      AuthShell={AuthShell}
+      Field={Field}
+    />
   );
 }
 
