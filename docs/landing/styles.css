@@ -2,6 +2,56 @@
    Davvy Landing – Design Tokens & Styles
    ============================================================ */
 
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src:
+    url("./SpaceGrotesk-VariableFont_wght.woff2") format("woff2"),
+    url("./SpaceGrotesk-VariableFont_wght.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    url("./DMSans-Italic.woff2") format("woff2"),
+    url("./DMSans-Italic.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 400 600 700;
+  font-display: swap;
+  src:
+    url("./DMSans-VariableFont_opsz,wght.woff2") format("woff2"),
+    url("./DMSans-VariableFont_opsz,wght.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "DM Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    url("./DMMono-Regular.woff2") format("woff2"),
+    url("./DMMono-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "DM Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src:
+    url("./DMMono-Medium.woff2") format("woff2"),
+    url("./DMMono-Medium.ttf") format("truetype");
+}
+
 /* --- Custom Properties (Light) --- */
 :root {
   --bg: #f8f6f1;
