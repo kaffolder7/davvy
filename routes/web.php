@@ -90,6 +90,7 @@ Route::middleware('auth')->group(function (): void {
     Route::middleware('admin')->group(function (): void {
         Route::get('/api/admin/users', [AdminController::class, 'users']);
         Route::post('/api/admin/users', [AdminController::class, 'createUser']);
+        Route::delete('/api/admin/users/{user}', [AdminController::class, 'destroyUser']);
         Route::patch('/api/admin/users/approve-pending', [AdminController::class, 'approvePendingUsers']);
         Route::patch('/api/admin/users/{user}/approve', [AdminController::class, 'approveUser']);
         Route::get('/api/admin/resources', [AdminController::class, 'sharableResources']);
