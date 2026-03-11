@@ -10,6 +10,7 @@ import {
 } from "react-router-dom";
 import AdminFeatureToggleComponent from "./components/admin/AdminFeatureToggle";
 import AdminPageComponent from "./components/admin/AdminPage";
+import useAuthState from "./components/auth/useAuthState";
 import CopyableResourceUriComponent from "./components/common/CopyableResourceUri";
 import FieldComponent from "./components/common/Field";
 import InfoCardComponent from "./components/common/InfoCard";
@@ -462,78 +463,10 @@ function useThemePreference() {
 
 function App() {
   const theme = useThemePreference();
-  const [auth, setAuth] = useState({
-    loading: true,
-    user: null,
-    registrationEnabled: false,
-    ownerShareManagementEnabled: false,
-    davCompatibilityModeEnabled: false,
-    contactManagementEnabled: false,
-    contactChangeModerationEnabled: false,
-    sponsorship: {
-      enabled: false,
-      links: [],
-    },
+  const { auth, value } = useAuthState({
+    api,
+    parseSponsorshipConfig,
   });
-
-  const refreshAuth = async () => {
-    try {
-      const { data } = await api.get("/api/auth/me");
-      setAuth({
-        loading: false,
-        user: data.user,
-        registrationEnabled: !!data.registration_enabled,
-        ownerShareManagementEnabled: !!data.owner_share_management_enabled,
-        davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
-        contactManagementEnabled: !!data.contact_management_enabled,
-        contactChangeModerationEnabled:
-          !!data.contact_change_moderation_enabled,
-        sponsorship: parseSponsorshipConfig(data.sponsorship),
-      });
-    } catch {
-      try {
-        const { data } = await api.get("/api/public/config");
-        setAuth({
-          loading: false,
-          user: null,
-          registrationEnabled: !!data.registration_enabled,
-          ownerShareManagementEnabled: !!data.owner_share_management_enabled,
-          davCompatibilityModeEnabled: !!data.dav_compatibility_mode_enabled,
-          contactManagementEnabled: !!data.contact_management_enabled,
-          contactChangeModerationEnabled:
-            !!data.contact_change_moderation_enabled,
-          sponsorship: parseSponsorshipConfig(data.sponsorship),
-        });
-      } catch {
-        setAuth({
-          loading: false,
-          user: null,
-          registrationEnabled: false,
-          ownerShareManagementEnabled: false,
-          davCompatibilityModeEnabled: false,
-          contactManagementEnabled: false,
-          contactChangeModerationEnabled: false,
-          sponsorship: {
-            enabled: false,
-            links: [],
-          },
-        });
-      }
-    }
-  };
-
-  useEffect(() => {
-    refreshAuth();
-  }, []);
-
-  const value = useMemo(
-    () => ({
-      ...auth,
-      setAuth,
-      refreshAuth,
-    }),
-    [auth],
-  );
 
   if (auth.loading) {
     return <FullPageState label="Loading Davvy..." />;
