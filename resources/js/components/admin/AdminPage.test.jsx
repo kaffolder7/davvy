@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AdminPage from "./AdminPage";
 
@@ -151,6 +151,7 @@ function buildProps(overrides = {}) {
     user: {
       id: 1,
       name: "Owner",
+      email: "owner@example.com",
       role: "admin",
     },
     registrationEnabled: false,
@@ -283,6 +284,7 @@ describe("AdminPage", () => {
         user: {
           id: 1,
           name: "Owner",
+          email: "owner@example.com",
           role: "admin",
         },
         registrationEnabled: true,
@@ -336,5 +338,78 @@ describe("AdminPage", () => {
     ).toBeInTheDocument();
     expect(confirmSpy).toHaveBeenCalledTimes(1);
     confirmSpy.mockRestore();
+  });
+
+  it("deletes a user with typed confirmation and optional ownership transfer", async () => {
+    const user = userEvent.setup();
+    const props = buildProps({
+      api: buildApi({
+        users: [
+          {
+            id: 2,
+            name: "Alice",
+            email: "alice@example.com",
+            role: "regular",
+            calendars_count: 2,
+            address_books_count: 2,
+          },
+          {
+            id: 3,
+            name: "Bob",
+            email: "bob@example.com",
+            role: "regular",
+            calendars_count: 1,
+            address_books_count: 1,
+          },
+        ],
+      }),
+    });
+    props.api.delete.mockResolvedValue({
+      data: {
+        ok: true,
+        deleted_user_id: 2,
+        transferred_to_user_id: 3,
+        transferred: {
+          calendars: 2,
+          address_books: 2,
+          contacts: 1,
+        },
+      },
+    });
+
+    render(<AdminPage {...props} />);
+
+    await waitFor(() =>
+      expect(props.api.get).toHaveBeenCalledWith("/api/admin/users"),
+    );
+
+    await user.click(screen.getAllByRole("button", { name: "Delete" })[0]);
+
+    const dialog = await screen.findByRole("dialog", {
+      name: /delete alice/i,
+    });
+    const transferSelect = within(dialog).getByRole("combobox");
+    const confirmInput = within(dialog).getByRole("textbox");
+    const deleteAction = within(dialog).getByRole("button", {
+      name: "Delete User",
+    });
+
+    expect(deleteAction).toBeDisabled();
+
+    await user.selectOptions(transferSelect, "3");
+    await user.type(confirmInput, "owner@example.com");
+
+    expect(deleteAction).not.toBeDisabled();
+
+    await user.click(deleteAction);
+
+    await waitFor(() =>
+      expect(props.api.delete).toHaveBeenCalledWith("/api/admin/users/2", {
+        data: {
+          confirmation_email: "owner@example.com",
+          transfer_owner_id: 3,
+        },
+      }),
+    );
   });
 });
