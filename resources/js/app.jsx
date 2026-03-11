@@ -9,6 +9,10 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import AdminFeatureToggleComponent from "./components/admin/AdminFeatureToggle";
+import CopyableResourceUriComponent from "./components/common/CopyableResourceUri";
+import FieldComponent from "./components/common/Field";
+import InfoCardComponent from "./components/common/InfoCard";
 import { api, extractError } from "./lib/api";
 import AddressBookMilestoneControlsComponent from "./components/contacts/AddressBookMilestoneControls";
 import AddressEditorComponent from "./components/contacts/AddressEditor";
@@ -18,6 +22,11 @@ import RowReorderControls from "./components/contacts/RowReorderControls";
 import RelatedNameEditorComponent from "./components/contacts/RelatedNameEditor";
 import { useRowReorder } from "./components/contacts/useRowReorder";
 import ResourcePanelComponent from "./components/dashboard/ResourcePanel";
+import {
+  formatQueueTimestamp,
+  queueOperationLabel,
+  queueStatusLabel,
+} from "./components/queue/queueDisplayUtils";
 
 function fileStem(value, fallback = "export") {
   const stem = String(value ?? "")
@@ -3784,70 +3793,12 @@ function ResourcePanel({
 
 function AdminFeatureToggle({ label, enabled, onClick }) {
   return (
-    <button
-      className={`btn-outline inline-flex items-center gap-1.5 rounded-lg !px-2.5 !py-1.5 !text-sm ${
-        enabled
-          ? "border-app-accent-edge bg-app-surface text-app-strong ring-1 ring-teal-500/25 hover:border-app-accent-edge"
-          : "border-app-edge bg-app-surface text-app-muted hover:border-app-edge"
-      }`}
-      type="button"
-      aria-pressed={enabled}
+    <AdminFeatureToggleComponent
+      label={label}
+      enabled={enabled}
       onClick={onClick}
-    >
-      <span
-        aria-hidden="true"
-        className={`h-2.5 w-2.5 rounded-full ${
-          enabled
-            ? "bg-teal-500 shadow-[0_0_0_2px_rgba(20,184,166,0.2)]"
-            : "bg-zinc-400"
-        }`}
-      />
-      <span className="whitespace-nowrap text-sm">{label}</span>
-      <span
-        className={`rounded-full border px-1.5 py-0.5 text-[9px] leading-[12px] font-semibold uppercase tracking-wide ${
-          enabled
-            ? "border-app-accent-edge text-app-accent"
-            : "border-app-edge text-app-faint"
-        }`}
-      >
-        {enabled ? "On" : "Off"}
-      </span>
-    </button>
+    />
   );
-}
-
-function formatQueueTimestamp(value) {
-  if (!value) {
-    return "n/a";
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return "n/a";
-  }
-
-  return parsed.toLocaleString();
-}
-
-function queueStatusLabel(status) {
-  switch (status) {
-    case "pending":
-      return "Pending";
-    case "approved":
-      return "Approved (awaiting others)";
-    case "manual_merge_needed":
-      return "Manual Merge Needed";
-    case "applied":
-      return "Applied";
-    case "denied":
-      return "Denied";
-    default:
-      return status || "Unknown";
-  }
-}
-
-function queueOperationLabel(operation) {
-  return operation === "delete" ? "Delete" : "Update";
 }
 
 function ContactChangeQueuePage({ auth, theme }) {
@@ -7012,141 +6963,31 @@ function AuthShell({
 }
 
 function CopyableResourceUri({ resourceKind, principalId, resourceUri }) {
-  const [copyState, setCopyState] = useState("idle");
-  const normalizedUri = String(resourceUri ?? "")
-    .trim()
-    .replace(/^\/+/, "")
-    .replace(/\/+$/, "");
-  const fullUrl = buildDavCollectionUrl(
-    resourceKind,
-    principalId,
-    normalizedUri,
-  );
-
-  useEffect(() => {
-    if (copyState === "idle") {
-      return undefined;
-    }
-
-    const timer = window.setTimeout(() => setCopyState("idle"), 1800);
-    return () => window.clearTimeout(timer);
-  }, [copyState]);
-
-  const copyUrl = async () => {
-    try {
-      await copyTextToClipboard(fullUrl);
-      setCopyState("copied");
-    } catch {
-      setCopyState("failed");
-    }
-  };
-
-  const copyLabel =
-    copyState === "copied"
-      ? "Copied URL"
-      : copyState === "failed"
-        ? "Copy failed"
-        : "";
-  const copyTone = copyState === "failed" ? "bg-red-700" : "bg-teal-700";
-
   return (
-    <div className="relative mt-1">
-      <button
-        type="button"
-        onClick={() => void copyUrl()}
-        className="break-all bg-transparent p-0 text-left text-xs font-normal text-app-faint focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-teal-500"
-        title={fullUrl}
-        aria-label={`Copy ${normalizedUri || "resource"} URL`}
-      >
-        /{normalizedUri}
-      </button>
-      <span
-        className={`pointer-events-none absolute left-0 top-full mt-1 rounded-md px-2 py-0.5 text-[10px] font-semibold text-white transition-opacity duration-150 ${
-          copyState === "idle" ? "opacity-0" : "opacity-100"
-        } ${copyTone}`}
-      >
-        {copyLabel}
-      </span>
-    </div>
+    <CopyableResourceUriComponent
+      resourceKind={resourceKind}
+      principalId={principalId}
+      resourceUri={resourceUri}
+      buildDavCollectionUrl={buildDavCollectionUrl}
+      copyTextToClipboard={copyTextToClipboard}
+    />
   );
 }
 
 function InfoCard({ title, value, helper, copyable = false }) {
-  const [copyState, setCopyState] = useState("idle");
-
-  useEffect(() => {
-    if (copyState === "idle") {
-      return undefined;
-    }
-
-    const timer = window.setTimeout(() => setCopyState("idle"), 1800);
-    return () => window.clearTimeout(timer);
-  }, [copyState]);
-
-  const copyValue = async () => {
-    if (!copyable) {
-      return;
-    }
-
-    try {
-      await copyTextToClipboard(value);
-      setCopyState("copied");
-    } catch {
-      setCopyState("failed");
-    }
-  };
-
-  const copyTooltipLabel =
-    copyState === "copied"
-      ? "Copied!"
-      : copyState === "failed"
-        ? "Copy failed"
-        : "";
-  const copyTooltipTone = copyState === "failed" ? "bg-red-700" : "bg-teal-700";
-
   return (
-    <article className="surface rounded-2xl p-4">
-      <p className="text-xs font-semibold uppercase tracking-wide text-app-faint">
-        {title}
-      </p>
-      {copyable ? (
-        <div className="relative mt-1">
-          <button
-            type="button"
-            onClick={() => void copyValue()}
-            className="w-full rounded-md text-left text-base font-bold text-app-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
-            aria-label={`Copy ${title}`}
-            title="Click to copy"
-          >
-            <span className="break-all">{value}</span>
-          </button>
-          <span
-            className={`pointer-events-none absolute right-0 top-0 rounded-md px-2 py-1 text-[11px] font-semibold text-white transition-opacity duration-150 ${
-              copyState === "idle" ? "opacity-0" : "opacity-100"
-            } ${copyTooltipTone}`}
-          >
-            {copyTooltipLabel}
-          </span>
-        </div>
-      ) : (
-        <p className="mt-1 break-all text-base font-bold text-app-strong">
-          {value}
-        </p>
-      )}
-      <p className="mt-2 text-xs text-app-muted">{helper}</p>
-    </article>
+    <InfoCardComponent
+      title={title}
+      value={value}
+      helper={helper}
+      copyable={copyable}
+      copyTextToClipboard={copyTextToClipboard}
+    />
   );
 }
 
 function Field({ label, children }) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-sm font-semibold text-app-base">
-        {label}
-      </span>
-      {children}
-    </label>
-  );
+  return <FieldComponent label={label}>{children}</FieldComponent>;
 }
 
 function FullPageState({ label, compact = false }) {
