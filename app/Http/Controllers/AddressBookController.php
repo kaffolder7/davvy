@@ -4,11 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Enums\ShareResourceType;
 use App\Models\AddressBook;
-use App\Models\ResourceShare;
-use App\Services\AddressBookMirrorService;
 use App\Services\Contacts\ContactMilestoneCalendarService;
-use App\Services\Contacts\ManagedContactSyncService;
 use App\Services\Dav\DavSyncService;
+use App\Services\ResourceDeletionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -17,9 +15,8 @@ class AddressBookController extends Controller
 {
     public function __construct(
         private readonly DavSyncService $syncService,
-        private readonly AddressBookMirrorService $mirrorService,
         private readonly ContactMilestoneCalendarService $milestoneCalendarService,
-        private readonly ManagedContactSyncService $managedContactSync,
+        private readonly ResourceDeletionService $resourceDeletion,
     ) {}
 
     public function store(Request $request): JsonResponse
@@ -74,14 +71,7 @@ class AddressBookController extends Controller
             abort(422, 'Default address books cannot be deleted.');
         }
 
-        $this->milestoneCalendarService->handleAddressBookDeleted($addressBook);
-        $this->mirrorService->handleSourceAddressBookDeleted($addressBook->id);
-        $this->managedContactSync->syncAddressBookDeleted($addressBook);
-        ResourceShare::query()
-            ->where('resource_type', ShareResourceType::AddressBook->value)
-            ->where('resource_id', $addressBook->id)
-            ->delete();
-        $addressBook->delete();
+        $this->resourceDeletion->deleteAddressBook($addressBook);
 
         return response()->json(['ok' => true]);
     }
