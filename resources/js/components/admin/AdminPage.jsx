@@ -73,6 +73,12 @@ export default function AdminPage({
     shared_with_id: "",
     permission: "read_only",
   });
+  const [deleteUserTarget, setDeleteUserTarget] = useState(null);
+  const [deleteUserConfirmationEmail, setDeleteUserConfirmationEmail] =
+    useState("");
+  const [deleteUserTransferOwnerId, setDeleteUserTransferOwnerId] =
+    useState("");
+  const [deleteUserSubmitting, setDeleteUserSubmitting] = useState(false);
   const [milestonePurgeSubmitting, setMilestonePurgeSubmitting] =
     useState(false);
   const [milestonePurgeSummary, setMilestonePurgeSummary] = useState("");
@@ -371,6 +377,86 @@ export default function AdminPage({
         ...prev,
         error: extractError(err, "Unable to approve user."),
       }));
+    }
+  };
+
+  const openDeleteUserDialog = (user) => {
+    setDeleteUserTarget(user);
+    setDeleteUserConfirmationEmail("");
+    setDeleteUserTransferOwnerId("");
+    setState((prev) => ({ ...prev, error: "" }));
+  };
+
+  const closeDeleteUserDialog = () => {
+    if (deleteUserSubmitting) {
+      return;
+    }
+
+    setDeleteUserTarget(null);
+    setDeleteUserConfirmationEmail("");
+    setDeleteUserTransferOwnerId("");
+  };
+
+  const deleteUser = async () => {
+    if (!deleteUserTarget || deleteUserSubmitting) {
+      return;
+    }
+
+    const expectedEmail = String(auth.user?.email || "")
+      .trim()
+      .toLowerCase();
+    const enteredEmail = String(deleteUserConfirmationEmail).trim().toLowerCase();
+
+    if (expectedEmail === "" || enteredEmail !== expectedEmail) {
+      setState((prev) => ({
+        ...prev,
+        error: "Type your account email to confirm this deletion.",
+      }));
+      return;
+    }
+
+    setDeleteUserSubmitting(true);
+    setState((prev) => ({ ...prev, error: "" }));
+
+    const transferOwnerId =
+      deleteUserTransferOwnerId === "" ? null : Number(deleteUserTransferOwnerId);
+
+    try {
+      const response = await api.delete(`/api/admin/users/${deleteUserTarget.id}`, {
+        data: {
+          confirmation_email: deleteUserConfirmationEmail,
+          transfer_owner_id: transferOwnerId,
+        },
+      });
+
+      const transferred = response.data?.transferred ?? {};
+      const transferredCalendars = Number(transferred.calendars ?? 0);
+      const transferredAddressBooks = Number(transferred.address_books ?? 0);
+      const transferredContacts = Number(transferred.contacts ?? 0);
+      const deletedUserName = deleteUserTarget.name;
+      const transferTargetName = transferOwnerId
+        ? state.users.find((candidate) => Number(candidate.id) === transferOwnerId)
+            ?.name
+        : null;
+
+      setDeleteUserTarget(null);
+      setDeleteUserConfirmationEmail("");
+      setDeleteUserTransferOwnerId("");
+      setBackupRunToast({
+        status: "success",
+        message: transferOwnerId
+          ? `Deleted ${deletedUserName} and transferred ${transferredCalendars} calendar(s), ${transferredAddressBooks} address book(s), and ${transferredContacts} contact(s) to ${transferTargetName || "the selected owner"}.`
+          : `Deleted ${deletedUserName} and all owned data.`,
+      });
+
+      await load();
+    } catch (err) {
+      setState((prev) => ({
+        ...prev,
+        error: extractError(err, "Unable to delete user."),
+      }));
+    } finally {
+      setDeleteUserSubmitting(false);
     }
   };
 
@@ -949,6 +1035,22 @@ export default function AdminPage({
     shareForm.resource_type === "calendar"
       ? state.resources.calendars
       : state.resources.address_books;
+  const adminConfirmationEmail = String(auth.user?.email || "").trim();
+  const deleteUserTransferOptions = useMemo(() => {
+    if (!deleteUserTarget) {
+      return [];
+    }
+
+    return state.users.filter(
+      (candidate) => Number(candidate.id) !== Number(deleteUserTarget.id),
+    );
+  }, [deleteUserTarget, state.users]);
+  const deleteUserConfirmationMatches =
+    adminConfirmationEmail !== "" &&
+    String(deleteUserConfirmationEmail).trim().toLowerCase() ===
+      adminConfirmationEmail.toLowerCase();
+  const deleteUserActionDisabled =
+    deleteUserSubmitting || !deleteUserTarget || !deleteUserConfirmationMatches;
   const backupTimezoneGroups = useMemo(() => buildTimezoneGroups(), []);
   const backupTimezoneExistsInOptions = useMemo(
     () =>
@@ -1260,6 +1362,102 @@ export default function AdminPage({
           status={backupRunToast.status}
           message={backupRunToast.message}
         />
+      ) : null}
+
+      {deleteUserTarget ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/45 p-4">
+          <div
+            className="w-full max-w-xl rounded-3xl border border-app-edge bg-app-surface p-6 shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-user-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3
+                  id="delete-user-title"
+                  className="text-lg font-semibold text-app-strong"
+                >
+                  Delete {deleteUserTarget.name}
+                </h3>
+                <p className="mt-1 text-sm text-app-muted">
+                  This action permanently removes the account.
+                </p>
+              </div>
+              <button
+                className="btn-outline btn-outline-sm"
+                type="button"
+                onClick={closeDeleteUserDialog}
+                disabled={deleteUserSubmitting}
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-app-faint">
+                  Transfer Ownership (Optional)
+                </span>
+                <select
+                  className="input"
+                  value={deleteUserTransferOwnerId}
+                  onChange={(event) =>
+                    setDeleteUserTransferOwnerId(event.target.value)
+                  }
+                  disabled={deleteUserSubmitting}
+                >
+                  <option value="">Delete all owned data</option>
+                  {deleteUserTransferOptions.map((candidate) => (
+                    <option key={candidate.id} value={candidate.id}>
+                      {candidate.name} ({candidate.email})
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-app-faint">
+                  If selected, ownership of calendars, address books, and
+                  contacts will transfer before deletion.
+                </p>
+              </label>
+
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-app-faint">
+                  Type Your Admin Email To Confirm
+                </span>
+                <input
+                  className="input"
+                  type="email"
+                  placeholder={adminConfirmationEmail || "admin@example.com"}
+                  value={deleteUserConfirmationEmail}
+                  onChange={(event) =>
+                    setDeleteUserConfirmationEmail(event.target.value)
+                  }
+                  disabled={deleteUserSubmitting}
+                />
+              </label>
+            </div>
+
+            <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
+              <button
+                className="btn-outline btn-outline-sm"
+                type="button"
+                onClick={closeDeleteUserDialog}
+                disabled={deleteUserSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-outline btn-outline-sm text-app-danger"
+                type="button"
+                onClick={deleteUser}
+                disabled={deleteUserActionDisabled}
+              >
+                {deleteUserSubmitting ? "Deleting..." : "Delete User"}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
 
       {backupConfigRendered ? (
@@ -1895,18 +2093,29 @@ export default function AdminPage({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <p className="font-semibold text-app-strong">{user.name}</p>
-                      {!isApproved ? (
-                        <button
-                          className="btn-outline btn-outline-sm inline-flex items-center gap-1"
-                          type="button"
-                          onClick={() => approveUser(user.id)}
-                        >
-                          <span>Approve</span>
-                          {CheckIcon ? (
-                            <CheckIcon className="h-3.5 w-3.5" />
-                          ) : null}
-                        </button>
-                      ) : null}
+                      <div className="flex flex-wrap items-center gap-1">
+                        {!isApproved ? (
+                          <button
+                            className="btn-outline btn-outline-sm inline-flex items-center gap-1"
+                            type="button"
+                            onClick={() => approveUser(user.id)}
+                          >
+                            <span>Approve</span>
+                            {CheckIcon ? (
+                              <CheckIcon className="h-3.5 w-3.5" />
+                            ) : null}
+                          </button>
+                        ) : null}
+                        {Number(user.id) !== Number(auth.user?.id) ? (
+                          <button
+                            className="btn-outline btn-outline-sm text-app-danger"
+                            type="button"
+                            onClick={() => openDeleteUserDialog(user)}
+                          >
+                            Delete
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
                     <p className="text-app-muted">{user.email}</p>
                     <p className="text-xs text-app-faint">
