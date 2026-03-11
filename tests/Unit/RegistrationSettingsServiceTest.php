@@ -19,6 +19,23 @@ class RegistrationSettingsServiceTest extends TestCase
         $service->setPublicRegistrationEnabled(true);
 
         $this->assertTrue($service->isPublicRegistrationEnabled());
+        $this->assertTrue($service->isPublicRegistrationApprovalRequired());
+    }
+
+    public function test_registration_approval_setting_can_be_toggled_independently_after_initial_enable(): void
+    {
+        $service = app(RegistrationSettingsService::class);
+
+        $service->setPublicRegistrationEnabled(true);
+        $this->assertTrue($service->isPublicRegistrationApprovalRequired());
+
+        $service->setPublicRegistrationApprovalRequired(false);
+        $this->assertFalse($service->isPublicRegistrationApprovalRequired());
+
+        $service->setPublicRegistrationEnabled(false);
+        $service->setPublicRegistrationEnabled(true);
+
+        $this->assertFalse($service->isPublicRegistrationApprovalRequired());
     }
 
     public function test_owner_share_management_setting_can_be_toggled(): void

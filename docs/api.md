@@ -34,6 +34,7 @@ Response:
 - `user`
 - feature flags:
   - `registration_enabled`
+  - `registration_approval_required`
   - `owner_share_management_enabled`
   - `dav_compatibility_mode_enabled`
   - `contact_management_enabled`
@@ -48,13 +49,17 @@ Request body:
 - `password` (required)
 - `password_confirmation` (required)
 
-Returns `403` if registration is disabled.
+Returns:
+- `201` and authenticated `user` payload when approval is not required
+- `202` with `registration_pending_approval=true` when admin approval is required
+- `403` if registration is disabled
 
 ### `GET /api/public/config`
 Return public feature flags.
 
 Response includes:
 - `registration_enabled`
+- `registration_approval_required`
 - `owner_share_management_enabled`
 - `dav_compatibility_mode_enabled`
 - `contact_management_enabled`
@@ -274,6 +279,17 @@ Body:
 - `password`
 - `role`: `admin` | `regular`
 
+Admin-created users are marked approved immediately.
+
+#### `PATCH /api/admin/users/{user}/approve`
+Approve a pending user account.
+
+#### `PATCH /api/admin/users/approve-pending`
+Approve all currently pending user accounts.
+
+Response:
+- `approved_count`
+
 #### `GET /api/admin/resources`
 List sharable calendars/address books across users.
 
@@ -281,6 +297,13 @@ List sharable calendars/address books across users.
 
 #### `PATCH /api/admin/settings/registration`
 Toggle public registration.
+
+Response:
+- `enabled`
+- `require_approval`
+
+#### `PATCH /api/admin/settings/registration-approval`
+Toggle whether newly registered public users require admin approval before sign-in.
 
 #### `PATCH /api/admin/settings/owner-share-management`
 Toggle owner-managed sharing.

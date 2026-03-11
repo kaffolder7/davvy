@@ -9,6 +9,7 @@ describe("useAuthState", () => {
         data: {
           user: { id: 12, name: "Admin" },
           registration_enabled: true,
+          registration_approval_required: true,
           owner_share_management_enabled: true,
           dav_compatibility_mode_enabled: true,
           contact_management_enabled: true,
@@ -33,6 +34,7 @@ describe("useAuthState", () => {
         loading: false,
         user: { id: 12, name: "Admin" },
         registrationEnabled: true,
+        registrationApprovalRequired: true,
         ownerShareManagementEnabled: true,
         davCompatibilityModeEnabled: true,
         contactManagementEnabled: true,
@@ -59,6 +61,7 @@ describe("useAuthState", () => {
         .mockResolvedValueOnce({
           data: {
             registration_enabled: true,
+            registration_approval_required: false,
             owner_share_management_enabled: false,
             dav_compatibility_mode_enabled: true,
             contact_management_enabled: false,
@@ -79,6 +82,7 @@ describe("useAuthState", () => {
         loading: false,
         user: null,
         registrationEnabled: true,
+        registrationApprovalRequired: false,
         ownerShareManagementEnabled: false,
         davCompatibilityModeEnabled: true,
         contactManagementEnabled: false,
@@ -105,6 +109,7 @@ describe("useAuthState", () => {
         loading: false,
         user: null,
         registrationEnabled: false,
+        registrationApprovalRequired: false,
         ownerShareManagementEnabled: false,
         davCompatibilityModeEnabled: false,
         contactManagementEnabled: false,

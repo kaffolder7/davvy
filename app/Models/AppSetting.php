@@ -27,6 +27,14 @@ class AppSetting extends Model
         );
     }
 
+    public static function publicRegistrationApprovalRequired(): bool
+    {
+        return self::booleanSetting(
+            key: 'public_registration_require_approval',
+            default: (bool) config('services.registration.require_approval', false),
+        );
+    }
+
     public static function ownerShareManagementEnabled(): bool
     {
         return self::booleanSetting(

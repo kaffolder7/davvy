@@ -18,6 +18,7 @@ export default function RegisterPage({
     password_confirmation: "",
   });
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   if (auth.user) {
@@ -32,11 +33,33 @@ export default function RegisterPage({
     event.preventDefault();
     setSubmitting(true);
     setError("");
+    setNotice("");
 
     try {
       const { data } = await api.post("/api/auth/register", form);
-      auth.setAuth(buildAuthStateFromPayload(data, { user: data.user }));
-      navigate("/");
+      if (data?.user) {
+        auth.setAuth(buildAuthStateFromPayload(data, { user: data.user }));
+        navigate("/");
+
+        return;
+      }
+
+      if (data?.registration_pending_approval) {
+        setForm({
+          name: "",
+          email: "",
+          password: "",
+          password_confirmation: "",
+        });
+        setNotice(
+          data?.message ||
+            "Registration submitted. An administrator must approve your account before you can sign in.",
+        );
+
+        return;
+      }
+
+      setError("Unexpected registration response.");
     } catch (err) {
       setError(extractError(err, "Unable to register."));
     } finally {
@@ -90,6 +113,7 @@ export default function RegisterPage({
           />
         </Field>
         {error ? <p className="text-sm text-app-danger">{error}</p> : null}
+        {notice ? <p className="text-sm text-app-accent">{notice}</p> : null}
         <button className="btn w-full" disabled={submitting}>
           {submitting ? "Creating account..." : "Register"}
         </button>
