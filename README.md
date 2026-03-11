@@ -18,6 +18,7 @@ It is designed for:
 - DAV basic auth at `/dav`
 - Roles: `admin`, `regular`
 - Feature flags controlled by admins (public registration, owner sharing, contact management, review queue moderation, DAV compatibility mode)
+- Admin user lifecycle controls, including typed-confirm account deletion with optional ownership transfer
 - Admin backup controls for schedule, destinations, retention strategy, and ZIP restore import
 
 ### Calendars and Address Books 🗓️

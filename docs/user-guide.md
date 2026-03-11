@@ -122,6 +122,8 @@ Admins can:
   - contact management
   - review queue moderation (off by default)
 - Create users with role selection
+- Delete users with typed admin-email confirmation
+- Optionally transfer ownership of calendars, address books, and contacts to another user before deleting an account
 - Manage cross-user share assignments globally
 - Set contact change queue history retention (days)
 - Configure automated backups:
@@ -134,8 +136,11 @@ Admins can:
 - Manual backup reruns in the same day/week/month/year replace that period snapshot (no duplicate period artifacts)
 - Purge generated milestone calendars (destructive maintenance action)
 
-Important guard:
+Important guards:
 - Admins cannot disable review queue moderation while unresolved queue requests still exist; requests must be approved/denied first.
+- Admins cannot delete their own account.
+- Admins cannot delete the last remaining admin account.
+- Ownership transfer is blocked if contact UID conflicts exist between source and target owners.
 
 ## 7. DAV Client Connection Quick Values
 
