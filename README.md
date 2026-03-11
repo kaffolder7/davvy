@@ -38,6 +38,7 @@ It is designed for:
 - Managed contact UI (feature-gated)
 - Contact writes synchronized to vCards in assigned address books
 - CardDAV writes synchronized back into managed contacts
+- Bidirectional related-name sync with inverse family mapping, pronoun-aware gendered labels, and neutral fallbacks when pronouns are not inferable
 - Optional contact change moderation queue for cross-owner edits (opt-in, default off for personal deployments)
 - Birthday/anniversary generated milestone calendars per address book, including combined couple anniversaries when relationships are mutually linked
 - Apple compatibility mirror mode (selected sources mirrored into user's default `contacts` book)
