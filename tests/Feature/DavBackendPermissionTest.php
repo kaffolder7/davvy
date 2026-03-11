@@ -61,7 +61,7 @@ class DavBackendPermissionTest extends TestCase
             'is_sharable' => true,
         ]);
 
-        ResourceShare::query()->create([
+        $share = ResourceShare::query()->create([
             'resource_type' => ShareResourceType::Calendar,
             'resource_id' => $calendar->id,
             'owner_id' => $owner->id,
@@ -160,7 +160,7 @@ class DavBackendPermissionTest extends TestCase
             'is_sharable' => true,
         ]);
 
-        ResourceShare::query()->create([
+        $share = ResourceShare::query()->create([
             'resource_type' => ShareResourceType::Calendar,
             'resource_id' => $calendar->id,
             'owner_id' => $owner->id,
@@ -176,6 +176,9 @@ class DavBackendPermissionTest extends TestCase
 
         $this->assertDatabaseMissing('calendars', [
             'id' => $calendar->id,
+        ]);
+        $this->assertDatabaseMissing('resource_shares', [
+            'id' => $share->id,
         ]);
     }
 
@@ -216,7 +219,7 @@ class DavBackendPermissionTest extends TestCase
             'is_sharable' => true,
         ]);
 
-        ResourceShare::query()->create([
+        $share = ResourceShare::query()->create([
             'resource_type' => ShareResourceType::AddressBook,
             'resource_id' => $addressBook->id,
             'owner_id' => $owner->id,
@@ -232,6 +235,9 @@ class DavBackendPermissionTest extends TestCase
 
         $this->assertDatabaseMissing('address_books', [
             'id' => $addressBook->id,
+        ]);
+        $this->assertDatabaseMissing('resource_shares', [
+            'id' => $share->id,
         ]);
     }
 }

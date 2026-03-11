@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\ShareResourceType;
 use App\Models\Calendar;
+use App\Models\ResourceShare;
 use App\Services\Dav\DavSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -66,6 +67,11 @@ class CalendarController extends Controller
         if ($calendar->is_default) {
             abort(422, 'Default calendars cannot be deleted.');
         }
+
+        ResourceShare::query()
+            ->where('resource_type', ShareResourceType::Calendar->value)
+            ->where('resource_id', $calendar->id)
+            ->delete();
 
         $calendar->delete();
 
