@@ -61,7 +61,7 @@ For every finding, include:
 - recommendation: a concrete fix or mitigation
 - tests: exact test(s) to add or update
 
-Keep findings evidence-based and tied to the diff (if applicable) plus nearby context.
+Keep findings evidence-based and tied to the diff plus nearby context.
 
 ## Output order
 
