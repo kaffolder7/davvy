@@ -23,7 +23,9 @@ import RegisterPageComponent from "./components/auth/RegisterPage";
 import useAuthState from "./components/auth/useAuthState";
 import CopyableResourceUriComponent from "./components/common/CopyableResourceUri";
 import FieldComponent from "./components/common/Field";
+import FullPageState from "./components/common/FullPageState";
 import InfoCardComponent from "./components/common/InfoCard";
+import PermissionBadge from "./components/common/PermissionBadge";
 import { api, extractError } from "./lib/api";
 import {
   buildDavCollectionUrl,
@@ -82,6 +84,14 @@ import ResourcePanelComponent from "./components/dashboard/ResourcePanel";
 import DashboardPageComponent from "./components/dashboard/DashboardPage";
 import ContactChangeQueuePageComponent from "./components/queue/ContactChangeQueuePage";
 import AppShellComponent from "./components/layout/AppShell";
+import {
+  CheckIcon,
+  ChevronRightIcon,
+  DownloadIcon,
+  PencilIcon,
+  ResetIcon,
+  TimesIcon,
+} from "./components/icons/AppIcons";
 import SponsorshipLinkIcon from "./components/layout/SponsorshipLinkIcon";
 import ProfilePageComponent from "./components/profile/ProfilePage";
 import ThemeControl from "./components/theme/ThemeControl";
@@ -473,125 +483,6 @@ function AppShell({ auth, theme, children }) {
   );
 }
 
-function PermissionBadge({ permission }) {
-  if (permission === "admin") {
-    return <span className="pill pill-admin">Admin</span>;
-  }
-
-  if (permission === "editor") {
-    return <span className="pill pill-editor">Editor</span>;
-  }
-
-  return <span className="pill pill-read">General</span>;
-}
-
-function DownloadIcon({ className }) {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 4v10" />
-      <path d="M8 10.5 12 14.5l4-4" />
-      <path d="M4.5 18.5h15" />
-    </svg>
-  );
-}
-
-function PencilIcon({ className }) {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 20h9" />
-      <path d="m16.5 3.5 4 4L8 20H4v-4L16.5 3.5Z" />
-    </svg>
-  );
-}
-
-function CheckIcon({ className }) {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m5 13 4 4L19 7" />
-    </svg>
-  );
-}
-
-function TimesIcon({ className }) {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m18 6-12 12" />
-      <path d="m6 6 12 12" />
-    </svg>
-  );
-}
-
-function ResetIcon({ className }) {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="8.5" />
-      <path d="m8.5 15.5 7-7" />
-    </svg>
-  );
-}
-
-function ChevronRightIcon({ className }) {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m9 6 6 6-6 6" />
-    </svg>
-  );
-}
-
 function CopyableResourceUri({ resourceKind, principalId, resourceUri }) {
   return (
     <CopyableResourceUriComponent
@@ -618,20 +509,6 @@ function InfoCard({ title, value, helper, copyable = false }) {
 
 function Field({ label, children }) {
   return <FieldComponent label={label}>{children}</FieldComponent>;
-}
-
-function FullPageState({ label, compact = false }) {
-  return (
-    <div
-      className={
-        compact
-          ? "mt-4 text-sm font-semibold text-app-muted"
-          : "flex min-h-screen items-center justify-center text-lg font-semibold text-app-base"
-      }
-    >
-      {label}
-    </div>
-  );
 }
 
 const mountNode = document.getElementById("app");
