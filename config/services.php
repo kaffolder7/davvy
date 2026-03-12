@@ -44,14 +44,12 @@ return [
         'two_factor_grace_period_days' => (int) env('TWO_FACTOR_GRACE_PERIOD_DAYS', 14),
     ],
     'openpanel' => [
-        'enabled' => (bool) env('OPENPANEL_ENABLED', true),
-        'disable_in_ddev' => (bool) env('OPENPANEL_DISABLE_IN_DDEV', true),
-        'client_id' => trim((string) env('OPENPANEL_CLIENT_ID', '')),
-        'client_secret' => trim((string) env('OPENPANEL_CLIENT_SECRET', '')),
-        'api_url' => rtrim((string) env('OPENPANEL_API_URL', 'https://api.openpanel.dev'), '/'),
-        'script_url' => trim((string) env('OPENPANEL_SCRIPT_URL', 'https://openpanel.dev/op1.js')),
-        'ddev_detected' => (bool) env('IS_DDEV_PROJECT', false)
-            || trim((string) env('DDEV_SITENAME', '')) !== ''
-            || str_contains((string) env('APP_URL', ''), '.ddev.site'),
+        'enabled' => (bool) env('ANALYTICS_ENABLED', true),
+        // Maintainers: replace these with your own OpenPanel values.
+        'client_id' => 'REPLACE_WITH_OPENPANEL_CLIENT_ID',
+        'client_secret' => 'REPLACE_WITH_OPENPANEL_CLIENT_SECRET',
+        'api_url' => 'REPLACE_WITH_OPENPANEL_API_URL',
+        // Optional explicit override; if empty, script URL is derived from the API host.
+        'script_url' => '',
     ],
 ];

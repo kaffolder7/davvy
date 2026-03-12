@@ -73,7 +73,7 @@ It is designed for:
 - Built-in scheduler worker support (`RUN_SCHEDULER=true`) for periodic jobs
 - Automated backup tiers with rotating retention (`daily`, `weekly`, `monthly`, `yearly`)
 - Restore snapshots via CLI (`app:backup:restore`) or Admin Control Center import flow
-- Optional OpenPanel analytics via environment configuration (no admin toggle; auto-disabled in DDEV by default)
+- Optional built-in OpenPanel analytics with a single runtime toggle (`ANALYTICS_ENABLED`; provider credentials are maintainer-configured in code)
 - Railway and Coolify deployment support
 - PostgreSQL advisory-lock startup bootstrap for multi-replica safety
 

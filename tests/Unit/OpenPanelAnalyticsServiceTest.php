@@ -13,10 +13,9 @@ class OpenPanelAnalyticsServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_track_is_a_noop_when_openpanel_is_disabled(): void
+    public function test_track_is_a_noop_when_analytics_is_disabled(): void
     {
         config()->set('services.openpanel.enabled', false);
-        config()->set('services.openpanel.disable_in_ddev', false);
         config()->set('services.openpanel.client_id', 'client_123');
         config()->set('services.openpanel.client_secret', 'secret_abc');
         config()->set('services.openpanel.api_url', 'https://analytics.example.test');
@@ -30,14 +29,12 @@ class OpenPanelAnalyticsServiceTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_track_is_a_noop_when_ddev_auto_disable_is_active(): void
+    public function test_track_is_a_noop_when_provider_values_are_not_configured(): void
     {
         config()->set('services.openpanel.enabled', true);
-        config()->set('services.openpanel.disable_in_ddev', true);
-        config()->set('services.openpanel.ddev_detected', true);
-        config()->set('services.openpanel.client_id', 'client_123');
-        config()->set('services.openpanel.client_secret', 'secret_abc');
-        config()->set('services.openpanel.api_url', 'https://analytics.example.test');
+        config()->set('services.openpanel.client_id', 'REPLACE_WITH_OPENPANEL_CLIENT_ID');
+        config()->set('services.openpanel.client_secret', 'REPLACE_WITH_OPENPANEL_CLIENT_SECRET');
+        config()->set('services.openpanel.api_url', 'REPLACE_WITH_OPENPANEL_API_URL');
 
         Http::fake();
 
@@ -51,8 +48,6 @@ class OpenPanelAnalyticsServiceTest extends TestCase
     public function test_track_posts_sanitized_payload_with_hashed_profile_id(): void
     {
         config()->set('services.openpanel.enabled', true);
-        config()->set('services.openpanel.disable_in_ddev', false);
-        config()->set('services.openpanel.ddev_detected', false);
         config()->set('services.openpanel.client_id', 'client_123');
         config()->set('services.openpanel.client_secret', 'secret_abc');
         config()->set('services.openpanel.api_url', 'https://analytics.example.test');

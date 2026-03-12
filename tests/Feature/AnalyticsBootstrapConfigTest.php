@@ -13,7 +13,7 @@ class AnalyticsBootstrapConfigTest extends TestCase
 
     public function test_public_config_exposes_openpanel_bootstrap_when_enabled(): void
     {
-        $this->configureOpenPanel(enabled: true, ddevDetected: false);
+        $this->configureOpenPanel(enabled: true);
 
         $this->getJson('/api/public/config')
             ->assertOk()
@@ -26,7 +26,7 @@ class AnalyticsBootstrapConfigTest extends TestCase
 
     public function test_authenticated_config_exposes_hashed_profile_identifier(): void
     {
-        $this->configureOpenPanel(enabled: true, ddevDetected: false);
+        $this->configureOpenPanel(enabled: true);
         $user = User::factory()->create();
         $expectedProfileId = app(AnalyticsProfileService::class)->profileIdForUser($user);
 
@@ -38,9 +38,9 @@ class AnalyticsBootstrapConfigTest extends TestCase
             ->assertJsonMissingPath('analytics.user_id');
     }
 
-    public function test_public_and_authenticated_config_disable_analytics_when_ddev_is_detected(): void
+    public function test_public_and_authenticated_config_disable_analytics_when_flag_is_off(): void
     {
-        $this->configureOpenPanel(enabled: true, ddevDetected: true);
+        $this->configureOpenPanel(enabled: false);
         $user = User::factory()->create();
 
         $this->getJson('/api/public/config')
@@ -55,15 +55,12 @@ class AnalyticsBootstrapConfigTest extends TestCase
             ->assertJsonMissingPath('analytics.profile_id');
     }
 
-    private function configureOpenPanel(bool $enabled, bool $ddevDetected): void
+    private function configureOpenPanel(bool $enabled): void
     {
         config()->set('services.openpanel.enabled', $enabled);
-        config()->set('services.openpanel.disable_in_ddev', true);
-        config()->set('services.openpanel.ddev_detected', $ddevDetected);
         config()->set('services.openpanel.client_id', 'client_public');
         config()->set('services.openpanel.client_secret', 'secret_private');
         config()->set('services.openpanel.api_url', 'https://analytics.example.test');
         config()->set('services.openpanel.script_url', 'https://analytics.example.test/op1.js');
     }
 }
-

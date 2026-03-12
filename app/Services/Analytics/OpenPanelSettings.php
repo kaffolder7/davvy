@@ -11,18 +11,7 @@ class OpenPanelSettings
      */
     public function trackingEnabled(): bool
     {
-        if (! (bool) config('services.openpanel.enabled', true)) {
-            return false;
-        }
-
-        if (
-            (bool) config('services.openpanel.disable_in_ddev', true)
-            && (bool) config('services.openpanel.ddev_detected', false)
-        ) {
-            return false;
-        }
-
-        return true;
+        return (bool) config('services.openpanel.enabled', true);
     }
 
     /**
@@ -32,7 +21,10 @@ class OpenPanelSettings
      */
     public function clientTrackingEnabled(): bool
     {
-        return $this->trackingEnabled() && $this->clientId() !== '';
+        return $this->trackingEnabled()
+            && $this->isConfiguredValue($this->clientId())
+            && $this->isConfiguredValue($this->apiUrl())
+            && $this->scriptUrl() !== '';
     }
 
     /**
@@ -42,7 +34,7 @@ class OpenPanelSettings
      */
     public function serverTrackingEnabled(): bool
     {
-        return $this->clientTrackingEnabled() && $this->clientSecret() !== '';
+        return $this->clientTrackingEnabled() && $this->isConfiguredValue($this->clientSecret());
     }
 
     /**
@@ -52,7 +44,7 @@ class OpenPanelSettings
      */
     public function clientId(): string
     {
-        return (string) config('services.openpanel.client_id', '');
+        return trim((string) config('services.openpanel.client_id', ''));
     }
 
     /**
@@ -62,7 +54,7 @@ class OpenPanelSettings
      */
     public function clientSecret(): string
     {
-        return (string) config('services.openpanel.client_secret', '');
+        return trim((string) config('services.openpanel.client_secret', ''));
     }
 
     /**
@@ -72,7 +64,7 @@ class OpenPanelSettings
      */
     public function apiUrl(): string
     {
-        return (string) config('services.openpanel.api_url', 'https://api.openpanel.dev');
+        return rtrim((string) config('services.openpanel.api_url', ''), '/');
     }
 
     /**
@@ -82,6 +74,36 @@ class OpenPanelSettings
      */
     public function scriptUrl(): string
     {
-        return (string) config('services.openpanel.script_url', 'https://openpanel.dev/op1.js');
+        $configured = trim((string) config('services.openpanel.script_url', ''));
+        if ($this->isConfiguredValue($configured)) {
+            return $configured;
+        }
+
+        $apiUrl = $this->apiUrl();
+        if (! $this->isConfiguredValue($apiUrl)) {
+            return '';
+        }
+
+        $parts = parse_url($apiUrl);
+        $scheme = (string) ($parts['scheme'] ?? '');
+        $host = (string) ($parts['host'] ?? '');
+        $port = isset($parts['port']) ? ':'.$parts['port'] : '';
+
+        if ($scheme === '' || $host === '') {
+            return '';
+        }
+
+        return $scheme.'://'.$host.$port.'/op1.js';
+    }
+
+    /**
+     * Determine whether a config value is present and not a placeholder.
+     *
+     * @param  string  $value
+     * @return bool
+     */
+    private function isConfiguredValue(string $value): bool
+    {
+        return $value !== '' && ! str_starts_with($value, 'REPLACE_WITH_');
     }
 }

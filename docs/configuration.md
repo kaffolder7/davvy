@@ -56,12 +56,7 @@ When an `app_settings` key exists, it overrides env defaults.
 | `CONTACT_CHANGE_REQUEST_RETENTION_DAYS` | `90` | Purge horizon for applied/denied queue history |
 | `ENABLE_TWO_FACTOR_ENFORCEMENT` | `false` | Admin-controlled default for global 2FA mandate (persisted in `app_settings` once toggled) |
 | `TWO_FACTOR_GRACE_PERIOD_DAYS` | `14` | Grace period days before mandatory 2FA is enforced for users without 2FA enabled |
-| `OPENPANEL_ENABLED` | `true` | Master kill switch for analytics tracking; set to `false` for a strict no-tracking runtime |
-| `OPENPANEL_DISABLE_IN_DDEV` | `true` | Auto-disables analytics when DDEV runtime is detected (`IS_DDEV_PROJECT`, `DDEV_SITENAME`, or `.ddev.site` URL) |
-| `OPENPANEL_CLIENT_ID` | _(empty)_ | OpenPanel client ID for browser + server event correlation |
-| `OPENPANEL_CLIENT_SECRET` | _(empty)_ | OpenPanel secret for server-side `/track` API calls; keep secret server-only |
-| `OPENPANEL_API_URL` | `https://api.openpanel.dev` | OpenPanel API base URL (`/track` is appended by Davvy) |
-| `OPENPANEL_SCRIPT_URL` | `https://openpanel.dev/op1.js` | Browser loader script URL; point to your self-hosted OpenPanel script endpoint when applicable |
+| `ANALYTICS_ENABLED` | `true` | Master toggle for analytics tracking; set to `false` for strict no-tracking runtime behavior |
 | `ENABLE_AUTOMATED_BACKUPS` | `false` | Enables scheduled automated backups |
 | `BACKUPS_LOCAL_ENABLED` | `true` | Write backup snapshots to local filesystem path |
 | `BACKUPS_LOCAL_PATH` | `/var/www/html/storage/app/backups` | Root folder for local snapshots (`daily/weekly/monthly/yearly` subfolders) |
@@ -128,8 +123,10 @@ Backup restore tooling:
 Because settings are persisted, environment defaults may no longer be authoritative after seeding/admin toggles.
 
 Analytics settings note:
-- OpenPanel analytics controls are environment-only and are not persisted in `app_settings`.
-- When disabled (`OPENPANEL_ENABLED=false` or DDEV auto-disable), Davvy does not initialize browser analytics and does not send server-side analytics events.
+- Analytics provider credentials and endpoints are configured in `config/services.php` and are not end-user configurable at runtime.
+- The only runtime analytics control is `ANALYTICS_ENABLED`.
+- Placeholder values (`REPLACE_WITH_OPENPANEL_*`) are treated as unconfigured and result in a safe no-op.
+- When disabled (`ANALYTICS_ENABLED=false`), Davvy does not initialize browser analytics and does not send server-side analytics events.
 
 OpenPanel event taxonomy:
 - `auth.login`: successful web login completion (`method`, `two_factor`)
