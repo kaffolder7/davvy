@@ -93,16 +93,16 @@ class ContactChangeModerationTest extends TestCase
             'last_name' => 'Rivera',
             'birthday' => [
                 'year' => 1988,
-                'month' => 7,
-                'day' => 14,
+                'month' => 3,
+                'day' => 9,
             ],
             'dates' => [
                 [
                     'label' => 'anniversary',
                     'custom_label' => null,
                     'year' => 2011,
-                    'month' => 5,
-                    'day' => 20,
+                    'month' => 11,
+                    'day' => 2,
                 ],
                 [
                     'label' => 'custom',
@@ -147,8 +147,8 @@ class ContactChangeModerationTest extends TestCase
 
         $updatedPayload = Contact::query()->findOrFail($contactId)->payload;
         $this->assertSame(1988, $updatedPayload['birthday']['year'] ?? null);
-        $this->assertSame(7, $updatedPayload['birthday']['month'] ?? null);
-        $this->assertSame(14, $updatedPayload['birthday']['day'] ?? null);
+        $this->assertSame(3, $updatedPayload['birthday']['month'] ?? null);
+        $this->assertSame(9, $updatedPayload['birthday']['day'] ?? null);
         $this->assertSame('anniversary', $updatedPayload['dates'][0]['label'] ?? null);
         $this->assertSame(2011, $updatedPayload['dates'][0]['year'] ?? null);
         $this->assertSame('custom', $updatedPayload['dates'][1]['label'] ?? null);
@@ -298,8 +298,8 @@ class ContactChangeModerationTest extends TestCase
 
         $updatedPayload = Contact::query()->findOrFail($contactId)->payload;
         $this->assertSame(1988, $updatedPayload['birthday']['year'] ?? null);
-        $this->assertSame(7, $updatedPayload['birthday']['month'] ?? null);
-        $this->assertSame(14, $updatedPayload['birthday']['day'] ?? null);
+        $this->assertSame(3, $updatedPayload['birthday']['month'] ?? null);
+        $this->assertSame(9, $updatedPayload['birthday']['day'] ?? null);
         $this->assertSame('anniversary', $updatedPayload['dates'][0]['label'] ?? null);
         $this->assertSame(2011, $updatedPayload['dates'][0]['year'] ?? null);
         $this->assertSame('custom', $updatedPayload['dates'][1]['label'] ?? null);
