@@ -14,6 +14,7 @@ use App\Models\ContactAddressBookAssignment;
 use App\Models\User;
 use App\Services\Dav\DavSyncService;
 use App\Services\Dav\IcsValidator;
+use App\Services\ResourceShareCleanupService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -30,6 +31,7 @@ class ContactMilestoneCalendarService
         private readonly DavSyncService $syncService,
         private readonly IcsValidator $icsValidator,
         private readonly ContactVCardService $contactVCardService,
+        private readonly ResourceShareCleanupService $shareCleanup,
     ) {}
 
     /**
@@ -168,6 +170,16 @@ class ContactMilestoneCalendarService
             ->where('address_book_id', $addressBook->id)
             ->get();
 
+        $calendarIds = $settings
+            ->pluck('calendar_id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->filter(fn (int $id): bool => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        $this->shareCleanup->deleteCalendarShares($calendarIds);
+
         foreach ($settings as $setting) {
             if ($setting->calendar) {
                 $setting->calendar->delete();
@@ -207,6 +219,8 @@ class ContactMilestoneCalendarService
             $purgedCalendarCount = count($calendarIds);
 
             if ($calendarIds !== []) {
+                $this->shareCleanup->deleteCalendarShares($calendarIds);
+
                 Calendar::query()
                     ->whereIn('id', $calendarIds)
                     ->get()
