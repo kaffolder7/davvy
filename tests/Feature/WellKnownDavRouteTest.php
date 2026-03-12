@@ -134,6 +134,30 @@ class WellKnownDavRouteTest extends TestCase
         $this->assertStringContainsString('<d:resource-id><d:href>urn:uuid:', (string) $response->getContent());
     }
 
+    public function test_authenticated_principals_collection_listing_is_disabled(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'principal-listing-owner@example.test',
+            'password' => 'password1234',
+        ]);
+        User::factory()->create([
+            'email' => 'principal-listing-other@example.test',
+        ]);
+
+        $response = $this->call(
+            method: 'PROPFIND',
+            uri: '/dav/principals/',
+            server: [
+                'HTTP_AUTHORIZATION' => 'Basic '.base64_encode($user->email.':password1234'),
+                'HTTP_DEPTH' => '1',
+                'CONTENT_TYPE' => 'application/xml; charset=utf-8',
+            ],
+            content: '<?xml version="1.0" encoding="utf-8"?><d:propfind xmlns:d="DAV:"><d:prop><d:displayname/></d:prop></d:propfind>',
+        );
+
+        $this->assertSame(405, $response->getStatusCode());
+    }
+
     public function test_address_book_home_propfind_exposes_display_name_and_sync_token(): void
     {
         $user = User::factory()->create([
