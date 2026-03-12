@@ -134,6 +134,96 @@ class WellKnownDavRouteTest extends TestCase
         $this->assertStringContainsString('<d:resource-id><d:href>urn:uuid:', (string) $response->getContent());
     }
 
+    public function test_authenticated_principals_collection_listing_is_disabled(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'principal-listing-owner@example.test',
+            'password' => 'password1234',
+        ]);
+        User::factory()->create([
+            'email' => 'principal-listing-other@example.test',
+        ]);
+
+        $response = $this->call(
+            method: 'PROPFIND',
+            uri: '/dav/principals/',
+            server: [
+                'HTTP_AUTHORIZATION' => 'Basic '.base64_encode($user->email.':password1234'),
+                'HTTP_DEPTH' => '1',
+                'CONTENT_TYPE' => 'application/xml; charset=utf-8',
+            ],
+            content: '<?xml version="1.0" encoding="utf-8"?><d:propfind xmlns:d="DAV:"><d:prop><d:displayname/></d:prop></d:propfind>',
+        );
+
+        $this->assertSame(405, $response->getStatusCode());
+    }
+
+    public function test_principal_property_search_report_honors_anyof_and_allof_modes(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Principal Search Owner',
+            'email' => 'principal-search-owner@example.test',
+            'password' => 'password1234',
+        ]);
+
+        $allOfResponse = $this->call(
+            method: 'REPORT',
+            uri: '/dav/principals/',
+            server: [
+                'HTTP_AUTHORIZATION' => 'Basic '.base64_encode($user->email.':password1234'),
+                'HTTP_DEPTH' => '0',
+                'CONTENT_TYPE' => 'application/xml; charset=utf-8',
+            ],
+            content: <<<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<d:principal-property-search xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" test="allof">
+  <d:property-search>
+    <d:prop><d:displayname/></d:prop>
+    <d:match>Principal Search</d:match>
+  </d:property-search>
+  <d:property-search>
+    <d:prop><s:email-address/></d:prop>
+    <d:match>missing-fragment</d:match>
+  </d:property-search>
+  <d:prop><d:displayname/></d:prop>
+</d:principal-property-search>
+XML,
+        );
+
+        $allOfResponse->assertStatus(207);
+        $this->assertStringNotContainsString(
+            '/dav/principals/'.$user->id.'/',
+            (string) $allOfResponse->getContent()
+        );
+
+        $anyOfResponse = $this->call(
+            method: 'REPORT',
+            uri: '/dav/principals/',
+            server: [
+                'HTTP_AUTHORIZATION' => 'Basic '.base64_encode($user->email.':password1234'),
+                'HTTP_DEPTH' => '0',
+                'CONTENT_TYPE' => 'application/xml; charset=utf-8',
+            ],
+            content: <<<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<d:principal-property-search xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" test="anyof">
+  <d:property-search>
+    <d:prop><d:displayname/></d:prop>
+    <d:match>Principal Search</d:match>
+  </d:property-search>
+  <d:property-search>
+    <d:prop><s:email-address/></d:prop>
+    <d:match>missing-fragment</d:match>
+  </d:property-search>
+  <d:prop><d:displayname/></d:prop>
+</d:principal-property-search>
+XML,
+        );
+
+        $anyOfResponse->assertStatus(207);
+        $this->assertStringContainsString('/dav/principals/'.$user->id.'/', (string) $anyOfResponse->getContent());
+    }
+
     public function test_address_book_home_propfind_exposes_display_name_and_sync_token(): void
     {
         $user = User::factory()->create([

@@ -67,14 +67,45 @@ class LaravelPrincipalBackend extends AbstractBackend
             return [];
         }
 
-        $query = User::query();
-
-        if (isset($searchProperties['{DAV:}displayname'])) {
-            $query->where('name', 'like', '%'.$searchProperties['{DAV:}displayname'].'%');
+        $supportedProperties = [];
+        if (array_key_exists('{DAV:}displayname', $searchProperties)) {
+            $supportedProperties[] = [
+                'column' => 'name',
+                'value' => (string) $searchProperties['{DAV:}displayname'],
+            ];
         }
 
-        if (isset($searchProperties['{http://sabredav.org/ns}email-address'])) {
-            $query->where('email', 'like', '%'.$searchProperties['{http://sabredav.org/ns}email-address'].'%');
+        if (array_key_exists('{http://sabredav.org/ns}email-address', $searchProperties)) {
+            $supportedProperties[] = [
+                'column' => 'email',
+                'value' => (string) $searchProperties['{http://sabredav.org/ns}email-address'],
+            ];
+        }
+
+        if ($supportedProperties === []) {
+            return [];
+        }
+
+        $query = User::query();
+        if ($test === 'anyof') {
+            $query->where(function ($builder) use ($supportedProperties): void {
+                foreach ($supportedProperties as $index => $search) {
+                    $method = $index === 0 ? 'where' : 'orWhere';
+                    $builder->{$method}(
+                        (string) $search['column'],
+                        'like',
+                        '%'.(string) $search['value'].'%',
+                    );
+                }
+            });
+        } else {
+            foreach ($supportedProperties as $search) {
+                $query->where(
+                    (string) $search['column'],
+                    'like',
+                    '%'.(string) $search['value'].'%',
+                );
+            }
         }
 
         return $query->pluck('id')

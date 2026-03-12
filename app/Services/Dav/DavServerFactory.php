@@ -29,8 +29,11 @@ class DavServerFactory
 
     public function make(): Server
     {
+        $principalCollection = new PrincipalCollection($this->principalBackend);
+        $principalCollection->disableListing = true;
+
         $nodes = [
-            new PrincipalCollection($this->principalBackend),
+            $principalCollection,
             new CalendarRoot($this->principalBackend, $this->calendarBackend),
             new AddressBookRoot($this->principalBackend, $this->cardDavBackend),
         ];

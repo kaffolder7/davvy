@@ -520,6 +520,79 @@ class BackupManagementTest extends TestCase
         );
     }
 
+    public function test_merge_restore_is_idempotent_when_archive_contains_collection_metadata(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $this->seedBackupData();
+
+        $archivePath = $this->createBackupArchiveAt(
+            directory: storage_path('framework/testing/backups-restore-idempotent-metadata'),
+            date: [2026, 3, 11, 2, 30, 0],
+        );
+
+        $initialCalendarCount = Calendar::query()->count();
+        $initialAddressBookCount = AddressBook::query()->count();
+        $initialCalendarObjectCount = CalendarObject::query()->count();
+        $initialCardCount = Card::query()->count();
+
+        $upload = UploadedFile::fake()->createWithContent(
+            'restore.zip',
+            (string) file_get_contents($archivePath),
+        );
+
+        $this->actingAs($admin)
+            ->post('/api/admin/backups/restore', [
+                'backup' => $upload,
+                'mode' => 'merge',
+                'dry_run' => '0',
+            ])
+            ->assertOk()
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('summary.calendars_created', 0)
+            ->assertJsonPath('summary.address_books_created', 0)
+            ->assertJsonPath('summary.calendar_objects_created', 0)
+            ->assertJsonPath('summary.cards_created', 0);
+
+        $this->assertSame($initialCalendarCount, Calendar::query()->count());
+        $this->assertSame($initialAddressBookCount, AddressBook::query()->count());
+        $this->assertSame($initialCalendarObjectCount, CalendarObject::query()->count());
+        $this->assertSame($initialCardCount, Card::query()->count());
+    }
+
+    public function test_merge_restore_legacy_archive_without_collection_metadata_does_not_duplicate_unambiguous_collections(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $this->seedBackupData();
+
+        $archivePath = $this->createBackupArchiveAt(
+            directory: storage_path('framework/testing/backups-restore-idempotent-legacy'),
+            date: [2026, 3, 12, 2, 30, 0],
+        );
+        $this->stripCollectionMetadataFromManifest($archivePath);
+
+        $initialCalendarCount = Calendar::query()->count();
+        $initialAddressBookCount = AddressBook::query()->count();
+
+        $upload = UploadedFile::fake()->createWithContent(
+            'restore.zip',
+            (string) file_get_contents($archivePath),
+        );
+
+        $this->actingAs($admin)
+            ->post('/api/admin/backups/restore', [
+                'backup' => $upload,
+                'mode' => 'merge',
+                'dry_run' => '0',
+            ])
+            ->assertOk()
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('summary.calendars_created', 0)
+            ->assertJsonPath('summary.address_books_created', 0);
+
+        $this->assertSame($initialCalendarCount, Calendar::query()->count());
+        $this->assertSame($initialAddressBookCount, AddressBook::query()->count());
+    }
+
     private function seedBackupData(): void
     {
         $owner = User::factory()->create();
@@ -606,5 +679,28 @@ class BackupManagementTest extends TestCase
         $this->assertIsString($files[0]);
 
         return (string) $files[0];
+    }
+
+    private function stripCollectionMetadataFromManifest(string $archivePath): void
+    {
+        $zip = new ZipArchive;
+        $opened = $zip->open($archivePath);
+        $this->assertTrue($opened === true, 'Unable to open backup archive for manifest mutation.');
+
+        $manifestPayload = $zip->getFromName('manifest.json');
+        $this->assertIsString($manifestPayload, 'Backup archive missing manifest.json.');
+        $manifest = json_decode($manifestPayload, true);
+        $this->assertIsArray($manifest, 'manifest.json is not valid JSON.');
+
+        unset($manifest['collections']);
+        $nextManifestPayload = json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        $this->assertIsString($nextManifestPayload, 'Unable to encode manifest JSON.');
+        $this->assertTrue($zip->deleteName('manifest.json'));
+        $this->assertTrue(
+            $zip->addFromString('manifest.json', $nextManifestPayload),
+            'Unable to write mutated manifest.json back to archive.'
+        );
+
+        $zip->close();
     }
 }
