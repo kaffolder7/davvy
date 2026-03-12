@@ -32,6 +32,8 @@ class AuthController extends Controller
     ) {}
 
     /**
+     * Registers a new user account.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -84,6 +86,8 @@ class AuthController extends Controller
     }
 
     /**
+     * Returns public configuration.
+     *
      * @return JsonResponse
      */
     public function publicConfig(): JsonResponse
@@ -92,6 +96,8 @@ class AuthController extends Controller
     }
 
     /**
+     * Authenticates the user.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -142,6 +148,8 @@ class AuthController extends Controller
     }
 
     /**
+     * Returns the pending two-factor challenge status.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -151,6 +159,8 @@ class AuthController extends Controller
     }
 
     /**
+     * Completes two factor login.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -188,6 +198,8 @@ class AuthController extends Controller
     }
 
     /**
+     * Signs out the current user.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -205,6 +217,8 @@ class AuthController extends Controller
     }
 
     /**
+     * Returns the authenticated user.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -216,6 +230,8 @@ class AuthController extends Controller
     }
 
     /**
+     * Changes the user's password.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -236,6 +252,8 @@ class AuthController extends Controller
     }
 
     /**
+     * Returns the current two-factor authentication status.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -256,6 +274,8 @@ class AuthController extends Controller
     }
 
     /**
+     * Starts two factor setup.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -278,6 +298,8 @@ class AuthController extends Controller
     }
 
     /**
+     * Enables two-factor authentication.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -315,6 +337,8 @@ class AuthController extends Controller
     }
 
     /**
+     * Disables two-factor authentication.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -343,6 +367,8 @@ class AuthController extends Controller
     }
 
     /**
+     * Regenerates backup codes.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -370,6 +396,8 @@ class AuthController extends Controller
     }
 
     /**
+     * Returns app passwords.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -398,6 +426,8 @@ class AuthController extends Controller
     }
 
     /**
+     * Creates app password.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -433,6 +463,8 @@ class AuthController extends Controller
     }
 
     /**
+     * Revokes app password.
+     *
      * @param  Request  $request
      * @param  UserAppPassword  $appPassword
      * @return JsonResponse

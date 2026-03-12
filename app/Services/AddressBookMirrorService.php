@@ -35,6 +35,8 @@ class AddressBookMirrorService
     ) {}
 
     /**
+     * Returns dashboard data.
+     *
      * @param  User  $user
      * @return array
      */
@@ -66,6 +68,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Updates user config.
+     *
      * @param  User  $user
      * @param  bool  $enabled
      * @param  array  $sourceIds
@@ -116,6 +120,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Synchronizes user config.
+     *
      * @param  User  $user
      * @return void
      */
@@ -168,6 +174,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Handles source card upsert.
+     *
      * @param  AddressBook  $sourceAddressBook
      * @param  Card  $sourceCard
      * @return void
@@ -214,6 +222,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Handles source card deleted.
+     *
      * @param  int  $sourceAddressBookId
      * @param  string  $sourceCardUri
      * @return void
@@ -231,6 +241,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Handles source address book deleted.
+     *
      * @param  int  $sourceAddressBookId
      * @return void
      */
@@ -246,6 +258,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Updates source from mirrored card.
+     *
      * @param  User|null  $actor
      * @param  Card  $mirroredCard
      * @param  string  $incomingCardData
@@ -325,6 +339,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Deletes source from mirrored card.
+     *
      * @param  User|null  $actor
      * @param  Card  $mirroredCard
      * @return bool

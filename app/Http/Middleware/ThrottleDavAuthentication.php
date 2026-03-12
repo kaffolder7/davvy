@@ -11,6 +11,8 @@ use Symfony\Component\HttpFoundation\Response;
 class ThrottleDavAuthentication
 {
     /**
+     * Handles the incoming request.
+     *
      * @param  Closure(Request): Response  $next
      */
     public function handle(Request $request, Closure $next): Response

@@ -33,6 +33,8 @@ class BackupRestoreService
     ) {}
 
     /**
+     * Restores from archive.
+     *
      * @return array{
      *   status:'success',
      *   trigger:string,

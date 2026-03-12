@@ -14,6 +14,8 @@ class DefaultResourceProvisioner
     public function __construct(private readonly DavSyncService $syncService) {}
 
     /**
+     * Provisions default resources.
+     *
      * @param  User  $user
      * @return void
      */

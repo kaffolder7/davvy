@@ -18,6 +18,8 @@ class CalendarController extends Controller
     ) {}
 
     /**
+     * Creates a new resource.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -51,6 +53,8 @@ class CalendarController extends Controller
     }
 
     /**
+     * Updates an existing resource.
+     *
      * @param  Request  $request
      * @param  Calendar  $calendar
      * @return JsonResponse
@@ -73,6 +77,8 @@ class CalendarController extends Controller
     }
 
     /**
+     * Deletes an existing resource.
+     *
      * @param  Request  $request
      * @param  Calendar  $calendar
      * @return JsonResponse

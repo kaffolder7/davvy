@@ -12,6 +12,8 @@ class EnsureContactManagementEnabled
     public function __construct(private readonly RegistrationSettingsService $settings) {}
 
     /**
+     * Handles the incoming request.
+     *
      * @param  Closure(Request): Response  $next
      */
     public function handle(Request $request, Closure $next): Response

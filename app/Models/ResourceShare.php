@@ -32,6 +32,8 @@ class ResourceShare extends Model
     }
 
     /**
+     * Returns owner.
+     *
      * @return BelongsTo
      */
     public function owner(): BelongsTo
@@ -40,6 +42,8 @@ class ResourceShare extends Model
     }
 
     /**
+     * Returns the user who received this share.
+     *
      * @return BelongsTo
      */
     public function sharedWith(): BelongsTo
@@ -48,6 +52,8 @@ class ResourceShare extends Model
     }
 
     /**
+     * Returns calendar.
+     *
      * @return BelongsTo
      */
     public function calendar(): BelongsTo
@@ -56,6 +62,8 @@ class ResourceShare extends Model
     }
 
     /**
+     * Returns address book.
+     *
      * @return BelongsTo
      */
     public function addressBook(): BelongsTo

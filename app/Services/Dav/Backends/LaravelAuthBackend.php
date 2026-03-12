@@ -24,6 +24,8 @@ class LaravelAuthBackend extends AbstractBasic
     ) {}
 
     /**
+     * Performs the check operation.
+     *
      * @param  RequestInterface  $request
      * @param  ResponseInterface  $response
      * @return array

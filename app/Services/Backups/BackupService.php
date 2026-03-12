@@ -21,6 +21,8 @@ class BackupService
     public function __construct(private readonly BackupSettingsService $settingsService) {}
 
     /**
+     * Runs the operation.
+     *
      * @return array{
      *   status: 'success'|'skipped'|'failed',
      *   trigger: string,

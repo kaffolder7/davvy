@@ -28,6 +28,8 @@ class DavServerFactory
     ) {}
 
     /**
+     * Creates the value.
+     *
      * @return Server
      */
     public function make(): Server

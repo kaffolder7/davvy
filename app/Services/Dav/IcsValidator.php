@@ -15,6 +15,8 @@ class IcsValidator
     public function __construct(private readonly RegistrationSettingsService $settings) {}
 
     /**
+     * Validates and normalizes the payload.
+     *
      * @param  string  $calendarData
      * @return array
      */
@@ -44,6 +46,8 @@ class IcsValidator
     }
 
     /**
+     * Extracts the UID.
+     *
      * @param  string  $calendarData
      * @return string|null
      */

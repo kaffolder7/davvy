@@ -9,6 +9,8 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [];
 
     /**
+     * Bootstraps the application services.
+     *
      * @return void
      */
     public function boot(): void

@@ -31,6 +31,8 @@ class UserAppPassword extends Model
     }
 
     /**
+     * Returns user.
+     *
      * @return BelongsTo
      */
     public function user(): BelongsTo
@@ -39,6 +41,8 @@ class UserAppPassword extends Model
     }
 
     /**
+     * Checks whether it is revoked.
+     *
      * @return bool
      */
     public function isRevoked(): bool

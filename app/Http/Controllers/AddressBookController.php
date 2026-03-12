@@ -20,6 +20,8 @@ class AddressBookController extends Controller
     ) {}
 
     /**
+     * Creates a new resource.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -49,6 +51,8 @@ class AddressBookController extends Controller
     }
 
     /**
+     * Updates an existing resource.
+     *
      * @param  Request  $request
      * @param  AddressBook  $addressBook
      * @return JsonResponse
@@ -73,6 +77,8 @@ class AddressBookController extends Controller
     }
 
     /**
+     * Deletes an existing resource.
+     *
      * @param  Request  $request
      * @param  AddressBook  $addressBook
      * @return JsonResponse

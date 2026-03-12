@@ -7,6 +7,8 @@ use App\Models\User;
 class PrincipalUriService
 {
     /**
+     * Returns URI for user.
+     *
      * @param  User  $user
      * @return string
      */
@@ -16,6 +18,8 @@ class PrincipalUriService
     }
 
     /**
+     * Returns user from principal URI.
+     *
      * @param  string  $principalUri
      * @return User|null
      */

@@ -28,6 +28,8 @@ class ContactChangeRequestService
     ) {}
 
     /**
+     * Enqueues web update if needed.
+     *
      * @param  array<string, mixed>  $payload
      * @param  array<int, int>  $addressBookIds
      * @return array{group_uuid:string,request_ids:array<int,int>,owner_ids:array<int,int>}|null
@@ -56,6 +58,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Enqueues web delete if needed.
+     *
      * @return array{group_uuid:string,request_ids:array<int,int>,owner_ids:array<int,int>}|null
      */
     public function enqueueWebDeleteIfNeeded(User $actor, Contact $contact): ?array
@@ -76,6 +80,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Enqueues card DAV update if needed.
+     *
      * @return array{group_uuid:string,request_ids:array<int,int>,owner_ids:array<int,int>}|null
      */
     public function enqueueCardDavUpdateIfNeeded(
@@ -112,6 +118,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Enqueues card DAV delete if needed.
+     *
      * @return array{group_uuid:string,request_ids:array<int,int>,owner_ids:array<int,int>}|null
      */
     public function enqueueCardDavDeleteIfNeeded(User $actor, AddressBook $addressBook, Card $card): ?array
@@ -139,6 +147,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Returns requests for reviewer.
+     *
      * @param  array<string, mixed>  $filters
      * @return Collection<int, ContactChangeRequest>
      */
@@ -187,6 +197,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Returns pending review count.
+     *
      * @param  User  $reviewer
      * @return int
      */
@@ -208,6 +220,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Approves the request.
+     *
      * @param  array<string, mixed>|null  $resolvedPayload
      * @param  array<int, int>|null  $resolvedAddressBookIds
      */
@@ -288,6 +302,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Denies the request.
+     *
      * @param  User  $reviewer
      * @param  ContactChangeRequest  $request
      * @return ContactChangeRequest
@@ -328,6 +344,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Processes a bulk review action.
+     *
      * @param  array<int, int>  $requestIds
      * @return array{processed:int,approved:int,denied:int,skipped:int}
      */
@@ -391,6 +409,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Purges expired terminal requests.
+     *
      * @return int
      */
     public function purgeExpiredTerminalRequests(): int

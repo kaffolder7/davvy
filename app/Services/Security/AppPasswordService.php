@@ -9,6 +9,8 @@ use Illuminate\Support\Collection;
 class AppPasswordService
 {
     /**
+     * Creates a new resource.
+     *
      * @param  User  $user
      * @param  string  $name
      * @return array
@@ -34,6 +36,8 @@ class AppPasswordService
     }
 
     /**
+     * Returns active records.
+     *
      * @return Collection<int, UserAppPassword>
      */
     public function activeFor(User $user): Collection
@@ -45,6 +49,8 @@ class AppPasswordService
     }
 
     /**
+     * Revokes access.
+     *
      * @param  User  $user
      * @param  int  $appPasswordId
      * @return bool
@@ -68,6 +74,8 @@ class AppPasswordService
     }
 
     /**
+     * Revokes all.
+     *
      * @param  User  $user
      * @return int
      */
@@ -79,6 +87,8 @@ class AppPasswordService
     }
 
     /**
+     * Verifies the credential and updates its usage timestamp.
+     *
      * @param  User  $user
      * @param  string  $token
      * @return bool

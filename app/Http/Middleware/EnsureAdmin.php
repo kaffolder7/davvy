@@ -9,6 +9,8 @@ use Symfony\Component\HttpFoundation\Response;
 class EnsureAdmin
 {
     /**
+     * Handles the incoming request.
+     *
      * @param  Request  $request
      * @param  Closure  $next
      * @return Response

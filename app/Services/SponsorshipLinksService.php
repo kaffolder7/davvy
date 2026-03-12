@@ -5,6 +5,8 @@ namespace App\Services;
 class SponsorshipLinksService
 {
     /**
+     * Returns public configuration.
+     *
      * @return array{enabled: bool, links: array<int, array{name: string, url: string}>}
      */
     public function publicConfig(): array

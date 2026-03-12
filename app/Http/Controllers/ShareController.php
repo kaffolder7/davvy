@@ -21,6 +21,8 @@ class ShareController extends Controller
     ) {}
 
     /**
+     * Lists resources.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -61,6 +63,8 @@ class ShareController extends Controller
     }
 
     /**
+     * Creates or updates a resource.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -116,6 +120,8 @@ class ShareController extends Controller
     }
 
     /**
+     * Deletes an existing resource.
+     *
      * @param  Request  $request
      * @param  ResourceShare  $share
      * @return JsonResponse

@@ -17,6 +17,8 @@ class UserDeletionService
     ) {}
 
     /**
+     * Deletes user.
+     *
      * @return array{
      *   deleted_user_id:int,
      *   transferred_to_user_id:?int,

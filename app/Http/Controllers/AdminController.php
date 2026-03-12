@@ -39,6 +39,8 @@ class AdminController extends Controller
     ) {}
 
     /**
+     * Returns users.
+     *
      * @return JsonResponse
      */
     public function users(): JsonResponse
@@ -60,6 +62,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Creates user.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -91,6 +95,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Deletes user.
+     *
      * @param  Request  $request
      * @param  User  $user
      * @return JsonResponse
@@ -147,6 +153,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Approves user.
+     *
      * @param  Request  $request
      * @param  User  $user
      * @return JsonResponse
@@ -165,6 +173,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Approves pending users.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -193,6 +203,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Returns sharable resources.
+     *
      * @return JsonResponse
      */
     public function sharableResources(): JsonResponse
@@ -242,6 +254,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Sets registration setting.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -263,6 +277,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Sets registration approval setting.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -283,6 +299,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Sets owner share management setting.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -303,6 +321,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Sets DAV compatibility mode setting.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -323,6 +343,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Sets contact management setting.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -353,6 +375,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Sets contact change moderation setting.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -399,6 +423,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Sets two factor enforcement setting.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -420,6 +446,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Resets user two factor.
+     *
      * @param  Request  $request
      * @param  User  $user
      * @return JsonResponse
@@ -442,6 +470,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Returns contact change request retention setting.
+     *
      * @return JsonResponse
      */
     public function contactChangeRequestRetentionSetting(): JsonResponse
@@ -452,6 +482,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Sets contact change request retention setting.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -472,6 +504,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Returns milestone generation years setting.
+     *
      * @return JsonResponse
      */
     public function milestoneGenerationYearsSetting(): JsonResponse
@@ -482,6 +516,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Sets milestone generation years setting.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -515,6 +551,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Purges generated milestone calendars.
+     *
      * @return JsonResponse
      */
     public function purgeGeneratedMilestoneCalendars(): JsonResponse
@@ -525,6 +563,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Returns backup settings.
+     *
      * @return JsonResponse
      */
     public function backupSettings(): JsonResponse
@@ -533,6 +573,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Sets backup settings.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -575,6 +617,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Runs a backup immediately.
+     *
      * @return JsonResponse
      */
     public function runBackupNow(): JsonResponse
@@ -593,6 +637,8 @@ class AdminController extends Controller
     }
 
     /**
+     * Restores a backup archive.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */

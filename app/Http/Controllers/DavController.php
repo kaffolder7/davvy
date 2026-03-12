@@ -19,6 +19,8 @@ class DavController extends Controller
     ) {}
 
     /**
+     * Handles the incoming request.
+     *
      * @param  Request  $request
      * @return Response
      */

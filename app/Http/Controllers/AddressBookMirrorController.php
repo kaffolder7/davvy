@@ -11,6 +11,8 @@ class AddressBookMirrorController extends Controller
     public function __construct(private readonly AddressBookMirrorService $mirrorService) {}
 
     /**
+     * Updates an existing resource.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */

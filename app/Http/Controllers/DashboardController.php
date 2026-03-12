@@ -22,6 +22,8 @@ class DashboardController extends Controller
     ) {}
 
     /**
+     * Lists resources.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */

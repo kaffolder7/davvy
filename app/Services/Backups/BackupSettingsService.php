@@ -10,6 +10,8 @@ use Carbon\CarbonTimeZone;
 class BackupSettingsService
 {
     /**
+     * Returns the current configuration.
+     *
      * @return array{
      *   enabled: bool,
      *   local_enabled: bool,
@@ -58,6 +60,8 @@ class BackupSettingsService
     }
 
     /**
+     * Updates an existing resource.
+     *
      * @param  array{
      *   enabled: bool,
      *   local_enabled: bool,
@@ -104,6 +108,8 @@ class BackupSettingsService
     }
 
     /**
+     * Checks whether the period has already been captured.
+     *
      * @param  string  $tier
      * @param  string  $periodKey
      * @return bool
@@ -114,6 +120,8 @@ class BackupSettingsService
     }
 
     /**
+     * Marks period captured.
+     *
      * @param  string  $tier
      * @param  string  $periodKey
      * @return void
@@ -131,6 +139,8 @@ class BackupSettingsService
     }
 
     /**
+     * Records run.
+     *
      * @param  string  $status
      * @param  string  $message
      * @param  CarbonImmutable|null  $executedAtUtc

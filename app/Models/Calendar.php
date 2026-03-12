@@ -35,6 +35,8 @@ class Calendar extends Model
     }
 
     /**
+     * Returns owner.
+     *
      * @return BelongsTo
      */
     public function owner(): BelongsTo
@@ -43,6 +45,8 @@ class Calendar extends Model
     }
 
     /**
+     * Returns objects.
+     *
      * @return HasMany
      */
     public function objects(): HasMany
@@ -51,6 +55,8 @@ class Calendar extends Model
     }
 
     /**
+     * Returns shares.
+     *
      * @return HasMany
      */
     public function shares(): HasMany
@@ -60,6 +66,8 @@ class Calendar extends Model
     }
 
     /**
+     * Returns milestone setting.
+     *
      * @return HasOne
      */
     public function milestoneSetting(): HasOne

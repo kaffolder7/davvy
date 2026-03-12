@@ -8,6 +8,8 @@ use App\Models\ResourceShare;
 class ResourceShareCleanupService
 {
     /**
+     * Deletes address book shares.
+     *
      * @param  int|array  $addressBookIds
      * @return void
      */
@@ -26,6 +28,8 @@ class ResourceShareCleanupService
     }
 
     /**
+     * Deletes calendar shares.
+     *
      * @param  int|array  $calendarIds
      * @return void
      */

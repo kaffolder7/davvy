@@ -19,6 +19,8 @@ class AddressBookMirrorLink extends Model
     ];
 
     /**
+     * Returns user.
+     *
      * @return BelongsTo
      */
     public function user(): BelongsTo
@@ -27,6 +29,8 @@ class AddressBookMirrorLink extends Model
     }
 
     /**
+     * Returns mirrored address book.
+     *
      * @return BelongsTo
      */
     public function mirroredAddressBook(): BelongsTo
@@ -35,6 +39,8 @@ class AddressBookMirrorLink extends Model
     }
 
     /**
+     * Returns mirrored card.
+     *
      * @return BelongsTo
      */
     public function mirroredCard(): BelongsTo

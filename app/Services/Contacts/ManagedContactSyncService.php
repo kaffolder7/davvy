@@ -18,6 +18,8 @@ class ManagedContactSyncService
     ) {}
 
     /**
+     * Synchronizes card upsert.
+     *
      * @param  AddressBook  $addressBook
      * @param  Card  $card
      * @param  User|null  $actor
@@ -209,6 +211,8 @@ class ManagedContactSyncService
     }
 
     /**
+     * Synchronizes card deleted.
+     *
      * @param  Card  $card
      * @return void
      */
@@ -251,6 +255,8 @@ class ManagedContactSyncService
     }
 
     /**
+     * Synchronizes address book deleted.
+     *
      * @param  AddressBook  $addressBook
      * @return void
      */

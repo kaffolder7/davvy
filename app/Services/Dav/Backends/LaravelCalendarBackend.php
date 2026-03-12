@@ -36,6 +36,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     ) {}
 
     /**
+     * Returns calendars for user.
+     *
      * @param  mixed  $principalUri
      * @return array
      */
@@ -68,6 +70,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Creates calendar.
+     *
      * @param  mixed  $principalUri
      * @param  mixed  $calendarUri
      * @param  array  $properties
@@ -96,6 +100,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Updates calendar.
+     *
      * @param  mixed  $calendarId
      * @param  PropPatch  $propPatch
      * @return void
@@ -139,6 +145,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Deletes calendar.
+     *
      * @param  mixed  $calendarId
      * @return void
      */
@@ -156,6 +164,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Returns calendar objects.
+     *
      * @param  mixed  $calendarId
      * @return array
      */
@@ -172,6 +182,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Returns calendar object.
+     *
      * @param  mixed  $calendarId
      * @param  mixed  $objectUri
      * @return array|null
@@ -193,6 +205,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Returns multiple calendar objects.
+     *
      * @param  mixed  $calendarId
      * @param  array  $uris
      * @return array
@@ -210,6 +224,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Creates calendar object.
+     *
      * @param  mixed  $calendarId
      * @param  mixed  $objectUri
      * @param  mixed  $calendarData
@@ -269,6 +285,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Updates calendar object.
+     *
      * @param  mixed  $calendarId
      * @param  mixed  $objectUri
      * @param  mixed  $calendarData
@@ -326,6 +344,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Deletes calendar object.
+     *
      * @param  mixed  $calendarId
      * @param  mixed  $objectUri
      * @return void
@@ -355,6 +375,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Returns calendar query.
+     *
      * @param  mixed  $calendarId
      * @param  array  $filters
      * @return array
@@ -370,6 +392,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Returns changes for calendar.
+     *
      * @param  mixed  $calendarId
      * @param  mixed  $syncToken
      * @param  mixed  $syncLevel

@@ -23,6 +23,8 @@ class ExportController extends Controller
     public function __construct(private readonly ResourceAccessService $accessService) {}
 
     /**
+     * Returns export all calendars.
+     *
      * @param  Request  $request
      * @return BinaryFileResponse
      */
@@ -43,6 +45,8 @@ class ExportController extends Controller
     }
 
     /**
+     * Returns export calendar.
+     *
      * @param  Request  $request
      * @param  Calendar  $calendar
      * @return Response
@@ -68,6 +72,8 @@ class ExportController extends Controller
     }
 
     /**
+     * Returns export all address books.
+     *
      * @param  Request  $request
      * @return BinaryFileResponse
      */
@@ -88,6 +94,8 @@ class ExportController extends Controller
     }
 
     /**
+     * Returns export address book.
+     *
      * @param  Request  $request
      * @param  AddressBook  $addressBook
      * @return Response

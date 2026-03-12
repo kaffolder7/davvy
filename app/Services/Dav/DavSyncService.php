@@ -11,6 +11,8 @@ class DavSyncService
     private const INITIAL_SYNC_TOKEN = 1;
 
     /**
+     * Returns current token.
+     *
      * @param  ShareResourceType  $resourceType
      * @param  int  $resourceId
      * @return int
@@ -32,6 +34,8 @@ class DavSyncService
     }
 
     /**
+     * Ensures resource.
+     *
      * @param  ShareResourceType  $resourceType
      * @param  int  $resourceId
      * @return void
@@ -42,6 +46,8 @@ class DavSyncService
     }
 
     /**
+     * Records added.
+     *
      * @param  ShareResourceType  $resourceType
      * @param  int  $resourceId
      * @param  string  $uri
@@ -53,6 +59,8 @@ class DavSyncService
     }
 
     /**
+     * Records modified.
+     *
      * @param  ShareResourceType  $resourceType
      * @param  int  $resourceId
      * @param  string  $uri
@@ -64,6 +72,8 @@ class DavSyncService
     }
 
     /**
+     * Records deleted.
+     *
      * @param  ShareResourceType  $resourceType
      * @param  int  $resourceId
      * @param  string  $uri
@@ -75,6 +85,8 @@ class DavSyncService
     }
 
     /**
+     * Returns changes since.
+     *
      * @param  ShareResourceType  $resourceType
      * @param  int  $resourceId
      * @param  int  $syncToken

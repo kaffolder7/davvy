@@ -16,6 +16,8 @@ class AddressBookMirrorSource extends Model
     ];
 
     /**
+     * Returns the current configuration.
+     *
      * @return BelongsTo
      */
     public function config(): BelongsTo
@@ -24,6 +26,8 @@ class AddressBookMirrorSource extends Model
     }
 
     /**
+     * Returns source address book.
+     *
      * @return BelongsTo
      */
     public function sourceAddressBook(): BelongsTo

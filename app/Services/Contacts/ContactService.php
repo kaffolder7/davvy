@@ -293,6 +293,8 @@ class ContactService
     ) {}
 
     /**
+     * Returns contacts.
+     *
      * @return Collection<int, Contact>
      */
     public function contactsFor(User $actor): Collection
@@ -317,6 +319,8 @@ class ContactService
     }
 
     /**
+     * Returns writable address books.
+     *
      * @return Collection<int, array{id:int,uri:string,display_name:string,scope:string,owner_name:?string,owner_email:?string}>
      */
     public function writableAddressBooksFor(User $actor): Collection
@@ -358,6 +362,8 @@ class ContactService
     }
 
     /**
+     * Returns writable address book IDs.
+     *
      * @return array<int, int>
      */
     public function writableAddressBookIdsFor(User $actor): array
@@ -370,6 +376,8 @@ class ContactService
     }
 
     /**
+     * Returns address book IDs for contact.
+     *
      * @return array<int, int>
      */
     public function addressBookIdsForContact(Contact $contact): array
@@ -382,6 +390,8 @@ class ContactService
     }
 
     /**
+     * Checks whether the user can write to the contact.
+     *
      * @param  User  $actor
      * @param  Contact  $contact
      * @return bool
@@ -405,6 +415,8 @@ class ContactService
     }
 
     /**
+     * Creates a new resource.
+     *
      * @param  array<string, mixed>  $payload
      * @param  array<int, int>  $addressBookIds
      */
@@ -443,6 +455,8 @@ class ContactService
     }
 
     /**
+     * Updates an existing resource.
+     *
      * @param  array<string, mixed>  $payload
      * @param  array<int, int>  $addressBookIds
      */
@@ -456,6 +470,8 @@ class ContactService
     }
 
     /**
+     * Deletes an existing resource.
+     *
      * @param  User  $actor
      * @param  Contact  $contact
      * @return void
@@ -468,6 +484,8 @@ class ContactService
     }
 
     /**
+     * Applies approved update.
+     *
      * @param  array<string, mixed>  $payload
      * @param  array<int, int>  $addressBookIds
      */
@@ -479,6 +497,8 @@ class ContactService
     }
 
     /**
+     * Applies approved delete.
+     *
      * @param  Contact  $contact
      * @return void
      */
@@ -648,6 +668,8 @@ class ContactService
     }
 
     /**
+     * Synchronizes bidirectional related names for contact.
+     *
      * @param  array<string, mixed>  $previousPayload
      * @return array<int, int>
      */
@@ -903,6 +925,8 @@ class ContactService
     }
 
     /**
+     * Removes bidirectional related names for contact.
+     *
      * @return array<int, int>
      */
     public function removeBidirectionalRelatedNamesForContact(Contact $contact): array

@@ -12,6 +12,8 @@ class LaravelPrincipalBackend extends AbstractBackend
     public function __construct(private readonly PrincipalUriService $principalUriService) {}
 
     /**
+     * Returns principals by prefix.
+     *
      * @param  mixed  $prefixPath
      * @return array
      */
@@ -29,6 +31,8 @@ class LaravelPrincipalBackend extends AbstractBackend
     }
 
     /**
+     * Returns principal by path.
+     *
      * @param  mixed  $path
      * @return array|null
      */
@@ -44,6 +48,8 @@ class LaravelPrincipalBackend extends AbstractBackend
     }
 
     /**
+     * Updates principal.
+     *
      * @param  mixed  $path
      * @param  PropPatch  $propPatch
      * @return void
@@ -75,6 +81,8 @@ class LaravelPrincipalBackend extends AbstractBackend
     }
 
     /**
+     * Returns search principals.
+     *
      * @param  mixed  $prefixPath
      * @param  array  $searchProperties
      * @param  mixed  $test
@@ -133,6 +141,8 @@ class LaravelPrincipalBackend extends AbstractBackend
     }
 
     /**
+     * Returns group member set.
+     *
      * @param  mixed  $principal
      * @return array
      */
@@ -142,6 +152,8 @@ class LaravelPrincipalBackend extends AbstractBackend
     }
 
     /**
+     * Returns group membership.
+     *
      * @param  mixed  $principal
      * @return array
      */
@@ -151,6 +163,8 @@ class LaravelPrincipalBackend extends AbstractBackend
     }
 
     /**
+     * Sets group member set.
+     *
      * @param  mixed  $principal
      * @param  array  $members
      * @return void

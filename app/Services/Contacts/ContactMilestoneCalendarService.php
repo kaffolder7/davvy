@@ -35,6 +35,8 @@ class ContactMilestoneCalendarService
     ) {}
 
     /**
+     * Returns settings index for address books.
+     *
      * @param  Collection<int, AddressBook>  $addressBooks
      * @return array<int, array<string, mixed>>
      */
@@ -68,6 +70,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Updates address book settings.
+     *
      * @param  array<string, mixed>  $attributes
      * @return array<string, mixed>
      */
@@ -140,6 +144,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Handles address book renamed.
+     *
      * @param  AddressBook  $addressBook
      * @return void
      */
@@ -164,6 +170,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Handles address book deleted.
+     *
      * @param  AddressBook  $addressBook
      * @return void
      */
@@ -200,6 +208,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Purges generated calendars and disable settings.
+     *
      * @return array{purged_calendar_count:int,purged_event_count:int,disabled_setting_count:int}
      */
     public function purgeGeneratedCalendarsAndDisableSettings(): array
@@ -267,6 +277,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Synchronizes address books by IDs.
+     *
      * @param  array<int, int>  $addressBookIds
      */
     public function syncAddressBooksByIds(array $addressBookIds): void

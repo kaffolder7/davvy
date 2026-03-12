@@ -34,6 +34,8 @@ class CalendarObject extends Model
     }
 
     /**
+     * Returns calendar.
+     *
      * @return BelongsTo
      */
     public function calendar(): BelongsTo

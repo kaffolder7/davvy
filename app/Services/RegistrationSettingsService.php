@@ -8,6 +8,8 @@ use App\Models\User;
 class RegistrationSettingsService
 {
     /**
+     * Checks whether public registration is enabled.
+     *
      * @return bool
      */
     public function isPublicRegistrationEnabled(): bool
@@ -16,6 +18,8 @@ class RegistrationSettingsService
     }
 
     /**
+     * Sets public registration enabled.
+     *
      * @param  bool  $enabled
      * @param  User|null  $actor
      * @return void
@@ -39,6 +43,8 @@ class RegistrationSettingsService
     }
 
     /**
+     * Checks whether public registration approval is required.
+     *
      * @return bool
      */
     public function isPublicRegistrationApprovalRequired(): bool
@@ -47,6 +53,8 @@ class RegistrationSettingsService
     }
 
     /**
+     * Sets public registration approval required.
+     *
      * @param  bool  $enabled
      * @param  User|null  $actor
      * @return void
@@ -60,6 +68,8 @@ class RegistrationSettingsService
     }
 
     /**
+     * Checks whether owner share management is enabled.
+     *
      * @return bool
      */
     public function isOwnerShareManagementEnabled(): bool
@@ -68,6 +78,8 @@ class RegistrationSettingsService
     }
 
     /**
+     * Sets owner share management enabled.
+     *
      * @param  bool  $enabled
      * @param  User|null  $actor
      * @return void
@@ -81,6 +93,8 @@ class RegistrationSettingsService
     }
 
     /**
+     * Checks whether DAV compatibility mode is enabled.
+     *
      * @return bool
      */
     public function isDavCompatibilityModeEnabled(): bool
@@ -89,6 +103,8 @@ class RegistrationSettingsService
     }
 
     /**
+     * Sets DAV compatibility mode enabled.
+     *
      * @param  bool  $enabled
      * @param  User|null  $actor
      * @return void
@@ -102,6 +118,8 @@ class RegistrationSettingsService
     }
 
     /**
+     * Checks whether contact management is enabled.
+     *
      * @return bool
      */
     public function isContactManagementEnabled(): bool
@@ -110,6 +128,8 @@ class RegistrationSettingsService
     }
 
     /**
+     * Sets contact management enabled.
+     *
      * @param  bool  $enabled
      * @param  User|null  $actor
      * @return void
@@ -123,6 +143,8 @@ class RegistrationSettingsService
     }
 
     /**
+     * Checks whether contact change moderation is enabled.
+     *
      * @return bool
      */
     public function isContactChangeModerationEnabled(): bool
@@ -131,6 +153,8 @@ class RegistrationSettingsService
     }
 
     /**
+     * Sets contact change moderation enabled.
+     *
      * @param  bool  $enabled
      * @param  User|null  $actor
      * @return void
@@ -144,6 +168,8 @@ class RegistrationSettingsService
     }
 
     /**
+     * Returns contact change request retention days.
+     *
      * @return int
      */
     public function contactChangeRequestRetentionDays(): int
@@ -152,6 +178,8 @@ class RegistrationSettingsService
     }
 
     /**
+     * Sets contact change request retention days.
+     *
      * @param  int  $days
      * @param  User|null  $actor
      * @return void
@@ -167,6 +195,8 @@ class RegistrationSettingsService
     }
 
     /**
+     * Returns milestone calendar generation years.
+     *
      * @return int
      */
     public function milestoneCalendarGenerationYears(): int
@@ -175,6 +205,8 @@ class RegistrationSettingsService
     }
 
     /**
+     * Sets milestone calendar generation years.
+     *
      * @param  int  $years
      * @param  User|null  $actor
      * @return void

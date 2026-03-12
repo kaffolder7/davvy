@@ -65,6 +65,8 @@ class ContactChangeRequest extends Model
     }
 
     /**
+     * Returns requester.
+     *
      * @return BelongsTo
      */
     public function requester(): BelongsTo
@@ -73,6 +75,8 @@ class ContactChangeRequest extends Model
     }
 
     /**
+     * Returns approval owner.
+     *
      * @return BelongsTo
      */
     public function approvalOwner(): BelongsTo
@@ -81,6 +85,8 @@ class ContactChangeRequest extends Model
     }
 
     /**
+     * Returns reviewer.
+     *
      * @return BelongsTo
      */
     public function reviewer(): BelongsTo

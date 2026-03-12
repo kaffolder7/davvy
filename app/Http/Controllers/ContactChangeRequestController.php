@@ -14,6 +14,8 @@ class ContactChangeRequestController extends Controller
     ) {}
 
     /**
+     * Lists resources.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -37,6 +39,8 @@ class ContactChangeRequestController extends Controller
     }
 
     /**
+     * Returns summary data.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -48,6 +52,8 @@ class ContactChangeRequestController extends Controller
     }
 
     /**
+     * Approves the request.
+     *
      * @param  Request  $request
      * @param  ContactChangeRequest  $contactChangeRequest
      * @return JsonResponse
@@ -75,6 +81,8 @@ class ContactChangeRequestController extends Controller
     }
 
     /**
+     * Denies the request.
+     *
      * @param  Request  $request
      * @param  ContactChangeRequest  $contactChangeRequest
      * @return JsonResponse
@@ -89,6 +97,8 @@ class ContactChangeRequestController extends Controller
     }
 
     /**
+     * Processes a bulk action.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */

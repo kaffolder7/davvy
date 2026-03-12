@@ -12,6 +12,8 @@ use App\Models\User;
 class ResourceAccessService
 {
     /**
+     * Returns calendar permission.
+     *
      * @param  User  $user
      * @param  Calendar  $calendar
      * @return SharePermission|null
@@ -32,6 +34,8 @@ class ResourceAccessService
     }
 
     /**
+     * Returns address book permission.
+     *
      * @param  User  $user
      * @param  AddressBook  $addressBook
      * @return SharePermission|null
@@ -52,6 +56,8 @@ class ResourceAccessService
     }
 
     /**
+     * Checks whether user can read calendar.
+     *
      * @param  User  $user
      * @param  Calendar  $calendar
      * @return bool
@@ -62,6 +68,8 @@ class ResourceAccessService
     }
 
     /**
+     * Checks whether user can write calendar.
+     *
      * @param  User  $user
      * @param  Calendar  $calendar
      * @return bool
@@ -74,6 +82,8 @@ class ResourceAccessService
     }
 
     /**
+     * Checks whether user can delete calendar.
+     *
      * @param  User  $user
      * @param  Calendar  $calendar
      * @return bool
@@ -86,6 +96,8 @@ class ResourceAccessService
     }
 
     /**
+     * Checks whether user can read address book.
+     *
      * @param  User  $user
      * @param  AddressBook  $addressBook
      * @return bool
@@ -96,6 +108,8 @@ class ResourceAccessService
     }
 
     /**
+     * Checks whether user can write address book.
+     *
      * @param  User  $user
      * @param  AddressBook  $addressBook
      * @return bool
@@ -108,6 +122,8 @@ class ResourceAccessService
     }
 
     /**
+     * Checks whether user can delete address book.
+     *
      * @param  User  $user
      * @param  AddressBook  $addressBook
      * @return bool

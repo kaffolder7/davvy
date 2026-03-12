@@ -10,6 +10,8 @@ class PendingTwoFactorLoginService
     private const SESSION_KEY = 'auth.pending_two_factor_login';
 
     /**
+     * Starts the process.
+     *
      * @param  Request  $request
      * @param  User  $user
      * @param  bool  $remember
@@ -26,6 +28,8 @@ class PendingTwoFactorLoginService
     }
 
     /**
+     * Returns pending user.
+     *
      * @param  Request  $request
      * @return User|null
      */
@@ -54,6 +58,8 @@ class PendingTwoFactorLoginService
     }
 
     /**
+     * Returns whether the pending login should be remembered.
+     *
      * @param  Request  $request
      * @return bool
      */
@@ -65,6 +71,8 @@ class PendingTwoFactorLoginService
     }
 
     /**
+     * Returns the current status.
+     *
      * @param  Request  $request
      * @return array
      */
@@ -85,6 +93,8 @@ class PendingTwoFactorLoginService
     }
 
     /**
+     * Records a failed two-factor attempt.
+     *
      * @param  Request  $request
      * @return int
      */
@@ -107,6 +117,8 @@ class PendingTwoFactorLoginService
     }
 
     /**
+     * Clears the value.
+     *
      * @param  Request  $request
      * @return void
      */

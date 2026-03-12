@@ -13,6 +13,8 @@ use Sabre\DAV\Xml\Property\Href;
 class DavResourceIdPlugin extends ServerPlugin
 {
     /**
+     * Initializes the component.
+     *
      * @param  Server  $server
      * @return void
      */
@@ -22,6 +24,8 @@ class DavResourceIdPlugin extends ServerPlugin
     }
 
     /**
+     * Returns plugin name.
+     *
      * @return string
      */
     public function getPluginName(): string
@@ -30,6 +34,8 @@ class DavResourceIdPlugin extends ServerPlugin
     }
 
     /**
+     * Handles the PROPFIND request.
+     *
      * @param  PropFind  $propFind
      * @param  INode  $node
      * @return void

@@ -17,6 +17,8 @@ class ResourceDeletionService
     ) {}
 
     /**
+     * Deletes address book.
+     *
      * @param  AddressBook  $addressBook
      * @return void
      */
@@ -31,6 +33,8 @@ class ResourceDeletionService
     }
 
     /**
+     * Deletes calendar.
+     *
      * @param  Calendar  $calendar
      * @return void
      */

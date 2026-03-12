@@ -27,6 +27,8 @@ class AddressBookMirrorConfig extends Model
     }
 
     /**
+     * Returns user.
+     *
      * @return BelongsTo
      */
     public function user(): BelongsTo
@@ -35,6 +37,8 @@ class AddressBookMirrorConfig extends Model
     }
 
     /**
+     * Returns sources.
+     *
      * @return HasMany
      */
     public function sources(): HasMany

@@ -11,6 +11,8 @@ enum ContactChangeStatus: string
     case Applied = 'applied';
 
     /**
+     * Checks whether it is terminal.
+     *
      * @return bool
      */
     public function isTerminal(): bool

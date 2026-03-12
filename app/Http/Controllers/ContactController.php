@@ -17,6 +17,8 @@ class ContactController extends Controller
     ) {}
 
     /**
+     * Lists resources.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -36,6 +38,8 @@ class ContactController extends Controller
     }
 
     /**
+     * Creates a new resource.
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -57,6 +61,8 @@ class ContactController extends Controller
     }
 
     /**
+     * Updates an existing resource.
+     *
      * @param  Request  $request
      * @param  int  $contact
      * @return JsonResponse
@@ -97,6 +103,8 @@ class ContactController extends Controller
     }
 
     /**
+     * Deletes an existing resource.
+     *
      * @param  Request  $request
      * @param  int  $contact
      * @return JsonResponse

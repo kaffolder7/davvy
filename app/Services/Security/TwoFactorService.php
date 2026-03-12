@@ -15,6 +15,8 @@ class TwoFactorService
     ) {}
 
     /**
+     * Returns begin setup.
+     *
      * @param  User  $user
      * @return array
      */
@@ -30,6 +32,8 @@ class TwoFactorService
     }
 
     /**
+     * Verifies enrollment code.
+     *
      * @param  string  $secret
      * @param  string  $code
      * @return bool
@@ -40,6 +44,8 @@ class TwoFactorService
     }
 
     /**
+     * Enables the feature.
+     *
      * @return array<int, string>
      */
     public function enable(User $user, string $secret): array
@@ -56,6 +62,8 @@ class TwoFactorService
     }
 
     /**
+     * Regenerates backup codes.
+     *
      * @return array<int, string>
      */
     public function regenerateBackupCodes(User $user): array
@@ -70,6 +78,8 @@ class TwoFactorService
     }
 
     /**
+     * Disables the feature.
+     *
      * @param  User  $user
      * @param  bool  $revokeAppPasswords
      * @return void
@@ -88,6 +98,8 @@ class TwoFactorService
     }
 
     /**
+     * Verifies TOTP or backup code.
+     *
      * @param  User  $user
      * @param  string  $input
      * @return bool
@@ -107,6 +119,8 @@ class TwoFactorService
     }
 
     /**
+     * Verifies TOTP code.
+     *
      * @param  User  $user
      * @param  string  $input
      * @return bool
@@ -126,6 +140,8 @@ class TwoFactorService
     }
 
     /**
+     * Returns current code.
+     *
      * @param  string  $secret
      * @return string
      */

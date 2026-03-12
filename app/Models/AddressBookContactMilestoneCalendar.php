@@ -33,6 +33,8 @@ class AddressBookContactMilestoneCalendar extends Model
     }
 
     /**
+     * Returns address book.
+     *
      * @return BelongsTo
      */
     public function addressBook(): BelongsTo
@@ -41,6 +43,8 @@ class AddressBookContactMilestoneCalendar extends Model
     }
 
     /**
+     * Returns calendar.
+     *
      * @return BelongsTo
      */
     public function calendar(): BelongsTo
