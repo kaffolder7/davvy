@@ -1,5 +1,11 @@
 import React from "react";
 
+/**
+ * Renders the Dashboard Apple Compat Panel.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function DashboardAppleCompatPanel({
   appleCompat,
   appleCompatForm,

@@ -13,6 +13,9 @@ class ContactChangeRequestController extends Controller
         private readonly ContactChangeRequestService $changeRequestService,
     ) {}
 
+    /**
+     * Lists resources.
+     */
     public function index(Request $request): JsonResponse
     {
         $filters = [
@@ -32,6 +35,9 @@ class ContactChangeRequestController extends Controller
         ]);
     }
 
+    /**
+     * Returns summary data.
+     */
     public function summary(Request $request): JsonResponse
     {
         return response()->json([
@@ -39,6 +45,9 @@ class ContactChangeRequestController extends Controller
         ]);
     }
 
+    /**
+     * Approves the request.
+     */
     public function approve(Request $request, ContactChangeRequest $contactChangeRequest): JsonResponse
     {
         $data = $request->validate([
@@ -61,6 +70,9 @@ class ContactChangeRequestController extends Controller
         ]);
     }
 
+    /**
+     * Denies the request.
+     */
     public function deny(Request $request, ContactChangeRequest $contactChangeRequest): JsonResponse
     {
         $denied = $this->changeRequestService->deny($request->user(), $contactChangeRequest);
@@ -70,6 +82,9 @@ class ContactChangeRequestController extends Controller
         ]);
     }
 
+    /**
+     * Processes a bulk action.
+     */
     public function bulk(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -87,6 +102,9 @@ class ContactChangeRequestController extends Controller
         return response()->json($summary);
     }
 
+    /**
+     * Returns serialize row.
+     */
     private function serializeRow(ContactChangeRequest $row): array
     {
         $basePayload = is_array($row->base_payload) ? $row->base_payload : [];
@@ -138,6 +156,8 @@ class ContactChangeRequestController extends Controller
     }
 
     /**
+     * Returns changed top level keys.
+     *
      * @param  array<string, mixed>  $base
      * @param  array<string, mixed>  $updated
      * @return array<int, string>
@@ -166,6 +186,9 @@ class ContactChangeRequestController extends Controller
         return $changed;
     }
 
+    /**
+     * Checks whether values equal.
+     */
     private function valuesEqual(mixed $left, mixed $right): bool
     {
         return json_encode($left, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)

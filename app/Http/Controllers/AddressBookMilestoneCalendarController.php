@@ -13,6 +13,9 @@ class AddressBookMilestoneCalendarController extends Controller
         private readonly ContactMilestoneCalendarService $milestoneCalendarService,
     ) {}
 
+    /**
+     * Updates an existing resource.
+     */
     public function update(Request $request, AddressBook $addressBook): JsonResponse
     {
         $data = $request->validate([

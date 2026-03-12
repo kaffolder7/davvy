@@ -20,6 +20,9 @@ class ResourceShare extends Model
         'permission',
     ];
 
+    /**
+     * Returns casts.
+     */
     protected function casts(): array
     {
         return [
@@ -28,21 +31,33 @@ class ResourceShare extends Model
         ];
     }
 
+    /**
+     * Returns owner.
+     */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
 
+    /**
+     * Returns the user who received this share.
+     */
     public function sharedWith(): BelongsTo
     {
         return $this->belongsTo(User::class, 'shared_with_id');
     }
 
+    /**
+     * Returns calendar.
+     */
     public function calendar(): BelongsTo
     {
         return $this->belongsTo(Calendar::class, 'resource_id');
     }
 
+    /**
+     * Returns address book.
+     */
     public function addressBook(): BelongsTo
     {
         return $this->belongsTo(AddressBook::class, 'resource_id');

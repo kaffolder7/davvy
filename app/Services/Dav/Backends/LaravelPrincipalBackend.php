@@ -11,6 +11,11 @@ class LaravelPrincipalBackend extends AbstractBackend
 {
     public function __construct(private readonly PrincipalUriService $principalUriService) {}
 
+    /**
+     * Returns principals matching a DAV prefix.
+     *
+     * @param  mixed  $prefixPath
+     */
     public function getPrincipalsByPrefix($prefixPath): array
     {
         if ($prefixPath !== 'principals') {
@@ -24,6 +29,11 @@ class LaravelPrincipalBackend extends AbstractBackend
             ->all();
     }
 
+    /**
+     * Returns a principal record for a DAV path.
+     *
+     * @param  mixed  $path
+     */
     public function getPrincipalByPath($path): ?array
     {
         $user = $this->principalUriService->userFromPrincipalUri($path);
@@ -35,6 +45,11 @@ class LaravelPrincipalBackend extends AbstractBackend
         return $this->transformUser($user);
     }
 
+    /**
+     * Updates mutable principal properties.
+     *
+     * @param  mixed  $path
+     */
     public function updatePrincipal($path, PropPatch $propPatch): void
     {
         $user = $this->principalUriService->userFromPrincipalUri($path);
@@ -61,6 +76,12 @@ class LaravelPrincipalBackend extends AbstractBackend
         );
     }
 
+    /**
+     * Searches principals by property criteria.
+     *
+     * @param  mixed  $prefixPath
+     * @param  mixed  $test
+     */
     public function searchPrincipals($prefixPath, array $searchProperties, $test = 'allof'): array
     {
         if ($prefixPath !== 'principals') {
@@ -113,21 +134,39 @@ class LaravelPrincipalBackend extends AbstractBackend
             ->all();
     }
 
+    /**
+     * Returns group members for a principal.
+     *
+     * @param  mixed  $principal
+     */
     public function getGroupMemberSet($principal): array
     {
         return [];
     }
 
+    /**
+     * Returns groups containing the principal.
+     *
+     * @param  mixed  $principal
+     */
     public function getGroupMembership($principal): array
     {
         return [];
     }
 
+    /**
+     * Updates group membership for a principal.
+     *
+     * @param  mixed  $principal
+     */
     public function setGroupMemberSet($principal, array $members): void
     {
         // No groups in MVP.
     }
 
+    /**
+     * Returns transform user.
+     */
     private function transformUser(User $user): array
     {
         return [

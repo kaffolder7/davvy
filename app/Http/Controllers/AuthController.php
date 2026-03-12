@@ -31,6 +31,9 @@ class AuthController extends Controller
         private readonly AppPasswordService $appPasswords,
     ) {}
 
+    /**
+     * Registers a new user account and returns auth bootstrap data.
+     */
     public function register(Request $request): JsonResponse
     {
         if (! $this->registrationSettings->isPublicRegistrationEnabled()) {
@@ -79,11 +82,17 @@ class AuthController extends Controller
         );
     }
 
+    /**
+     * Returns public auth and feature configuration for unauthenticated clients.
+     */
     public function publicConfig(): JsonResponse
     {
         return response()->json($this->publicSettingsPayload());
     }
 
+    /**
+     * Authenticates credentials and begins or completes sign-in.
+     */
     public function login(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -130,11 +139,17 @@ class AuthController extends Controller
         );
     }
 
+    /**
+     * Returns pending two-factor challenge metadata for sign-in.
+     */
     public function loginTwoFactorStatus(Request $request): JsonResponse
     {
         return response()->json($this->pendingTwoFactorLogin->status($request));
     }
 
+    /**
+     * Verifies a two-factor code and completes sign-in.
+     */
     public function completeTwoFactorLogin(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -168,6 +183,9 @@ class AuthController extends Controller
         );
     }
 
+    /**
+     * Logs out the current user and invalidates the session.
+     */
     public function logout(Request $request): JsonResponse
     {
         $this->pendingTwoFactorLogin->clear($request);
@@ -181,6 +199,9 @@ class AuthController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    /**
+     * Returns the authenticated user with feature flags.
+     */
     public function me(Request $request): JsonResponse
     {
         return response()->json(
@@ -188,6 +209,9 @@ class AuthController extends Controller
         );
     }
 
+    /**
+     * Changes the authenticated user's password.
+     */
     public function changePassword(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -204,6 +228,9 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Returns current two-factor enrollment status for the user.
+     */
     public function twoFactorStatus(Request $request): JsonResponse
     {
         $user = $request->user()->fresh();
@@ -220,6 +247,9 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Starts two-factor enrollment and returns setup details.
+     */
     public function startTwoFactorSetup(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -238,6 +268,9 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Enables two-factor authentication after code verification.
+     */
     public function enableTwoFactor(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -271,6 +304,9 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Disables two-factor authentication and clears related state.
+     */
     public function disableTwoFactor(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -295,6 +331,9 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Regenerates two-factor backup codes.
+     */
     public function regenerateBackupCodes(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -318,6 +357,9 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Lists active app passwords for the current user.
+     */
     public function listAppPasswords(Request $request): JsonResponse
     {
         $user = $request->user()->fresh();
@@ -342,6 +384,9 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Creates a new app password for the current user.
+     */
     public function createAppPassword(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -373,6 +418,9 @@ class AuthController extends Controller
         ], 201);
     }
 
+    /**
+     * Revokes the specified app password for the current user.
+     */
     public function revokeAppPassword(Request $request, UserAppPassword $appPassword): JsonResponse
     {
         $data = $request->validate([
@@ -402,6 +450,9 @@ class AuthController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    /**
+     * Returns public settings payload.
+     */
     private function publicSettingsPayload(): array
     {
         return [
@@ -417,6 +468,9 @@ class AuthController extends Controller
         ];
     }
 
+    /**
+     * Returns authenticated settings payload.
+     */
     private function authenticatedSettingsPayload(User $user): array
     {
         $graceDeadline = $this->twoFactorSettings->graceDeadlineFor($user);

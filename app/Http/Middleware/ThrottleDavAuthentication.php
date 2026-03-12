@@ -11,6 +11,8 @@ use Symfony\Component\HttpFoundation\Response;
 class ThrottleDavAuthentication
 {
     /**
+     * Handles the incoming request.
+     *
      * @param  Closure(Request): Response  $next
      */
     public function handle(Request $request, Closure $next): Response
@@ -45,6 +47,9 @@ class ThrottleDavAuthentication
         return $response;
     }
 
+    /**
+     * Returns throttle key.
+     */
     private function throttleKey(Request $request): string
     {
         $username = $this->basicUsername($request);
@@ -53,6 +58,9 @@ class ThrottleDavAuthentication
         return 'dav-auth:'.sha1($username.'|'.$ip);
     }
 
+    /**
+     * Returns basic username.
+     */
     private function basicUsername(Request $request): string
     {
         $header = trim((string) $request->header('Authorization', ''));
@@ -76,6 +84,9 @@ class ThrottleDavAuthentication
         return $normalized !== '' ? $normalized : 'anonymous';
     }
 
+    /**
+     * Checks whether it has basic authorization header.
+     */
     private function hasBasicAuthorizationHeader(Request $request): bool
     {
         $header = trim((string) $request->header('Authorization', ''));

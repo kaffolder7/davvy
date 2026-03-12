@@ -35,6 +35,8 @@ class ContactMilestoneCalendarService
     ) {}
 
     /**
+     * Returns milestone settings for the given address books.
+     *
      * @param  Collection<int, AddressBook>  $addressBooks
      * @return array<int, array<string, mixed>>
      */
@@ -68,6 +70,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Updates milestone settings for selected address books.
+     *
      * @param  array<string, mixed>  $attributes
      * @return array<string, mixed>
      */
@@ -139,6 +143,9 @@ class ContactMilestoneCalendarService
         return $this->settingsIndexForAddressBooks(collect([$addressBook]))[$addressBook->id];
     }
 
+    /**
+     * Synchronizes generated milestone calendar names after address-book rename.
+     */
     public function handleAddressBookRenamed(AddressBook $addressBook): void
     {
         if (! $this->schemaAvailable()) {
@@ -159,6 +166,9 @@ class ContactMilestoneCalendarService
         }
     }
 
+    /**
+     * Removes generated milestone calendars after address-book deletion.
+     */
     public function handleAddressBookDeleted(AddressBook $addressBook): void
     {
         if (! $this->schemaAvailable()) {
@@ -192,6 +202,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Deletes generated milestone calendars and disables milestone settings.
+     *
      * @return array{purged_calendar_count:int,purged_event_count:int,disabled_setting_count:int}
      */
     public function purgeGeneratedCalendarsAndDisableSettings(): array
@@ -259,6 +271,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Regenerates milestone calendars for the selected address books.
+     *
      * @param  array<int, int>  $addressBookIds
      */
     public function syncAddressBooksByIds(array $addressBookIds): void
@@ -312,6 +326,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Returns serialize settings for address book.
+     *
      * @param  Collection<int, AddressBookContactMilestoneCalendar>  $settings
      * @return array<string, mixed>
      */
@@ -339,6 +355,9 @@ class ContactMilestoneCalendarService
         return $serialized;
     }
 
+    /**
+     * Ensures calendar for setting.
+     */
     private function ensureCalendarForSetting(
         AddressBook $addressBook,
         AddressBookContactMilestoneCalendar $setting,
@@ -380,6 +399,9 @@ class ContactMilestoneCalendarService
         return $calendar;
     }
 
+    /**
+     * Synchronizes calendar display name.
+     */
     private function syncCalendarDisplayName(
         AddressBook $addressBook,
         AddressBookContactMilestoneCalendar $setting,
@@ -400,6 +422,9 @@ class ContactMilestoneCalendarService
         ]);
     }
 
+    /**
+     * Synchronizes calendar objects for setting.
+     */
     private function syncCalendarObjectsForSetting(
         AddressBook $addressBook,
         AddressBookContactMilestoneCalendar $setting,
@@ -433,6 +458,9 @@ class ContactMilestoneCalendarService
         }
     }
 
+    /**
+     * Performs the upsert calendar object operation.
+     */
     private function upsertCalendarObject(
         Calendar $calendar,
         string $uri,
@@ -494,6 +522,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Returns desired birthday events.
+     *
      * @return array<string, string>
      */
     private function desiredBirthdayEvents(AddressBook $addressBook, int $generationYears): array
@@ -549,6 +579,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Returns desired anniversary events.
+     *
      * @return array<string, string>
      */
     private function desiredAnniversaryEvents(AddressBook $addressBook, int $generationYears): array
@@ -691,6 +723,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Returns anniversary date key.
+     *
      * @param  array{year:?int,month:int,day:int,effective_year:int}  $dateParts
      */
     private function anniversaryDateKey(array $dateParts): string
@@ -699,6 +733,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Returns anniversary related name keys.
+     *
      * @param  array<string, mixed>  $payload
      * @return array<string, bool>
      */
@@ -729,6 +765,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Checks whether spouse like related name row.
+     *
      * @param  array<string, mixed>  $row
      */
     private function isSpouseLikeRelatedNameRow(array $row): bool
@@ -744,6 +782,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Returns anniversary contact name keys.
+     *
      * @param  array<string, mixed>  $payload
      * @return array<string, bool>
      */
@@ -768,6 +808,9 @@ class ContactMilestoneCalendarService
         return $keys;
     }
 
+    /**
+     * Returns anniversary contact ID key.
+     */
     private function anniversaryContactIdKey(mixed $value): ?string
     {
         $contactId = $this->toInteger($value);
@@ -779,6 +822,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Performs the add anniversary name key operation.
+     *
      * @param  array<string, bool>  $keys
      */
     private function addAnniversaryNameKey(array &$keys, mixed $value): void
@@ -791,6 +836,9 @@ class ContactMilestoneCalendarService
         $keys[$key] = true;
     }
 
+    /**
+     * Returns anniversary name key.
+     */
     private function anniversaryNameKey(mixed $value): ?string
     {
         $normalized = $this->normalizeString($value);
@@ -806,6 +854,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Returns anniversary first name.
+     *
      * @param  array<string, mixed>  $payload
      */
     private function anniversaryFirstName(array $payload, string $contactName): string
@@ -821,6 +871,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Returns anniversary last name.
+     *
      * @param  array<string, mixed>  $payload
      */
     private function anniversaryLastName(array $payload, string $contactName): ?string
@@ -839,6 +891,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Returns anniversary pairs for date entries.
+     *
      * @param  array<int, array<string, mixed>>  $entries
      * @return array<int, array{left:array<string, mixed>, right:array<string, mixed>}>
      */
@@ -886,6 +940,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Checks whether entries are mutually married.
+     *
      * @param  array<string, mixed>  $left
      * @param  array<string, mixed>  $right
      */
@@ -896,6 +952,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Checks whether entry references other as spouse.
+     *
      * @param  array<string, mixed>  $source
      * @param  array<string, mixed>  $target
      */
@@ -920,6 +978,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Returns ordered anniversary pair entries.
+     *
      * @param  array<string, mixed>  $left
      * @param  array<string, mixed>  $right
      * @return array{0:array<string, mixed>,1:array<string, mixed>}
@@ -942,6 +1002,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Returns anniversary pair suffix.
+     *
      * @param  array<string, mixed>  $left
      * @param  array<string, mixed>  $right
      */
@@ -957,6 +1019,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Returns anniversary pair summary.
+     *
      * @param  array<string, mixed>  $primaryEntry
      * @param  array<string, mixed>  $secondaryEntry
      */
@@ -987,6 +1051,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Returns contacts for address book.
+     *
      * @return Collection<int, Contact>
      */
     private function contactsForAddressBook(int $addressBookId): Collection
@@ -998,6 +1064,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Returns anniversary dates.
+     *
      * @param  array<string, mixed>  $payload
      * @return array<int, array{id:string, date_parts:array{year:?int,month:int,day:int,effective_year:int}} >
      */
@@ -1040,6 +1108,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Normalizes date parts.
+     *
      * @param  array<string, mixed>|mixed  $value
      * @return array{year:?int,month:int,day:int,effective_year:int}|null
      */
@@ -1077,6 +1147,9 @@ class ContactMilestoneCalendarService
         ];
     }
 
+    /**
+     * Builds all day event.
+     */
     private function buildAllDayEvent(
         string $uid,
         string $summary,
@@ -1111,6 +1184,9 @@ class ContactMilestoneCalendarService
         return implode("\r\n", $lines);
     }
 
+    /**
+     * Returns birthday summary.
+     */
     private function birthdaySummary(string $contactName, ?int $baseYear, int $occurrenceYear): string
     {
         $ordinal = $this->milestoneOrdinal($baseYear, $occurrenceYear);
@@ -1120,6 +1196,9 @@ class ContactMilestoneCalendarService
             : '🎂 '.$contactName.'\'s Birthday';
     }
 
+    /**
+     * Returns anniversary summary.
+     */
     private function anniversarySummary(string $contactName, ?int $baseYear, int $occurrenceYear): string
     {
         $ordinal = $this->milestoneOrdinal($baseYear, $occurrenceYear);
@@ -1129,6 +1208,9 @@ class ContactMilestoneCalendarService
             : '💍 '.$contactName.'\'s Anniversary';
     }
 
+    /**
+     * Returns contact milestone name.
+     */
     private function contactMilestoneName(Contact $contact): ?string
     {
         $fullName = $this->normalizeString($contact->full_name);
@@ -1148,6 +1230,9 @@ class ContactMilestoneCalendarService
         return $this->normalizeString($payload['company'] ?? null);
     }
 
+    /**
+     * Performs the reconcile legacy cards for address book operation.
+     */
     private function reconcileLegacyCardsForAddressBook(AddressBook $addressBook): void
     {
         if (! Schema::hasTable('cards')) {
@@ -1169,6 +1254,9 @@ class ContactMilestoneCalendarService
         }
     }
 
+    /**
+     * Performs the upsert legacy managed contact operation.
+     */
     private function upsertLegacyManagedContact(AddressBook $addressBook, Card $card): void
     {
         $parsed = $this->contactVCardService->parse($card->data);
@@ -1258,6 +1346,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Returns upcoming occurrence years.
+     *
      * @param  array{year:?int,month:int,day:int,effective_year:int}  $dateParts
      * @return array<int, int>
      */
@@ -1294,6 +1384,9 @@ class ContactMilestoneCalendarService
         return $years;
     }
 
+    /**
+     * Returns milestone ordinal.
+     */
     private function milestoneOrdinal(?int $baseYear, int $occurrenceYear): ?string
     {
         if ($baseYear === null) {
@@ -1318,6 +1411,9 @@ class ContactMilestoneCalendarService
         return $number.$suffix;
     }
 
+    /**
+     * Returns managed URI.
+     */
     private function managedUri(string $type, int $contactId, ?string $suffix = null): string
     {
         $base = $this->managedUriPrefix($type).'contact-'.$contactId;
@@ -1328,6 +1424,9 @@ class ContactMilestoneCalendarService
         return $base.'.ics';
     }
 
+    /**
+     * Returns managed uid.
+     */
     private function managedUid(
         string $type,
         int $addressBookId,
@@ -1342,11 +1441,17 @@ class ContactMilestoneCalendarService
         return $base;
     }
 
+    /**
+     * Returns managed URI prefix.
+     */
     private function managedUriPrefix(string $type): string
     {
         return self::MANAGED_URI_PREFIX.$type.'-';
     }
 
+    /**
+     * Returns display name for setting.
+     */
     private function displayNameForSetting(
         AddressBook $addressBook,
         AddressBookContactMilestoneCalendar $setting,
@@ -1356,6 +1461,9 @@ class ContactMilestoneCalendarService
             ?? $this->defaultCalendarName($addressBook, $type);
     }
 
+    /**
+     * Returns default calendar name.
+     */
     private function defaultCalendarName(AddressBook $addressBook, string $type): string
     {
         return sprintf(
@@ -1367,6 +1475,9 @@ class ContactMilestoneCalendarService
         );
     }
 
+    /**
+     * Returns unique calendar URI.
+     */
     private function uniqueCalendarUri(int $ownerId, string $baseUri): string
     {
         $seed = trim((string) $baseUri) !== '' ? trim((string) $baseUri) : 'calendar';
@@ -1386,6 +1497,9 @@ class ContactMilestoneCalendarService
         return $candidate;
     }
 
+    /**
+     * Normalizes string.
+     */
     private function normalizeString(mixed $value): ?string
     {
         if (! is_scalar($value) && $value !== null) {
@@ -1398,6 +1512,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Checks whether contact excluded from milestones.
+     *
      * @param  array<string, mixed>  $payload
      */
     private function contactExcludedFromMilestones(array $payload): bool
@@ -1405,6 +1521,9 @@ class ContactMilestoneCalendarService
         return $this->payloadBoolean($payload['exclude_milestone_calendars'] ?? false);
     }
 
+    /**
+     * Checks whether payload boolean.
+     */
     private function payloadBoolean(mixed $value): bool
     {
         if (is_bool($value)) {
@@ -1422,6 +1541,9 @@ class ContactMilestoneCalendarService
         return false;
     }
 
+    /**
+     * Returns to integer.
+     */
     private function toInteger(mixed $value): ?int
     {
         if ($value === null || $value === '') {
@@ -1439,6 +1561,9 @@ class ContactMilestoneCalendarService
         return null;
     }
 
+    /**
+     * Returns escape ICS text.
+     */
     private function escapeIcsText(string $value): string
     {
         return str_replace(
@@ -1449,6 +1574,8 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Returns milestone types.
+     *
      * @return array<int, string>
      */
     private function milestoneTypes(): array
@@ -1459,6 +1586,9 @@ class ContactMilestoneCalendarService
         ];
     }
 
+    /**
+     * Returns settings key for type.
+     */
     private function settingsKeyForType(string $type): string
     {
         return $type === AddressBookContactMilestoneCalendar::TYPE_BIRTHDAY
@@ -1466,6 +1596,9 @@ class ContactMilestoneCalendarService
             : 'anniversaries';
     }
 
+    /**
+     * Returns enabled field for type.
+     */
     private function enabledFieldForType(string $type): string
     {
         return $type === AddressBookContactMilestoneCalendar::TYPE_BIRTHDAY
@@ -1473,6 +1606,9 @@ class ContactMilestoneCalendarService
             : 'anniversaries_enabled';
     }
 
+    /**
+     * Returns custom name field for type.
+     */
     private function customNameFieldForType(string $type): string
     {
         return $type === AddressBookContactMilestoneCalendar::TYPE_BIRTHDAY
@@ -1480,6 +1616,9 @@ class ContactMilestoneCalendarService
             : 'anniversary_calendar_name';
     }
 
+    /**
+     * Marks milestone purge control visible.
+     */
     private function markMilestonePurgeControlVisible(?User $actor = null): void
     {
         AppSetting::query()->updateOrCreate(
@@ -1488,6 +1627,9 @@ class ContactMilestoneCalendarService
         );
     }
 
+    /**
+     * Checks whether schema available.
+     */
     private function schemaAvailable(): bool
     {
         return Schema::hasTable('address_book_contact_milestone_calendars')

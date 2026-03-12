@@ -23,6 +23,9 @@ class LaravelAuthBackend extends AbstractBasic
         private readonly TwoFactorSettingsService $twoFactorSettings,
     ) {}
 
+    /**
+     * Authenticates DAV credentials and resolves the principal URI.
+     */
     public function check(RequestInterface $request, ResponseInterface $response): array
     {
         $auth = new Basic($this->realm, $request, $response);
@@ -41,11 +44,20 @@ class LaravelAuthBackend extends AbstractBasic
         return [true, $this->principalUriService->uriForUser($user)];
     }
 
+    /**
+     * Validates user pass.
+     *
+     * @param  mixed  $username
+     * @param  mixed  $password
+     */
     protected function validateUserPass($username, $password): bool
     {
         return $this->resolveUser((string) $username, (string) $password) !== null;
     }
 
+    /**
+     * Resolves user.
+     */
     private function resolveUser(string $username, string $password): ?User
     {
         $normalizedUsername = Str::lower(trim($username));
@@ -74,6 +86,9 @@ class LaravelAuthBackend extends AbstractBasic
         return $user;
     }
 
+    /**
+     * Checks whether it should require app password.
+     */
     private function shouldRequireAppPassword(User $user): bool
     {
         return $user->hasTwoFactorEnabled() || $this->twoFactorSettings->isSetupRequired($user);

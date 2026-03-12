@@ -17,6 +17,9 @@ class ManagedContactSyncService
         private readonly ContactMilestoneCalendarService $milestoneCalendarService,
     ) {}
 
+    /**
+     * Applies CardDAV upsert payloads to managed contacts.
+     */
     public function syncCardUpsert(
         AddressBook $addressBook,
         Card $card,
@@ -202,6 +205,9 @@ class ManagedContactSyncService
         ]);
     }
 
+    /**
+     * Removes managed contacts associated with a deleted CardDAV card.
+     */
     public function syncCardDeleted(Card $card): void
     {
         if (! $this->schemaAvailable()) {
@@ -240,6 +246,9 @@ class ManagedContactSyncService
         }
     }
 
+    /**
+     * Removes managed contacts after source address-book deletion.
+     */
     public function syncAddressBookDeleted(AddressBook $addressBook): void
     {
         if (! $this->schemaAvailable()) {
@@ -284,6 +293,8 @@ class ManagedContactSyncService
     }
 
     /**
+     * Deletes contact if orphaned.
+     *
      * @return array<int, int>
      */
     private function deleteContactIfOrphaned(int $contactId): array
@@ -309,17 +320,26 @@ class ManagedContactSyncService
         return $relatedAddressBookIds;
     }
 
+    /**
+     * Returns contact service.
+     */
     private function contactService(): ContactService
     {
         return app(ContactService::class);
     }
 
+    /**
+     * Checks whether schema available.
+     */
     private function schemaAvailable(): bool
     {
         return Schema::hasTable('contacts') &&
             Schema::hasTable('contact_address_book_assignments');
     }
 
+    /**
+     * Returns to integer.
+     */
     private function toInteger(mixed $value): ?int
     {
         if ($value === null || $value === '') {
@@ -337,6 +357,9 @@ class ManagedContactSyncService
         return null;
     }
 
+    /**
+     * Returns clean string.
+     */
     private function cleanString(mixed $value): ?string
     {
         if (! is_scalar($value) && $value !== null) {
@@ -349,6 +372,8 @@ class ManagedContactSyncService
     }
 
     /**
+     * Synchronizes milestone calendars for address books.
+     *
      * @param  array<int, int>  $addressBookIds
      */
     private function syncMilestoneCalendarsForAddressBooks(

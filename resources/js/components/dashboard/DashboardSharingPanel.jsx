@@ -1,5 +1,11 @@
 import React from "react";
 
+/**
+ * Renders the Dashboard Sharing Panel.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function DashboardSharingPanel({
   shareForm,
   setShareForm,

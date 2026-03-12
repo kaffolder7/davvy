@@ -27,6 +27,9 @@ class DavServerFactory
         private readonly DavResourceIdPlugin $resourceIdPlugin,
     ) {}
 
+    /**
+     * Builds a configured SabreDAV server instance.
+     */
     public function make(): Server
     {
         $principalCollection = new PrincipalCollection($this->principalBackend);

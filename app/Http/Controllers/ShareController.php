@@ -20,6 +20,9 @@ class ShareController extends Controller
         private readonly AddressBookMirrorService $mirrorService,
     ) {}
 
+    /**
+     * Lists resources.
+     */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -56,6 +59,9 @@ class ShareController extends Controller
         return response()->json(['data' => $shares]);
     }
 
+    /**
+     * Creates or updates a resource.
+     */
     public function upsert(Request $request): JsonResponse
     {
         $actor = $request->user();
@@ -107,6 +113,9 @@ class ShareController extends Controller
         return response()->json($share->fresh(), 201);
     }
 
+    /**
+     * Deletes an existing resource.
+     */
     public function destroy(Request $request, ResourceShare $share): JsonResponse
     {
         $actor = $request->user();
@@ -131,6 +140,9 @@ class ShareController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    /**
+     * Returns resource ownership and sharable state.
+     */
     private function resourceOwnershipAndSharableState(ShareResourceType $type, int $resourceId): array
     {
         if ($type === ShareResourceType::Calendar) {
@@ -144,6 +156,9 @@ class ShareController extends Controller
         return [$addressBook->owner_id, $addressBook->is_sharable];
     }
 
+    /**
+     * Asserts owner share management allowed.
+     */
     private function assertOwnerShareManagementAllowed(): void
     {
         if (! $this->settings->isOwnerShareManagementEnabled()) {

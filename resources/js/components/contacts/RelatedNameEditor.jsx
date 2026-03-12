@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
 
+/**
+ * Renders the Related Name Editor component.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function RelatedNameEditor({
   rows,
   setRows,

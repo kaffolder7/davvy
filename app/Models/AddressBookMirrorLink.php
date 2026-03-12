@@ -18,16 +18,25 @@ class AddressBookMirrorLink extends Model
         'mirrored_card_id',
     ];
 
+    /**
+     * Returns user.
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * Returns mirrored address book.
+     */
     public function mirroredAddressBook(): BelongsTo
     {
         return $this->belongsTo(AddressBook::class, 'mirrored_address_book_id');
     }
 
+    /**
+     * Returns mirrored card.
+     */
     public function mirroredCard(): BelongsTo
     {
         return $this->belongsTo(Card::class, 'mirrored_card_id');

@@ -10,6 +10,13 @@ export const api = axios.create({
   xsrfHeaderName: 'X-XSRF-TOKEN',
 });
 
+/**
+ * Returns the most useful error message from an API/network failure payload.
+ *
+ * @param {unknown} error
+ * @param {string} [fallback='Something went wrong.']
+ * @returns {string}
+ */
 export function extractError(error, fallback = 'Something went wrong.') {
   if (error?.response?.data?.message) {
     return error.response.data.message;

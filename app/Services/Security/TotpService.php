@@ -6,6 +6,9 @@ class TotpService
 {
     private const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
+    /**
+     * Generates a new base32 TOTP secret.
+     */
     public function generateSecret(int $bytes = 20): string
     {
         $bytes = max(10, min(64, $bytes));
@@ -13,6 +16,9 @@ class TotpService
         return $this->base32Encode(random_bytes($bytes));
     }
 
+    /**
+     * Builds a provisioning URI for authenticator apps.
+     */
     public function provisioningUri(string $email, string $secret, ?string $issuer = null): string
     {
         $issuer = trim((string) ($issuer ?: config('app.name', 'Davvy')));
@@ -32,6 +38,9 @@ class TotpService
         return "otpauth://totp/{$label}?{$query}";
     }
 
+    /**
+     * Verifies a TOTP code within the allowed clock drift.
+     */
     public function verify(string $secret, string $code, int $window = 1, ?int $timestamp = null): bool
     {
         $normalizedCode = $this->normalizeTotpCode($code);
@@ -53,6 +62,9 @@ class TotpService
         return false;
     }
 
+    /**
+     * Generates the current TOTP code for a secret.
+     */
     public function currentCode(string $secret, ?int $timestamp = null): string
     {
         $time = max(0, $timestamp ?? time());
@@ -60,6 +72,9 @@ class TotpService
         return $this->codeForTimeslice($secret, intdiv($time, 30));
     }
 
+    /**
+     * Formats a secret into human-readable groups.
+     */
     public function formatSecretForHumans(string $secret): string
     {
         $trimmed = strtoupper(trim($secret));
@@ -70,6 +85,9 @@ class TotpService
         return implode('-', str_split($trimmed, 4));
     }
 
+    /**
+     * Normalizes user input into a six-digit TOTP code.
+     */
     public function normalizeTotpCode(string $code): ?string
     {
         $digits = preg_replace('/\D+/', '', $code);
@@ -81,6 +99,9 @@ class TotpService
         return $digits;
     }
 
+    /**
+     * Returns code for timeslice.
+     */
     private function codeForTimeslice(string $secret, int $slice): string
     {
         $slice = max(0, $slice);
@@ -104,6 +125,9 @@ class TotpService
         return str_pad((string) $value, 6, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * Returns base32 encode.
+     */
     private function base32Encode(string $bytes): string
     {
         if ($bytes === '') {
@@ -133,6 +157,9 @@ class TotpService
         return $result;
     }
 
+    /**
+     * Returns base32 decode.
+     */
     private function base32Decode(string $secret): string
     {
         $normalized = strtoupper(trim($secret));

@@ -14,6 +14,9 @@ class TwoFactorService
         private readonly AppPasswordService $appPasswords,
     ) {}
 
+    /**
+     * Starts two-factor setup and returns enrollment details.
+     */
     public function beginSetup(User $user): array
     {
         $secret = $this->totp->generateSecret();
@@ -25,12 +28,17 @@ class TwoFactorService
         ];
     }
 
+    /**
+     * Verifies an enrollment code during two-factor setup.
+     */
     public function verifyEnrollmentCode(string $secret, string $code): bool
     {
         return $this->totp->verify($secret, $code);
     }
 
     /**
+     * Enables two-factor auth and stores backup codes.
+     *
      * @return array<int, string>
      */
     public function enable(User $user, string $secret): array
@@ -47,6 +55,8 @@ class TwoFactorService
     }
 
     /**
+     * Regenerates backup codes for an enrolled user.
+     *
      * @return array<int, string>
      */
     public function regenerateBackupCodes(User $user): array
@@ -60,6 +70,9 @@ class TwoFactorService
         return $backupCodes;
     }
 
+    /**
+     * Disables two-factor auth and clears related fields.
+     */
     public function disable(User $user, bool $revokeAppPasswords = true): void
     {
         $user->forceFill([
@@ -73,6 +86,9 @@ class TwoFactorService
         }
     }
 
+    /**
+     * Verifies a TOTP code or consumes a backup code.
+     */
     public function verifyTotpOrBackupCode(User $user, string $input): bool
     {
         if (! $user->hasTwoFactorEnabled()) {
@@ -87,6 +103,9 @@ class TwoFactorService
         return $this->consumeBackupCode($user, $input);
     }
 
+    /**
+     * Verifies a TOTP code against the stored secret.
+     */
     public function verifyTotpCode(User $user, string $input): bool
     {
         if (! $user->hasTwoFactorEnabled()) {
@@ -101,11 +120,17 @@ class TwoFactorService
         return $this->totp->verify((string) $user->two_factor_secret, $code);
     }
 
+    /**
+     * Generates the current TOTP code for the stored secret.
+     */
     public function currentCode(string $secret): string
     {
         return $this->totp->currentCode($secret);
     }
 
+    /**
+     * Checks whether consume backup code.
+     */
     private function consumeBackupCode(User $user, string $input): bool
     {
         $normalized = $this->normalizeBackupCode($input);
@@ -137,6 +162,8 @@ class TwoFactorService
     }
 
     /**
+     * Generates backup codes.
+     *
      * @return array<int, string>
      */
     private function generateBackupCodes(): array
@@ -150,6 +177,9 @@ class TwoFactorService
         return $codes;
     }
 
+    /**
+     * Generates backup code.
+     */
     private function generateBackupCode(): string
     {
         $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -167,6 +197,8 @@ class TwoFactorService
     }
 
     /**
+     * Returns hash backup codes.
+     *
      * @param  array<int, string>  $codes
      * @return array<int, string>
      */
@@ -179,6 +211,8 @@ class TwoFactorService
     }
 
     /**
+     * Returns backup code hashes.
+     *
      * @return array<int, string>
      */
     private function backupCodeHashesFor(User $user): array
@@ -186,6 +220,9 @@ class TwoFactorService
         return is_array($user->two_factor_backup_codes) ? $user->two_factor_backup_codes : [];
     }
 
+    /**
+     * Normalizes backup code.
+     */
     private function normalizeBackupCode(string $code): ?string
     {
         $normalized = strtoupper(trim($code));

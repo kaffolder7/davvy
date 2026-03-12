@@ -38,6 +38,9 @@ class AdminController extends Controller
         private readonly UserDeletionService $userDeletionService,
     ) {}
 
+    /**
+     * Returns users for the admin dashboard.
+     */
     public function users(): JsonResponse
     {
         $users = User::query()
@@ -56,6 +59,9 @@ class AdminController extends Controller
         return response()->json(['data' => $users]);
     }
 
+    /**
+     * Creates a new admin-provisioned user account.
+     */
     public function createUser(Request $request): JsonResponse
     {
         $email = Str::lower(trim((string) $request->input('email', '')));
@@ -83,6 +89,9 @@ class AdminController extends Controller
         return response()->json($user, 201);
     }
 
+    /**
+     * Deletes a user account and related data.
+     */
     public function destroyUser(Request $request, User $user): JsonResponse
     {
         $actor = $request->user();
@@ -134,6 +143,9 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Approves a pending user account.
+     */
     public function approveUser(Request $request, User $user): JsonResponse
     {
         if (! $user->is_approved) {
@@ -147,6 +159,9 @@ class AdminController extends Controller
         return response()->json($user->fresh());
     }
 
+    /**
+     * Approves all pending user accounts.
+     */
     public function approvePendingUsers(Request $request): JsonResponse
     {
         $actorId = $request->user()?->id;
@@ -171,6 +186,9 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Returns resources the selected user can share.
+     */
     public function sharableResources(): JsonResponse
     {
         $calendars = Calendar::query()
@@ -217,6 +235,9 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Enables or disables public registration.
+     */
     public function setRegistrationSetting(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -234,6 +255,9 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Enables or disables registration approval requirements.
+     */
     public function setRegistrationApprovalSetting(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -250,6 +274,9 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Enables or disables owner-managed sharing.
+     */
     public function setOwnerShareManagementSetting(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -266,6 +293,9 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Enables or disables DAV compatibility mode.
+     */
     public function setDavCompatibilityModeSetting(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -282,6 +312,9 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Enables or disables contact management features.
+     */
     public function setContactManagementSetting(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -308,6 +341,9 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Enables or disables contact change moderation.
+     */
     public function setContactChangeModerationSetting(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -350,6 +386,9 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Updates two-factor enforcement settings.
+     */
     public function setTwoFactorEnforcementSetting(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -367,6 +406,9 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Clears two-factor enrollment and backup codes for a user.
+     */
     public function resetUserTwoFactor(Request $request, User $user): JsonResponse
     {
         $data = $request->validate([
@@ -384,6 +426,9 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Returns contact-change request retention settings.
+     */
     public function contactChangeRequestRetentionSetting(): JsonResponse
     {
         return response()->json([
@@ -391,6 +436,9 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Updates contact-change request retention settings.
+     */
     public function setContactChangeRequestRetentionSetting(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -407,6 +455,9 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Returns milestone calendar generation-year settings.
+     */
     public function milestoneGenerationYearsSetting(): JsonResponse
     {
         return response()->json([
@@ -414,6 +465,9 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Updates milestone calendar generation-year settings.
+     */
     public function setMilestoneGenerationYearsSetting(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -443,6 +497,9 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Purges generated milestone calendars for selected address books.
+     */
     public function purgeGeneratedMilestoneCalendars(): JsonResponse
     {
         $summary = $this->milestoneCalendarService->purgeGeneratedCalendarsAndDisableSettings();
@@ -450,11 +507,17 @@ class AdminController extends Controller
         return response()->json($summary);
     }
 
+    /**
+     * Returns backup configuration and last-run status.
+     */
     public function backupSettings(): JsonResponse
     {
         return response()->json($this->backupSettings->current());
     }
 
+    /**
+     * Updates backup configuration settings.
+     */
     public function setBackupSettings(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -493,6 +556,9 @@ class AdminController extends Controller
         return response()->json($this->backupSettings->update($data, $request->user()));
     }
 
+    /**
+     * Runs a backup immediately from the admin panel.
+     */
     public function runBackupNow(): JsonResponse
     {
         $result = $this->backupService->run(force: true, trigger: 'manual');
@@ -508,6 +574,9 @@ class AdminController extends Controller
         return response()->json($result);
     }
 
+    /**
+     * Restores data from an uploaded backup archive.
+     */
     public function restoreBackup(Request $request): JsonResponse
     {
         $data = $request->validate([

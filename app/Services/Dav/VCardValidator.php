@@ -12,6 +12,9 @@ class VCardValidator
 {
     public function __construct(private readonly RegistrationSettingsService $settings) {}
 
+    /**
+     * Validates and normalizes vCard payload content.
+     */
     public function validateAndNormalize(string $cardData): array
     {
         $strictModeEnabled = ! $this->settings->isDavCompatibilityModeEnabled();
@@ -37,6 +40,9 @@ class VCardValidator
         ];
     }
 
+    /**
+     * Extracts the UID from a vCard payload.
+     */
     public function extractUid(string $cardData): ?string
     {
         try {
@@ -56,6 +62,9 @@ class VCardValidator
         return $uid !== '' ? $uid : null;
     }
 
+    /**
+     * Parses v card.
+     */
     private function parseVCard(string $cardData): VCard
     {
         try {
@@ -71,6 +80,9 @@ class VCardValidator
         return $component;
     }
 
+    /**
+     * Validates version.
+     */
     private function validateVersion(VCard $card, bool $strictModeEnabled): string
     {
         $versions = $card->select('VERSION');
@@ -92,6 +104,9 @@ class VCardValidator
         return $version;
     }
 
+    /**
+     * Validates full name.
+     */
     private function validateFullName(VCard $card, bool $strictModeEnabled): string
     {
         $fnProperties = $card->select('FN');
@@ -119,6 +134,9 @@ class VCardValidator
         return $value;
     }
 
+    /**
+     * Validates uid.
+     */
     private function validateUid(VCard $card, bool $strictModeEnabled): ?string
     {
         $uidProperties = $card->select('UID');
@@ -136,6 +154,9 @@ class VCardValidator
         return $uid !== '' ? $uid : null;
     }
 
+    /**
+     * Validates email addresses.
+     */
     private function validateEmailAddresses(VCard $card, bool $strictModeEnabled): void
     {
         foreach ($card->select('EMAIL') as $emailProperty) {

@@ -9,6 +9,12 @@ function sponsorshipFaviconUrl(targetUrl) {
   }
 }
 
+/**
+ * Renders the Sponsorship Link Icon icon.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function SponsorshipLinkIcon({ name, url }) {
   const [iconFailed, setIconFailed] = useState(false);
   const faviconUrl = useMemo(() => sponsorshipFaviconUrl(url), [url]);

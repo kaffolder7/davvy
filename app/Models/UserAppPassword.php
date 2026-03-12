@@ -19,6 +19,9 @@ class UserAppPassword extends Model
         'revoked_at',
     ];
 
+    /**
+     * Returns casts.
+     */
     protected function casts(): array
     {
         return [
@@ -27,11 +30,17 @@ class UserAppPassword extends Model
         ];
     }
 
+    /**
+     * Returns user.
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * Checks whether it is revoked.
+     */
     public function isRevoked(): bool
     {
         return $this->revoked_at !== null;

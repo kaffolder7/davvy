@@ -1,6 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
+/**
+ * Renders the Profile Page.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function ProfilePage({
   auth,
   theme,

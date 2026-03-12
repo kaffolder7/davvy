@@ -10,6 +10,8 @@ use Carbon\CarbonTimeZone;
 class BackupSettingsService
 {
     /**
+     * Returns current backup settings and last-run metadata.
+     *
      * @return array{
      *   enabled: bool,
      *   local_enabled: bool,
@@ -58,6 +60,8 @@ class BackupSettingsService
     }
 
     /**
+     * Persists backup settings with normalized schedule and retention values.
+     *
      * @param  array{
      *   enabled: bool,
      *   local_enabled: bool,
@@ -103,11 +107,17 @@ class BackupSettingsService
         return $this->current();
     }
 
+    /**
+     * Checks whether a backup tier already captured the period key.
+     */
     public function wasPeriodCaptured(string $tier, string $periodKey): bool
     {
         return AppSetting::backupLastCapturedPeriod($tier) === $periodKey;
     }
 
+    /**
+     * Records the most recently captured period key for a tier.
+     */
     public function markPeriodCaptured(string $tier, string $periodKey): void
     {
         if (! in_array($tier, ['daily', 'weekly', 'monthly', 'yearly'], true)) {
@@ -120,6 +130,9 @@ class BackupSettingsService
         );
     }
 
+    /**
+     * Records the latest backup run result metadata.
+     */
     public function recordRun(string $status, string $message, ?CarbonImmutable $executedAtUtc = null): void
     {
         $executedAt = ($executedAtUtc ?? CarbonImmutable::now('UTC'))->toIso8601String();
@@ -139,6 +152,8 @@ class BackupSettingsService
     }
 
     /**
+     * Normalizes schedule times.
+     *
      * @param  array<int, string>  $scheduleTimes
      * @return array<int, string>
      */
@@ -156,6 +171,9 @@ class BackupSettingsService
         return $normalized === [] ? ['02:30'] : $normalized;
     }
 
+    /**
+     * Sets boolean.
+     */
     private function setBoolean(string $key, bool $value, ?User $actor = null): void
     {
         AppSetting::query()->updateOrCreate(
@@ -164,6 +182,9 @@ class BackupSettingsService
         );
     }
 
+    /**
+     * Sets integer.
+     */
     private function setInteger(string $key, int $value, ?User $actor = null): void
     {
         AppSetting::query()->updateOrCreate(
@@ -172,6 +193,9 @@ class BackupSettingsService
         );
     }
 
+    /**
+     * Sets string.
+     */
     private function setString(string $key, string $value, ?User $actor = null): void
     {
         AppSetting::query()->updateOrCreate(

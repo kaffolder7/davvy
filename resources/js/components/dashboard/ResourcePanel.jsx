@@ -1,5 +1,11 @@
 import React, { useState } from "react";
 
+/**
+ * Renders the Resource Panel.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function ResourcePanel({
   title,
   createLabel,

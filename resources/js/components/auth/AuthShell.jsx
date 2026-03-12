@@ -1,6 +1,12 @@
 import React from "react";
 import ThemeControl from "../theme/ThemeControl";
 
+/**
+ * Renders the Auth Shell.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function AuthShell({
   theme,
   title,
