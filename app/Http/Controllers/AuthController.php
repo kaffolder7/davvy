@@ -6,6 +6,7 @@ use App\Enums\Role;
 use App\Models\User;
 use App\Models\UserAppPassword;
 use App\Services\RegistrationSettingsService;
+use App\Services\Analytics\OpenPanelAnalyticsService;
 use App\Services\Security\AppPasswordService;
 use App\Services\Security\PendingTwoFactorLoginService;
 use App\Services\Security\TwoFactorService;
@@ -25,6 +26,7 @@ class AuthController extends Controller
 
     public function __construct(
         private readonly RegistrationSettingsService $registrationSettings,
+        private readonly OpenPanelAnalyticsService $analytics,
         private readonly SponsorshipLinksService $sponsorshipLinks,
         private readonly TwoFactorService $twoFactor,
         private readonly TwoFactorSettingsService $twoFactorSettings,
@@ -252,6 +254,10 @@ class AuthController extends Controller
 
         Auth::login($user, (bool) ($data['remember'] ?? false));
         $request->session()->regenerate();
+        $this->analytics->track('auth_login', [
+            'two_factor' => false,
+            'method' => 'password',
+        ], $request->user());
 
         return response()->json(
             array_merge(['user' => $request->user()], $this->authenticatedSettingsPayload($request->user())),
@@ -296,6 +302,10 @@ class AuthController extends Controller
 
         Auth::login($user, $remember);
         $request->session()->regenerate();
+        $this->analytics->track('auth_login', [
+            'two_factor' => true,
+            'method' => 'password+totp',
+        ], $request->user());
 
         return response()->json(
             array_merge(['user' => $request->user()], $this->authenticatedSettingsPayload($request->user())),
@@ -307,6 +317,9 @@ class AuthController extends Controller
      */
     public function logout(Request $request): JsonResponse
     {
+        $this->analytics->track('auth_logout', [
+            'trigger' => 'manual',
+        ], $request->user());
         $this->pendingTwoFactorLogin->clear($request);
         $request->session()->forget(self::TWO_FACTOR_PENDING_SETUP_SESSION_KEY);
 
@@ -585,6 +598,7 @@ class AuthController extends Controller
             'two_factor_enforcement_enabled' => $this->twoFactorSettings->isEnforced(),
             'two_factor_grace_period_days' => $this->twoFactorSettings->gracePeriodDays(),
             'sponsorship' => $this->sponsorshipLinks->publicConfig(),
+            'analytics' => $this->analytics->browserConfig(),
         ];
     }
 
@@ -600,6 +614,7 @@ class AuthController extends Controller
             'two_factor_setup_required' => $this->twoFactorSettings->isSetupRequired($user),
             'two_factor_mandated' => $this->twoFactorSettings->isEnforced(),
             'two_factor_grace_expires_at' => $graceDeadline?->toISOString(),
+            'analytics' => $this->analytics->browserConfig($user),
         ]);
     }
 }

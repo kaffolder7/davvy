@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildAuthStateFromPayload,
   createDefaultAuthState,
+  parseAnalyticsConfig,
   createSignedOutAuthState,
   parseSponsorshipConfig,
 } from "./authStateMapper";
@@ -24,6 +25,13 @@ describe("authStateMapper", () => {
       twoFactorSetupRequired: false,
       twoFactorMandated: false,
       twoFactorGraceExpiresAt: null,
+      analytics: {
+        enabled: false,
+        clientId: null,
+        apiUrl: null,
+        scriptUrl: null,
+        profileId: null,
+      },
       sponsorship: {
         enabled: false,
         links: [],
@@ -46,6 +54,13 @@ describe("authStateMapper", () => {
       twoFactorSetupRequired: false,
       twoFactorMandated: false,
       twoFactorGraceExpiresAt: null,
+      analytics: {
+        enabled: false,
+        clientId: null,
+        apiUrl: null,
+        scriptUrl: null,
+        profileId: null,
+      },
       sponsorship: {
         enabled: false,
         links: [],
@@ -79,6 +94,46 @@ describe("authStateMapper", () => {
     });
   });
 
+  it("parses analytics config safely", () => {
+    expect(parseAnalyticsConfig(null)).toEqual({
+      enabled: false,
+      clientId: null,
+      apiUrl: null,
+      scriptUrl: null,
+      profileId: null,
+    });
+
+    expect(
+      parseAnalyticsConfig({
+        enabled: true,
+        client_id: "client_123",
+        api_url: "https://openpanel.example.test",
+        script_url: "https://openpanel.example.test/op1.js",
+        profile_id: "hashed_user_id",
+      }),
+    ).toEqual({
+      enabled: true,
+      clientId: "client_123",
+      apiUrl: "https://openpanel.example.test",
+      scriptUrl: "https://openpanel.example.test/op1.js",
+      profileId: "hashed_user_id",
+    });
+
+    expect(
+      parseAnalyticsConfig({
+        enabled: true,
+        client_id: "",
+        api_url: "https://openpanel.example.test",
+      }),
+    ).toEqual({
+      enabled: false,
+      clientId: null,
+      apiUrl: null,
+      scriptUrl: null,
+      profileId: null,
+    });
+  });
+
   it("maps auth payload fields into UI auth state", () => {
     expect(
       buildAuthStateFromPayload(
@@ -96,6 +151,13 @@ describe("authStateMapper", () => {
           two_factor_setup_required: false,
           two_factor_mandated: true,
           two_factor_grace_expires_at: "2026-03-20T00:00:00Z",
+          analytics: {
+            enabled: true,
+            client_id: "client_abc",
+            api_url: "https://openpanel.example.test",
+            script_url: "https://openpanel.example.test/op1.js",
+            profile_id: "hashed-profile",
+          },
           sponsorship: {
             enabled: true,
             links: [{ name: "Sponsor", url: "https://example.com/sponsor" }],
@@ -119,6 +181,13 @@ describe("authStateMapper", () => {
       twoFactorSetupRequired: false,
       twoFactorMandated: true,
       twoFactorGraceExpiresAt: "2026-03-20T00:00:00Z",
+      analytics: {
+        enabled: true,
+        clientId: "client_abc",
+        apiUrl: "https://openpanel.example.test",
+        scriptUrl: "https://openpanel.example.test/op1.js",
+        profileId: "hashed-profile",
+      },
       sponsorship: {
         enabled: true,
         links: [{ name: "Sponsor", url: "https://example.com/sponsor" }],

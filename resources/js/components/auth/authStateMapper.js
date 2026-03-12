@@ -4,6 +4,16 @@
 
 /**
  * @typedef {{
+ *   enabled: boolean,
+ *   clientId: string|null,
+ *   apiUrl: string|null,
+ *   scriptUrl: string|null,
+ *   profileId: string|null
+ * }} AnalyticsConfig
+ */
+
+/**
+ * @typedef {{
  *   loading: boolean,
  *   user: object|null,
  *   registrationEnabled: boolean,
@@ -18,10 +28,31 @@
  *   twoFactorSetupRequired: boolean,
  *   twoFactorMandated: boolean,
  *   twoFactorGraceExpiresAt: string|null,
+ *   analytics: AnalyticsConfig,
  *   sponsorship: {enabled: boolean, links: SponsorshipLink[]}
  * }} AuthState
  */
 
+/**
+ * Returns the default analytics bootstrap state.
+ *
+ * @returns {AnalyticsConfig}
+ */
+function createDefaultAnalyticsConfig() {
+  return {
+    enabled: false,
+    clientId: null,
+    apiUrl: null,
+    scriptUrl: null,
+    profileId: null,
+  };
+}
+
+/**
+ * Returns the default sponsorship configuration.
+ *
+ * @returns {{enabled: boolean, links: SponsorshipLink[]}}
+ */
 function createDefaultSponsorship() {
   return {
     enabled: false,
@@ -51,6 +82,7 @@ export function createDefaultAuthState() {
     twoFactorSetupRequired: false,
     twoFactorMandated: false,
     twoFactorGraceExpiresAt: null,
+    analytics: createDefaultAnalyticsConfig(),
     sponsorship: createDefaultSponsorship(),
   };
 }
@@ -97,6 +129,36 @@ export function parseSponsorshipConfig(rawConfig) {
 }
 
 /**
+ * Normalizes analytics bootstrap config.
+ *
+ * @param {unknown} rawConfig
+ * @returns {AnalyticsConfig}
+ */
+export function parseAnalyticsConfig(rawConfig) {
+  if (!rawConfig || typeof rawConfig !== "object") {
+    return createDefaultAnalyticsConfig();
+  }
+
+  const enabled = Boolean(rawConfig.enabled);
+  const clientId = String(rawConfig.client_id ?? "").trim();
+  const apiUrl = String(rawConfig.api_url ?? "").trim();
+  const scriptUrl = String(rawConfig.script_url ?? "").trim();
+  const profileId = String(rawConfig.profile_id ?? "").trim();
+
+  if (!enabled || clientId === "" || apiUrl === "" || scriptUrl === "") {
+    return createDefaultAnalyticsConfig();
+  }
+
+  return {
+    enabled: true,
+    clientId,
+    apiUrl,
+    scriptUrl,
+    profileId: profileId === "" ? null : profileId,
+  };
+}
+
+/**
  * Maps backend auth/public-config payloads into frontend auth state.
  *
  * @param {unknown} payload
@@ -122,6 +184,7 @@ export function buildAuthStateFromPayload(payload, { user = null } = {}) {
     twoFactorSetupRequired: !!source.two_factor_setup_required,
     twoFactorMandated: !!source.two_factor_mandated,
     twoFactorGraceExpiresAt: source.two_factor_grace_expires_at || null,
+    analytics: parseAnalyticsConfig(source.analytics),
     sponsorship: parseSponsorshipConfig(source.sponsorship),
   };
 }

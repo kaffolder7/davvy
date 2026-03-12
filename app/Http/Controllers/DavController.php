@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\Dav\DavServerFactory;
 use App\Services\DavRequestContext;
+use App\Services\Analytics\OpenPanelAnalyticsService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +17,7 @@ class DavController extends Controller
     public function __construct(
         private readonly DavServerFactory $davServerFactory,
         private readonly DavRequestContext $davContext,
+        private readonly OpenPanelAnalyticsService $analytics,
     ) {}
 
     /**
@@ -105,6 +107,7 @@ class DavController extends Controller
             $response->headers->set($name, $value);
         }
 
+        $this->trackDavRequest($request, $sabreResponse->getStatus());
         $this->davContext->clear();
 
         return $response;
@@ -145,5 +148,51 @@ class DavController extends Controller
             $class,
             $message
         );
+    }
+
+    /**
+     * Tracks anonymized DAV usage and failure metrics.
+     */
+    private function trackDavRequest(Request $request, int $status): void
+    {
+        $method = strtoupper($request->method());
+        $isReadMethod = in_array($method, ['PROPFIND', 'REPORT', 'OPTIONS'], true);
+
+        if ($status < 400 && $isReadMethod) {
+            return;
+        }
+
+        $this->analytics->track('dav_request', [
+            'method' => $method,
+            'status' => $status,
+            'status_family' => sprintf('%dxx', intdiv($status, 100)),
+            'client_family' => $this->classifyDavClient($request->userAgent()),
+            'read_method' => $isReadMethod,
+        ], $this->davContext->getAuthenticatedUser());
+    }
+
+    /**
+     * Returns normalized DAV client family from user-agent.
+     */
+    private function classifyDavClient(?string $userAgent): string
+    {
+        $agent = strtolower(trim((string) $userAgent));
+
+        if ($agent === '') {
+            return 'unknown';
+        }
+
+        return match (true) {
+            str_contains($agent, 'addressbookcore') => 'apple-addressbookcore',
+            str_contains($agent, 'calendarstore') => 'apple-calendarstore',
+            str_contains($agent, 'davx5') => 'davx5',
+            str_contains($agent, 'thunderbird') => 'thunderbird',
+            str_contains($agent, 'outlook') => 'outlook',
+            str_contains($agent, 'evolution') => 'evolution',
+            str_contains($agent, 'iphone') || str_contains($agent, 'ios') => 'ios',
+            str_contains($agent, 'android') => 'android',
+            str_contains($agent, 'mac os') || str_contains($agent, 'macos') => 'macos',
+            default => 'other',
+        };
     }
 }

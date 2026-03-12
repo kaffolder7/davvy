@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import AdminFeatureToggleComponent from "./components/admin/AdminFeatureToggle";
 import AdminPageComponent from "./components/admin/AdminPage";
 import {
@@ -36,6 +36,7 @@ import {
   downloadExport,
   fileStem,
 } from "./lib/browserDavUtils";
+import { configureAnalytics, trackPageView } from "./lib/analytics";
 import AddressBookMilestoneControlsComponent from "./components/contacts/AddressBookMilestoneControls";
 import AddressEditorComponent from "./components/contacts/AddressEditor";
 import ContactEditorHideFieldModalComponent from "./components/contacts/ContactEditorHideFieldModal";
@@ -105,6 +106,25 @@ function App() {
   const { auth, value } = useAuthState({
     api,
   });
+  const location = useLocation();
+
+  useEffect(() => {
+    configureAnalytics(value.analytics);
+  }, [
+    value.analytics.enabled,
+    value.analytics.clientId,
+    value.analytics.apiUrl,
+    value.analytics.scriptUrl,
+    value.analytics.profileId,
+  ]);
+
+  useEffect(() => {
+    if (auth.loading) {
+      return;
+    }
+
+    trackPageView(location.pathname);
+  }, [auth.loading, location.pathname]);
 
   if (auth.loading) {
     return <FullPageState label="Loading Davvy..." />;

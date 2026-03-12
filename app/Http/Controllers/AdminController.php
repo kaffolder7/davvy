@@ -10,6 +10,7 @@ use App\Models\AppSetting;
 use App\Models\Calendar;
 use App\Models\ContactChangeRequest;
 use App\Models\User;
+use App\Services\Analytics\OpenPanelAnalyticsService;
 use App\Services\Backups\BackupRestoreService;
 use App\Services\Backups\BackupService;
 use App\Services\Backups\BackupSettingsService;
@@ -29,6 +30,7 @@ class AdminController extends Controller
 {
     public function __construct(
         private readonly RegistrationSettingsService $registrationSettings,
+        private readonly OpenPanelAnalyticsService $analytics,
         private readonly ContactMilestoneCalendarService $milestoneCalendarService,
         private readonly BackupSettingsService $backupSettings,
         private readonly BackupService $backupService,
@@ -575,9 +577,15 @@ class AdminController extends Controller
     /**
      * Runs a backup immediately from the admin panel.
      */
-    public function runBackupNow(): JsonResponse
+    public function runBackupNow(Request $request): JsonResponse
     {
         $result = $this->backupService->run(force: true, trigger: 'manual');
+        $this->analytics->track('backup_run', [
+            'status' => (string) ($result['status'] ?? 'unknown'),
+            'trigger' => (string) ($result['trigger'] ?? 'manual'),
+            'artifact_count' => (int) ($result['artifact_count'] ?? 0),
+            'tier_count' => is_array($result['tiers'] ?? null) ? count($result['tiers']) : 0,
+        ], $request->user());
 
         if ($result['status'] === 'failed') {
             return response()->json($result, 500);
@@ -628,6 +636,11 @@ class AdminController extends Controller
                 trigger: 'manual-admin',
             );
         } catch (Throwable $throwable) {
+            $this->analytics->track('backup_restore', [
+                'status' => 'failed',
+                'mode' => $mode,
+                'dry_run' => (bool) $dryRun,
+            ], $request->user());
             report($throwable);
 
             return response()->json([
@@ -635,6 +648,13 @@ class AdminController extends Controller
                 'reason' => 'Backup restore failed: '.$throwable->getMessage(),
             ], 422);
         }
+
+        $this->analytics->track('backup_restore', [
+            'status' => (string) ($result['status'] ?? 'unknown'),
+            'mode' => $mode,
+            'dry_run' => (bool) $dryRun,
+            'resource_count' => is_array($result['resources'] ?? null) ? count($result['resources']) : 0,
+        ], $request->user());
 
         return response()->json($result);
     }
