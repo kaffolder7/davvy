@@ -28,6 +28,21 @@ use Throwable;
 
 class AdminController extends Controller
 {
+    /**
+     * Creates a new admin controller instance.
+     *
+     * @param  RegistrationSettingsService  $registrationSettings
+     * @param  OpenPanelAnalyticsService  $analytics
+     * @param  ContactMilestoneCalendarService  $milestoneCalendarService
+     * @param  BackupSettingsService  $backupSettings
+     * @param  BackupService  $backupService
+     * @param  BackupRestoreService  $backupRestoreService
+     * @param  TwoFactorSettingsService  $twoFactorSettings
+     * @param  TwoFactorService  $twoFactor
+     * @param  UserOnboardingService  $onboarding
+     * @param  UserDeletionService  $userDeletionService
+     * @return void
+     */
     public function __construct(
         private readonly RegistrationSettingsService $registrationSettings,
         private readonly OpenPanelAnalyticsService $analytics,
@@ -43,6 +58,8 @@ class AdminController extends Controller
 
     /**
      * Returns users for the admin dashboard.
+     *
+     * @return JsonResponse
      */
     public function users(): JsonResponse
     {
@@ -64,6 +81,9 @@ class AdminController extends Controller
 
     /**
      * Creates an approved user account and issues a one-time invitation link.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function createUser(Request $request): JsonResponse
     {
@@ -109,6 +129,10 @@ class AdminController extends Controller
 
     /**
      * Deletes a user account and related data.
+     *
+     * @param  Request  $request
+     * @param  User  $user
+     * @return JsonResponse
      */
     public function destroyUser(Request $request, User $user): JsonResponse
     {
@@ -163,6 +187,10 @@ class AdminController extends Controller
 
     /**
      * Approves a pending user account.
+     *
+     * @param  Request  $request
+     * @param  User  $user
+     * @return JsonResponse
      */
     public function approveUser(Request $request, User $user): JsonResponse
     {
@@ -179,6 +207,9 @@ class AdminController extends Controller
 
     /**
      * Approves all pending user accounts.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function approvePendingUsers(Request $request): JsonResponse
     {
@@ -206,6 +237,8 @@ class AdminController extends Controller
 
     /**
      * Returns resources the selected user can share.
+     *
+     * @return JsonResponse
      */
     public function sharableResources(): JsonResponse
     {
@@ -255,6 +288,9 @@ class AdminController extends Controller
 
     /**
      * Enables or disables public registration.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function setRegistrationSetting(Request $request): JsonResponse
     {
@@ -275,6 +311,9 @@ class AdminController extends Controller
 
     /**
      * Enables or disables registration approval requirements.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function setRegistrationApprovalSetting(Request $request): JsonResponse
     {
@@ -294,6 +333,9 @@ class AdminController extends Controller
 
     /**
      * Enables or disables owner-managed sharing.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function setOwnerShareManagementSetting(Request $request): JsonResponse
     {
@@ -313,6 +355,9 @@ class AdminController extends Controller
 
     /**
      * Enables or disables DAV compatibility mode.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function setDavCompatibilityModeSetting(Request $request): JsonResponse
     {
@@ -332,6 +377,9 @@ class AdminController extends Controller
 
     /**
      * Enables or disables contact management features.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function setContactManagementSetting(Request $request): JsonResponse
     {
@@ -361,6 +409,9 @@ class AdminController extends Controller
 
     /**
      * Enables or disables contact change moderation.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function setContactChangeModerationSetting(Request $request): JsonResponse
     {
@@ -406,6 +457,9 @@ class AdminController extends Controller
 
     /**
      * Updates two-factor enforcement settings.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function setTwoFactorEnforcementSetting(Request $request): JsonResponse
     {
@@ -426,6 +480,10 @@ class AdminController extends Controller
 
     /**
      * Clears two-factor enrollment and backup codes for a user.
+     *
+     * @param  Request  $request
+     * @param  User  $user
+     * @return JsonResponse
      */
     public function resetUserTwoFactor(Request $request, User $user): JsonResponse
     {
@@ -446,6 +504,8 @@ class AdminController extends Controller
 
     /**
      * Returns contact-change request retention settings.
+     *
+     * @return JsonResponse
      */
     public function contactChangeRequestRetentionSetting(): JsonResponse
     {
@@ -456,6 +516,9 @@ class AdminController extends Controller
 
     /**
      * Updates contact-change request retention settings.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function setContactChangeRequestRetentionSetting(Request $request): JsonResponse
     {
@@ -475,6 +538,8 @@ class AdminController extends Controller
 
     /**
      * Returns milestone calendar generation-year settings.
+     *
+     * @return JsonResponse
      */
     public function milestoneGenerationYearsSetting(): JsonResponse
     {
@@ -485,6 +550,9 @@ class AdminController extends Controller
 
     /**
      * Updates milestone calendar generation-year settings.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function setMilestoneGenerationYearsSetting(Request $request): JsonResponse
     {
@@ -517,6 +585,8 @@ class AdminController extends Controller
 
     /**
      * Purges generated milestone calendars for selected address books.
+     *
+     * @return JsonResponse
      */
     public function purgeGeneratedMilestoneCalendars(): JsonResponse
     {
@@ -527,6 +597,8 @@ class AdminController extends Controller
 
     /**
      * Returns backup configuration and last-run status.
+     *
+     * @return JsonResponse
      */
     public function backupSettings(): JsonResponse
     {
@@ -535,6 +607,9 @@ class AdminController extends Controller
 
     /**
      * Updates backup configuration settings.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function setBackupSettings(Request $request): JsonResponse
     {
@@ -576,11 +651,14 @@ class AdminController extends Controller
 
     /**
      * Runs a backup immediately from the admin panel.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function runBackupNow(Request $request): JsonResponse
     {
         $result = $this->backupService->run(force: true, trigger: 'manual');
-        $this->analytics->track('backup_run', [
+        $this->analytics->track('backups.run', [
             'status' => (string) ($result['status'] ?? 'unknown'),
             'trigger' => (string) ($result['trigger'] ?? 'manual'),
             'artifact_count' => (int) ($result['artifact_count'] ?? 0),
@@ -600,6 +678,9 @@ class AdminController extends Controller
 
     /**
      * Restores data from an uploaded backup archive.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function restoreBackup(Request $request): JsonResponse
     {
@@ -636,7 +717,7 @@ class AdminController extends Controller
                 trigger: 'manual-admin',
             );
         } catch (Throwable $throwable) {
-            $this->analytics->track('backup_restore', [
+            $this->analytics->track('backups.restore', [
                 'status' => 'failed',
                 'mode' => $mode,
                 'dry_run' => (bool) $dryRun,
@@ -649,7 +730,7 @@ class AdminController extends Controller
             ], 422);
         }
 
-        $this->analytics->track('backup_restore', [
+        $this->analytics->track('backups.restore', [
             'status' => (string) ($result['status'] ?? 'unknown'),
             'mode' => $mode,
             'dry_run' => (bool) $dryRun,

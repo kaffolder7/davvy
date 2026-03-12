@@ -55,7 +55,7 @@ describe("analytics", () => {
     expect(window.op).toHaveBeenCalledWith("identify", {
       profileId: "hashed-user-id",
     });
-    expect(window.op).toHaveBeenCalledWith("track", "session_started", {
+    expect(window.op).toHaveBeenCalledWith("track", "ui.session_started", {
       path: "/",
     });
 
@@ -78,9 +78,8 @@ describe("analytics", () => {
     trackPageView("/contacts/123");
 
     expect(window.op).toHaveBeenCalledTimes(1);
-    expect(window.op).toHaveBeenCalledWith("track", "page_view", {
+    expect(window.op).toHaveBeenCalledWith("track", "ui.page_view", {
       path: "/contacts/:id",
     });
   });
 });
-

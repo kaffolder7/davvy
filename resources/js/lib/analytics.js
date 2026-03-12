@@ -66,7 +66,7 @@ export function configureAnalytics(rawConfig) {
 
   if (sessionTrackedConfigKey !== configKey) {
     const path = sanitizePath(window.location?.pathname ?? "/");
-    trackClientEvent("session_started", {
+    trackClientEvent("ui.session_started", {
       path,
     });
     sessionTrackedConfigKey = configKey;
@@ -79,6 +79,7 @@ export function configureAnalytics(rawConfig) {
  * Tracks a SPA page-view event with sanitized route path.
  *
  * @param {string} pathname
+ * @returns {void}
  */
 export function trackPageView(pathname) {
   if (!currentConfig.enabled) {
@@ -91,7 +92,7 @@ export function trackPageView(pathname) {
   }
 
   lastTrackedPath = path;
-  trackClientEvent("page_view", {
+  trackClientEvent("ui.page_view", {
     path,
   });
 }
@@ -101,6 +102,7 @@ export function trackPageView(pathname) {
  *
  * @param {string} name
  * @param {Record<string, unknown>} [properties]
+ * @returns {void}
  */
 export function trackClientEvent(name, properties = {}) {
   if (!currentConfig.enabled || typeof window === "undefined") {

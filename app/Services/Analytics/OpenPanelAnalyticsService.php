@@ -18,6 +18,13 @@ class OpenPanelAnalyticsService
         'secret',
     ];
 
+    /**
+     * Creates a new OpenPanel analytics service instance.
+     *
+     * @param  OpenPanelSettings  $settings
+     * @param  AnalyticsProfileService  $profiles
+     * @return void
+     */
     public function __construct(
         private readonly OpenPanelSettings $settings,
         private readonly AnalyticsProfileService $profiles,

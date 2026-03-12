@@ -131,6 +131,15 @@ Analytics settings note:
 - OpenPanel analytics controls are environment-only and are not persisted in `app_settings`.
 - When disabled (`OPENPANEL_ENABLED=false` or DDEV auto-disable), Davvy does not initialize browser analytics and does not send server-side analytics events.
 
+OpenPanel event taxonomy:
+- `auth.login`: successful web login completion (`method`, `two_factor`)
+- `auth.logout`: successful web logout (`trigger`)
+- `backups.run`: backup run result (`status`, `trigger`, `artifact_count`, `tier_count`)
+- `backups.restore`: restore result (`status`, `mode`, `dry_run`, `resource_count`)
+- `dav.request`: selected DAV request outcomes (`method`, `status`, `status_family`, `client_family`, `read_method`)
+- `ui.session_started`: browser session bootstrap marker (`path`)
+- `ui.page_view`: SPA route view (`path`)
+
 ## Feature Flags in Admin UI
 
 Admin Control Center toggles map to these settings keys:

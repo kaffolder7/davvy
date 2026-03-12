@@ -23,7 +23,7 @@ class OpenPanelAnalyticsServiceTest extends TestCase
 
         Http::fake();
 
-        app(OpenPanelAnalyticsService::class)->track('auth_login', [
+        app(OpenPanelAnalyticsService::class)->track('auth.login', [
             'method' => 'password',
         ]);
 
@@ -41,7 +41,7 @@ class OpenPanelAnalyticsServiceTest extends TestCase
 
         Http::fake();
 
-        app(OpenPanelAnalyticsService::class)->track('auth_login', [
+        app(OpenPanelAnalyticsService::class)->track('auth.login', [
             'method' => 'password',
         ]);
 
@@ -64,7 +64,7 @@ class OpenPanelAnalyticsServiceTest extends TestCase
             'https://analytics.example.test/track' => Http::response(['ok' => true], 200),
         ]);
 
-        app(OpenPanelAnalyticsService::class)->track('backup_restore', [
+        app(OpenPanelAnalyticsService::class)->track('backups.restore', [
             'status' => 'success',
             'resource_count' => 3,
             'admin_email' => 'admin@example.com',
@@ -81,7 +81,7 @@ class OpenPanelAnalyticsServiceTest extends TestCase
             $properties = $payload['payload']['properties'] ?? [];
 
             $this->assertSame('track', $payload['type'] ?? null);
-            $this->assertSame('backup_restore', $payload['payload']['name'] ?? null);
+            $this->assertSame('backups.restore', $payload['payload']['name'] ?? null);
             $this->assertSame($expectedProfileId, $payload['payload']['profileId'] ?? null);
             $this->assertSame('success', $properties['status'] ?? null);
             $this->assertSame(3, $properties['resource_count'] ?? null);
@@ -93,4 +93,3 @@ class OpenPanelAnalyticsServiceTest extends TestCase
         });
     }
 }
-
