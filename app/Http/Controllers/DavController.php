@@ -15,7 +15,7 @@ use Sabre\HTTP\Response as SabreResponse;
 class DavController extends Controller
 {
     /**
-     * Creates a new DAV controller instance.
+     * Create a new DAV controller instance.
      *
      * @param  DavServerFactory  $davServerFactory
      * @param  DavRequestContext  $davContext
@@ -29,7 +29,7 @@ class DavController extends Controller
     ) {}
 
     /**
-     * Handles the incoming request.
+     * Handle the incoming request.
      *
      * @param  Request  $request
      * @return Response
@@ -125,7 +125,7 @@ class DavController extends Controller
     }
 
     /**
-     * Checks whether it should log client DAV traffic.
+     * Determine whether to log client DAV traffic.
      *
      * @param  Request  $request
      * @return bool
@@ -150,7 +150,7 @@ class DavController extends Controller
     }
 
     /**
-     * Returns serialize DAV exception.
+     * Serialize a DAV exception payload.
      *
      * @param  DavException  $exception
      * @return string
@@ -168,7 +168,7 @@ class DavController extends Controller
     }
 
     /**
-     * Tracks anonymized DAV usage and failure metrics.
+     * Track anonymized DAV usage and failure metrics.
      *
      * @param  Request  $request
      * @param  int  $status
@@ -193,7 +193,7 @@ class DavController extends Controller
     }
 
     /**
-     * Returns normalized DAV client family from user-agent.
+     * Return normalized DAV client family from user-agent.
      *
      * @param  string|null  $userAgent
      * @return string

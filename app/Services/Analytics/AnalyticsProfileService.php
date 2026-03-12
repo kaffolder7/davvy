@@ -7,7 +7,7 @@ use App\Models\User;
 class AnalyticsProfileService
 {
     /**
-     * Returns stable, non-reversible profile identifier for the user.
+     * Return a stable, non-reversible profile identifier for the user.
      *
      * @param  User  $user
      * @return string
@@ -18,7 +18,7 @@ class AnalyticsProfileService
     }
 
     /**
-     * Returns stable, non-reversible profile identifier for user ID.
+     * Return a stable, non-reversible profile identifier for a user ID.
      *
      * @param  string  $userId
      * @return string

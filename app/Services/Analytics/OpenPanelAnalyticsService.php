@@ -19,7 +19,7 @@ class OpenPanelAnalyticsService
     ];
 
     /**
-     * Creates a new OpenPanel analytics service instance.
+     * Create a new OpenPanel analytics service instance.
      *
      * @param  OpenPanelSettings  $settings
      * @param  AnalyticsProfileService  $profiles
@@ -31,7 +31,7 @@ class OpenPanelAnalyticsService
     ) {}
 
     /**
-     * Tracks an event to OpenPanel when enabled.
+     * Track an event to OpenPanel when enabled.
      *
      * @param  string  $name
      * @param  array<string, bool|int|float|string|null>  $properties
@@ -75,7 +75,7 @@ class OpenPanelAnalyticsService
     }
 
     /**
-     * Returns browser bootstrap payload.
+     * Return the browser bootstrap payload.
      *
      * @param  User|null  $user
      * @return array{enabled:bool,client_id?:string,api_url?:string,script_url?:string,profile_id?:string}
@@ -101,7 +101,7 @@ class OpenPanelAnalyticsService
     }
 
     /**
-     * Sanitizes custom event properties before transport.
+     * Sanitize custom event properties before transport.
      *
      * @param  array<string, bool|int|float|string|null>  $properties
      * @return array<string, bool|int|float|string>
@@ -144,7 +144,7 @@ class OpenPanelAnalyticsService
     }
 
     /**
-     * Returns whether the key likely contains PII.
+     * Determine whether the key likely contains PII.
      *
      * @param  string  $value
      * @return bool
@@ -162,7 +162,7 @@ class OpenPanelAnalyticsService
     }
 
     /**
-     * Returns whether the value appears to be an email address.
+     * Determine whether the value appears to be an email address.
      *
      * @param  string  $value
      * @return bool

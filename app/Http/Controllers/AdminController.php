@@ -29,7 +29,7 @@ use Throwable;
 class AdminController extends Controller
 {
     /**
-     * Creates a new admin controller instance.
+     * Create a new admin controller instance.
      *
      * @param  RegistrationSettingsService  $registrationSettings
      * @param  OpenPanelAnalyticsService  $analytics
@@ -57,7 +57,7 @@ class AdminController extends Controller
     ) {}
 
     /**
-     * Returns users for the admin dashboard.
+     * Return users for the admin dashboard.
      *
      * @return JsonResponse
      */
@@ -80,7 +80,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Creates an approved user account and issues a one-time invitation link.
+     * Create an approved user account and issue a one-time invitation link.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -128,7 +128,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Deletes a user account and related data.
+     * Delete a user account and related data.
      *
      * @param  Request  $request
      * @param  User  $user
@@ -186,7 +186,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Approves a pending user account.
+     * Approve a pending user account.
      *
      * @param  Request  $request
      * @param  User  $user
@@ -206,7 +206,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Approves all pending user accounts.
+     * Approve all pending user accounts.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -236,7 +236,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Returns resources the selected user can share.
+     * Return resources the selected user can share.
      *
      * @return JsonResponse
      */
@@ -287,7 +287,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Enables or disables public registration.
+     * Enable or disable public registration.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -310,7 +310,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Enables or disables registration approval requirements.
+     * Enable or disable registration approval requirements.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -332,7 +332,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Enables or disables owner-managed sharing.
+     * Enable or disable owner-managed sharing.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -354,7 +354,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Enables or disables DAV compatibility mode.
+     * Enable or disable DAV compatibility mode.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -376,7 +376,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Enables or disables contact management features.
+     * Enable or disable contact management features.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -408,7 +408,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Enables or disables contact change moderation.
+     * Enable or disable contact change moderation.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -456,7 +456,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Updates two-factor enforcement settings.
+     * Update two-factor enforcement settings.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -479,7 +479,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Clears two-factor enrollment and backup codes for a user.
+     * Clear two-factor enrollment and backup codes for a user.
      *
      * @param  Request  $request
      * @param  User  $user
@@ -503,7 +503,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Returns contact-change request retention settings.
+     * Return contact-change request retention settings.
      *
      * @return JsonResponse
      */
@@ -515,7 +515,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Updates contact-change request retention settings.
+     * Update contact-change request retention settings.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -537,7 +537,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Returns milestone calendar generation-year settings.
+     * Return milestone calendar generation-year settings.
      *
      * @return JsonResponse
      */
@@ -549,7 +549,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Updates milestone calendar generation-year settings.
+     * Update milestone calendar generation-year settings.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -584,7 +584,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Purges generated milestone calendars for selected address books.
+     * Purge generated milestone calendars for selected address books.
      *
      * @return JsonResponse
      */
@@ -596,7 +596,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Returns backup configuration and last-run status.
+     * Return backup configuration and last-run status.
      *
      * @return JsonResponse
      */
@@ -606,7 +606,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Updates backup configuration settings.
+     * Update backup configuration settings.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -650,7 +650,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Runs a backup immediately from the admin panel.
+     * Run a backup immediately from the admin panel.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -677,7 +677,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Restores data from an uploaded backup archive.
+     * Restore data from an uploaded backup archive.
      *
      * @param  Request  $request
      * @return JsonResponse

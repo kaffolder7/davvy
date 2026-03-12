@@ -5,7 +5,7 @@ namespace App\Services\Analytics;
 class OpenPanelSettings
 {
     /**
-     * Returns whether tracking should run at all for current runtime.
+     * Determine whether tracking should run for the current runtime.
      *
      * @return bool
      */
@@ -26,7 +26,7 @@ class OpenPanelSettings
     }
 
     /**
-     * Returns whether browser tracking can be initialized safely.
+     * Determine whether browser tracking can be initialized safely.
      *
      * @return bool
      */
@@ -36,7 +36,7 @@ class OpenPanelSettings
     }
 
     /**
-     * Returns whether server-side tracking can be sent.
+     * Determine whether server-side tracking can be sent.
      *
      * @return bool
      */
@@ -46,7 +46,7 @@ class OpenPanelSettings
     }
 
     /**
-     * Returns the OpenPanel browser client ID.
+     * Return the OpenPanel browser client ID.
      *
      * @return string
      */
@@ -56,7 +56,7 @@ class OpenPanelSettings
     }
 
     /**
-     * Returns the OpenPanel server client secret.
+     * Return the OpenPanel server client secret.
      *
      * @return string
      */
@@ -66,7 +66,7 @@ class OpenPanelSettings
     }
 
     /**
-     * Returns the OpenPanel API base URL.
+     * Return the OpenPanel API base URL.
      *
      * @return string
      */
@@ -76,7 +76,7 @@ class OpenPanelSettings
     }
 
     /**
-     * Returns script source for browser runtime.
+     * Return the script source for browser runtime.
      *
      * @return string
      */
