@@ -114,8 +114,8 @@ describe("useContactsPageState", () => {
     const { result } = renderHook(() => useContactsPageState(deps));
 
     await waitFor(() => expect(deps.api.get).toHaveBeenCalledWith("/api/contacts"));
+    await waitFor(() => expect(result.current.loading).toBe(false));
 
-    expect(result.current.loading).toBe(false);
     expect(result.current.contacts).toHaveLength(1);
     expect(result.current.addressBooks).toHaveLength(1);
     expect(result.current.form.id).toBe(null);
