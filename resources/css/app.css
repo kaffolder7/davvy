@@ -272,6 +272,62 @@ body {
   backdrop-filter: blur(8px);
 }
 
+.backup-codes-ticket {
+  position: relative;
+  border: 2px dashed var(--warn-edge);
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      color-mix(in srgb, var(--warn-edge) 16%, transparent) 0 10px,
+      transparent 10px 20px
+    ),
+    color-mix(in srgb, var(--warn-surface) 68%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warn-edge) 24%, transparent);
+}
+
+.backup-codes-ticket::before,
+.backup-codes-ticket::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--warn-edge) 66%, transparent);
+  background: var(--bg-start);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.backup-codes-ticket::before {
+  left: -10px;
+}
+
+.backup-codes-ticket::after {
+  right: -10px;
+}
+
+.backup-codes-ticket-label {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--warn-edge) 90%, transparent);
+  background: color-mix(in srgb, var(--warn-edge) 26%, var(--surface-solid));
+  padding: 0.18rem 0.55rem;
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-strong);
+}
+
+.backup-codes-ticket-field {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--warn-edge) 75%, var(--edge));
+  background: color-mix(in srgb, var(--surface-solid) 84%, var(--warn-surface));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 28%, transparent);
+}
+
 .pill {
   @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
 }

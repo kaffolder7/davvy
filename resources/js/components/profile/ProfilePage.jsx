@@ -464,10 +464,13 @@ export default function ProfilePage({
         )}
 
         {backupCodes.length > 0 ? (
-          <div className="mt-4 rounded-2xl border border-app-warning-edge bg-app-warning/10 p-4">
-            <p className="text-sm font-semibold text-app-strong">
-              Save these backup codes now.
-            </p>
+          <div className="backup-codes-ticket mt-4 rounded-2xl p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-app-strong">
+                Save these backup codes now.
+              </p>
+              <span className="backup-codes-ticket-label">Shown once</span>
+            </div>
             <p className="mt-1 text-xs text-app-muted">
               Each backup code can be used once. You will not be able to view
               these exact codes again.
@@ -475,7 +478,7 @@ export default function ProfilePage({
             <div className="mt-3">
               <textarea
                 ref={backupCodesFieldRef}
-                className="input min-h-36 resize-y font-mono leading-6"
+                className="input backup-codes-ticket-field min-h-36 resize-y font-mono leading-6"
                 value={backupCodesText}
                 rows={Math.max(4, backupCodes.length)}
                 aria-label="Backup codes"
