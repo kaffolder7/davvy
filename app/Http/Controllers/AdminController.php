@@ -18,6 +18,7 @@ use App\Services\Backups\BackupService;
 use App\Services\Backups\BackupSettingsService;
 use App\Services\Contacts\ContactMilestoneCalendarService;
 use App\Services\RegistrationSettingsService;
+use App\Services\ResourceDeletionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -34,6 +35,7 @@ class AdminController extends Controller
         private readonly BackupSettingsService $backupSettings,
         private readonly BackupService $backupService,
         private readonly BackupRestoreService $backupRestoreService,
+        private readonly ResourceDeletionService $resourceDeletion,
     ) {}
 
     public function users(): JsonResponse
@@ -129,6 +131,21 @@ class AdminController extends Controller
         ): void {
             if ($transferOwnerId !== null) {
                 $summary = $this->transferOwnedResources($deletedUserId, $transferOwnerId);
+            } else {
+                $addressBooks = AddressBook::query()
+                    ->where('owner_id', $deletedUserId)
+                    ->get();
+                $calendars = Calendar::query()
+                    ->where('owner_id', $deletedUserId)
+                    ->get();
+
+                foreach ($addressBooks as $addressBook) {
+                    $this->resourceDeletion->deleteAddressBook($addressBook);
+                }
+
+                foreach ($calendars as $calendar) {
+                    $this->resourceDeletion->deleteCalendar($calendar);
+                }
             }
 
             User::query()->whereKey($deletedUserId)->delete();
