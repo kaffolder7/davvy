@@ -508,6 +508,8 @@ class ContactService
     }
 
     /**
+     * Asserts can mutate contact.
+     *
      * @param  User  $actor
      * @param  Contact  $contact
      * @return void
@@ -520,6 +522,8 @@ class ContactService
     }
 
     /**
+     * Returns writable address book models.
+     *
      * @param  array<int, int>  $addressBookIds
      * @return Collection<int, AddressBook>
      */
@@ -564,6 +568,8 @@ class ContactService
     }
 
     /**
+     * Returns address book models by IDs.
+     *
      * @param  array<int, int>  $addressBookIds
      * @return Collection<int, AddressBook>
      */
@@ -599,6 +605,8 @@ class ContactService
     }
 
     /**
+     * Returns persist contact update.
+     *
      * @param  array<string, mixed>  $payload
      * @param  Collection<int, AddressBook>  $addressBooks
      */
@@ -640,6 +648,8 @@ class ContactService
     }
 
     /**
+     * Deletes contact.
+     *
      * @param  Contact  $contact
      * @return void
      */
@@ -982,6 +992,8 @@ class ContactService
     }
 
     /**
+     * Synchronizes assignments.
+     *
      * @param  Collection<int, AddressBook>  $addressBooks
      */
     private function syncAssignments(Contact $contact, Collection $addressBooks): void
@@ -1015,6 +1027,8 @@ class ContactService
     }
 
     /**
+     * Creates assignment.
+     *
      * @param  Contact  $contact
      * @param  AddressBook  $addressBook
      * @return void
@@ -1047,6 +1061,8 @@ class ContactService
     }
 
     /**
+     * Performs the upsert assignment card operation.
+     *
      * @param  Contact  $contact
      * @param  AddressBook  $addressBook
      * @param  ContactAddressBookAssignment  $assignment
@@ -1112,6 +1128,8 @@ class ContactService
     }
 
     /**
+     * Deletes assignment card.
+     *
      * @param  ContactAddressBookAssignment  $assignment
      * @return void
      */
@@ -1129,6 +1147,8 @@ class ContactService
     }
 
     /**
+     * Asserts no uid conflict.
+     *
      * @param  AddressBook  $addressBook
      * @param  string  $uid
      * @param  int|null  $exceptCardId
@@ -1158,6 +1178,8 @@ class ContactService
     }
 
     /**
+     * Returns normalized card data.
+     *
      * @param  Contact  $contact
      * @return string
      */
@@ -1170,6 +1192,8 @@ class ContactService
     }
 
     /**
+     * Returns next available card URI.
+     *
      * @param  AddressBook  $addressBook
      * @param  Contact  $contact
      * @param  string|null  $preferredUri
@@ -1202,6 +1226,8 @@ class ContactService
     }
 
     /**
+     * Returns sanitize card URI.
+     *
      * @param  string|null  $value
      * @return string|null
      */
@@ -1222,6 +1248,8 @@ class ContactService
     }
 
     /**
+     * Checks whether card URI exists.
+     *
      * @param  int  $addressBookId
      * @param  string  $uri
      * @param  int|null  $exceptCardId
@@ -1241,6 +1269,8 @@ class ContactService
     }
 
     /**
+     * Synchronizes assignments for existing contact.
+     *
      * @param  Contact  $contact
      * @return void
      */
@@ -1269,6 +1299,8 @@ class ContactService
     }
 
     /**
+     * Normalizes related rows for sync.
+     *
      * @return array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>
      */
     private function normalizeRelatedRowsForSync(mixed $rows): array
@@ -1293,6 +1325,8 @@ class ContactService
     }
 
     /**
+     * Returns linked related contact IDs.
+     *
      * @param  array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>  $rows
      * @return array<int, int>
      */
@@ -1307,6 +1341,8 @@ class ContactService
     }
 
     /**
+     * Returns owner scoped linked rows by contact ID.
+     *
      * @param  array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>  $rows
      * @return array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>
      */
@@ -1348,6 +1384,8 @@ class ContactService
     }
 
     /**
+     * Returns spouse propagation inputs from linked rows.
+     *
      * @param  array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>  $linkedRowsByContactId
      * @return array{
      *   spouse_contact_ids:array<int, int>,
@@ -1381,6 +1419,8 @@ class ContactService
     }
 
     /**
+     * Returns spouse propagation pairs.
+     *
      * @param  array<int, int>  $spouseContactIds
      * @param  array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>  $propagatedRows
      * @return array<string, array{
@@ -1419,6 +1459,8 @@ class ContactService
     }
 
     /**
+     * Removes stale spouse propagation rows.
+     *
      * @param  array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>  $previousLinkedRowsByContactId
      * @param  array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>  $currentLinkedRowsByContactId
      * @return array<int, int>
@@ -1518,6 +1560,8 @@ class ContactService
     }
 
     /**
+     * Returns inverse canonical for propagation row.
+     *
      * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $sourceRow
      */
     private function inverseCanonicalForPropagationRow(
@@ -1554,6 +1598,8 @@ class ContactService
     }
 
     /**
+     * Removes related rows for derived pair.
+     *
      * @param  array<int, int>  $affectedAddressBookIds
      */
     private function removeRelatedRowsForDerivedPair(
@@ -1593,6 +1639,8 @@ class ContactService
     }
 
     /**
+     * Returns upsert reciprocal related row.
+     *
      * @param  array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>  $targetRows
      * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $sourceRow
      * @return array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>
@@ -1646,6 +1694,8 @@ class ContactService
     }
 
     /**
+     * Returns merged reciprocal row.
+     *
      * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $existingRow
      * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $incomingRow
      * @return array{label:string, custom_label:?string, value:string, related_contact_id:?int}
@@ -1677,6 +1727,8 @@ class ContactService
     }
 
     /**
+     * Checks whether it should preserve existing specific reciprocal label.
+     *
      * @param  string|null  $existingToken
      * @param  string|null  $incomingToken
      * @return bool
@@ -1739,6 +1791,8 @@ class ContactService
     }
 
     /**
+     * Returns gender aware inverse token.
+     *
      * @param  string  $inverseToken
      * @param  Contact  $sourceContact
      * @return string
@@ -1759,6 +1813,8 @@ class ContactService
     }
 
     /**
+     * Returns inferred gender for contact.
+     *
      * @param  Contact  $contact
      * @return string|null
      */
@@ -1772,6 +1828,8 @@ class ContactService
     }
 
     /**
+     * Returns inferred gender from pronouns.
+     *
      * @param  string|null  $value
      * @return string|null
      */
@@ -1803,6 +1861,8 @@ class ContactService
     }
 
     /**
+     * Returns canonical related label for row.
+     *
      * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $row
      */
     private function canonicalRelatedLabelForRow(array $row): ?string
@@ -1816,6 +1876,8 @@ class ContactService
     }
 
     /**
+     * Returns upsert mirrored related row.
+     *
      * @param  array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>  $targetRows
      * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $incomingRow
      * @return array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>
@@ -1859,6 +1921,8 @@ class ContactService
     }
 
     /**
+     * Returns inverse label for related row.
+     *
      * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $row
      * @return array{label:string, custom_label:?string}
      */
@@ -1888,6 +1952,8 @@ class ContactService
     }
 
     /**
+     * Returns related label token and display.
+     *
      * @param  array{label:string, custom_label:?string, value:string, related_contact_id:?int}  $row
      * @return array{0:?string,1:?string}
      */
@@ -1913,6 +1979,8 @@ class ContactService
     }
 
     /**
+     * Normalizes related label token.
+     *
      * @param  string|null  $value
      * @return string|null
      */
@@ -1933,6 +2001,8 @@ class ContactService
     }
 
     /**
+     * Checks whether related rows equal.
+     *
      * @param  array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>  $leftRows
      */
     private function relatedRowsEqual(array $leftRows, mixed $rightRows): bool
@@ -1941,6 +2011,8 @@ class ContactService
     }
 
     /**
+     * Normalizes string.
+     *
      * @param  mixed  $value
      * @return string|null
      */
@@ -1956,6 +2028,8 @@ class ContactService
     }
 
     /**
+     * Normalizes int.
+     *
      * @param  mixed  $value
      * @return int|null
      */
@@ -1977,6 +2051,8 @@ class ContactService
     }
 
     /**
+     * Synchronizes milestone calendars for address books.
+     *
      * @param  array<int, int>  $addressBookIds
      */
     private function syncMilestoneCalendarsForAddressBooks(array $addressBookIds): void

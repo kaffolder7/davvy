@@ -165,6 +165,8 @@ class BackupSettingsService
     }
 
     /**
+     * Normalizes schedule times.
+     *
      * @param  array<int, string>  $scheduleTimes
      * @return array<int, string>
      */
@@ -183,6 +185,8 @@ class BackupSettingsService
     }
 
     /**
+     * Sets boolean.
+     *
      * @param  string  $key
      * @param  bool  $value
      * @param  User|null  $actor
@@ -197,6 +201,8 @@ class BackupSettingsService
     }
 
     /**
+     * Sets integer.
+     *
      * @param  string  $key
      * @param  int  $value
      * @param  User|null  $actor
@@ -211,6 +217,8 @@ class BackupSettingsService
     }
 
     /**
+     * Sets string.
+     *
      * @param  string  $key
      * @param  string  $value
      * @param  User|null  $actor

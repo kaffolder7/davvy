@@ -133,6 +133,8 @@ class ContactController extends Controller
     }
 
     /**
+     * Returns validated input.
+     *
      * @return array{0: array<string,mixed>, 1: array<int, int>}
      */
     private function validatedInput(
@@ -268,6 +270,8 @@ class ContactController extends Controller
     }
 
     /**
+     * Returns serialize contact.
+     *
      * @param  Contact  $contact
      * @return array
      */
@@ -298,6 +302,8 @@ class ContactController extends Controller
     }
 
     /**
+     * Normalizes value rows.
+     *
      * @param  array<int, mixed>  $rows
      * @return array<int, array{label:string, custom_label:?string, value:string}>
      */
@@ -318,6 +324,8 @@ class ContactController extends Controller
     }
 
     /**
+     * Normalizes related name rows.
+     *
      * @param  array<int, mixed>  $rows
      * @param  array<int, string>  $relatedContactDisplayNames
      * @return array<int, array{label:string, custom_label:?string, value:string, related_contact_id:?int}>
@@ -345,6 +353,8 @@ class ContactController extends Controller
     }
 
     /**
+     * Resolves related contact display names.
+     *
      * @param  array<int, mixed>  $rows
      * @return array<int, string>
      */
@@ -415,6 +425,8 @@ class ContactController extends Controller
     }
 
     /**
+     * Normalizes address rows.
+     *
      * @param  array<int, mixed>  $rows
      * @return array<int, array{label:string, custom_label:?string, street:?string, city:?string, state:?string, postal_code:?string, country:?string}>
      */
@@ -445,6 +457,8 @@ class ContactController extends Controller
     }
 
     /**
+     * Normalizes date rows.
+     *
      * @param  array<int, mixed>  $rows
      * @return array<int, array{label:string, custom_label:?string, year:?int, month:?int, day:?int}>
      */
@@ -469,6 +483,8 @@ class ContactController extends Controller
     }
 
     /**
+     * Normalizes date parts.
+     *
      * @param  array<string, mixed>  $parts
      * @return array{year:?int, month:?int, day:?int}
      */
@@ -482,6 +498,8 @@ class ContactController extends Controller
     }
 
     /**
+     * Normalizes string.
+     *
      * @param  mixed  $value
      * @return string|null
      */
@@ -497,6 +515,8 @@ class ContactController extends Controller
     }
 
     /**
+     * Normalizes int.
+     *
      * @param  mixed  $value
      * @return int|null
      */

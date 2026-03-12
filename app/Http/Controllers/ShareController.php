@@ -151,6 +151,8 @@ class ShareController extends Controller
     }
 
     /**
+     * Returns resource ownership and sharable state.
+     *
      * @param  ShareResourceType  $type
      * @param  int  $resourceId
      * @return array
@@ -169,6 +171,8 @@ class ShareController extends Controller
     }
 
     /**
+     * Asserts owner share management allowed.
+     *
      * @return void
      */
     private function assertOwnerShareManagementAllowed(): void

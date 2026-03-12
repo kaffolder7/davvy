@@ -175,6 +175,8 @@ class LaravelPrincipalBackend extends AbstractBackend
     }
 
     /**
+     * Returns transform user.
+     *
      * @param  User  $user
      * @return array
      */

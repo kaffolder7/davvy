@@ -71,6 +71,8 @@ class IcsValidator
     }
 
     /**
+     * Parses v calendar.
+     *
      * @param  string  $calendarData
      * @return VCalendar
      */
@@ -90,6 +92,8 @@ class IcsValidator
     }
 
     /**
+     * Validates calendar envelope.
+     *
      * @param  VCalendar  $calendar
      * @param  bool  $strictModeEnabled
      * @return void
@@ -109,6 +113,8 @@ class IcsValidator
     }
 
     /**
+     * Returns primary components.
+     *
      * @return array<int, Component>
      */
     private function primaryComponents(VCalendar $calendar): array
@@ -127,6 +133,8 @@ class IcsValidator
     }
 
     /**
+     * Resolves primary type.
+     *
      * @param  array<int, Component>  $components
      */
     private function resolvePrimaryType(array $components): string
@@ -147,6 +155,8 @@ class IcsValidator
     }
 
     /**
+     * Validates primary components.
+     *
      * @param  array<int, Component>  $components
      */
     private function validatePrimaryComponents(array $components, string $componentType, bool $strictModeEnabled): ?string
@@ -226,6 +236,8 @@ class IcsValidator
     }
 
     /**
+     * Validates event component.
+     *
      * @param  Component  $component
      * @return void
      */
@@ -248,6 +260,8 @@ class IcsValidator
     }
 
     /**
+     * Validates todo component.
+     *
      * @param  Component  $component
      * @return void
      */
@@ -263,6 +277,8 @@ class IcsValidator
     }
 
     /**
+     * Validates sequence.
+     *
      * @param  Component  $component
      * @return void
      */
@@ -280,6 +296,8 @@ class IcsValidator
     }
 
     /**
+     * Validates r rule.
+     *
      * @param  Component  $component
      * @param  bool  $strictModeEnabled
      * @return void
@@ -344,6 +362,8 @@ class IcsValidator
     }
 
     /**
+     * Returns detect occurrence bounds.
+     *
      * @param  VCalendar  $calendar
      * @return array
      */
@@ -377,6 +397,8 @@ class IcsValidator
     }
 
     /**
+     * Returns safe date time.
+     *
      * @param  mixed  $property
      * @return DateTimeImmutable|null
      */

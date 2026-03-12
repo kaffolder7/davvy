@@ -75,6 +75,8 @@ class DefaultResourceProvisioner
     }
 
     /**
+     * Returns unique URI.
+     *
      * @param  string  $base
      * @param  callable  $exists
      * @return string

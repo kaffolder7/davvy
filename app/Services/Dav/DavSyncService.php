@@ -141,6 +141,8 @@ class DavSyncService
     }
 
     /**
+     * Records change.
+     *
      * @param  ShareResourceType  $resourceType
      * @param  int  $resourceId
      * @param  string  $uri
@@ -194,6 +196,8 @@ class DavSyncService
     }
 
     /**
+     * Initializes state.
+     *
      * @param  ShareResourceType  $resourceType
      * @param  int  $resourceId
      * @return void
@@ -210,6 +214,8 @@ class DavSyncService
     }
 
     /**
+     * Normalizes persisted token.
+     *
      * @param  ShareResourceType  $resourceType
      * @param  int  $resourceId
      * @param  int  $syncToken

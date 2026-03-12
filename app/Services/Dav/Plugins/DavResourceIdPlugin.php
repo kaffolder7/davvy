@@ -59,6 +59,8 @@ class DavResourceIdPlugin extends ServerPlugin
     }
 
     /**
+     * Returns stable UUID for path.
+     *
      * @param  string  $path
      * @return string
      */
@@ -84,6 +86,8 @@ class DavResourceIdPlugin extends ServerPlugin
     }
 
     /**
+     * Returns address book home sync token.
+     *
      * @param  string  $path
      * @return string
      */

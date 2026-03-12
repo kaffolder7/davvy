@@ -49,6 +49,8 @@ class LaravelAuthBackend extends AbstractBasic
     }
 
     /**
+     * Validates user pass.
+     *
      * @param  mixed  $username
      * @param  mixed  $password
      * @return bool
@@ -59,6 +61,8 @@ class LaravelAuthBackend extends AbstractBasic
     }
 
     /**
+     * Resolves user.
+     *
      * @param  string  $username
      * @param  string  $password
      * @return User|null
@@ -92,6 +96,8 @@ class LaravelAuthBackend extends AbstractBasic
     }
 
     /**
+     * Checks whether it should require app password.
+     *
      * @param  User  $user
      * @return bool
      */

@@ -48,6 +48,8 @@ class ThrottleDavAuthentication
     }
 
     /**
+     * Returns throttle key.
+     *
      * @param  Request  $request
      * @return string
      */
@@ -60,6 +62,8 @@ class ThrottleDavAuthentication
     }
 
     /**
+     * Returns basic username.
+     *
      * @param  Request  $request
      * @return string
      */
@@ -87,6 +91,8 @@ class ThrottleDavAuthentication
     }
 
     /**
+     * Checks whether it has basic authorization header.
+     *
      * @param  Request  $request
      * @return bool
      */

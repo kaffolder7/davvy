@@ -304,6 +304,8 @@ class ManagedContactSyncService
     }
 
     /**
+     * Deletes contact if orphaned.
+     *
      * @return array<int, int>
      */
     private function deleteContactIfOrphaned(int $contactId): array
@@ -330,6 +332,8 @@ class ManagedContactSyncService
     }
 
     /**
+     * Returns contact service.
+     *
      * @return ContactService
      */
     private function contactService(): ContactService
@@ -338,6 +342,8 @@ class ManagedContactSyncService
     }
 
     /**
+     * Checks whether schema available.
+     *
      * @return bool
      */
     private function schemaAvailable(): bool
@@ -347,6 +353,8 @@ class ManagedContactSyncService
     }
 
     /**
+     * Returns to integer.
+     *
      * @param  mixed  $value
      * @return int|null
      */
@@ -368,6 +376,8 @@ class ManagedContactSyncService
     }
 
     /**
+     * Returns clean string.
+     *
      * @param  mixed  $value
      * @return string|null
      */
@@ -383,6 +393,8 @@ class ManagedContactSyncService
     }
 
     /**
+     * Synchronizes milestone calendars for address books.
+     *
      * @param  array<int, int>  $addressBookIds
      */
     private function syncMilestoneCalendarsForAddressBooks(

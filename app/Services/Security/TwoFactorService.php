@@ -151,6 +151,8 @@ class TwoFactorService
     }
 
     /**
+     * Checks whether consume backup code.
+     *
      * @param  User  $user
      * @param  string  $input
      * @return bool
@@ -186,6 +188,8 @@ class TwoFactorService
     }
 
     /**
+     * Generates backup codes.
+     *
      * @return array<int, string>
      */
     private function generateBackupCodes(): array
@@ -200,6 +204,8 @@ class TwoFactorService
     }
 
     /**
+     * Generates backup code.
+     *
      * @return string
      */
     private function generateBackupCode(): string
@@ -219,6 +225,8 @@ class TwoFactorService
     }
 
     /**
+     * Returns hash backup codes.
+     *
      * @param  array<int, string>  $codes
      * @return array<int, string>
      */
@@ -231,6 +239,8 @@ class TwoFactorService
     }
 
     /**
+     * Returns backup code hashes.
+     *
      * @return array<int, string>
      */
     private function backupCodeHashesFor(User $user): array
@@ -239,6 +249,8 @@ class TwoFactorService
     }
 
     /**
+     * Normalizes backup code.
+     *
      * @param  string  $code
      * @return string|null
      */

@@ -121,6 +121,8 @@ class ExportController extends Controller
     }
 
     /**
+     * Returns readable calendars.
+     *
      * @return Collection<int, Calendar>
      */
     private function readableCalendars(User $user): Collection
@@ -149,6 +151,8 @@ class ExportController extends Controller
     }
 
     /**
+     * Returns readable address books.
+     *
      * @return Collection<int, AddressBook>
      */
     private function readableAddressBooks(User $user): Collection
@@ -177,6 +181,8 @@ class ExportController extends Controller
     }
 
     /**
+     * Builds calendar payload.
+     *
      * @param  Calendar  $calendar
      * @return string
      */
@@ -207,6 +213,8 @@ class ExportController extends Controller
     }
 
     /**
+     * Builds address book payload.
+     *
      * @param  AddressBook  $addressBook
      * @return string
      */
@@ -221,6 +229,8 @@ class ExportController extends Controller
     }
 
     /**
+     * Returns download zip.
+     *
      * @param  array<int, array{name: string, contents: string}>  $files
      */
     private function downloadZip(
@@ -261,6 +271,8 @@ class ExportController extends Controller
     }
 
     /**
+     * Returns unique archive entry name.
+     *
      * @param  array<string, true>  $usedNames
      */
     private function uniqueArchiveEntryName(string $name, array &$usedNames): string
@@ -281,6 +293,8 @@ class ExportController extends Controller
     }
 
     /**
+     * Returns attachment header.
+     *
      * @param  string  $fileName
      * @return string
      */
@@ -290,6 +304,8 @@ class ExportController extends Controller
     }
 
     /**
+     * Returns resource file name.
+     *
      * @param  string  $displayName
      * @param  string  $fallbackStem
      * @param  string  $extension
@@ -307,6 +323,8 @@ class ExportController extends Controller
     }
 
     /**
+     * Returns export archive name.
+     *
      * @param  string  $resourceType
      * @return string
      */

@@ -120,6 +120,8 @@ class ContactChangeRequestController extends Controller
     }
 
     /**
+     * Returns serialize row.
+     *
      * @param  ContactChangeRequest  $row
      * @return array
      */
@@ -174,6 +176,8 @@ class ContactChangeRequestController extends Controller
     }
 
     /**
+     * Returns changed top level keys.
+     *
      * @param  array<string, mixed>  $base
      * @param  array<string, mixed>  $updated
      * @return array<int, string>
@@ -203,6 +207,8 @@ class ContactChangeRequestController extends Controller
     }
 
     /**
+     * Checks whether values equal.
+     *
      * @param  mixed  $left
      * @param  mixed  $right
      * @return bool

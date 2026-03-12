@@ -20,6 +20,8 @@ class UserAppPassword extends Model
     ];
 
     /**
+     * Returns casts.
+     *
      * @return array
      */
     protected function casts(): array

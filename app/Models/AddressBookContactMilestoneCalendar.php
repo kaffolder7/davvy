@@ -23,6 +23,8 @@ class AddressBookContactMilestoneCalendar extends Model
     ];
 
     /**
+     * Returns casts.
+     *
      * @return array
      */
     protected function casts(): array

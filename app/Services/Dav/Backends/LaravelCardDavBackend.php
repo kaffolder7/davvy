@@ -453,6 +453,8 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Returns transform address book.
+     *
      * @param  AddressBook  $addressBook
      * @param  SharePermission  $permission
      * @param  string  $principalUri
@@ -478,6 +480,8 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Checks whether initial sync request.
+     *
      * @param  mixed  $syncToken
      * @return bool
      */
@@ -491,6 +495,8 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Returns transform card.
+     *
      * @param  Card  $card
      * @param  bool  $withData
      * @return array
@@ -513,6 +519,8 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Returns readable address book.
+     *
      * @param  int  $addressBookId
      * @return AddressBook
      */
@@ -534,6 +542,8 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Asserts writable address book.
+     *
      * @param  AddressBook  $addressBook
      * @return void
      */
@@ -547,6 +557,8 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Asserts deletable address book.
+     *
      * @param  AddressBook  $addressBook
      * @return void
      */
@@ -560,6 +572,8 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Parses sync token.
+     *
      * @param  mixed  $syncToken
      * @return int
      */
@@ -581,6 +595,8 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Checks whether uid conflict exists.
+     *
      * @param  int  $addressBookId
      * @param  string  $uid
      * @param  int|null  $exceptCardId
@@ -600,6 +616,8 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Returns fallback uid for legacy payload.
+     *
      * @param  string  $cardUri
      * @return string
      */
@@ -609,6 +627,8 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Checks whether uid unique constraint violation.
+     *
      * @param  QueryException  $exception
      * @return bool
      */
@@ -621,6 +641,8 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Synchronizes managed contact upsert.
+     *
      * @param  AddressBook  $addressBook
      * @param  Card  $card
      * @return void
@@ -639,6 +661,8 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Synchronizes managed contact delete.
+     *
      * @param  Card  $card
      * @return void
      */

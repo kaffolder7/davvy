@@ -399,6 +399,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Returns eligible source options for user.
+     *
      * @param  User  $user
      * @param  int|null  $targetAddressBookId
      * @return Collection
@@ -445,6 +447,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Resolves target address book.
+     *
      * @param  User  $user
      * @return AddressBook|null
      */
@@ -468,6 +472,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Checks whether user can use source address book.
+     *
      * @param  User  $user
      * @param  int  $sourceAddressBookId
      * @param  int  $targetAddressBookId
@@ -496,6 +502,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Synchronizes source address book for user.
+     *
      * @param  User  $user
      * @param  AddressBook  $targetAddressBook
      * @param  int  $sourceAddressBookId
@@ -558,6 +566,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Performs the upsert mirrored card operation.
+     *
      * @param  User  $user
      * @param  AddressBook  $targetAddressBook
      * @param  AddressBook  $sourceAddressBook
@@ -646,6 +656,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Builds mirrored card payload.
+     *
      * @param  User  $user
      * @param  AddressBook  $sourceAddressBook
      * @param  Card  $sourceCard
@@ -707,6 +719,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Returns source payload from mirrored update.
+     *
      * @param  string  $incomingCardData
      * @param  string  $sourceUid
      * @return string
@@ -749,6 +763,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Returns mirrored URI.
+     *
      * @param  int  $userId
      * @param  int  $sourceAddressBookId
      * @param  string  $sourceCardUri
@@ -762,6 +778,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Returns mirrored uid.
+     *
      * @param  int  $userId
      * @param  int  $sourceAddressBookId
      * @param  string  $sourceCardUri
@@ -775,6 +793,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Checks whether mirror managed card.
+     *
      * @param  string  $cardData
      * @return bool
      */
@@ -784,6 +804,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Removes mirrors for user.
+     *
      * @param  int  $userId
      * @param  array|null  $sourceAddressBookIds
      * @param  array|null  $exceptSourceAddressBookIds
@@ -811,6 +833,8 @@ class AddressBookMirrorService
     }
 
     /**
+     * Deletes mirrored link.
+     *
      * @param  AddressBookMirrorLink  $link
      * @return void
      */

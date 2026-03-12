@@ -128,6 +128,8 @@ class PendingTwoFactorLoginService
     }
 
     /**
+     * Returns session data.
+     *
      * @param  Request  $request
      * @return array|null
      */

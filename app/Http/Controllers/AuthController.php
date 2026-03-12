@@ -499,6 +499,8 @@ class AuthController extends Controller
     }
 
     /**
+     * Returns public settings payload.
+     *
      * @return array
      */
     private function publicSettingsPayload(): array
@@ -517,6 +519,8 @@ class AuthController extends Controller
     }
 
     /**
+     * Returns authenticated settings payload.
+     *
      * @param  User  $user
      * @return array
      */

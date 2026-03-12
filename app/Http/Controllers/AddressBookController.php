@@ -97,6 +97,8 @@ class AddressBookController extends Controller
     }
 
     /**
+     * Performs the authorize ownership operation.
+     *
      * @param  Request  $request
      * @param  AddressBook  $addressBook
      * @return void
@@ -111,6 +113,8 @@ class AddressBookController extends Controller
     }
 
     /**
+     * Returns unique URI.
+     *
      * @param  int  $ownerId
      * @param  string  $baseUri
      * @return string

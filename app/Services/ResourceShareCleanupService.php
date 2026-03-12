@@ -48,6 +48,8 @@ class ResourceShareCleanupService
     }
 
     /**
+     * Normalizes IDs.
+     *
      * @return array<int, int>
      */
     private function normalizeIds(int|array $ids): array

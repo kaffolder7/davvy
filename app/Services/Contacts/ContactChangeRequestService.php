@@ -424,6 +424,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Enqueues if needed.
+     *
      * @param  array<string, mixed>|null  $proposedPayload
      * @param  array<int, int>|null  $proposedAddressBookIds
      * @param  array<string, mixed>  $meta
@@ -558,6 +560,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Returns queue owner IDs.
+     *
      * @param  Collection<int, AddressBook>  $addressBooks
      * @return array<int, int>
      */
@@ -590,6 +594,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Asserts user can write address books.
+     *
      * @param  array<int, int>  $addressBookIds
      */
     private function assertUserCanWriteAddressBooks(User $actor, array $addressBookIds): void
@@ -623,6 +629,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Applies status filter.
+     *
      * @param  Builder  $query
      * @param  string  $statusFilter
      * @return void
@@ -670,6 +678,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Asserts reviewer can act.
+     *
      * @param  User  $reviewer
      * @param  ContactChangeRequest  $request
      * @return void
@@ -686,6 +696,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Applies resolution to group.
+     *
      * @param  array<string, mixed>|null  $resolvedPayload
      * @param  array<int, int>|null  $resolvedAddressBookIds
      */
@@ -718,6 +730,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Returns group rows for update.
+     *
      * @return Collection<int, ContactChangeRequest>
      */
     private function groupRowsForUpdate(string $groupUuid): Collection
@@ -730,6 +744,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Applies approved group.
+     *
      * @param  Collection<int, ContactChangeRequest>  $groupRows
      */
     private function applyApprovedGroup(Collection $groupRows, User $reviewer): void
@@ -756,6 +772,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Applies delete group.
+     *
      * @param  Collection<int, ContactChangeRequest>  $groupRows
      */
     private function applyDeleteGroup(Collection $groupRows, User $reviewer): void
@@ -780,6 +798,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Applies update group.
+     *
      * @param  Collection<int, ContactChangeRequest>  $groupRows
      */
     private function applyUpdateGroup(Collection $groupRows, User $reviewer): void
@@ -875,6 +895,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Checks whether manual resolution request.
+     *
      * @param  Collection<int, ContactChangeRequest>  $groupRows
      */
     private function isManualResolutionRequest(Collection $groupRows): bool
@@ -886,6 +908,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Returns changed top level keys.
+     *
      * @param  array<string, mixed>  $base
      * @param  array<string, mixed>  $updated
      * @return array<int, string>
@@ -915,6 +939,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Merges payload.
+     *
      * @param  array<string, mixed>  $current
      * @param  array<string, mixed>  $requested
      * @param  array<int, string>  $requestedChangedKeys
@@ -938,6 +964,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Checks whether it has assignment conflict.
+     *
      * @param  array<int, int>  $baseIds
      * @param  array<int, int>  $requestedIds
      * @param  array<int, int>  $currentIds
@@ -951,6 +979,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Resolves address book IDs.
+     *
      * @param  array<int, int>  $baseIds
      * @param  array<int, int>  $requestedIds
      * @param  array<int, int>  $currentIds
@@ -968,6 +998,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Checks whether values equal.
+     *
      * @param  mixed  $left
      * @param  mixed  $right
      * @return bool
@@ -979,6 +1011,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Normalizes address book IDs.
+     *
      * @param  array<int, mixed>  $addressBookIds
      * @return array<int, int>
      */

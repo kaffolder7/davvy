@@ -27,6 +27,8 @@ class SponsorshipLinksService
     }
 
     /**
+     * Returns links from funding file.
+     *
      * @return array<int, array{name: string, url: string}>
      */
     private function linksFromFundingFile(): array
@@ -136,6 +138,8 @@ class SponsorshipLinksService
     }
 
     /**
+     * Performs the append platform links operation.
+     *
      * @param  array<int, array{name: string, url: string}>  $links
      * @param  array<string, true>  $seenUrls
      */
@@ -167,6 +171,8 @@ class SponsorshipLinksService
     }
 
     /**
+     * Performs the append custom links operation.
+     *
      * @param  array<int, array{name: string, url: string}>  $links
      * @param  array<string, true>  $seenUrls
      */
@@ -195,6 +201,8 @@ class SponsorshipLinksService
     }
 
     /**
+     * Performs the append validated link operation.
+     *
      * @param  array<int, array{name: string, url: string}>  $links
      * @param  array<string, true>  $seenUrls
      */
@@ -221,6 +229,8 @@ class SponsorshipLinksService
     }
 
     /**
+     * Normalizes values.
+     *
      * @return array<int, string>
      */
     private function normalizeValues(mixed $rawValue, bool $splitCommaValues = false): array
@@ -264,6 +274,8 @@ class SponsorshipLinksService
     }
 
     /**
+     * Normalizes handle.
+     *
      * @param  string  $value
      * @return string
      */
@@ -325,6 +337,8 @@ class SponsorshipLinksService
     }
 
     /**
+     * Parses inline funding value.
+     *
      * @param  string  $value
      * @return string|array
      */
@@ -356,6 +370,8 @@ class SponsorshipLinksService
     }
 
     /**
+     * Normalizes yaml scalar.
+     *
      * @param  string  $value
      * @return string
      */
@@ -379,6 +395,8 @@ class SponsorshipLinksService
     }
 
     /**
+     * Returns strip inline comment.
+     *
      * @param  string  $value
      * @return string
      */

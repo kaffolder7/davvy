@@ -120,6 +120,8 @@ class AppPasswordService
     }
 
     /**
+     * Generates token.
+     *
      * @return string
      */
     private function generateToken(): string
@@ -128,6 +130,8 @@ class AppPasswordService
     }
 
     /**
+     * Returns hash token.
+     *
      * @param  string  $token
      * @return string
      */

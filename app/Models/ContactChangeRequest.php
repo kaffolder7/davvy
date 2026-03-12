@@ -41,6 +41,8 @@ class ContactChangeRequest extends Model
     ];
 
     /**
+     * Returns casts.
+     *
      * @return array
      */
     protected function casts(): array

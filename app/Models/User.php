@@ -38,6 +38,8 @@ class User extends Authenticatable
     ];
 
     /**
+     * Returns casts.
+     *
      * @return array
      */
     protected function casts(): array
@@ -55,6 +57,8 @@ class User extends Authenticatable
     }
 
     /**
+     * Returns email.
+     *
      * @return Attribute
      */
     protected function email(): Attribute

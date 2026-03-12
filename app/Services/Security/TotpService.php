@@ -124,6 +124,8 @@ class TotpService
     }
 
     /**
+     * Returns code for timeslice.
+     *
      * @param  string  $secret
      * @param  int  $slice
      * @return string
@@ -152,6 +154,8 @@ class TotpService
     }
 
     /**
+     * Returns base32 encode.
+     *
      * @param  string  $bytes
      * @return string
      */
@@ -185,6 +189,8 @@ class TotpService
     }
 
     /**
+     * Returns base32 decode.
+     *
      * @param  string  $secret
      * @return string
      */

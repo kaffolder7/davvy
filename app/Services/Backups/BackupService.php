@@ -194,6 +194,8 @@ class BackupService
     }
 
     /**
+     * Checks whether due for schedule.
+     *
      * @param  array<int, string>  $scheduleTimes
      */
     private function isDueForSchedule(CarbonImmutable $nowLocal, array $scheduleTimes): bool
@@ -204,6 +206,8 @@ class BackupService
     }
 
     /**
+     * Returns due tiers.
+     *
      * @param  array{
      *   retention_daily:int,
      *   retention_weekly:int,
@@ -248,6 +252,8 @@ class BackupService
     }
 
     /**
+     * Builds archive.
+     *
      * @param  array<int, string>  $tiers
      * @return array{0:string,1:array{calendars:int,address_books:int,calendar_objects:int,cards:int}}
      */
@@ -397,6 +403,8 @@ class BackupService
     }
 
     /**
+     * Stores tier snapshot.
+     *
      * @param  array{
      *   local_enabled: bool,
      *   local_path: string,
@@ -449,6 +457,8 @@ class BackupService
     }
 
     /**
+     * Stores local snapshot.
+     *
      * @param  string  $archivePath
      * @param  string  $localRoot
      * @param  string  $tier
@@ -474,6 +484,8 @@ class BackupService
     }
 
     /**
+     * Stores remote snapshot.
+     *
      * @param  string  $archivePath
      * @param  string  $diskName
      * @param  string  $prefix
@@ -511,6 +523,8 @@ class BackupService
     }
 
     /**
+     * Prunes by retention.
+     *
      * @param  array{
      *   local_enabled: bool,
      *   local_path: string,
@@ -551,6 +565,8 @@ class BackupService
     }
 
     /**
+     * Prunes local tier.
+     *
      * @param  string  $localRoot
      * @param  string  $tier
      * @param  int  $limit
@@ -583,6 +599,8 @@ class BackupService
     }
 
     /**
+     * Prunes remote tier.
+     *
      * @param  string  $diskName
      * @param  string  $prefix
      * @param  string  $tier
@@ -613,6 +631,8 @@ class BackupService
     }
 
     /**
+     * Builds calendar payload.
+     *
      * @param  Calendar  $calendar
      * @return string
      */
@@ -640,6 +660,8 @@ class BackupService
     }
 
     /**
+     * Builds address book payload.
+     *
      * @param  AddressBook  $addressBook
      * @return string
      */
@@ -652,6 +674,8 @@ class BackupService
     }
 
     /**
+     * Returns resource file name.
+     *
      * @param  string  $displayName
      * @param  string  $fallbackStem
      * @param  string  $extension
@@ -668,6 +692,8 @@ class BackupService
     }
 
     /**
+     * Returns skip result.
+     *
      * @return array{
      *   status: 'skipped',
      *   trigger: string,
@@ -711,6 +737,8 @@ class BackupService
     }
 
     /**
+     * Returns failed result.
+     *
      * @return array{
      *   status: 'failed',
      *   trigger: string,

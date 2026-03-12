@@ -68,6 +68,8 @@ class UserDeletionService
     }
 
     /**
+     * Deletes owned resources.
+     *
      * @param  int  $ownerId
      * @return void
      */
@@ -90,6 +92,8 @@ class UserDeletionService
     }
 
     /**
+     * Returns transfer owned resources.
+     *
      * @return array{calendars:int,address_books:int,contacts:int,shares_reassigned:int,shares_removed:int}
      */
     private function transferOwnedResources(int $sourceUserId, int $targetUserId): array
@@ -262,6 +266,8 @@ class UserDeletionService
     }
 
     /**
+     * Returns next unique identifier.
+     *
      * @param  array<string, bool>  $lookup
      */
     private function nextUniqueIdentifier(string $seed, string $fallback, array &$lookup): string

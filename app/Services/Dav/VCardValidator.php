@@ -69,6 +69,8 @@ class VCardValidator
     }
 
     /**
+     * Parses v card.
+     *
      * @param  string  $cardData
      * @return VCard
      */
@@ -88,6 +90,8 @@ class VCardValidator
     }
 
     /**
+     * Validates version.
+     *
      * @param  VCard  $card
      * @param  bool  $strictModeEnabled
      * @return string
@@ -114,6 +118,8 @@ class VCardValidator
     }
 
     /**
+     * Validates full name.
+     *
      * @param  VCard  $card
      * @param  bool  $strictModeEnabled
      * @return string
@@ -146,6 +152,8 @@ class VCardValidator
     }
 
     /**
+     * Validates uid.
+     *
      * @param  VCard  $card
      * @param  bool  $strictModeEnabled
      * @return string|null
@@ -168,6 +176,8 @@ class VCardValidator
     }
 
     /**
+     * Validates email addresses.
+     *
      * @param  VCard  $card
      * @param  bool  $strictModeEnabled
      * @return void

@@ -429,6 +429,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Returns transform calendar.
+     *
      * @param  Calendar  $calendar
      * @param  SharePermission  $permission
      * @param  string  $principalUri
@@ -456,6 +458,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Checks whether initial sync request.
+     *
      * @param  mixed  $syncToken
      * @return bool
      */
@@ -469,6 +473,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Returns transform calendar object.
+     *
      * @param  CalendarObject  $object
      * @param  bool  $withData
      * @return array
@@ -491,6 +497,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Returns readable calendar.
+     *
      * @param  int  $calendarId
      * @return Calendar
      */
@@ -512,6 +520,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Asserts writable calendar.
+     *
      * @param  Calendar  $calendar
      * @return void
      */
@@ -525,6 +535,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Asserts deletable calendar.
+     *
      * @param  Calendar  $calendar
      * @return void
      */
@@ -538,6 +550,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Parses sync token.
+     *
      * @param  mixed  $syncToken
      * @return int
      */
@@ -559,6 +573,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Checks whether uid conflict exists.
+     *
      * @param  int  $calendarId
      * @param  string  $uid
      * @param  int|null  $exceptObjectId
@@ -578,6 +594,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Returns fallback uid for legacy payload.
+     *
      * @param  string  $objectUri
      * @return string
      */
@@ -587,6 +605,8 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
+     * Checks whether uid unique constraint violation.
+     *
      * @param  QueryException  $exception
      * @return bool
      */

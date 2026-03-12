@@ -114,6 +114,8 @@ class DavController extends Controller
     }
 
     /**
+     * Checks whether it should log client DAV traffic.
+     *
      * @param  Request  $request
      * @return bool
      */
@@ -137,6 +139,8 @@ class DavController extends Controller
     }
 
     /**
+     * Returns serialize DAV exception.
+     *
      * @param  DavException  $exception
      * @return string
      */
