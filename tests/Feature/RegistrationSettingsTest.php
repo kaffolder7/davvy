@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Services\RegistrationSettingsService;
+use App\Services\Security\TwoFactorSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -183,6 +184,17 @@ class RegistrationSettingsTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('contact_change_moderation_enabled', true);
+    }
+
+    public function test_public_config_includes_two_factor_enforcement_setting(): void
+    {
+        app(TwoFactorSettingsService::class)->setEnforced(true);
+
+        $response = $this->getJson('/api/public/config');
+
+        $response->assertOk();
+        $response->assertJsonPath('two_factor_enforcement_enabled', true);
+        $response->assertJsonPath('two_factor_grace_period_days', 14);
     }
 
     public function test_authenticated_me_payload_includes_contact_management_setting(): void

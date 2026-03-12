@@ -15,7 +15,10 @@ It is designed for:
 
 ### Identity and Access 🔐
 - Session-based web auth (`/api/auth/*`)
+- Optional TOTP two-factor auth with backup codes
+- Optional org-wide 2FA enforcement with grace period
 - DAV basic auth at `/dav`
+- DAV app passwords for CalDAV/CardDAV clients when 2FA is enabled
 - Roles: `admin`, `regular`
 - Feature flags controlled by admins (public registration, owner sharing, contact management, review queue moderation, DAV compatibility mode)
 - Admin user lifecycle controls, including typed-confirm account deletion with optional ownership transfer

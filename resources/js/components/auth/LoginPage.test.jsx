@@ -70,6 +70,7 @@ function renderPage(props) {
         <Route path="/login" element={<LoginPage {...props} />} />
         <Route path="/" element={<div>Dashboard Home</div>} />
         <Route path="/register" element={<div>Register Screen</div>} />
+        <Route path="/login/2fa" element={<div>2FA Screen</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -132,6 +133,28 @@ describe("LoginPage", () => {
 
     expect(await screen.findByText("Sign in failed.")).toBeInTheDocument();
     expect(props.extractError).toHaveBeenCalledWith(err, "Unable to sign in.");
+    expect(props.auth.setAuth).not.toHaveBeenCalled();
+  });
+
+  it("redirects to 2FA screen when challenge is required", async () => {
+    const user = userEvent.setup();
+    const props = buildProps({
+      api: {
+        post: vi.fn().mockResolvedValue({
+          data: {
+            two_factor_required: true,
+          },
+        }),
+      },
+    });
+
+    renderPage(props);
+
+    await user.type(screen.getByLabelText("Email"), "admin@example.com");
+    await user.type(screen.getByLabelText("Password"), "secret123");
+    await user.click(screen.getByRole("button", { name: "Sign In" }));
+
+    expect(await screen.findByText("2FA Screen")).toBeInTheDocument();
     expect(props.auth.setAuth).not.toHaveBeenCalled();
   });
 });

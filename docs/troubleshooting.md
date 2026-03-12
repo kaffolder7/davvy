@@ -18,6 +18,15 @@ Check:
 - password is correct
 - seeded admin values are what you expect
 
+### Login asks for 2FA code (`202` with `two_factor_required`)
+- Expected when 2FA is enabled on the account.
+- Complete `/login/2fa` challenge using authenticator code or backup code.
+- If challenge expired, sign in again with email/password to start a new challenge.
+
+### `423 Locked` on authenticated API endpoints
+- Global 2FA enforcement is active and your grace period ended.
+- Complete 2FA enrollment from Profile -> Security, then retry.
+
 ### `403` on `POST /api/auth/register`
 Public registration is disabled by setting.
 
@@ -71,7 +80,8 @@ Fix:
 
 ### `401 Unauthorized` in DAV client
 - confirm client uses email/password basic auth
-- confirm password not recently changed without client update
+- if 2FA is enabled (or mandated after grace), use a DAV app password from Profile -> Security
+- confirm password/app-password not recently rotated without client update
 
 ### `403 Forbidden` on DAV write/delete
 Permission is insufficient:

@@ -15,6 +15,12 @@ export function createDefaultAuthState() {
     davCompatibilityModeEnabled: false,
     contactManagementEnabled: false,
     contactChangeModerationEnabled: false,
+    twoFactorEnforcementEnabled: false,
+    twoFactorGracePeriodDays: 14,
+    twoFactorEnabled: false,
+    twoFactorSetupRequired: false,
+    twoFactorMandated: false,
+    twoFactorGraceExpiresAt: null,
     sponsorship: createDefaultSponsorship(),
   };
 }
@@ -61,6 +67,12 @@ export function buildAuthStateFromPayload(payload, { user = null } = {}) {
     davCompatibilityModeEnabled: !!source.dav_compatibility_mode_enabled,
     contactManagementEnabled: !!source.contact_management_enabled,
     contactChangeModerationEnabled: !!source.contact_change_moderation_enabled,
+    twoFactorEnforcementEnabled: !!source.two_factor_enforcement_enabled,
+    twoFactorGracePeriodDays: Number(source.two_factor_grace_period_days || 14),
+    twoFactorEnabled: !!source.two_factor_enabled,
+    twoFactorSetupRequired: !!source.two_factor_setup_required,
+    twoFactorMandated: !!source.two_factor_mandated,
+    twoFactorGraceExpiresAt: source.two_factor_grace_expires_at || null,
     sponsorship: parseSponsorshipConfig(source.sponsorship),
   };
 }

@@ -37,6 +37,7 @@ export default function AdminPage({
     davCompatibilityModeEnabled: auth.davCompatibilityModeEnabled,
     contactManagementEnabled: auth.contactManagementEnabled,
     contactChangeModerationEnabled: auth.contactChangeModerationEnabled,
+    twoFactorEnforcementEnabled: auth.twoFactorEnforcementEnabled,
     contactChangeRetentionDays: 90,
     milestoneGenerationYears: 3,
     milestonePurgeVisible: false,
@@ -678,6 +679,53 @@ export default function AdminPage({
     }
   };
 
+  const toggleTwoFactorEnforcement = async () => {
+    const next = !state.twoFactorEnforcementEnabled;
+
+    try {
+      const response = await api.patch(
+        "/api/admin/settings/two-factor-enforcement",
+        {
+          enabled: next,
+        },
+      );
+      setState((prev) => ({
+        ...prev,
+        twoFactorEnforcementEnabled: !!response.data.enabled,
+      }));
+      auth.setAuth((prev) => ({
+        ...prev,
+        twoFactorEnforcementEnabled: !!response.data.enabled,
+      }));
+    } catch (err) {
+      setState((prev) => ({
+        ...prev,
+        error: extractError(err, "Unable to update 2FA enforcement setting."),
+      }));
+    }
+  };
+
+  const resetUserTwoFactor = async (userId) => {
+    const confirmed = window.confirm(
+      "Reset this user's 2FA enrollment and revoke their DAV app passwords?",
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await api.post(`/api/admin/users/${userId}/two-factor/reset`, {
+        revoke_app_passwords: true,
+      });
+      await load();
+    } catch (err) {
+      setState((prev) => ({
+        ...prev,
+        error: extractError(err, "Unable to reset user 2FA."),
+      }));
+    }
+  };
+
   const purgeGeneratedMilestoneCalendars = async () => {
     if (milestonePurgeSubmitting || !state.milestonePurgeAvailable) {
       return;
@@ -1143,6 +1191,11 @@ export default function AdminPage({
             label="Review queue"
             enabled={state.contactChangeModerationEnabled}
             onClick={toggleContactChangeModeration}
+          />
+          <AdminFeatureToggle
+            label="2FA enforcement"
+            enabled={state.twoFactorEnforcementEnabled}
+            onClick={toggleTwoFactorEnforcement}
           />
         </div>
         <div className="mt-4">
@@ -2120,8 +2173,16 @@ export default function AdminPage({
                     <p className="text-app-muted">{user.email}</p>
                     <p className="text-xs text-app-faint">
                       Role: {user.role} | Calendars: {user.calendars_count} |
-                      Address books: {user.address_books_count}
+                      Address books: {user.address_books_count} | 2FA:{" "}
+                      {user.two_factor_enabled ? "Enabled" : "Disabled"}
                     </p>
+                    <button
+                      className="mt-2 text-xs font-semibold text-app-danger"
+                      type="button"
+                      onClick={() => resetUserTwoFactor(user.id)}
+                    >
+                      Reset 2FA
+                    </button>
                     {!isApproved ? (
                       <p className="text-xs text-app-faint">
                         Status: pending approval

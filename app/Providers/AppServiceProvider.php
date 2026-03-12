@@ -33,5 +33,15 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute(10)->by($userKey.'|'.$request->ip());
         });
+
+        RateLimiter::for('auth-login-2fa', function (Request $request): Limit {
+            return Limit::perMinute(15)->by($request->ip().'|'.$request->session()->getId());
+        });
+
+        RateLimiter::for('auth-2fa-action', function (Request $request): Limit {
+            $userKey = (string) ($request->user()?->id ?? 'guest');
+
+            return Limit::perMinute(30)->by($userKey.'|'.$request->ip());
+        });
     }
 }

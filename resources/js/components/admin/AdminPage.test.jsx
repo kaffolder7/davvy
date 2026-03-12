@@ -135,6 +135,15 @@ function buildApi({ users } = {}) {
       return Promise.resolve({ data: { days: Number(payload.days) } });
     }
 
+    if (url === "/api/admin/settings/two-factor-enforcement") {
+      return Promise.resolve({
+        data: {
+          enabled: !!payload.enabled,
+          grace_period_days: 14,
+        },
+      });
+    }
+
     return Promise.resolve({ data: {} });
   });
 
@@ -160,6 +169,7 @@ function buildProps(overrides = {}) {
     davCompatibilityModeEnabled: false,
     contactManagementEnabled: true,
     contactChangeModerationEnabled: true,
+    twoFactorEnforcementEnabled: false,
     setAuth: vi.fn(),
   };
 
@@ -272,6 +282,15 @@ describe("AdminPage", () => {
       expect(props.api.patch).toHaveBeenCalledWith(
         "/api/admin/settings/contact-change-retention",
         { days: 120 },
+      ),
+    );
+
+    await user.click(screen.getByRole("button", { name: /2fa enforcement/i }));
+
+    await waitFor(() =>
+      expect(props.api.patch).toHaveBeenCalledWith(
+        "/api/admin/settings/two-factor-enforcement",
+        { enabled: true },
       ),
     );
   });

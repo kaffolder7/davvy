@@ -5,6 +5,7 @@ This guide covers day-to-day Davvy usage in the web UI.
 ## 1. Sign In
 
 - Open the app URL and sign in with email/password.
+- If your account has 2FA enabled, complete the second step using authenticator code or backup code.
 - If public registration is enabled, a registration link appears on the login page.
 - If registration approval is required, newly registered users must be approved by an admin before they can sign in.
 - Approved users automatically receive:
@@ -105,11 +106,14 @@ Status values include:
 
 ## 5. Profile
 
-The `Profile` page shows current account details and lets you change password.
+The `Profile` page shows current account details and security controls.
 
 Important:
 - Password updates affect both web login and DAV clients.
 - Update saved client credentials after password change.
+- You can enable/disable two-factor authentication (TOTP) and regenerate backup codes.
+- You can create/revoke DAV app passwords for clients like iOS Calendar/Contacts, DAVx5, or Thunderbird.
+- App passwords are shown once at creation time and are required for DAV when 2FA is enabled.
 
 ## 6. Admin Control Center (Admin Users)
 
@@ -121,9 +125,12 @@ Admins can:
   - DAV compatibility mode
   - contact management
   - review queue moderation (off by default)
+  - 2FA enforcement (with grace period rollout)
 - Create users with role selection
+- Reset a user's 2FA enrollment and revoke their DAV app passwords (emergency recovery)
 - Delete users with typed admin-email confirmation
 - Optionally transfer ownership of calendars, address books, and contacts to another user before deleting an account
+- Reset a user's 2FA enrollment and revoke their DAV app passwords (emergency recovery)
 - Manage cross-user share assignments globally
 - Set contact change queue history retention (days)
 - Configure automated backups:

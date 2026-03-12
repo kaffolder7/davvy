@@ -15,6 +15,8 @@ use App\Http\Controllers\ShareController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/api/auth/login', [AuthController::class, 'login'])->middleware('throttle:auth-login');
+Route::get('/api/auth/login/2fa/status', [AuthController::class, 'loginTwoFactorStatus']);
+Route::post('/api/auth/login/2fa', [AuthController::class, 'completeTwoFactorLogin'])->middleware('throttle:auth-login-2fa');
 Route::post('/api/auth/register', [AuthController::class, 'register'])->middleware('throttle:auth-register');
 Route::get('/api/public/config', [AuthController::class, 'publicConfig']);
 Route::redirect('/.well-known/caldav', '/dav', 301);
@@ -51,68 +53,82 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/api/auth/logout', [AuthController::class, 'logout']);
     Route::patch('/api/auth/password', [AuthController::class, 'changePassword'])->middleware('throttle:auth-password');
 
-    Route::get('/api/dashboard', [DashboardController::class, 'index']);
+    Route::get('/api/auth/2fa', [AuthController::class, 'twoFactorStatus']);
+    Route::post('/api/auth/2fa/setup', [AuthController::class, 'startTwoFactorSetup'])->middleware('throttle:auth-2fa-action');
+    Route::post('/api/auth/2fa/enable', [AuthController::class, 'enableTwoFactor'])->middleware('throttle:auth-2fa-action');
+    Route::post('/api/auth/2fa/disable', [AuthController::class, 'disableTwoFactor'])->middleware('throttle:auth-2fa-action');
+    Route::post('/api/auth/2fa/backup-codes/regenerate', [AuthController::class, 'regenerateBackupCodes'])->middleware('throttle:auth-2fa-action');
 
-    Route::get('/api/exports/calendars', [ExportController::class, 'exportAllCalendars']);
-    Route::get('/api/exports/calendars/{calendar}', [ExportController::class, 'exportCalendar']);
-    Route::get('/api/exports/address-books', [ExportController::class, 'exportAllAddressBooks']);
-    Route::get('/api/exports/address-books/{addressBook}', [ExportController::class, 'exportAddressBook']);
+    Route::get('/api/auth/app-passwords', [AuthController::class, 'listAppPasswords']);
+    Route::post('/api/auth/app-passwords', [AuthController::class, 'createAppPassword'])->middleware('throttle:auth-2fa-action');
+    Route::delete('/api/auth/app-passwords/{appPassword}', [AuthController::class, 'revokeAppPassword'])->middleware('throttle:auth-2fa-action');
 
-    Route::post('/api/calendars', [CalendarController::class, 'store']);
-    Route::patch('/api/calendars/{calendar}', [CalendarController::class, 'update']);
-    Route::delete('/api/calendars/{calendar}', [CalendarController::class, 'destroy']);
+    Route::middleware('2fa-enrolled')->group(function (): void {
+        Route::get('/api/dashboard', [DashboardController::class, 'index']);
 
-    Route::post('/api/address-books', [AddressBookController::class, 'store']);
-    Route::patch('/api/address-books/{addressBook}/milestone-calendars', [AddressBookMilestoneCalendarController::class, 'update']);
-    Route::patch('/api/address-books/apple-compat', [AddressBookMirrorController::class, 'update']);
-    Route::patch('/api/address-books/{addressBook}', [AddressBookController::class, 'update']);
-    Route::delete('/api/address-books/{addressBook}', [AddressBookController::class, 'destroy']);
+        Route::get('/api/exports/calendars', [ExportController::class, 'exportAllCalendars']);
+        Route::get('/api/exports/calendars/{calendar}', [ExportController::class, 'exportCalendar']);
+        Route::get('/api/exports/address-books', [ExportController::class, 'exportAllAddressBooks']);
+        Route::get('/api/exports/address-books/{addressBook}', [ExportController::class, 'exportAddressBook']);
 
-    Route::middleware('contact-management')->group(function (): void {
-        Route::get('/api/contacts', [ContactController::class, 'index']);
-        Route::post('/api/contacts', [ContactController::class, 'store']);
-        Route::patch('/api/contacts/{contact}', [ContactController::class, 'update']);
-        Route::delete('/api/contacts/{contact}', [ContactController::class, 'destroy']);
-    });
+        Route::post('/api/calendars', [CalendarController::class, 'store']);
+        Route::patch('/api/calendars/{calendar}', [CalendarController::class, 'update']);
+        Route::delete('/api/calendars/{calendar}', [CalendarController::class, 'destroy']);
 
-    Route::get('/api/shares', [ShareController::class, 'index']);
-    Route::post('/api/shares', [ShareController::class, 'upsert']);
-    Route::delete('/api/shares/{share}', [ShareController::class, 'destroy']);
+        Route::post('/api/address-books', [AddressBookController::class, 'store']);
+        Route::patch('/api/address-books/{addressBook}/milestone-calendars', [AddressBookMilestoneCalendarController::class, 'update']);
+        Route::patch('/api/address-books/apple-compat', [AddressBookMirrorController::class, 'update']);
+        Route::patch('/api/address-books/{addressBook}', [AddressBookController::class, 'update']);
+        Route::delete('/api/address-books/{addressBook}', [AddressBookController::class, 'destroy']);
 
-    Route::middleware('contact-change-moderation')->group(function (): void {
-        Route::get('/api/contact-change-requests', [ContactChangeRequestController::class, 'index']);
-        Route::get('/api/contact-change-requests/summary', [ContactChangeRequestController::class, 'summary']);
-        Route::post('/api/contact-change-requests/bulk', [ContactChangeRequestController::class, 'bulk']);
-        Route::patch('/api/contact-change-requests/{contactChangeRequest}/approve', [ContactChangeRequestController::class, 'approve']);
-        Route::patch('/api/contact-change-requests/{contactChangeRequest}/deny', [ContactChangeRequestController::class, 'deny']);
-    });
+        Route::middleware('contact-management')->group(function (): void {
+            Route::get('/api/contacts', [ContactController::class, 'index']);
+            Route::post('/api/contacts', [ContactController::class, 'store']);
+            Route::patch('/api/contacts/{contact}', [ContactController::class, 'update']);
+            Route::delete('/api/contacts/{contact}', [ContactController::class, 'destroy']);
+        });
 
-    Route::middleware('admin')->group(function (): void {
-        Route::get('/api/admin/users', [AdminController::class, 'users']);
-        Route::post('/api/admin/users', [AdminController::class, 'createUser']);
-        Route::delete('/api/admin/users/{user}', [AdminController::class, 'destroyUser']);
-        Route::patch('/api/admin/users/approve-pending', [AdminController::class, 'approvePendingUsers']);
-        Route::patch('/api/admin/users/{user}/approve', [AdminController::class, 'approveUser']);
-        Route::get('/api/admin/resources', [AdminController::class, 'sharableResources']);
-        Route::patch('/api/admin/settings/registration', [AdminController::class, 'setRegistrationSetting']);
-        Route::patch('/api/admin/settings/registration-approval', [AdminController::class, 'setRegistrationApprovalSetting']);
-        Route::patch('/api/admin/settings/owner-share-management', [AdminController::class, 'setOwnerShareManagementSetting']);
-        Route::patch('/api/admin/settings/dav-compatibility-mode', [AdminController::class, 'setDavCompatibilityModeSetting']);
-        Route::patch('/api/admin/settings/contact-management', [AdminController::class, 'setContactManagementSetting']);
-        Route::patch('/api/admin/settings/contact-change-moderation', [AdminController::class, 'setContactChangeModerationSetting']);
-        Route::get('/api/admin/settings/contact-change-retention', [AdminController::class, 'contactChangeRequestRetentionSetting']);
-        Route::patch('/api/admin/settings/contact-change-retention', [AdminController::class, 'setContactChangeRequestRetentionSetting']);
-        Route::get('/api/admin/settings/milestone-generation-years', [AdminController::class, 'milestoneGenerationYearsSetting']);
-        Route::patch('/api/admin/settings/milestone-generation-years', [AdminController::class, 'setMilestoneGenerationYearsSetting']);
-        Route::get('/api/admin/settings/backups', [AdminController::class, 'backupSettings']);
-        Route::patch('/api/admin/settings/backups', [AdminController::class, 'setBackupSettings']);
-        Route::post('/api/admin/backups/run', [AdminController::class, 'runBackupNow']);
-        Route::post('/api/admin/backups/restore', [AdminController::class, 'restoreBackup']);
-        Route::post('/api/admin/contact-milestones/purge-generated-calendars', [AdminController::class, 'purgeGeneratedMilestoneCalendars']);
+        Route::get('/api/shares', [ShareController::class, 'index']);
+        Route::post('/api/shares', [ShareController::class, 'upsert']);
+        Route::delete('/api/shares/{share}', [ShareController::class, 'destroy']);
 
-        Route::get('/api/admin/shares', [ShareController::class, 'index']);
-        Route::post('/api/admin/shares', [ShareController::class, 'upsert']);
-        Route::delete('/api/admin/shares/{share}', [ShareController::class, 'destroy']);
+        Route::middleware('contact-change-moderation')->group(function (): void {
+            Route::get('/api/contact-change-requests', [ContactChangeRequestController::class, 'index']);
+            Route::get('/api/contact-change-requests/summary', [ContactChangeRequestController::class, 'summary']);
+            Route::post('/api/contact-change-requests/bulk', [ContactChangeRequestController::class, 'bulk']);
+            Route::patch('/api/contact-change-requests/{contactChangeRequest}/approve', [ContactChangeRequestController::class, 'approve']);
+            Route::patch('/api/contact-change-requests/{contactChangeRequest}/deny', [ContactChangeRequestController::class, 'deny']);
+        });
+
+        Route::middleware('admin')->group(function (): void {
+            Route::get('/api/admin/users', [AdminController::class, 'users']);
+            Route::post('/api/admin/users', [AdminController::class, 'createUser']);
+            Route::delete('/api/admin/users/{user}', [AdminController::class, 'destroyUser']);
+            Route::patch('/api/admin/users/approve-pending', [AdminController::class, 'approvePendingUsers']);
+            Route::patch('/api/admin/users/{user}/approve', [AdminController::class, 'approveUser']);
+            Route::post('/api/admin/users/{user}/two-factor/reset', [AdminController::class, 'resetUserTwoFactor']);
+            Route::get('/api/admin/resources', [AdminController::class, 'sharableResources']);
+            Route::patch('/api/admin/settings/registration', [AdminController::class, 'setRegistrationSetting']);
+            Route::patch('/api/admin/settings/registration-approval', [AdminController::class, 'setRegistrationApprovalSetting']);
+            Route::patch('/api/admin/settings/owner-share-management', [AdminController::class, 'setOwnerShareManagementSetting']);
+            Route::patch('/api/admin/settings/dav-compatibility-mode', [AdminController::class, 'setDavCompatibilityModeSetting']);
+            Route::patch('/api/admin/settings/contact-management', [AdminController::class, 'setContactManagementSetting']);
+            Route::patch('/api/admin/settings/contact-change-moderation', [AdminController::class, 'setContactChangeModerationSetting']);
+            Route::patch('/api/admin/settings/two-factor-enforcement', [AdminController::class, 'setTwoFactorEnforcementSetting']);
+            Route::get('/api/admin/settings/contact-change-retention', [AdminController::class, 'contactChangeRequestRetentionSetting']);
+            Route::patch('/api/admin/settings/contact-change-retention', [AdminController::class, 'setContactChangeRequestRetentionSetting']);
+            Route::get('/api/admin/settings/milestone-generation-years', [AdminController::class, 'milestoneGenerationYearsSetting']);
+            Route::patch('/api/admin/settings/milestone-generation-years', [AdminController::class, 'setMilestoneGenerationYearsSetting']);
+            Route::get('/api/admin/settings/backups', [AdminController::class, 'backupSettings']);
+            Route::patch('/api/admin/settings/backups', [AdminController::class, 'setBackupSettings']);
+            Route::post('/api/admin/backups/run', [AdminController::class, 'runBackupNow']);
+            Route::post('/api/admin/backups/restore', [AdminController::class, 'restoreBackup']);
+            Route::post('/api/admin/contact-milestones/purge-generated-calendars', [AdminController::class, 'purgeGeneratedMilestoneCalendars']);
+
+            Route::get('/api/admin/shares', [ShareController::class, 'index']);
+            Route::post('/api/admin/shares', [ShareController::class, 'upsert']);
+            Route::delete('/api/admin/shares/{share}', [ShareController::class, 'destroy']);
+        });
     });
 });
 

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Davvy is a self-hosted CalDAV and CardDAV server with a modern web dashboard for calendars, contacts, sharing, automated backup rotation, and restore import tooling."
+      content="Davvy is a self-hosted CalDAV and CardDAV server with a modern web dashboard, TOTP 2FA with backup codes, DAV app passwords, sharing, and automated backup rotation with restore tooling."
     />
     <title>Davvy | Self-hosted CalDAV + CardDAV</title>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
@@ -347,8 +347,10 @@
               </div>
               <h3>Unified identity model</h3>
               <p>
-                One account, two auth channels. Session-based web auth and DAV
-                basic auth share the same principals and roles.
+                One account, two auth channels. Session-based web auth supports
+                TOTP two-factor authentication with backup codes, while DAV
+                clients use HTTP Basic auth with app passwords when 2FA is
+                enabled.
               </p>
             </article>
 
@@ -595,10 +597,10 @@
                     </svg>
                   </div>
                   <div>
-                    <strong>Same credentials</strong>
+                    <strong>Credential model</strong>
                     <span
-                      >Use your Davvy account email and password in supported
-                      clients</span
+                      >Use account email + password for web sign-in. Use DAV app
+                      passwords in supported clients when 2FA is enabled.</span
                     >
                   </div>
                 </div>
@@ -640,7 +642,7 @@
                 </li>
                 <li class="config-item">
                   <span class="config-key">Auth method</span>
-                  <span class="config-value">Basic Auth</span>
+                  <span class="config-value">Basic Auth (+ app passwords)</span>
                 </li>
                 <li class="config-item">
                   <span class="config-key">Docker port (quick start)</span>

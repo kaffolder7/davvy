@@ -55,5 +55,17 @@ class DatabaseSeeder extends Seeder
             ['key' => 'contact_change_moderation_enabled'],
             ['value' => env('ENABLE_CONTACT_CHANGE_MODERATION', false) ? 'true' : 'false']
         );
+        AppSetting::query()->updateOrCreate(
+            ['key' => 'two_factor_enforcement_enabled'],
+            ['value' => env('ENABLE_TWO_FACTOR_ENFORCEMENT', false) ? 'true' : 'false']
+        );
+        AppSetting::query()->updateOrCreate(
+            ['key' => 'two_factor_enforcement_started_at'],
+            [
+                'value' => env('ENABLE_TWO_FACTOR_ENFORCEMENT', false)
+                    ? now()->toISOString()
+                    : null,
+            ]
+        );
     }
 }
