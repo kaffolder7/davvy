@@ -35,6 +35,7 @@ class PublicRegistrationVerificationMail extends Mailable
     {
         return new Content(
             view: 'emails.auth.verify-email',
+            text: 'emails.auth.verify-email-text',
         );
     }
 }

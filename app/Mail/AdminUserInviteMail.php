@@ -35,6 +35,7 @@ class AdminUserInviteMail extends Mailable
     {
         return new Content(
             view: 'emails.auth.admin-invite',
+            text: 'emails.auth.admin-invite-text',
         );
     }
 }
