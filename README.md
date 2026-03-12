@@ -19,7 +19,7 @@ It is designed for:
     <td><img src="docs/screenshots/admin.webp" alt="Davvy admin control center" style="width: 100%"/><small><strong>Admin Control Center</strong></small></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/" alt="" style="width: 100%"/><small><strong></strong></small></td>
+    <td><img src="docs/screenshots/contacts.webp" alt="Davvy contacts management page" style="width: 100%"/><small><strong>Contacts</strong></small></td>
     <td><img src="docs/screenshots/login.webp" alt="Davvy login screen" style="width: 100%"/><small><strong>Login</strong></small></td>
   </tr>
 </table>
