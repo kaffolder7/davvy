@@ -118,7 +118,7 @@ class ContactMilestoneCalendarTest extends TestCase
             'BEGIN:VCARD',
             'VERSION:3.0',
             'FN:Rowan Hargrove',
-            'N:Hargrove;Collin;;;',
+            'N:Hargrove;Rowan;;;',
             'ORG:Granite Harbor Credit Union;Treasury Operations',
             'BDAY:1995-02-19',
             'ITEM1.X-ABDATE:2018-03-11',
