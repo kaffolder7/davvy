@@ -15,6 +15,7 @@ use App\Services\ResourceAccessService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
 use Sabre\CalDAV\Backend\AbstractBackend;
+use Sabre\CalDAV\Backend\SyncSupport;
 use Sabre\DAV\Exception\BadRequest;
 use Sabre\DAV\Exception\Conflict;
 use Sabre\DAV\Exception\Forbidden;
@@ -22,7 +23,7 @@ use Sabre\DAV\Exception\InvalidSyncToken;
 use Sabre\DAV\Exception\NotFound;
 use Sabre\DAV\PropPatch;
 
-class LaravelCalendarBackend extends AbstractBackend implements \Sabre\CalDAV\Backend\SyncSupport
+class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
 {
     public function __construct(
         private readonly PrincipalUriService $principalUriService,
