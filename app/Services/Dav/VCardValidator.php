@@ -13,7 +13,7 @@ class VCardValidator
     public function __construct(private readonly RegistrationSettingsService $settings) {}
 
     /**
-     * Validates and normalizes the payload.
+     * Validates and normalizes vCard payload content.
      *
      * @param  string  $cardData
      * @return array
@@ -44,7 +44,7 @@ class VCardValidator
     }
 
     /**
-     * Extracts the UID.
+     * Extracts the UID from a vCard payload.
      *
      * @param  string  $cardData
      * @return string|null

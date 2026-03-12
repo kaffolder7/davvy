@@ -18,7 +18,7 @@ class ManagedContactSyncService
     ) {}
 
     /**
-     * Synchronizes card upsert.
+     * Applies CardDAV upsert payloads to managed contacts.
      *
      * @param  AddressBook  $addressBook
      * @param  Card  $card
@@ -211,7 +211,7 @@ class ManagedContactSyncService
     }
 
     /**
-     * Synchronizes card deleted.
+     * Removes managed contacts associated with a deleted CardDAV card.
      *
      * @param  Card  $card
      * @return void
@@ -255,7 +255,7 @@ class ManagedContactSyncService
     }
 
     /**
-     * Synchronizes address book deleted.
+     * Removes managed contacts after source address-book deletion.
      *
      * @param  AddressBook  $addressBook
      * @return void

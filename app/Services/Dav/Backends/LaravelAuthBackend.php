@@ -24,7 +24,7 @@ class LaravelAuthBackend extends AbstractBasic
     ) {}
 
     /**
-     * Performs the check operation.
+     * Authenticates DAV credentials and resolves the principal URI.
      *
      * @param  RequestInterface  $request
      * @param  ResponseInterface  $response

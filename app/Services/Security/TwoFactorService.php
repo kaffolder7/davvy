@@ -15,7 +15,7 @@ class TwoFactorService
     ) {}
 
     /**
-     * Returns begin setup.
+     * Starts two-factor setup and returns enrollment details.
      *
      * @param  User  $user
      * @return array
@@ -32,7 +32,7 @@ class TwoFactorService
     }
 
     /**
-     * Verifies enrollment code.
+     * Verifies an enrollment code during two-factor setup.
      *
      * @param  string  $secret
      * @param  string  $code
@@ -44,7 +44,7 @@ class TwoFactorService
     }
 
     /**
-     * Enables the feature.
+     * Enables two-factor auth and stores backup codes.
      *
      * @return array<int, string>
      */
@@ -62,7 +62,7 @@ class TwoFactorService
     }
 
     /**
-     * Regenerates backup codes.
+     * Regenerates backup codes for an enrolled user.
      *
      * @return array<int, string>
      */
@@ -78,7 +78,7 @@ class TwoFactorService
     }
 
     /**
-     * Disables the feature.
+     * Disables two-factor auth and clears related fields.
      *
      * @param  User  $user
      * @param  bool  $revokeAppPasswords
@@ -98,7 +98,7 @@ class TwoFactorService
     }
 
     /**
-     * Verifies TOTP or backup code.
+     * Verifies a TOTP code or consumes a backup code.
      *
      * @param  User  $user
      * @param  string  $input
@@ -119,7 +119,7 @@ class TwoFactorService
     }
 
     /**
-     * Verifies TOTP code.
+     * Verifies a TOTP code against the stored secret.
      *
      * @param  User  $user
      * @param  string  $input
@@ -140,7 +140,7 @@ class TwoFactorService
     }
 
     /**
-     * Returns current code.
+     * Generates the current TOTP code for the stored secret.
      *
      * @param  string  $secret
      * @return string

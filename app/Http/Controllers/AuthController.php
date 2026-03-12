@@ -32,7 +32,7 @@ class AuthController extends Controller
     ) {}
 
     /**
-     * Registers a new user account.
+     * Registers a new user account and returns auth bootstrap data.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -86,7 +86,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Returns public configuration.
+     * Returns public auth and feature configuration for unauthenticated clients.
      *
      * @return JsonResponse
      */
@@ -96,7 +96,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Authenticates the user.
+     * Authenticates credentials and begins or completes sign-in.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -148,7 +148,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Returns the pending two-factor challenge status.
+     * Returns pending two-factor challenge metadata for sign-in.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -159,7 +159,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Completes two factor login.
+     * Verifies a two-factor code and completes sign-in.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -198,7 +198,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Signs out the current user.
+     * Logs out the current user and invalidates the session.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -217,7 +217,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Returns the authenticated user.
+     * Returns the authenticated user with feature flags.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -230,7 +230,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Changes the user's password.
+     * Changes the authenticated user's password.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -252,7 +252,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Returns the current two-factor authentication status.
+     * Returns current two-factor enrollment status for the user.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -274,7 +274,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Starts two factor setup.
+     * Starts two-factor enrollment and returns setup details.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -298,7 +298,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Enables two-factor authentication.
+     * Enables two-factor authentication after code verification.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -337,7 +337,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Disables two-factor authentication.
+     * Disables two-factor authentication and clears related state.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -367,7 +367,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Regenerates backup codes.
+     * Regenerates two-factor backup codes.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -396,7 +396,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Returns app passwords.
+     * Lists active app passwords for the current user.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -426,7 +426,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Creates app password.
+     * Creates a new app password for the current user.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -463,7 +463,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Revokes app password.
+     * Revokes the specified app password for the current user.
      *
      * @param  Request  $request
      * @param  UserAppPassword  $appPassword

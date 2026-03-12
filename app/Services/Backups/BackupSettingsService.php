@@ -10,7 +10,7 @@ use Carbon\CarbonTimeZone;
 class BackupSettingsService
 {
     /**
-     * Returns the current configuration.
+     * Returns current backup settings and last-run metadata.
      *
      * @return array{
      *   enabled: bool,
@@ -60,7 +60,7 @@ class BackupSettingsService
     }
 
     /**
-     * Updates an existing resource.
+     * Persists backup settings with normalized schedule and retention values.
      *
      * @param  array{
      *   enabled: bool,
@@ -108,7 +108,7 @@ class BackupSettingsService
     }
 
     /**
-     * Checks whether the period has already been captured.
+     * Checks whether a backup tier already captured the period key.
      *
      * @param  string  $tier
      * @param  string  $periodKey
@@ -120,7 +120,7 @@ class BackupSettingsService
     }
 
     /**
-     * Marks period captured.
+     * Records the most recently captured period key for a tier.
      *
      * @param  string  $tier
      * @param  string  $periodKey
@@ -139,7 +139,7 @@ class BackupSettingsService
     }
 
     /**
-     * Records run.
+     * Records the latest backup run result metadata.
      *
      * @param  string  $status
      * @param  string  $message

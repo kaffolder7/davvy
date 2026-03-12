@@ -12,7 +12,7 @@ class LaravelPrincipalBackend extends AbstractBackend
     public function __construct(private readonly PrincipalUriService $principalUriService) {}
 
     /**
-     * Returns principals by prefix.
+     * Returns principals matching a DAV prefix.
      *
      * @param  mixed  $prefixPath
      * @return array
@@ -31,7 +31,7 @@ class LaravelPrincipalBackend extends AbstractBackend
     }
 
     /**
-     * Returns principal by path.
+     * Returns a principal record for a DAV path.
      *
      * @param  mixed  $path
      * @return array|null
@@ -48,7 +48,7 @@ class LaravelPrincipalBackend extends AbstractBackend
     }
 
     /**
-     * Updates principal.
+     * Updates mutable principal properties.
      *
      * @param  mixed  $path
      * @param  PropPatch  $propPatch
@@ -81,7 +81,7 @@ class LaravelPrincipalBackend extends AbstractBackend
     }
 
     /**
-     * Returns search principals.
+     * Searches principals by property criteria.
      *
      * @param  mixed  $prefixPath
      * @param  array  $searchProperties
@@ -141,7 +141,7 @@ class LaravelPrincipalBackend extends AbstractBackend
     }
 
     /**
-     * Returns group member set.
+     * Returns group members for a principal.
      *
      * @param  mixed  $principal
      * @return array
@@ -152,7 +152,7 @@ class LaravelPrincipalBackend extends AbstractBackend
     }
 
     /**
-     * Returns group membership.
+     * Returns groups containing the principal.
      *
      * @param  mixed  $principal
      * @return array
@@ -163,7 +163,7 @@ class LaravelPrincipalBackend extends AbstractBackend
     }
 
     /**
-     * Sets group member set.
+     * Updates group membership for a principal.
      *
      * @param  mixed  $principal
      * @param  array  $members

@@ -200,7 +200,7 @@ class ContactVCardService
     private const RELATED_CONTACT_ID_PARAMETER = 'X-DAVVY-RELATED-CONTACT-ID';
 
     /**
-     * Returns display name.
+     * Builds a display name from contact payload fields.
      *
      * @param  array  $payload
      * @return string
@@ -237,7 +237,7 @@ class ContactVCardService
     }
 
     /**
-     * Builds the value.
+     * Builds a vCard payload from normalized contact data.
      *
      * @param  Contact  $contact
      * @return string
@@ -458,7 +458,7 @@ class ContactVCardService
     }
 
     /**
-     * Parses the input.
+     * Parses a vCard payload into normalized contact fields.
      *
      * @return array{
      *   uid:?string,

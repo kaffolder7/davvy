@@ -293,7 +293,7 @@ class ContactService
     ) {}
 
     /**
-     * Returns contacts.
+     * Returns contacts visible to the actor.
      *
      * @return Collection<int, Contact>
      */
@@ -319,7 +319,7 @@ class ContactService
     }
 
     /**
-     * Returns writable address books.
+     * Returns writable address books available to the actor.
      *
      * @return Collection<int, array{id:int,uri:string,display_name:string,scope:string,owner_name:?string,owner_email:?string}>
      */
@@ -362,7 +362,7 @@ class ContactService
     }
 
     /**
-     * Returns writable address book IDs.
+     * Returns writable address book IDs for the actor.
      *
      * @return array<int, int>
      */
@@ -376,7 +376,7 @@ class ContactService
     }
 
     /**
-     * Returns address book IDs for contact.
+     * Returns assigned address-book IDs for a contact.
      *
      * @return array<int, int>
      */
@@ -390,7 +390,7 @@ class ContactService
     }
 
     /**
-     * Checks whether the user can write to the contact.
+     * Checks whether the actor can write all assigned address books for the contact.
      *
      * @param  User  $actor
      * @param  Contact  $contact
@@ -415,7 +415,7 @@ class ContactService
     }
 
     /**
-     * Creates a new resource.
+     * Creates a contact, assignments, and derived milestone artifacts.
      *
      * @param  array<string, mixed>  $payload
      * @param  array<int, int>  $addressBookIds
@@ -455,7 +455,7 @@ class ContactService
     }
 
     /**
-     * Updates an existing resource.
+     * Updates a contact payload, assignments, and derived artifacts.
      *
      * @param  array<string, mixed>  $payload
      * @param  array<int, int>  $addressBookIds
@@ -470,7 +470,7 @@ class ContactService
     }
 
     /**
-     * Deletes an existing resource.
+     * Deletes a contact and cleans derived relationship artifacts.
      *
      * @param  User  $actor
      * @param  Contact  $contact
@@ -484,7 +484,7 @@ class ContactService
     }
 
     /**
-     * Applies approved update.
+     * Applies an approved moderation update to a contact.
      *
      * @param  array<string, mixed>  $payload
      * @param  array<int, int>  $addressBookIds
@@ -497,7 +497,7 @@ class ContactService
     }
 
     /**
-     * Applies approved delete.
+     * Applies an approved moderation delete for a contact.
      *
      * @param  Contact  $contact
      * @return void
@@ -678,7 +678,7 @@ class ContactService
     }
 
     /**
-     * Synchronizes bidirectional related names for contact.
+     * Synchronizes reciprocal related-name rows for a contact.
      *
      * @param  array<string, mixed>  $previousPayload
      * @return array<int, int>
@@ -935,7 +935,7 @@ class ContactService
     }
 
     /**
-     * Removes bidirectional related names for contact.
+     * Removes reciprocal related-name rows linked to a contact.
      *
      * @return array<int, int>
      */

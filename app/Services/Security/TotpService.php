@@ -7,7 +7,7 @@ class TotpService
     private const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
     /**
-     * Generates secret.
+     * Generates a new base32 TOTP secret.
      *
      * @param  int  $bytes
      * @return string
@@ -20,7 +20,7 @@ class TotpService
     }
 
     /**
-     * Returns provisioning URI.
+     * Builds a provisioning URI for authenticator apps.
      *
      * @param  string  $email
      * @param  string  $secret
@@ -47,7 +47,7 @@ class TotpService
     }
 
     /**
-     * Verifies the input.
+     * Verifies a TOTP code within the allowed clock drift.
      *
      * @param  string  $secret
      * @param  string  $code
@@ -77,7 +77,7 @@ class TotpService
     }
 
     /**
-     * Returns current code.
+     * Generates the current TOTP code for a secret.
      *
      * @param  string  $secret
      * @param  int|null  $timestamp
@@ -91,7 +91,7 @@ class TotpService
     }
 
     /**
-     * Formats secret for humans.
+     * Formats a secret into human-readable groups.
      *
      * @param  string  $secret
      * @return string
@@ -107,7 +107,7 @@ class TotpService
     }
 
     /**
-     * Normalizes TOTP code.
+     * Normalizes user input into a six-digit TOTP code.
      *
      * @param  string  $code
      * @return string|null

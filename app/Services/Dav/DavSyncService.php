@@ -11,7 +11,7 @@ class DavSyncService
     private const INITIAL_SYNC_TOKEN = 1;
 
     /**
-     * Returns current token.
+     * Returns the current sync token for a resource.
      *
      * @param  ShareResourceType  $resourceType
      * @param  int  $resourceId
@@ -34,7 +34,7 @@ class DavSyncService
     }
 
     /**
-     * Ensures resource.
+     * Ensures a sync tracker exists for the resource.
      *
      * @param  ShareResourceType  $resourceType
      * @param  int  $resourceId
@@ -46,7 +46,7 @@ class DavSyncService
     }
 
     /**
-     * Records added.
+     * Records an added resource URI for sync tracking.
      *
      * @param  ShareResourceType  $resourceType
      * @param  int  $resourceId
@@ -59,7 +59,7 @@ class DavSyncService
     }
 
     /**
-     * Records modified.
+     * Records a modified resource URI for sync tracking.
      *
      * @param  ShareResourceType  $resourceType
      * @param  int  $resourceId
@@ -72,7 +72,7 @@ class DavSyncService
     }
 
     /**
-     * Records deleted.
+     * Records a deleted resource URI for sync tracking.
      *
      * @param  ShareResourceType  $resourceType
      * @param  int  $resourceId
@@ -85,7 +85,7 @@ class DavSyncService
     }
 
     /**
-     * Returns changes since.
+     * Returns DAV sync changes since the given token.
      *
      * @param  ShareResourceType  $resourceType
      * @param  int  $resourceId

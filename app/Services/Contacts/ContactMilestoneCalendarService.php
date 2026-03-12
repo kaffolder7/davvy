@@ -35,7 +35,7 @@ class ContactMilestoneCalendarService
     ) {}
 
     /**
-     * Returns settings index for address books.
+     * Returns milestone settings for the given address books.
      *
      * @param  Collection<int, AddressBook>  $addressBooks
      * @return array<int, array<string, mixed>>
@@ -70,7 +70,7 @@ class ContactMilestoneCalendarService
     }
 
     /**
-     * Updates address book settings.
+     * Updates milestone settings for selected address books.
      *
      * @param  array<string, mixed>  $attributes
      * @return array<string, mixed>
@@ -144,7 +144,7 @@ class ContactMilestoneCalendarService
     }
 
     /**
-     * Handles address book renamed.
+     * Synchronizes generated milestone calendar names after address-book rename.
      *
      * @param  AddressBook  $addressBook
      * @return void
@@ -170,7 +170,7 @@ class ContactMilestoneCalendarService
     }
 
     /**
-     * Handles address book deleted.
+     * Removes generated milestone calendars after address-book deletion.
      *
      * @param  AddressBook  $addressBook
      * @return void
@@ -208,7 +208,7 @@ class ContactMilestoneCalendarService
     }
 
     /**
-     * Purges generated calendars and disable settings.
+     * Deletes generated milestone calendars and disables milestone settings.
      *
      * @return array{purged_calendar_count:int,purged_event_count:int,disabled_setting_count:int}
      */
@@ -277,7 +277,7 @@ class ContactMilestoneCalendarService
     }
 
     /**
-     * Synchronizes address books by IDs.
+     * Regenerates milestone calendars for the selected address books.
      *
      * @param  array<int, int>  $addressBookIds
      */

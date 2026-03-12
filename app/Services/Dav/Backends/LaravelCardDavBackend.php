@@ -45,7 +45,7 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     ) {}
 
     /**
-     * Returns address books for user.
+     * Returns address books accessible to the principal.
      *
      * @param  mixed  $principalUri
      * @return array
@@ -79,7 +79,7 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
-     * Updates address book.
+     * Updates properties for a writable address book.
      *
      * @param  mixed  $addressBookId
      * @param  PropPatch  $propPatch
@@ -115,7 +115,7 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
-     * Creates address book.
+     * Creates an address book for the principal owner.
      *
      * @param  mixed  $principalUri
      * @param  mixed  $url
@@ -143,7 +143,7 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
-     * Deletes address book.
+     * Deletes a writable address book.
      *
      * @param  mixed  $addressBookId
      * @return void
@@ -162,7 +162,7 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
-     * Returns cards.
+     * Returns cards for an address book.
      *
      * @param  mixed  $addressBookId
      * @return array
@@ -180,7 +180,7 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
-     * Returns card.
+     * Returns a single card by URI.
      *
      * @param  mixed  $addressBookId
      * @param  mixed  $cardUri
@@ -203,7 +203,7 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
-     * Returns multiple cards.
+     * Returns multiple cards by URI.
      *
      * @param  mixed  $addressBookId
      * @param  array  $uris
@@ -222,7 +222,7 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
-     * Creates card.
+     * Creates a card and records sync changes.
      *
      * @param  mixed  $addressBookId
      * @param  mixed  $cardUri
@@ -282,7 +282,7 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
-     * Updates card.
+     * Updates a card and records sync changes.
      *
      * @param  mixed  $addressBookId
      * @param  mixed  $cardUri
@@ -370,7 +370,7 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
-     * Deletes card.
+     * Deletes a card and records sync changes.
      *
      * @param  mixed  $addressBookId
      * @param  mixed  $cardUri
@@ -416,7 +416,7 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     }
 
     /**
-     * Returns changes for address book.
+     * Returns DAV sync changes for an address book.
      *
      * @param  mixed  $addressBookId
      * @param  mixed  $syncToken

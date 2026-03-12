@@ -28,7 +28,7 @@ class DavServerFactory
     ) {}
 
     /**
-     * Creates the value.
+     * Builds a configured SabreDAV server instance.
      *
      * @return Server
      */

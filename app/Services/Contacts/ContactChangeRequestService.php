@@ -28,7 +28,7 @@ class ContactChangeRequestService
     ) {}
 
     /**
-     * Enqueues web update if needed.
+     * Queues moderated update requests for web-initiated contact edits when required.
      *
      * @param  array<string, mixed>  $payload
      * @param  array<int, int>  $addressBookIds
@@ -58,7 +58,7 @@ class ContactChangeRequestService
     }
 
     /**
-     * Enqueues web delete if needed.
+     * Queues moderated delete requests for web-initiated contact deletes when required.
      *
      * @return array{group_uuid:string,request_ids:array<int,int>,owner_ids:array<int,int>}|null
      */
@@ -80,7 +80,7 @@ class ContactChangeRequestService
     }
 
     /**
-     * Enqueues card DAV update if needed.
+     * Queues moderated update requests for CardDAV contact updates when required.
      *
      * @return array{group_uuid:string,request_ids:array<int,int>,owner_ids:array<int,int>}|null
      */
@@ -118,7 +118,7 @@ class ContactChangeRequestService
     }
 
     /**
-     * Enqueues card DAV delete if needed.
+     * Queues moderated delete requests for CardDAV contact deletes when required.
      *
      * @return array{group_uuid:string,request_ids:array<int,int>,owner_ids:array<int,int>}|null
      */
@@ -147,7 +147,7 @@ class ContactChangeRequestService
     }
 
     /**
-     * Returns requests for reviewer.
+     * Returns reviewable contact-change requests for a reviewer.
      *
      * @param  array<string, mixed>  $filters
      * @return Collection<int, ContactChangeRequest>
@@ -197,7 +197,7 @@ class ContactChangeRequestService
     }
 
     /**
-     * Returns pending review count.
+     * Returns the number of pending review requests for a reviewer.
      *
      * @param  User  $reviewer
      * @return int
@@ -220,7 +220,7 @@ class ContactChangeRequestService
     }
 
     /**
-     * Approves the request.
+     * Approves a request group and applies resolved contact changes.
      *
      * @param  array<string, mixed>|null  $resolvedPayload
      * @param  array<int, int>|null  $resolvedAddressBookIds
@@ -302,7 +302,7 @@ class ContactChangeRequestService
     }
 
     /**
-     * Denies the request.
+     * Denies a request group and marks pending siblings as denied.
      *
      * @param  User  $reviewer
      * @param  ContactChangeRequest  $request
@@ -344,7 +344,7 @@ class ContactChangeRequestService
     }
 
     /**
-     * Processes a bulk review action.
+     * Processes bulk approve or deny actions for request groups.
      *
      * @param  array<int, int>  $requestIds
      * @return array{processed:int,approved:int,denied:int,skipped:int}
@@ -409,7 +409,7 @@ class ContactChangeRequestService
     }
 
     /**
-     * Purges expired terminal requests.
+     * Deletes old applied or denied requests past retention.
      *
      * @return int
      */

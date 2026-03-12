@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 class AppPasswordService
 {
     /**
-     * Creates a new resource.
+     * Creates an app password and returns the plaintext token once.
      *
      * @param  User  $user
      * @param  string  $name
@@ -36,7 +36,7 @@ class AppPasswordService
     }
 
     /**
-     * Returns active records.
+     * Returns active app passwords for a user.
      *
      * @return Collection<int, UserAppPassword>
      */
@@ -49,7 +49,7 @@ class AppPasswordService
     }
 
     /**
-     * Revokes access.
+     * Revokes an app password owned by the user.
      *
      * @param  User  $user
      * @param  int  $appPasswordId
@@ -74,7 +74,7 @@ class AppPasswordService
     }
 
     /**
-     * Revokes all.
+     * Revokes all app passwords for a user.
      *
      * @param  User  $user
      * @return int
@@ -87,7 +87,7 @@ class AppPasswordService
     }
 
     /**
-     * Verifies the credential and updates its usage timestamp.
+     * Verifies an app-password token and updates last-used metadata.
      *
      * @param  User  $user
      * @param  string  $token

@@ -21,7 +21,7 @@ class BackupService
     public function __construct(private readonly BackupSettingsService $settingsService) {}
 
     /**
-     * Runs the operation.
+     * Runs backup capture, retention pruning, and status recording.
      *
      * @return array{
      *   status: 'success'|'skipped'|'failed',

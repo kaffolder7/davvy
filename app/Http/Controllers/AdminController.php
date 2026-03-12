@@ -39,7 +39,7 @@ class AdminController extends Controller
     ) {}
 
     /**
-     * Returns users.
+     * Returns users for the admin dashboard.
      *
      * @return JsonResponse
      */
@@ -62,7 +62,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Creates user.
+     * Creates a new admin-provisioned user account.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -95,7 +95,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Deletes user.
+     * Deletes a user account and related data.
      *
      * @param  Request  $request
      * @param  User  $user
@@ -153,7 +153,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Approves user.
+     * Approves a pending user account.
      *
      * @param  Request  $request
      * @param  User  $user
@@ -173,7 +173,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Approves pending users.
+     * Approves all pending user accounts.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -203,7 +203,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Returns sharable resources.
+     * Returns resources the selected user can share.
      *
      * @return JsonResponse
      */
@@ -254,7 +254,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Sets registration setting.
+     * Enables or disables public registration.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -277,7 +277,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Sets registration approval setting.
+     * Enables or disables registration approval requirements.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -299,7 +299,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Sets owner share management setting.
+     * Enables or disables owner-managed sharing.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -321,7 +321,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Sets DAV compatibility mode setting.
+     * Enables or disables DAV compatibility mode.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -343,7 +343,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Sets contact management setting.
+     * Enables or disables contact management features.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -375,7 +375,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Sets contact change moderation setting.
+     * Enables or disables contact change moderation.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -423,7 +423,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Sets two factor enforcement setting.
+     * Updates two-factor enforcement settings.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -446,7 +446,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Resets user two factor.
+     * Clears two-factor enrollment and backup codes for a user.
      *
      * @param  Request  $request
      * @param  User  $user
@@ -470,7 +470,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Returns contact change request retention setting.
+     * Returns contact-change request retention settings.
      *
      * @return JsonResponse
      */
@@ -482,7 +482,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Sets contact change request retention setting.
+     * Updates contact-change request retention settings.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -504,7 +504,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Returns milestone generation years setting.
+     * Returns milestone calendar generation-year settings.
      *
      * @return JsonResponse
      */
@@ -516,7 +516,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Sets milestone generation years setting.
+     * Updates milestone calendar generation-year settings.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -551,7 +551,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Purges generated milestone calendars.
+     * Purges generated milestone calendars for selected address books.
      *
      * @return JsonResponse
      */
@@ -563,7 +563,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Returns backup settings.
+     * Returns backup configuration and last-run status.
      *
      * @return JsonResponse
      */
@@ -573,7 +573,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Sets backup settings.
+     * Updates backup configuration settings.
      *
      * @param  Request  $request
      * @return JsonResponse
@@ -617,7 +617,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Runs a backup immediately.
+     * Runs a backup immediately from the admin panel.
      *
      * @return JsonResponse
      */
@@ -637,7 +637,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Restores a backup archive.
+     * Restores data from an uploaded backup archive.
      *
      * @param  Request  $request
      * @return JsonResponse

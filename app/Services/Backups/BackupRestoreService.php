@@ -33,7 +33,7 @@ class BackupRestoreService
     ) {}
 
     /**
-     * Restores from archive.
+     * Restores application resources from a backup archive.
      *
      * @return array{
      *   status:'success',
