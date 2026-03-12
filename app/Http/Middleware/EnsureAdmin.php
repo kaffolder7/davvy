@@ -8,6 +8,11 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureAdmin
 {
+    /**
+     * @param  Request  $request
+     * @param  Closure  $next
+     * @return Response
+     */
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();

@@ -23,6 +23,9 @@ class Calendar extends Model
         'is_sharable',
     ];
 
+    /**
+     * @return array
+     */
     protected function casts(): array
     {
         return [
@@ -31,22 +34,34 @@ class Calendar extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo
+     */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
 
+    /**
+     * @return HasMany
+     */
     public function objects(): HasMany
     {
         return $this->hasMany(CalendarObject::class);
     }
 
+    /**
+     * @return HasMany
+     */
     public function shares(): HasMany
     {
         return $this->hasMany(ResourceShare::class, 'resource_id')
             ->where('resource_type', 'calendar');
     }
 
+    /**
+     * @return HasOne
+     */
     public function milestoneSetting(): HasOne
     {
         return $this->hasOne(AddressBookContactMilestoneCalendar::class, 'calendar_id');

@@ -34,6 +34,10 @@ class AddressBookMirrorService
         private readonly ManagedContactSyncService $managedContactSync,
     ) {}
 
+    /**
+     * @param  User  $user
+     * @return array
+     */
     public function dashboardDataFor(User $user): array
     {
         $config = AddressBookMirrorConfig::query()
@@ -61,6 +65,12 @@ class AddressBookMirrorService
         ];
     }
 
+    /**
+     * @param  User  $user
+     * @param  bool  $enabled
+     * @param  array  $sourceIds
+     * @return array
+     */
     public function updateUserConfig(User $user, bool $enabled, array $sourceIds): array
     {
         $target = $this->resolveTargetAddressBook($user);
@@ -105,6 +115,10 @@ class AddressBookMirrorService
         return $this->dashboardDataFor($user);
     }
 
+    /**
+     * @param  User  $user
+     * @return void
+     */
     public function syncUserConfig(User $user): void
     {
         $config = AddressBookMirrorConfig::query()
@@ -153,6 +167,11 @@ class AddressBookMirrorService
         }
     }
 
+    /**
+     * @param  AddressBook  $sourceAddressBook
+     * @param  Card  $sourceCard
+     * @return void
+     */
     public function handleSourceCardUpsert(AddressBook $sourceAddressBook, Card $sourceCard): void
     {
         if ($this->isMirrorManagedCard($sourceCard->data)) {
@@ -194,6 +213,11 @@ class AddressBookMirrorService
         }
     }
 
+    /**
+     * @param  int  $sourceAddressBookId
+     * @param  string  $sourceCardUri
+     * @return void
+     */
     public function handleSourceCardDeleted(int $sourceAddressBookId, string $sourceCardUri): void
     {
         $links = AddressBookMirrorLink::query()
@@ -206,6 +230,10 @@ class AddressBookMirrorService
         }
     }
 
+    /**
+     * @param  int  $sourceAddressBookId
+     * @return void
+     */
     public function handleSourceAddressBookDeleted(int $sourceAddressBookId): void
     {
         $links = AddressBookMirrorLink::query()
@@ -217,6 +245,12 @@ class AddressBookMirrorService
         }
     }
 
+    /**
+     * @param  User|null  $actor
+     * @param  Card  $mirroredCard
+     * @param  string  $incomingCardData
+     * @return string|null
+     */
     public function updateSourceFromMirroredCard(?User $actor, Card $mirroredCard, string $incomingCardData): ?string
     {
         $link = AddressBookMirrorLink::query()
@@ -290,6 +324,11 @@ class AddressBookMirrorService
         return $refreshedMirroredCard?->etag;
     }
 
+    /**
+     * @param  User|null  $actor
+     * @param  Card  $mirroredCard
+     * @return bool
+     */
     public function deleteSourceFromMirroredCard(?User $actor, Card $mirroredCard): bool
     {
         $link = AddressBookMirrorLink::query()
@@ -343,6 +382,11 @@ class AddressBookMirrorService
         return true;
     }
 
+    /**
+     * @param  User  $user
+     * @param  int|null  $targetAddressBookId
+     * @return Collection
+     */
     private function eligibleSourceOptionsForUser(User $user, ?int $targetAddressBookId): Collection
     {
         $owned = AddressBook::query()
@@ -384,6 +428,10 @@ class AddressBookMirrorService
             ->values();
     }
 
+    /**
+     * @param  User  $user
+     * @return AddressBook|null
+     */
     private function resolveTargetAddressBook(User $user): ?AddressBook
     {
         $default = AddressBook::query()
@@ -403,6 +451,12 @@ class AddressBookMirrorService
             ->first();
     }
 
+    /**
+     * @param  User  $user
+     * @param  int  $sourceAddressBookId
+     * @param  int  $targetAddressBookId
+     * @return bool
+     */
     private function userCanUseSourceAddressBook(User $user, int $sourceAddressBookId, int $targetAddressBookId): bool
     {
         if ($sourceAddressBookId === $targetAddressBookId) {
@@ -425,6 +479,12 @@ class AddressBookMirrorService
             ->exists();
     }
 
+    /**
+     * @param  User  $user
+     * @param  AddressBook  $targetAddressBook
+     * @param  int  $sourceAddressBookId
+     * @return void
+     */
     private function syncSourceAddressBookForUser(
         User $user,
         AddressBook $targetAddressBook,
@@ -481,6 +541,13 @@ class AddressBookMirrorService
         }
     }
 
+    /**
+     * @param  User  $user
+     * @param  AddressBook  $targetAddressBook
+     * @param  AddressBook  $sourceAddressBook
+     * @param  Card  $sourceCard
+     * @return void
+     */
     private function upsertMirroredCard(
         User $user,
         AddressBook $targetAddressBook,
@@ -562,6 +629,12 @@ class AddressBookMirrorService
         }
     }
 
+    /**
+     * @param  User  $user
+     * @param  AddressBook  $sourceAddressBook
+     * @param  Card  $sourceCard
+     * @return array|null
+     */
     private function buildMirroredCardPayload(User $user, AddressBook $sourceAddressBook, Card $sourceCard): ?array
     {
         $mirroredUid = $this->mirroredUid($user->id, $sourceAddressBook->id, $sourceCard->uri);
@@ -617,6 +690,11 @@ class AddressBookMirrorService
         }
     }
 
+    /**
+     * @param  string  $incomingCardData
+     * @param  string  $sourceUid
+     * @return string
+     */
     private function sourcePayloadFromMirroredUpdate(string $incomingCardData, string $sourceUid): string
     {
         try {
@@ -654,6 +732,12 @@ class AddressBookMirrorService
         return $data;
     }
 
+    /**
+     * @param  int  $userId
+     * @param  int  $sourceAddressBookId
+     * @param  string  $sourceCardUri
+     * @return string
+     */
     private function mirroredUri(int $userId, int $sourceAddressBookId, string $sourceCardUri): string
     {
         $hash = substr(sha1($userId.'|'.$sourceAddressBookId.'|'.$sourceCardUri), 0, 24);
@@ -661,6 +745,12 @@ class AddressBookMirrorService
         return sprintf('mirror-u%d-b%d-%s.vcf', $userId, $sourceAddressBookId, $hash);
     }
 
+    /**
+     * @param  int  $userId
+     * @param  int  $sourceAddressBookId
+     * @param  string  $sourceCardUri
+     * @return string
+     */
     private function mirroredUid(int $userId, int $sourceAddressBookId, string $sourceCardUri): string
     {
         $hash = substr(sha1($userId.'|'.$sourceAddressBookId.'|'.$sourceCardUri), 0, 24);
@@ -668,11 +758,21 @@ class AddressBookMirrorService
         return sprintf('davvy-mirror-%d-%d-%s', $userId, $sourceAddressBookId, $hash);
     }
 
+    /**
+     * @param  string  $cardData
+     * @return bool
+     */
     private function isMirrorManagedCard(string $cardData): bool
     {
         return stripos($cardData, self::MIRROR_SOURCE_PROPERTY.':') !== false;
     }
 
+    /**
+     * @param  int  $userId
+     * @param  array|null  $sourceAddressBookIds
+     * @param  array|null  $exceptSourceAddressBookIds
+     * @return void
+     */
     private function removeMirrorsForUser(
         int $userId,
         ?array $sourceAddressBookIds = null,
@@ -694,6 +794,10 @@ class AddressBookMirrorService
         }
     }
 
+    /**
+     * @param  AddressBookMirrorLink  $link
+     * @return void
+     */
     private function deleteMirroredLink(AddressBookMirrorLink $link): void
     {
         $mirroredCard = Card::query()->find($link->mirrored_card_id);

@@ -139,6 +139,10 @@ class ContactMilestoneCalendarService
         return $this->settingsIndexForAddressBooks(collect([$addressBook]))[$addressBook->id];
     }
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @return void
+     */
     public function handleAddressBookRenamed(AddressBook $addressBook): void
     {
         if (! $this->schemaAvailable()) {
@@ -159,6 +163,10 @@ class ContactMilestoneCalendarService
         }
     }
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @return void
+     */
     public function handleAddressBookDeleted(AddressBook $addressBook): void
     {
         if (! $this->schemaAvailable()) {
@@ -339,6 +347,12 @@ class ContactMilestoneCalendarService
         return $serialized;
     }
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @param  AddressBookContactMilestoneCalendar  $setting
+     * @param  string  $type
+     * @return Calendar
+     */
     private function ensureCalendarForSetting(
         AddressBook $addressBook,
         AddressBookContactMilestoneCalendar $setting,
@@ -380,6 +394,12 @@ class ContactMilestoneCalendarService
         return $calendar;
     }
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @param  AddressBookContactMilestoneCalendar  $setting
+     * @param  string  $type
+     * @return void
+     */
     private function syncCalendarDisplayName(
         AddressBook $addressBook,
         AddressBookContactMilestoneCalendar $setting,
@@ -400,6 +420,12 @@ class ContactMilestoneCalendarService
         ]);
     }
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @param  AddressBookContactMilestoneCalendar  $setting
+     * @param  Calendar  $calendar
+     * @return void
+     */
     private function syncCalendarObjectsForSetting(
         AddressBook $addressBook,
         AddressBookContactMilestoneCalendar $setting,
@@ -433,6 +459,13 @@ class ContactMilestoneCalendarService
         }
     }
 
+    /**
+     * @param  Calendar  $calendar
+     * @param  string  $uri
+     * @param  string  $rawData
+     * @param  CalendarObject|null  $existingObject
+     * @return void
+     */
     private function upsertCalendarObject(
         Calendar $calendar,
         string $uri,
@@ -768,6 +801,10 @@ class ContactMilestoneCalendarService
         return $keys;
     }
 
+    /**
+     * @param  mixed  $value
+     * @return string|null
+     */
     private function anniversaryContactIdKey(mixed $value): ?string
     {
         $contactId = $this->toInteger($value);
@@ -791,6 +828,10 @@ class ContactMilestoneCalendarService
         $keys[$key] = true;
     }
 
+    /**
+     * @param  mixed  $value
+     * @return string|null
+     */
     private function anniversaryNameKey(mixed $value): ?string
     {
         $normalized = $this->normalizeString($value);
@@ -1077,6 +1118,17 @@ class ContactMilestoneCalendarService
         ];
     }
 
+    /**
+     * @param  string  $uid
+     * @param  string  $summary
+     * @param  int  $year
+     * @param  int  $month
+     * @param  int  $day
+     * @param  int  $addressBookId
+     * @param  int  $contactId
+     * @param  string  $milestoneType
+     * @return string
+     */
     private function buildAllDayEvent(
         string $uid,
         string $summary,
@@ -1111,6 +1163,12 @@ class ContactMilestoneCalendarService
         return implode("\r\n", $lines);
     }
 
+    /**
+     * @param  string  $contactName
+     * @param  int|null  $baseYear
+     * @param  int  $occurrenceYear
+     * @return string
+     */
     private function birthdaySummary(string $contactName, ?int $baseYear, int $occurrenceYear): string
     {
         $ordinal = $this->milestoneOrdinal($baseYear, $occurrenceYear);
@@ -1120,6 +1178,12 @@ class ContactMilestoneCalendarService
             : '🎂 '.$contactName.'\'s Birthday';
     }
 
+    /**
+     * @param  string  $contactName
+     * @param  int|null  $baseYear
+     * @param  int  $occurrenceYear
+     * @return string
+     */
     private function anniversarySummary(string $contactName, ?int $baseYear, int $occurrenceYear): string
     {
         $ordinal = $this->milestoneOrdinal($baseYear, $occurrenceYear);
@@ -1129,6 +1193,10 @@ class ContactMilestoneCalendarService
             : '💍 '.$contactName.'\'s Anniversary';
     }
 
+    /**
+     * @param  Contact  $contact
+     * @return string|null
+     */
     private function contactMilestoneName(Contact $contact): ?string
     {
         $fullName = $this->normalizeString($contact->full_name);
@@ -1148,6 +1216,10 @@ class ContactMilestoneCalendarService
         return $this->normalizeString($payload['company'] ?? null);
     }
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @return void
+     */
     private function reconcileLegacyCardsForAddressBook(AddressBook $addressBook): void
     {
         if (! Schema::hasTable('cards')) {
@@ -1169,6 +1241,11 @@ class ContactMilestoneCalendarService
         }
     }
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @param  Card  $card
+     * @return void
+     */
     private function upsertLegacyManagedContact(AddressBook $addressBook, Card $card): void
     {
         $parsed = $this->contactVCardService->parse($card->data);
@@ -1294,6 +1371,11 @@ class ContactMilestoneCalendarService
         return $years;
     }
 
+    /**
+     * @param  int|null  $baseYear
+     * @param  int  $occurrenceYear
+     * @return string|null
+     */
     private function milestoneOrdinal(?int $baseYear, int $occurrenceYear): ?string
     {
         if ($baseYear === null) {
@@ -1318,6 +1400,12 @@ class ContactMilestoneCalendarService
         return $number.$suffix;
     }
 
+    /**
+     * @param  string  $type
+     * @param  int  $contactId
+     * @param  string|null  $suffix
+     * @return string
+     */
     private function managedUri(string $type, int $contactId, ?string $suffix = null): string
     {
         $base = $this->managedUriPrefix($type).'contact-'.$contactId;
@@ -1328,6 +1416,13 @@ class ContactMilestoneCalendarService
         return $base.'.ics';
     }
 
+    /**
+     * @param  string  $type
+     * @param  int  $addressBookId
+     * @param  int  $contactId
+     * @param  string|null  $suffix
+     * @return string
+     */
     private function managedUid(
         string $type,
         int $addressBookId,
@@ -1342,11 +1437,21 @@ class ContactMilestoneCalendarService
         return $base;
     }
 
+    /**
+     * @param  string  $type
+     * @return string
+     */
     private function managedUriPrefix(string $type): string
     {
         return self::MANAGED_URI_PREFIX.$type.'-';
     }
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @param  AddressBookContactMilestoneCalendar  $setting
+     * @param  string  $type
+     * @return string
+     */
     private function displayNameForSetting(
         AddressBook $addressBook,
         AddressBookContactMilestoneCalendar $setting,
@@ -1356,6 +1461,11 @@ class ContactMilestoneCalendarService
             ?? $this->defaultCalendarName($addressBook, $type);
     }
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @param  string  $type
+     * @return string
+     */
     private function defaultCalendarName(AddressBook $addressBook, string $type): string
     {
         return sprintf(
@@ -1367,6 +1477,11 @@ class ContactMilestoneCalendarService
         );
     }
 
+    /**
+     * @param  int  $ownerId
+     * @param  string  $baseUri
+     * @return string
+     */
     private function uniqueCalendarUri(int $ownerId, string $baseUri): string
     {
         $seed = trim((string) $baseUri) !== '' ? trim((string) $baseUri) : 'calendar';
@@ -1386,6 +1501,10 @@ class ContactMilestoneCalendarService
         return $candidate;
     }
 
+    /**
+     * @param  mixed  $value
+     * @return string|null
+     */
     private function normalizeString(mixed $value): ?string
     {
         if (! is_scalar($value) && $value !== null) {
@@ -1405,6 +1524,10 @@ class ContactMilestoneCalendarService
         return $this->payloadBoolean($payload['exclude_milestone_calendars'] ?? false);
     }
 
+    /**
+     * @param  mixed  $value
+     * @return bool
+     */
     private function payloadBoolean(mixed $value): bool
     {
         if (is_bool($value)) {
@@ -1422,6 +1545,10 @@ class ContactMilestoneCalendarService
         return false;
     }
 
+    /**
+     * @param  mixed  $value
+     * @return int|null
+     */
     private function toInteger(mixed $value): ?int
     {
         if ($value === null || $value === '') {
@@ -1439,6 +1566,10 @@ class ContactMilestoneCalendarService
         return null;
     }
 
+    /**
+     * @param  string  $value
+     * @return string
+     */
     private function escapeIcsText(string $value): string
     {
         return str_replace(
@@ -1459,6 +1590,10 @@ class ContactMilestoneCalendarService
         ];
     }
 
+    /**
+     * @param  string  $type
+     * @return string
+     */
     private function settingsKeyForType(string $type): string
     {
         return $type === AddressBookContactMilestoneCalendar::TYPE_BIRTHDAY
@@ -1466,6 +1601,10 @@ class ContactMilestoneCalendarService
             : 'anniversaries';
     }
 
+    /**
+     * @param  string  $type
+     * @return string
+     */
     private function enabledFieldForType(string $type): string
     {
         return $type === AddressBookContactMilestoneCalendar::TYPE_BIRTHDAY
@@ -1473,6 +1612,10 @@ class ContactMilestoneCalendarService
             : 'anniversaries_enabled';
     }
 
+    /**
+     * @param  string  $type
+     * @return string
+     */
     private function customNameFieldForType(string $type): string
     {
         return $type === AddressBookContactMilestoneCalendar::TYPE_BIRTHDAY
@@ -1480,6 +1623,10 @@ class ContactMilestoneCalendarService
             : 'anniversary_calendar_name';
     }
 
+    /**
+     * @param  User|null  $actor
+     * @return void
+     */
     private function markMilestonePurgeControlVisible(?User $actor = null): void
     {
         AppSetting::query()->updateOrCreate(
@@ -1488,6 +1635,9 @@ class ContactMilestoneCalendarService
         );
     }
 
+    /**
+     * @return bool
+     */
     private function schemaAvailable(): bool
     {
         return Schema::hasTable('address_book_contact_milestone_calendars')

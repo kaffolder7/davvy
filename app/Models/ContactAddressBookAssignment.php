@@ -17,16 +17,25 @@ class ContactAddressBookAssignment extends Model
         'card_uri',
     ];
 
+    /**
+     * @return BelongsTo
+     */
     public function contact(): BelongsTo
     {
         return $this->belongsTo(Contact::class);
     }
 
+    /**
+     * @return BelongsTo
+     */
     public function addressBook(): BelongsTo
     {
         return $this->belongsTo(AddressBook::class);
     }
 
+    /**
+     * @return BelongsTo
+     */
     public function card(): BelongsTo
     {
         return $this->belongsTo(Card::class);

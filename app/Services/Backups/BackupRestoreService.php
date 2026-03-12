@@ -946,6 +946,10 @@ class BackupRestoreService
         return $map;
     }
 
+    /**
+     * @param  string  $fileStem
+     * @return string|null
+     */
     private function legacyCollectionUriCandidateFromStem(string $fileStem): ?string
     {
         $rawStem = trim($fileStem);
@@ -1036,6 +1040,12 @@ class BackupRestoreService
         return $next;
     }
 
+    /**
+     * @param  string  $candidate
+     * @param  string  $extension
+     * @param  string  $fallbackStem
+     * @return string
+     */
     private function normalizeResourceUri(string $candidate, string $extension, string $fallbackStem): string
     {
         $stem = Str::slug(pathinfo(trim($candidate), PATHINFO_FILENAME));

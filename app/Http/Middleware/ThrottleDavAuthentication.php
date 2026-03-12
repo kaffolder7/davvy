@@ -45,6 +45,10 @@ class ThrottleDavAuthentication
         return $response;
     }
 
+    /**
+     * @param  Request  $request
+     * @return string
+     */
     private function throttleKey(Request $request): string
     {
         $username = $this->basicUsername($request);
@@ -53,6 +57,10 @@ class ThrottleDavAuthentication
         return 'dav-auth:'.sha1($username.'|'.$ip);
     }
 
+    /**
+     * @param  Request  $request
+     * @return string
+     */
     private function basicUsername(Request $request): string
     {
         $header = trim((string) $request->header('Authorization', ''));
@@ -76,6 +84,10 @@ class ThrottleDavAuthentication
         return $normalized !== '' ? $normalized : 'anonymous';
     }
 
+    /**
+     * @param  Request  $request
+     * @return bool
+     */
     private function hasBasicAuthorizationHeader(Request $request): bool
     {
         $header = trim((string) $request->header('Authorization', ''));

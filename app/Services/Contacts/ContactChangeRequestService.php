@@ -186,6 +186,10 @@ class ContactChangeRequestService
         return $query->get();
     }
 
+    /**
+     * @param  User  $reviewer
+     * @return int
+     */
     public function pendingReviewCount(User $reviewer): int
     {
         $this->purgeExpiredTerminalRequests();
@@ -283,6 +287,11 @@ class ContactChangeRequestService
         });
     }
 
+    /**
+     * @param  User  $reviewer
+     * @param  ContactChangeRequest  $request
+     * @return ContactChangeRequest
+     */
     public function deny(User $reviewer, ContactChangeRequest $request): ContactChangeRequest
     {
         $this->purgeExpiredTerminalRequests();
@@ -381,6 +390,9 @@ class ContactChangeRequestService
         return $summary;
     }
 
+    /**
+     * @return int
+     */
     public function purgeExpiredTerminalRequests(): int
     {
         $retentionDays = $this->settingsService->contactChangeRequestRetentionDays();
@@ -590,6 +602,11 @@ class ContactChangeRequestService
         }
     }
 
+    /**
+     * @param  Builder  $query
+     * @param  string  $statusFilter
+     * @return void
+     */
     private function applyStatusFilter(Builder $query, string $statusFilter): void
     {
         if ($statusFilter === 'all') {
@@ -632,6 +649,11 @@ class ContactChangeRequestService
         $query->where('status', ContactChangeStatus::Pending->value);
     }
 
+    /**
+     * @param  User  $reviewer
+     * @param  ContactChangeRequest  $request
+     * @return void
+     */
     private function assertReviewerCanAct(User $reviewer, ContactChangeRequest $request): void
     {
         if ($reviewer->isAdmin()) {
@@ -925,6 +947,11 @@ class ContactChangeRequestService
         return $requestedIds;
     }
 
+    /**
+     * @param  mixed  $left
+     * @param  mixed  $right
+     * @return bool
+     */
     private function valuesEqual(mixed $left, mixed $right): bool
     {
         return json_encode($left, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)

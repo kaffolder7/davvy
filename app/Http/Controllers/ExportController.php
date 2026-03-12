@@ -22,6 +22,10 @@ class ExportController extends Controller
 {
     public function __construct(private readonly ResourceAccessService $accessService) {}
 
+    /**
+     * @param  Request  $request
+     * @return BinaryFileResponse
+     */
     public function exportAllCalendars(Request $request): BinaryFileResponse
     {
         $calendars = $this->readableCalendars($request->user());
@@ -38,6 +42,11 @@ class ExportController extends Controller
         );
     }
 
+    /**
+     * @param  Request  $request
+     * @param  Calendar  $calendar
+     * @return Response
+     */
     public function exportCalendar(Request $request, Calendar $calendar): Response
     {
         $user = $request->user();
@@ -58,6 +67,10 @@ class ExportController extends Controller
         );
     }
 
+    /**
+     * @param  Request  $request
+     * @return BinaryFileResponse
+     */
     public function exportAllAddressBooks(Request $request): BinaryFileResponse
     {
         $addressBooks = $this->readableAddressBooks($request->user());
@@ -74,6 +87,11 @@ class ExportController extends Controller
         );
     }
 
+    /**
+     * @param  Request  $request
+     * @param  AddressBook  $addressBook
+     * @return Response
+     */
     public function exportAddressBook(Request $request, AddressBook $addressBook): Response
     {
         $user = $request->user();
@@ -150,6 +168,10 @@ class ExportController extends Controller
             ->get();
     }
 
+    /**
+     * @param  Calendar  $calendar
+     * @return string
+     */
     private function buildCalendarPayload(Calendar $calendar): string
     {
         $calendar->loadMissing(['objects' => fn ($query) => $query->orderBy('id')]);
@@ -176,6 +198,10 @@ class ExportController extends Controller
         return $export->serialize();
     }
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @return string
+     */
     private function buildAddressBookPayload(AddressBook $addressBook): string
     {
         $addressBook->loadMissing(['cards' => fn ($query) => $query->orderBy('id')]);
@@ -246,11 +272,21 @@ class ExportController extends Controller
         return $candidate;
     }
 
+    /**
+     * @param  string  $fileName
+     * @return string
+     */
     private function attachmentHeader(string $fileName): string
     {
         return sprintf('attachment; filename="%s"', $fileName);
     }
 
+    /**
+     * @param  string  $displayName
+     * @param  string  $fallbackStem
+     * @param  string  $extension
+     * @return string
+     */
     private function resourceFileName(string $displayName, string $fallbackStem, string $extension): string
     {
         $stem = Str::slug($displayName);
@@ -262,6 +298,10 @@ class ExportController extends Controller
         return $stem.'.'.$extension;
     }
 
+    /**
+     * @param  string  $resourceType
+     * @return string
+     */
     private function exportArchiveName(string $resourceType): string
     {
         return sprintf('davvy-%s-%s.zip', $resourceType, now()->format('Ymd-His'));

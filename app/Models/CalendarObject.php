@@ -22,6 +22,9 @@ class CalendarObject extends Model
         'data',
     ];
 
+    /**
+     * @return array
+     */
     protected function casts(): array
     {
         return [
@@ -30,6 +33,9 @@ class CalendarObject extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo
+     */
     public function calendar(): BelongsTo
     {
         return $this->belongsTo(Calendar::class);

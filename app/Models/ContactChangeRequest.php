@@ -40,6 +40,9 @@ class ContactChangeRequest extends Model
         'applied_at',
     ];
 
+    /**
+     * @return array
+     */
     protected function casts(): array
     {
         return [
@@ -61,16 +64,25 @@ class ContactChangeRequest extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo
+     */
     public function requester(): BelongsTo
     {
         return $this->belongsTo(User::class, 'requester_id');
     }
 
+    /**
+     * @return BelongsTo
+     */
     public function approvalOwner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approval_owner_id');
     }
 
+    /**
+     * @return BelongsTo
+     */
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewer_id');

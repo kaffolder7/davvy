@@ -103,11 +103,21 @@ class BackupSettingsService
         return $this->current();
     }
 
+    /**
+     * @param  string  $tier
+     * @param  string  $periodKey
+     * @return bool
+     */
     public function wasPeriodCaptured(string $tier, string $periodKey): bool
     {
         return AppSetting::backupLastCapturedPeriod($tier) === $periodKey;
     }
 
+    /**
+     * @param  string  $tier
+     * @param  string  $periodKey
+     * @return void
+     */
     public function markPeriodCaptured(string $tier, string $periodKey): void
     {
         if (! in_array($tier, ['daily', 'weekly', 'monthly', 'yearly'], true)) {
@@ -120,6 +130,12 @@ class BackupSettingsService
         );
     }
 
+    /**
+     * @param  string  $status
+     * @param  string  $message
+     * @param  CarbonImmutable|null  $executedAtUtc
+     * @return void
+     */
     public function recordRun(string $status, string $message, ?CarbonImmutable $executedAtUtc = null): void
     {
         $executedAt = ($executedAtUtc ?? CarbonImmutable::now('UTC'))->toIso8601String();
@@ -156,6 +172,12 @@ class BackupSettingsService
         return $normalized === [] ? ['02:30'] : $normalized;
     }
 
+    /**
+     * @param  string  $key
+     * @param  bool  $value
+     * @param  User|null  $actor
+     * @return void
+     */
     private function setBoolean(string $key, bool $value, ?User $actor = null): void
     {
         AppSetting::query()->updateOrCreate(
@@ -164,6 +186,12 @@ class BackupSettingsService
         );
     }
 
+    /**
+     * @param  string  $key
+     * @param  int  $value
+     * @param  User|null  $actor
+     * @return void
+     */
     private function setInteger(string $key, int $value, ?User $actor = null): void
     {
         AppSetting::query()->updateOrCreate(
@@ -172,6 +200,12 @@ class BackupSettingsService
         );
     }
 
+    /**
+     * @param  string  $key
+     * @param  string  $value
+     * @param  User|null  $actor
+     * @return void
+     */
     private function setString(string $key, string $value, ?User $actor = null): void
     {
         AppSetting::query()->updateOrCreate(

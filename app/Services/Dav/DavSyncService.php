@@ -10,6 +10,11 @@ class DavSyncService
 {
     private const INITIAL_SYNC_TOKEN = 1;
 
+    /**
+     * @param  ShareResourceType  $resourceType
+     * @param  int  $resourceId
+     * @return int
+     */
     public function currentToken(ShareResourceType $resourceType, int $resourceId): int
     {
         $this->initializeState($resourceType, $resourceId);
@@ -26,26 +31,56 @@ class DavSyncService
         );
     }
 
+    /**
+     * @param  ShareResourceType  $resourceType
+     * @param  int  $resourceId
+     * @return void
+     */
     public function ensureResource(ShareResourceType $resourceType, int $resourceId): void
     {
         $this->initializeState($resourceType, $resourceId);
     }
 
+    /**
+     * @param  ShareResourceType  $resourceType
+     * @param  int  $resourceId
+     * @param  string  $uri
+     * @return void
+     */
     public function recordAdded(ShareResourceType $resourceType, int $resourceId, string $uri): void
     {
         $this->recordChange($resourceType, $resourceId, $uri, 'added');
     }
 
+    /**
+     * @param  ShareResourceType  $resourceType
+     * @param  int  $resourceId
+     * @param  string  $uri
+     * @return void
+     */
     public function recordModified(ShareResourceType $resourceType, int $resourceId, string $uri): void
     {
         $this->recordChange($resourceType, $resourceId, $uri, 'modified');
     }
 
+    /**
+     * @param  ShareResourceType  $resourceType
+     * @param  int  $resourceId
+     * @param  string  $uri
+     * @return void
+     */
     public function recordDeleted(ShareResourceType $resourceType, int $resourceId, string $uri): void
     {
         $this->recordChange($resourceType, $resourceId, $uri, 'deleted');
     }
 
+    /**
+     * @param  ShareResourceType  $resourceType
+     * @param  int  $resourceId
+     * @param  int  $syncToken
+     * @param  int|null  $limit
+     * @return array
+     */
     public function getChangesSince(
         ShareResourceType $resourceType,
         int $resourceId,
@@ -93,6 +128,13 @@ class DavSyncService
         ];
     }
 
+    /**
+     * @param  ShareResourceType  $resourceType
+     * @param  int  $resourceId
+     * @param  string  $uri
+     * @param  string  $operation
+     * @return void
+     */
     private function recordChange(ShareResourceType $resourceType, int $resourceId, string $uri, string $operation): void
     {
         DB::transaction(function () use ($resourceType, $resourceId, $uri, $operation): void {
@@ -139,6 +181,11 @@ class DavSyncService
         });
     }
 
+    /**
+     * @param  ShareResourceType  $resourceType
+     * @param  int  $resourceId
+     * @return void
+     */
     private function initializeState(ShareResourceType $resourceType, int $resourceId): void
     {
         DB::table('dav_resource_sync_states')->insertOrIgnore([
@@ -150,6 +197,12 @@ class DavSyncService
         ]);
     }
 
+    /**
+     * @param  ShareResourceType  $resourceType
+     * @param  int  $resourceId
+     * @param  int  $syncToken
+     * @return int
+     */
     private function normalizePersistedToken(
         ShareResourceType $resourceType,
         int $resourceId,

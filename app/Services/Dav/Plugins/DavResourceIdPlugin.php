@@ -12,16 +12,28 @@ use Sabre\DAV\Xml\Property\Href;
 
 class DavResourceIdPlugin extends ServerPlugin
 {
+    /**
+     * @param  Server  $server
+     * @return void
+     */
     public function initialize(Server $server): void
     {
         $server->on('propFind', [$this, 'propFind']);
     }
 
+    /**
+     * @return string
+     */
     public function getPluginName(): string
     {
         return 'davvy-resource-id';
     }
 
+    /**
+     * @param  PropFind  $propFind
+     * @param  INode  $node
+     * @return void
+     */
     public function propFind(PropFind $propFind, INode $node): void
     {
         $propFind->handle('{DAV:}resource-id', function () use ($propFind): Href {
@@ -40,6 +52,10 @@ class DavResourceIdPlugin extends ServerPlugin
         }
     }
 
+    /**
+     * @param  string  $path
+     * @return string
+     */
     private function stableUuidForPath(string $path): string
     {
         $seed = (string) config('app.key', 'davvy');
@@ -61,6 +77,10 @@ class DavResourceIdPlugin extends ServerPlugin
         );
     }
 
+    /**
+     * @param  string  $path
+     * @return string
+     */
     private function addressBookHomeSyncToken(string $path): string
     {
         $segments = explode('/', trim($path, '/'));

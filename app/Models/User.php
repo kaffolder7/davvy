@@ -37,6 +37,9 @@ class User extends Authenticatable
         'two_factor_backup_codes',
     ];
 
+    /**
+     * @return array
+     */
     protected function casts(): array
     {
         return [
@@ -51,6 +54,9 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * @return Attribute
+     */
     protected function email(): Attribute
     {
         return Attribute::make(
@@ -73,46 +79,73 @@ class User extends Authenticatable
         });
     }
 
+    /**
+     * @return HasMany
+     */
     public function calendars(): HasMany
     {
         return $this->hasMany(Calendar::class, 'owner_id');
     }
 
+    /**
+     * @return HasMany
+     */
     public function addressBooks(): HasMany
     {
         return $this->hasMany(AddressBook::class, 'owner_id');
     }
 
+    /**
+     * @return HasMany
+     */
     public function contacts(): HasMany
     {
         return $this->hasMany(Contact::class, 'owner_id');
     }
 
+    /**
+     * @return HasMany
+     */
     public function incomingShares(): HasMany
     {
         return $this->hasMany(ResourceShare::class, 'shared_with_id');
     }
 
+    /**
+     * @return HasOne
+     */
     public function addressBookMirrorConfig(): HasOne
     {
         return $this->hasOne(AddressBookMirrorConfig::class);
     }
 
+    /**
+     * @return HasMany
+     */
     public function appPasswords(): HasMany
     {
         return $this->hasMany(UserAppPassword::class);
     }
 
+    /**
+     * @return bool
+     */
     public function isAdmin(): bool
     {
         return $this->role === Role::Admin;
     }
 
+    /**
+     * @return string
+     */
     public function principalUri(): string
     {
         return 'principals/'.$this->id;
     }
 
+    /**
+     * @return bool
+     */
     public function hasTwoFactorEnabled(): bool
     {
         return $this->two_factor_enabled_at !== null

@@ -8,11 +8,19 @@ use Carbon\CarbonImmutable;
 
 class TwoFactorSettingsService
 {
+    /**
+     * @return bool
+     */
     public function isEnforced(): bool
     {
         return AppSetting::twoFactorEnforcementEnabled();
     }
 
+    /**
+     * @param  bool  $enabled
+     * @param  User|null  $actor
+     * @return void
+     */
     public function setEnforced(bool $enabled, ?User $actor = null): void
     {
         AppSetting::query()->updateOrCreate(
@@ -38,6 +46,9 @@ class TwoFactorSettingsService
         );
     }
 
+    /**
+     * @return int
+     */
     public function gracePeriodDays(): int
     {
         $configured = (int) config('services.auth.two_factor_grace_period_days', 14);
@@ -45,6 +56,9 @@ class TwoFactorSettingsService
         return max(1, min(30, $configured));
     }
 
+    /**
+     * @return CarbonImmutable|null
+     */
     public function enforcementStartedAt(): ?CarbonImmutable
     {
         $raw = AppSetting::twoFactorEnforcementStartedAt();
@@ -59,6 +73,10 @@ class TwoFactorSettingsService
         }
     }
 
+    /**
+     * @param  User  $user
+     * @return CarbonImmutable|null
+     */
     public function graceDeadlineFor(User $user): ?CarbonImmutable
     {
         if (! $this->isEnforced() || $user->hasTwoFactorEnabled()) {
@@ -78,6 +96,10 @@ class TwoFactorSettingsService
         return $reference->addDays($this->gracePeriodDays());
     }
 
+    /**
+     * @param  User  $user
+     * @return bool
+     */
     public function isSetupRequired(User $user): bool
     {
         if ($user->hasTwoFactorEnabled()) {
@@ -89,6 +111,10 @@ class TwoFactorSettingsService
         return $deadline !== null && now()->greaterThanOrEqualTo($deadline);
     }
 
+    /**
+     * @param  User  $user
+     * @return bool
+     */
     public function isWithinGrace(User $user): bool
     {
         if (! $this->isEnforced() || $user->hasTwoFactorEnabled()) {

@@ -16,6 +16,9 @@ class AddressBookMirrorConfig extends Model
         'enabled',
     ];
 
+    /**
+     * @return array
+     */
     protected function casts(): array
     {
         return [
@@ -23,11 +26,17 @@ class AddressBookMirrorConfig extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return HasMany
+     */
     public function sources(): HasMany
     {
         return $this->hasMany(AddressBookMirrorSource::class, 'config_id');

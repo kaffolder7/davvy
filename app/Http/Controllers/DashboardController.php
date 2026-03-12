@@ -21,6 +21,10 @@ class DashboardController extends Controller
         private readonly ContactMilestoneCalendarService $milestoneCalendarService,
     ) {}
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();

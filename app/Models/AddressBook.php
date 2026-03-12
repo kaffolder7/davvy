@@ -21,6 +21,9 @@ class AddressBook extends Model
         'is_sharable',
     ];
 
+    /**
+     * @return array
+     */
     protected function casts(): array
     {
         return [
@@ -29,26 +32,41 @@ class AddressBook extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo
+     */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
 
+    /**
+     * @return HasMany
+     */
     public function cards(): HasMany
     {
         return $this->hasMany(Card::class);
     }
 
+    /**
+     * @return HasMany
+     */
     public function contactAssignments(): HasMany
     {
         return $this->hasMany(ContactAddressBookAssignment::class);
     }
 
+    /**
+     * @return HasMany
+     */
     public function milestoneCalendars(): HasMany
     {
         return $this->hasMany(AddressBookContactMilestoneCalendar::class);
     }
 
+    /**
+     * @return HasManyThrough
+     */
     public function contacts(): HasManyThrough
     {
         return $this->hasManyThrough(
@@ -61,6 +79,9 @@ class AddressBook extends Model
         );
     }
 
+    /**
+     * @return HasMany
+     */
     public function shares(): HasMany
     {
         return $this->hasMany(ResourceShare::class, 'resource_id')

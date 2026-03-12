@@ -15,11 +15,17 @@ class AddressBookMirrorSource extends Model
         'source_address_book_id',
     ];
 
+    /**
+     * @return BelongsTo
+     */
     public function config(): BelongsTo
     {
         return $this->belongsTo(AddressBookMirrorConfig::class, 'config_id');
     }
 
+    /**
+     * @return BelongsTo
+     */
     public function sourceAddressBook(): BelongsTo
     {
         return $this->belongsTo(AddressBook::class, 'source_address_book_id');

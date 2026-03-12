@@ -10,6 +10,9 @@ enum ContactChangeStatus: string
     case ManualMergeNeeded = 'manual_merge_needed';
     case Applied = 'applied';
 
+    /**
+     * @return bool
+     */
     public function isTerminal(): bool
     {
         return $this === self::Denied || $this === self::Applied;

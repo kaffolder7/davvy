@@ -17,6 +17,10 @@ class CalendarController extends Controller
         private readonly ResourceDeletionService $resourceDeletion,
     ) {}
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -46,6 +50,11 @@ class CalendarController extends Controller
         return response()->json($calendar, 201);
     }
 
+    /**
+     * @param  Request  $request
+     * @param  Calendar  $calendar
+     * @return JsonResponse
+     */
     public function update(Request $request, Calendar $calendar): JsonResponse
     {
         $this->authorizeOwnership($request, $calendar);
@@ -63,6 +72,11 @@ class CalendarController extends Controller
         return response()->json($calendar->fresh());
     }
 
+    /**
+     * @param  Request  $request
+     * @param  Calendar  $calendar
+     * @return JsonResponse
+     */
     public function destroy(Request $request, Calendar $calendar): JsonResponse
     {
         $this->authorizeOwnership($request, $calendar);
@@ -76,6 +90,11 @@ class CalendarController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    /**
+     * @param  Request  $request
+     * @param  Calendar  $calendar
+     * @return void
+     */
     private function authorizeOwnership(Request $request, Calendar $calendar): void
     {
         $user = $request->user();
@@ -85,6 +104,11 @@ class CalendarController extends Controller
         }
     }
 
+    /**
+     * @param  int  $ownerId
+     * @param  string  $baseUri
+     * @return string
+     */
     private function uniqueUri(int $ownerId, string $baseUri): string
     {
         $seed = $baseUri !== '' ? $baseUri : 'calendar';

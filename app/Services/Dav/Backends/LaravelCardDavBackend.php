@@ -44,6 +44,10 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         private readonly ResourceDeletionService $resourceDeletion,
     ) {}
 
+    /**
+     * @param  mixed  $principalUri
+     * @return array
+     */
     public function getAddressBooksForUser($principalUri): array
     {
         $owner = $this->principalUriService->userFromPrincipalUri($principalUri);
@@ -72,6 +76,11 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         return [...$own, ...$shared];
     }
 
+    /**
+     * @param  mixed  $addressBookId
+     * @param  PropPatch  $propPatch
+     * @return void
+     */
     public function updateAddressBook($addressBookId, PropPatch $propPatch): void
     {
         $addressBook = AddressBook::query()->find($addressBookId);
@@ -101,6 +110,12 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         });
     }
 
+    /**
+     * @param  mixed  $principalUri
+     * @param  mixed  $url
+     * @param  array  $properties
+     * @return void
+     */
     public function createAddressBook($principalUri, $url, array $properties): void
     {
         $user = $this->principalUriService->userFromPrincipalUri($principalUri);
@@ -121,6 +136,10 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         $this->syncService->ensureResource(ShareResourceType::AddressBook, $addressBook->id);
     }
 
+    /**
+     * @param  mixed  $addressBookId
+     * @return void
+     */
     public function deleteAddressBook($addressBookId): void
     {
         $addressBook = AddressBook::query()->find($addressBookId);
@@ -134,6 +153,10 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         $this->resourceDeletion->deleteAddressBook($addressBook);
     }
 
+    /**
+     * @param  mixed  $addressBookId
+     * @return array
+     */
     public function getCards($addressBookId): array
     {
         $addressBook = $this->loadReadableAddressBook($addressBookId);
@@ -146,6 +169,11 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
             ->all();
     }
 
+    /**
+     * @param  mixed  $addressBookId
+     * @param  mixed  $cardUri
+     * @return array|null
+     */
     public function getCard($addressBookId, $cardUri): ?array
     {
         $addressBook = $this->loadReadableAddressBook($addressBookId);
@@ -162,6 +190,11 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         return $this->transformCard($card, withData: true);
     }
 
+    /**
+     * @param  mixed  $addressBookId
+     * @param  array  $uris
+     * @return array
+     */
     public function getMultipleCards($addressBookId, array $uris): array
     {
         $addressBook = $this->loadReadableAddressBook($addressBookId);
@@ -174,6 +207,12 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
             ->all();
     }
 
+    /**
+     * @param  mixed  $addressBookId
+     * @param  mixed  $cardUri
+     * @param  mixed  $cardData
+     * @return string
+     */
     public function createCard($addressBookId, $cardUri, $cardData): string
     {
         $addressBook = AddressBook::query()->find($addressBookId);
@@ -226,6 +265,12 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         return '"'.$etag.'"';
     }
 
+    /**
+     * @param  mixed  $addressBookId
+     * @param  mixed  $cardUri
+     * @param  mixed  $cardData
+     * @return string
+     */
     public function updateCard($addressBookId, $cardUri, $cardData): string
     {
         $addressBook = AddressBook::query()->find($addressBookId);
@@ -306,6 +351,11 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         return '"'.$etag.'"';
     }
 
+    /**
+     * @param  mixed  $addressBookId
+     * @param  mixed  $cardUri
+     * @return void
+     */
     public function deleteCard($addressBookId, $cardUri): void
     {
         $addressBook = AddressBook::query()->find($addressBookId);
@@ -345,6 +395,13 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         $this->mirrorService->handleSourceCardDeleted($addressBook->id, (string) $cardUri);
     }
 
+    /**
+     * @param  mixed  $addressBookId
+     * @param  mixed  $syncToken
+     * @param  mixed  $syncLevel
+     * @param  mixed  $limit
+     * @return array
+     */
     public function getChangesForAddressBook($addressBookId, $syncToken, $syncLevel, $limit = null): array
     {
         $addressBook = $this->loadReadableAddressBook($addressBookId);
@@ -373,6 +430,12 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         );
     }
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @param  SharePermission  $permission
+     * @param  string  $principalUri
+     * @return array
+     */
     private function transformAddressBook(AddressBook $addressBook, SharePermission $permission, string $principalUri): array
     {
         $syncToken = (string) $this->syncService->currentToken(
@@ -392,6 +455,10 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         ];
     }
 
+    /**
+     * @param  mixed  $syncToken
+     * @return bool
+     */
     private function isInitialSyncRequest(mixed $syncToken): bool
     {
         if ($syncToken === null) {
@@ -401,6 +468,11 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         return is_string($syncToken) && trim($syncToken) === '';
     }
 
+    /**
+     * @param  Card  $card
+     * @param  bool  $withData
+     * @return array
+     */
     private function transformCard(Card $card, bool $withData): array
     {
         $data = [
@@ -418,6 +490,10 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         return $data;
     }
 
+    /**
+     * @param  int  $addressBookId
+     * @return AddressBook
+     */
     private function loadReadableAddressBook(int $addressBookId): AddressBook
     {
         $addressBook = AddressBook::query()->find($addressBookId);
@@ -435,6 +511,10 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         return $addressBook;
     }
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @return void
+     */
     private function assertWritableAddressBook(AddressBook $addressBook): void
     {
         $user = $this->davContext->getAuthenticatedUser();
@@ -444,6 +524,10 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         }
     }
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @return void
+     */
     private function assertDeletableAddressBook(AddressBook $addressBook): void
     {
         $user = $this->davContext->getAuthenticatedUser();
@@ -453,6 +537,10 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         }
     }
 
+    /**
+     * @param  mixed  $syncToken
+     * @return int
+     */
     private function parseSyncToken(mixed $syncToken): int
     {
         if (is_int($syncToken) && $syncToken >= 0) {
@@ -470,6 +558,12 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         throw new InvalidSyncToken('Sync token format is invalid.');
     }
 
+    /**
+     * @param  int  $addressBookId
+     * @param  string  $uid
+     * @param  int|null  $exceptCardId
+     * @return bool
+     */
     private function uidConflictExists(int $addressBookId, string $uid, ?int $exceptCardId = null): bool
     {
         $query = Card::query()
@@ -483,11 +577,19 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         return $query->exists();
     }
 
+    /**
+     * @param  string  $cardUri
+     * @return string
+     */
     private function fallbackUidForLegacyPayload(string $cardUri): string
     {
         return 'legacy-card-'.sha1($cardUri);
     }
 
+    /**
+     * @param  QueryException  $exception
+     * @return bool
+     */
     private function isUidUniqueConstraintViolation(QueryException $exception): bool
     {
         $message = Str::lower($exception->getMessage());
@@ -496,6 +598,11 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
             || str_contains($message, 'unique constraint failed: cards.address_book_id, cards.uid');
     }
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @param  Card  $card
+     * @return void
+     */
     private function syncManagedContactUpsert(AddressBook $addressBook, Card $card): void
     {
         try {
@@ -509,6 +616,10 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
         }
     }
 
+    /**
+     * @param  Card  $card
+     * @return void
+     */
     private function syncManagedContactDelete(Card $card): void
     {
         try {

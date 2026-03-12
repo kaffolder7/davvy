@@ -6,6 +6,10 @@ class TotpService
 {
     private const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
+    /**
+     * @param  int  $bytes
+     * @return string
+     */
     public function generateSecret(int $bytes = 20): string
     {
         $bytes = max(10, min(64, $bytes));
@@ -13,6 +17,12 @@ class TotpService
         return $this->base32Encode(random_bytes($bytes));
     }
 
+    /**
+     * @param  string  $email
+     * @param  string  $secret
+     * @param  string|null  $issuer
+     * @return string
+     */
     public function provisioningUri(string $email, string $secret, ?string $issuer = null): string
     {
         $issuer = trim((string) ($issuer ?: config('app.name', 'Davvy')));
@@ -32,6 +42,13 @@ class TotpService
         return "otpauth://totp/{$label}?{$query}";
     }
 
+    /**
+     * @param  string  $secret
+     * @param  string  $code
+     * @param  int  $window
+     * @param  int|null  $timestamp
+     * @return bool
+     */
     public function verify(string $secret, string $code, int $window = 1, ?int $timestamp = null): bool
     {
         $normalizedCode = $this->normalizeTotpCode($code);
@@ -53,6 +70,11 @@ class TotpService
         return false;
     }
 
+    /**
+     * @param  string  $secret
+     * @param  int|null  $timestamp
+     * @return string
+     */
     public function currentCode(string $secret, ?int $timestamp = null): string
     {
         $time = max(0, $timestamp ?? time());
@@ -60,6 +82,10 @@ class TotpService
         return $this->codeForTimeslice($secret, intdiv($time, 30));
     }
 
+    /**
+     * @param  string  $secret
+     * @return string
+     */
     public function formatSecretForHumans(string $secret): string
     {
         $trimmed = strtoupper(trim($secret));
@@ -70,6 +96,10 @@ class TotpService
         return implode('-', str_split($trimmed, 4));
     }
 
+    /**
+     * @param  string  $code
+     * @return string|null
+     */
     public function normalizeTotpCode(string $code): ?string
     {
         $digits = preg_replace('/\D+/', '', $code);
@@ -81,6 +111,11 @@ class TotpService
         return $digits;
     }
 
+    /**
+     * @param  string  $secret
+     * @param  int  $slice
+     * @return string
+     */
     private function codeForTimeslice(string $secret, int $slice): string
     {
         $slice = max(0, $slice);
@@ -104,6 +139,10 @@ class TotpService
         return str_pad((string) $value, 6, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * @param  string  $bytes
+     * @return string
+     */
     private function base32Encode(string $bytes): string
     {
         if ($bytes === '') {
@@ -133,6 +172,10 @@ class TotpService
         return $result;
     }
 
+    /**
+     * @param  string  $secret
+     * @return string
+     */
     private function base32Decode(string $secret): string
     {
         $normalized = strtoupper(trim($secret));

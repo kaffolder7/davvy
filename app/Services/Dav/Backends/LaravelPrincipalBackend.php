@@ -11,6 +11,10 @@ class LaravelPrincipalBackend extends AbstractBackend
 {
     public function __construct(private readonly PrincipalUriService $principalUriService) {}
 
+    /**
+     * @param  mixed  $prefixPath
+     * @return array
+     */
     public function getPrincipalsByPrefix($prefixPath): array
     {
         if ($prefixPath !== 'principals') {
@@ -24,6 +28,10 @@ class LaravelPrincipalBackend extends AbstractBackend
             ->all();
     }
 
+    /**
+     * @param  mixed  $path
+     * @return array|null
+     */
     public function getPrincipalByPath($path): ?array
     {
         $user = $this->principalUriService->userFromPrincipalUri($path);
@@ -35,6 +43,11 @@ class LaravelPrincipalBackend extends AbstractBackend
         return $this->transformUser($user);
     }
 
+    /**
+     * @param  mixed  $path
+     * @param  PropPatch  $propPatch
+     * @return void
+     */
     public function updatePrincipal($path, PropPatch $propPatch): void
     {
         $user = $this->principalUriService->userFromPrincipalUri($path);
@@ -61,6 +74,12 @@ class LaravelPrincipalBackend extends AbstractBackend
         );
     }
 
+    /**
+     * @param  mixed  $prefixPath
+     * @param  array  $searchProperties
+     * @param  mixed  $test
+     * @return array
+     */
     public function searchPrincipals($prefixPath, array $searchProperties, $test = 'allof'): array
     {
         if ($prefixPath !== 'principals') {
@@ -113,21 +132,38 @@ class LaravelPrincipalBackend extends AbstractBackend
             ->all();
     }
 
+    /**
+     * @param  mixed  $principal
+     * @return array
+     */
     public function getGroupMemberSet($principal): array
     {
         return [];
     }
 
+    /**
+     * @param  mixed  $principal
+     * @return array
+     */
     public function getGroupMembership($principal): array
     {
         return [];
     }
 
+    /**
+     * @param  mixed  $principal
+     * @param  array  $members
+     * @return void
+     */
     public function setGroupMemberSet($principal, array $members): void
     {
         // No groups in MVP.
     }
 
+    /**
+     * @param  User  $user
+     * @return array
+     */
     private function transformUser(User $user): array
     {
         return [

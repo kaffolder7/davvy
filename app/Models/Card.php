@@ -20,11 +20,17 @@ class Card extends Model
         'data',
     ];
 
+    /**
+     * @return BelongsTo
+     */
     public function addressBook(): BelongsTo
     {
         return $this->belongsTo(AddressBook::class);
     }
 
+    /**
+     * @return HasOne
+     */
     public function contactAssignment(): HasOne
     {
         return $this->hasOne(ContactAddressBookAssignment::class);

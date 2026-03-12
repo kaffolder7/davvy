@@ -14,6 +14,10 @@ class TwoFactorService
         private readonly AppPasswordService $appPasswords,
     ) {}
 
+    /**
+     * @param  User  $user
+     * @return array
+     */
     public function beginSetup(User $user): array
     {
         $secret = $this->totp->generateSecret();
@@ -25,6 +29,11 @@ class TwoFactorService
         ];
     }
 
+    /**
+     * @param  string  $secret
+     * @param  string  $code
+     * @return bool
+     */
     public function verifyEnrollmentCode(string $secret, string $code): bool
     {
         return $this->totp->verify($secret, $code);
@@ -60,6 +69,11 @@ class TwoFactorService
         return $backupCodes;
     }
 
+    /**
+     * @param  User  $user
+     * @param  bool  $revokeAppPasswords
+     * @return void
+     */
     public function disable(User $user, bool $revokeAppPasswords = true): void
     {
         $user->forceFill([
@@ -73,6 +87,11 @@ class TwoFactorService
         }
     }
 
+    /**
+     * @param  User  $user
+     * @param  string  $input
+     * @return bool
+     */
     public function verifyTotpOrBackupCode(User $user, string $input): bool
     {
         if (! $user->hasTwoFactorEnabled()) {
@@ -87,6 +106,11 @@ class TwoFactorService
         return $this->consumeBackupCode($user, $input);
     }
 
+    /**
+     * @param  User  $user
+     * @param  string  $input
+     * @return bool
+     */
     public function verifyTotpCode(User $user, string $input): bool
     {
         if (! $user->hasTwoFactorEnabled()) {
@@ -101,11 +125,20 @@ class TwoFactorService
         return $this->totp->verify((string) $user->two_factor_secret, $code);
     }
 
+    /**
+     * @param  string  $secret
+     * @return string
+     */
     public function currentCode(string $secret): string
     {
         return $this->totp->currentCode($secret);
     }
 
+    /**
+     * @param  User  $user
+     * @param  string  $input
+     * @return bool
+     */
     private function consumeBackupCode(User $user, string $input): bool
     {
         $normalized = $this->normalizeBackupCode($input);
@@ -150,6 +183,9 @@ class TwoFactorService
         return $codes;
     }
 
+    /**
+     * @return string
+     */
     private function generateBackupCode(): string
     {
         $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -186,6 +222,10 @@ class TwoFactorService
         return is_array($user->two_factor_backup_codes) ? $user->two_factor_backup_codes : [];
     }
 
+    /**
+     * @param  string  $code
+     * @return string|null
+     */
     private function normalizeBackupCode(string $code): ?string
     {
         $normalized = strtoupper(trim($code));

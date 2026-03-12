@@ -14,6 +14,10 @@ class IcsValidator
 {
     public function __construct(private readonly RegistrationSettingsService $settings) {}
 
+    /**
+     * @param  string  $calendarData
+     * @return array
+     */
     public function validateAndNormalize(string $calendarData): array
     {
         $strictModeEnabled = ! $this->settings->isDavCompatibilityModeEnabled();
@@ -39,6 +43,10 @@ class IcsValidator
         ];
     }
 
+    /**
+     * @param  string  $calendarData
+     * @return string|null
+     */
     public function extractUid(string $calendarData): ?string
     {
         try {
@@ -58,6 +66,10 @@ class IcsValidator
         return $uid !== '' ? $uid : null;
     }
 
+    /**
+     * @param  string  $calendarData
+     * @return VCalendar
+     */
     private function parseVCalendar(string $calendarData): VCalendar
     {
         try {
@@ -73,6 +85,11 @@ class IcsValidator
         return $component;
     }
 
+    /**
+     * @param  VCalendar  $calendar
+     * @param  bool  $strictModeEnabled
+     * @return void
+     */
     private function validateCalendarEnvelope(VCalendar $calendar, bool $strictModeEnabled): void
     {
         if (trim((string) ($calendar->VERSION ?? '')) !== '2.0') {
@@ -204,6 +221,10 @@ class IcsValidator
         return $resourceUid;
     }
 
+    /**
+     * @param  Component  $component
+     * @return void
+     */
     private function validateEventComponent(Component $component): void
     {
         if (! isset($component->DTSTART)) {
@@ -222,6 +243,10 @@ class IcsValidator
         }
     }
 
+    /**
+     * @param  Component  $component
+     * @return void
+     */
     private function validateTodoComponent(Component $component): void
     {
         if (isset($component->DUE) && isset($component->DURATION)) {
@@ -233,6 +258,10 @@ class IcsValidator
         }
     }
 
+    /**
+     * @param  Component  $component
+     * @return void
+     */
     private function validateSequence(Component $component): void
     {
         if (! isset($component->SEQUENCE)) {
@@ -246,6 +275,11 @@ class IcsValidator
         }
     }
 
+    /**
+     * @param  Component  $component
+     * @param  bool  $strictModeEnabled
+     * @return void
+     */
     private function validateRRule(Component $component, bool $strictModeEnabled): void
     {
         if (! isset($component->RRULE)) {
@@ -305,6 +339,10 @@ class IcsValidator
         }
     }
 
+    /**
+     * @param  VCalendar  $calendar
+     * @return array
+     */
     private function detectOccurrenceBounds(VCalendar $calendar): array
     {
         $first = null;
@@ -334,6 +372,10 @@ class IcsValidator
         return [$first, $last];
     }
 
+    /**
+     * @param  mixed  $property
+     * @return DateTimeImmutable|null
+     */
     private function safeDateTime(mixed $property): ?DateTimeImmutable
     {
         if (! $property) {

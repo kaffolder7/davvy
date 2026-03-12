@@ -9,6 +9,12 @@ class PendingTwoFactorLoginService
 {
     private const SESSION_KEY = 'auth.pending_two_factor_login';
 
+    /**
+     * @param  Request  $request
+     * @param  User  $user
+     * @param  bool  $remember
+     * @return void
+     */
     public function start(Request $request, User $user, bool $remember): void
     {
         $request->session()->put(self::SESSION_KEY, [
@@ -19,6 +25,10 @@ class PendingTwoFactorLoginService
         ]);
     }
 
+    /**
+     * @param  Request  $request
+     * @return User|null
+     */
     public function pendingUser(Request $request): ?User
     {
         $data = $this->sessionData($request);
@@ -43,6 +53,10 @@ class PendingTwoFactorLoginService
         return $user;
     }
 
+    /**
+     * @param  Request  $request
+     * @return bool
+     */
     public function remember(Request $request): bool
     {
         $data = $this->sessionData($request);
@@ -50,6 +64,10 @@ class PendingTwoFactorLoginService
         return (bool) ($data['remember'] ?? false);
     }
 
+    /**
+     * @param  Request  $request
+     * @return array
+     */
     public function status(Request $request): array
     {
         $data = $this->sessionData($request);
@@ -66,6 +84,10 @@ class PendingTwoFactorLoginService
         ];
     }
 
+    /**
+     * @param  Request  $request
+     * @return int
+     */
     public function registerFailedAttempt(Request $request): int
     {
         $data = $this->sessionData($request);
@@ -84,11 +106,19 @@ class PendingTwoFactorLoginService
         return $attempts;
     }
 
+    /**
+     * @param  Request  $request
+     * @return void
+     */
     public function clear(Request $request): void
     {
         $request->session()->forget(self::SESSION_KEY);
     }
 
+    /**
+     * @param  Request  $request
+     * @return array|null
+     */
     private function sessionData(Request $request): ?array
     {
         $data = $request->session()->get(self::SESSION_KEY);

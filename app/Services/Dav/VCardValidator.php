@@ -12,6 +12,10 @@ class VCardValidator
 {
     public function __construct(private readonly RegistrationSettingsService $settings) {}
 
+    /**
+     * @param  string  $cardData
+     * @return array
+     */
     public function validateAndNormalize(string $cardData): array
     {
         $strictModeEnabled = ! $this->settings->isDavCompatibilityModeEnabled();
@@ -37,6 +41,10 @@ class VCardValidator
         ];
     }
 
+    /**
+     * @param  string  $cardData
+     * @return string|null
+     */
     public function extractUid(string $cardData): ?string
     {
         try {
@@ -56,6 +64,10 @@ class VCardValidator
         return $uid !== '' ? $uid : null;
     }
 
+    /**
+     * @param  string  $cardData
+     * @return VCard
+     */
     private function parseVCard(string $cardData): VCard
     {
         try {
@@ -71,6 +83,11 @@ class VCardValidator
         return $component;
     }
 
+    /**
+     * @param  VCard  $card
+     * @param  bool  $strictModeEnabled
+     * @return string
+     */
     private function validateVersion(VCard $card, bool $strictModeEnabled): string
     {
         $versions = $card->select('VERSION');
@@ -92,6 +109,11 @@ class VCardValidator
         return $version;
     }
 
+    /**
+     * @param  VCard  $card
+     * @param  bool  $strictModeEnabled
+     * @return string
+     */
     private function validateFullName(VCard $card, bool $strictModeEnabled): string
     {
         $fnProperties = $card->select('FN');
@@ -119,6 +141,11 @@ class VCardValidator
         return $value;
     }
 
+    /**
+     * @param  VCard  $card
+     * @param  bool  $strictModeEnabled
+     * @return string|null
+     */
     private function validateUid(VCard $card, bool $strictModeEnabled): ?string
     {
         $uidProperties = $card->select('UID');
@@ -136,6 +163,11 @@ class VCardValidator
         return $uid !== '' ? $uid : null;
     }
 
+    /**
+     * @param  VCard  $card
+     * @param  bool  $strictModeEnabled
+     * @return void
+     */
     private function validateEmailAddresses(VCard $card, bool $strictModeEnabled): void
     {
         foreach ($card->select('EMAIL') as $emailProperty) {

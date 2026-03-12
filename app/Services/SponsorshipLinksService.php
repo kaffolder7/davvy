@@ -261,6 +261,10 @@ class SponsorshipLinksService
         return array_values(array_unique($values));
     }
 
+    /**
+     * @param  string  $value
+     * @return string
+     */
     private function normalizeHandle(string $value): string
     {
         $normalized = trim($value);
@@ -318,6 +322,10 @@ class SponsorshipLinksService
         return $parsed;
     }
 
+    /**
+     * @param  string  $value
+     * @return string|array
+     */
     private function parseInlineFundingValue(string $value): string|array
     {
         $value = $this->stripInlineComment($value);
@@ -345,6 +353,10 @@ class SponsorshipLinksService
         return $this->normalizeYamlScalar($value);
     }
 
+    /**
+     * @param  string  $value
+     * @return string
+     */
     private function normalizeYamlScalar(string $value): string
     {
         $trimmed = trim($this->stripInlineComment($value));
@@ -364,6 +376,10 @@ class SponsorshipLinksService
         return trim($trimmed);
     }
 
+    /**
+     * @param  string  $value
+     * @return string
+     */
     private function stripInlineComment(string $value): string
     {
         $inSingleQuote = false;

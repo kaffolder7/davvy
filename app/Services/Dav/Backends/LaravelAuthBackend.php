@@ -23,6 +23,11 @@ class LaravelAuthBackend extends AbstractBasic
         private readonly TwoFactorSettingsService $twoFactorSettings,
     ) {}
 
+    /**
+     * @param  RequestInterface  $request
+     * @param  ResponseInterface  $response
+     * @return array
+     */
     public function check(RequestInterface $request, ResponseInterface $response): array
     {
         $auth = new Basic($this->realm, $request, $response);
@@ -41,11 +46,21 @@ class LaravelAuthBackend extends AbstractBasic
         return [true, $this->principalUriService->uriForUser($user)];
     }
 
+    /**
+     * @param  mixed  $username
+     * @param  mixed  $password
+     * @return bool
+     */
     protected function validateUserPass($username, $password): bool
     {
         return $this->resolveUser((string) $username, (string) $password) !== null;
     }
 
+    /**
+     * @param  string  $username
+     * @param  string  $password
+     * @return User|null
+     */
     private function resolveUser(string $username, string $password): ?User
     {
         $normalizedUsername = Str::lower(trim($username));
@@ -74,6 +89,10 @@ class LaravelAuthBackend extends AbstractBasic
         return $user;
     }
 
+    /**
+     * @param  User  $user
+     * @return bool
+     */
     private function shouldRequireAppPassword(User $user): bool
     {
         return $user->hasTwoFactorEnabled() || $this->twoFactorSettings->isSetupRequired($user);

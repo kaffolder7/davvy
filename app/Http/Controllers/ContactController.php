@@ -16,6 +16,10 @@ class ContactController extends Controller
         private readonly ContactChangeRequestService $changeRequestService,
     ) {}
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -31,6 +35,10 @@ class ContactController extends Controller
         ]);
     }
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function store(Request $request): JsonResponse
     {
         [$payload, $addressBookIds] = $this->validatedInput(
@@ -48,6 +56,11 @@ class ContactController extends Controller
         return response()->json($this->serializeContact($contact), 201);
     }
 
+    /**
+     * @param  Request  $request
+     * @param  int  $contact
+     * @return JsonResponse
+     */
     public function update(Request $request, int $contact): JsonResponse
     {
         $model = Contact::query()->findOrFail($contact);
@@ -83,6 +96,11 @@ class ContactController extends Controller
         return response()->json($this->serializeContact($updated));
     }
 
+    /**
+     * @param  Request  $request
+     * @param  int  $contact
+     * @return JsonResponse
+     */
     public function destroy(Request $request, int $contact): JsonResponse
     {
         $model = Contact::query()->findOrFail($contact);
@@ -241,6 +259,10 @@ class ContactController extends Controller
         return [$payload, $addressBookIds];
     }
 
+    /**
+     * @param  Contact  $contact
+     * @return array
+     */
     private function serializeContact(Contact $contact): array
     {
         $payload = is_array($contact->payload) ? $contact->payload : [];
@@ -451,6 +473,10 @@ class ContactController extends Controller
         ];
     }
 
+    /**
+     * @param  mixed  $value
+     * @return string|null
+     */
     private function normalizeString(mixed $value): ?string
     {
         if (! is_scalar($value) && $value !== null) {
@@ -462,6 +488,10 @@ class ContactController extends Controller
         return $normalized !== '' ? $normalized : null;
     }
 
+    /**
+     * @param  mixed  $value
+     * @return int|null
+     */
     private function normalizeInt(mixed $value): ?int
     {
         if ($value === null || $value === '') {

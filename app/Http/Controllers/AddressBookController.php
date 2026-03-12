@@ -19,6 +19,10 @@ class AddressBookController extends Controller
         private readonly ResourceDeletionService $resourceDeletion,
     ) {}
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -44,6 +48,11 @@ class AddressBookController extends Controller
         return response()->json($addressBook, 201);
     }
 
+    /**
+     * @param  Request  $request
+     * @param  AddressBook  $addressBook
+     * @return JsonResponse
+     */
     public function update(Request $request, AddressBook $addressBook): JsonResponse
     {
         $this->authorizeOwnership($request, $addressBook);
@@ -63,6 +72,11 @@ class AddressBookController extends Controller
         return response()->json($addressBook->fresh());
     }
 
+    /**
+     * @param  Request  $request
+     * @param  AddressBook  $addressBook
+     * @return JsonResponse
+     */
     public function destroy(Request $request, AddressBook $addressBook): JsonResponse
     {
         $this->authorizeOwnership($request, $addressBook);
@@ -76,6 +90,11 @@ class AddressBookController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    /**
+     * @param  Request  $request
+     * @param  AddressBook  $addressBook
+     * @return void
+     */
     private function authorizeOwnership(Request $request, AddressBook $addressBook): void
     {
         $user = $request->user();
@@ -85,6 +104,11 @@ class AddressBookController extends Controller
         }
     }
 
+    /**
+     * @param  int  $ownerId
+     * @param  string  $baseUri
+     * @return string
+     */
     private function uniqueUri(int $ownerId, string $baseUri): string
     {
         $seed = $baseUri !== '' ? $baseUri : 'address-book';

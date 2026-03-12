@@ -10,6 +10,10 @@ class AddressBookMirrorController extends Controller
 {
     public function __construct(private readonly AddressBookMirrorService $mirrorService) {}
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function update(Request $request): JsonResponse
     {
         $data = $request->validate([

@@ -8,6 +8,11 @@ use Illuminate\Support\Collection;
 
 class AppPasswordService
 {
+    /**
+     * @param  User  $user
+     * @param  string  $name
+     * @return array
+     */
     public function create(User $user, string $name): array
     {
         $trimmedName = trim($name);
@@ -39,6 +44,11 @@ class AppPasswordService
             ->get();
     }
 
+    /**
+     * @param  User  $user
+     * @param  int  $appPasswordId
+     * @return bool
+     */
     public function revoke(User $user, int $appPasswordId): bool
     {
         $password = $user->appPasswords()
@@ -57,6 +67,10 @@ class AppPasswordService
         return true;
     }
 
+    /**
+     * @param  User  $user
+     * @return int
+     */
     public function revokeAll(User $user): int
     {
         return $user->appPasswords()
@@ -64,6 +78,11 @@ class AppPasswordService
             ->update(['revoked_at' => now()]);
     }
 
+    /**
+     * @param  User  $user
+     * @param  string  $token
+     * @return bool
+     */
     public function verifyAndTouch(User $user, string $token): bool
     {
         $candidate = trim($token);
@@ -90,11 +109,18 @@ class AppPasswordService
         return true;
     }
 
+    /**
+     * @return string
+     */
     private function generateToken(): string
     {
         return 'dvap_'.bin2hex(random_bytes(20));
     }
 
+    /**
+     * @param  string  $token
+     * @return string
+     */
     private function hashToken(string $token): string
     {
         return hash_hmac('sha256', $token, (string) config('app.key', 'davvy-app-passwords'));

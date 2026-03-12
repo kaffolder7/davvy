@@ -13,6 +13,10 @@ class DefaultResourceProvisioner
 {
     public function __construct(private readonly DavSyncService $syncService) {}
 
+    /**
+     * @param  User  $user
+     * @return void
+     */
     public function provisionFor(User $user): void
     {
         $calendar = Calendar::query()
@@ -68,6 +72,11 @@ class DefaultResourceProvisioner
         $this->syncService->ensureResource(ShareResourceType::AddressBook, $addressBook->id);
     }
 
+    /**
+     * @param  string  $base
+     * @param  callable  $exists
+     * @return string
+     */
     private function uniqueUri(string $base, callable $exists): string
     {
         $candidate = Str::slug($base);

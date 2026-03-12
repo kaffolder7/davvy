@@ -27,6 +27,9 @@ class DavServerFactory
         private readonly DavResourceIdPlugin $resourceIdPlugin,
     ) {}
 
+    /**
+     * @return Server
+     */
     public function make(): Server
     {
         $principalCollection = new PrincipalCollection($this->principalBackend);

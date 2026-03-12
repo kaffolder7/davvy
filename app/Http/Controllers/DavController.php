@@ -18,6 +18,10 @@ class DavController extends Controller
         private readonly DavRequestContext $davContext,
     ) {}
 
+    /**
+     * @param  Request  $request
+     * @return Response
+     */
     public function handle(Request $request): Response
     {
         $this->davContext->clear();
@@ -107,6 +111,10 @@ class DavController extends Controller
         return $response;
     }
 
+    /**
+     * @param  Request  $request
+     * @return bool
+     */
     private function shouldLogClientDavTraffic(Request $request): bool
     {
         if (! config('dav.log_client_traffic', false)) {
@@ -126,6 +134,10 @@ class DavController extends Controller
         return str_contains((string) $request->userAgent(), 'AddressBookCore');
     }
 
+    /**
+     * @param  DavException  $exception
+     * @return string
+     */
     private function serializeDavException(DavException $exception): string
     {
         $message = htmlspecialchars($exception->getMessage(), ENT_NOQUOTES, 'UTF-8');

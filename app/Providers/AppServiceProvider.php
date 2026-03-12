@@ -11,11 +11,17 @@ use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
+    /**
+     * @return void
+     */
     public function register(): void
     {
         $this->app->singleton(DavRequestContext::class);
     }
 
+    /**
+     * @return void
+     */
     public function boot(): void
     {
         RateLimiter::for('auth-login', function (Request $request): Limit {

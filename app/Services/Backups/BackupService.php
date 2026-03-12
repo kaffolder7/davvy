@@ -446,6 +446,13 @@ class BackupService
         ];
     }
 
+    /**
+     * @param  string  $archivePath
+     * @param  string  $localRoot
+     * @param  string  $tier
+     * @param  string  $fileName
+     * @return string
+     */
     private function storeLocalSnapshot(string $archivePath, string $localRoot, string $tier, string $fileName): string
     {
         $root = rtrim($localRoot, '/\\');
@@ -464,6 +471,14 @@ class BackupService
         return $targetPath;
     }
 
+    /**
+     * @param  string  $archivePath
+     * @param  string  $diskName
+     * @param  string  $prefix
+     * @param  string  $tier
+     * @param  string  $fileName
+     * @return string
+     */
     private function storeRemoteSnapshot(
         string $archivePath,
         string $diskName,
@@ -533,6 +548,12 @@ class BackupService
         }
     }
 
+    /**
+     * @param  string  $localRoot
+     * @param  string  $tier
+     * @param  int  $limit
+     * @return void
+     */
     private function pruneLocalTier(string $localRoot, string $tier, int $limit): void
     {
         $root = rtrim($localRoot, '/\\');
@@ -559,6 +580,13 @@ class BackupService
         }
     }
 
+    /**
+     * @param  string  $diskName
+     * @param  string  $prefix
+     * @param  string  $tier
+     * @param  int  $limit
+     * @return void
+     */
     private function pruneRemoteTier(string $diskName, string $prefix, string $tier, int $limit): void
     {
         $disk = Storage::disk($diskName);
@@ -582,6 +610,10 @@ class BackupService
         }
     }
 
+    /**
+     * @param  Calendar  $calendar
+     * @return string
+     */
     private function buildCalendarPayload(Calendar $calendar): string
     {
         $export = new VCalendar([
@@ -605,6 +637,10 @@ class BackupService
         return $export->serialize();
     }
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @return string
+     */
     private function buildAddressBookPayload(AddressBook $addressBook): string
     {
         return $addressBook->cards
@@ -613,6 +649,12 @@ class BackupService
             ->implode("\r\n");
     }
 
+    /**
+     * @param  string  $displayName
+     * @param  string  $fallbackStem
+     * @param  string  $extension
+     * @return string
+     */
     private function resourceFileName(string $displayName, string $fallbackStem, string $extension): string
     {
         $stem = Str::slug($displayName);

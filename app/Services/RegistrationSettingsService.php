@@ -7,11 +7,19 @@ use App\Models\User;
 
 class RegistrationSettingsService
 {
+    /**
+     * @return bool
+     */
     public function isPublicRegistrationEnabled(): bool
     {
         return AppSetting::publicRegistrationEnabled();
     }
 
+    /**
+     * @param  bool  $enabled
+     * @param  User|null  $actor
+     * @return void
+     */
     public function setPublicRegistrationEnabled(bool $enabled, ?User $actor = null): void
     {
         AppSetting::query()->updateOrCreate(
@@ -30,11 +38,19 @@ class RegistrationSettingsService
         }
     }
 
+    /**
+     * @return bool
+     */
     public function isPublicRegistrationApprovalRequired(): bool
     {
         return AppSetting::publicRegistrationApprovalRequired();
     }
 
+    /**
+     * @param  bool  $enabled
+     * @param  User|null  $actor
+     * @return void
+     */
     public function setPublicRegistrationApprovalRequired(bool $enabled, ?User $actor = null): void
     {
         AppSetting::query()->updateOrCreate(
@@ -43,11 +59,19 @@ class RegistrationSettingsService
         );
     }
 
+    /**
+     * @return bool
+     */
     public function isOwnerShareManagementEnabled(): bool
     {
         return AppSetting::ownerShareManagementEnabled();
     }
 
+    /**
+     * @param  bool  $enabled
+     * @param  User|null  $actor
+     * @return void
+     */
     public function setOwnerShareManagementEnabled(bool $enabled, ?User $actor = null): void
     {
         AppSetting::query()->updateOrCreate(
@@ -56,11 +80,19 @@ class RegistrationSettingsService
         );
     }
 
+    /**
+     * @return bool
+     */
     public function isDavCompatibilityModeEnabled(): bool
     {
         return AppSetting::davCompatibilityModeEnabled();
     }
 
+    /**
+     * @param  bool  $enabled
+     * @param  User|null  $actor
+     * @return void
+     */
     public function setDavCompatibilityModeEnabled(bool $enabled, ?User $actor = null): void
     {
         AppSetting::query()->updateOrCreate(
@@ -69,11 +101,19 @@ class RegistrationSettingsService
         );
     }
 
+    /**
+     * @return bool
+     */
     public function isContactManagementEnabled(): bool
     {
         return AppSetting::contactManagementEnabled();
     }
 
+    /**
+     * @param  bool  $enabled
+     * @param  User|null  $actor
+     * @return void
+     */
     public function setContactManagementEnabled(bool $enabled, ?User $actor = null): void
     {
         AppSetting::query()->updateOrCreate(
@@ -82,11 +122,19 @@ class RegistrationSettingsService
         );
     }
 
+    /**
+     * @return bool
+     */
     public function isContactChangeModerationEnabled(): bool
     {
         return AppSetting::contactChangeModerationEnabled();
     }
 
+    /**
+     * @param  bool  $enabled
+     * @param  User|null  $actor
+     * @return void
+     */
     public function setContactChangeModerationEnabled(bool $enabled, ?User $actor = null): void
     {
         AppSetting::query()->updateOrCreate(
@@ -95,11 +143,19 @@ class RegistrationSettingsService
         );
     }
 
+    /**
+     * @return int
+     */
     public function contactChangeRequestRetentionDays(): int
     {
         return AppSetting::contactChangeRequestRetentionDays();
     }
 
+    /**
+     * @param  int  $days
+     * @param  User|null  $actor
+     * @return void
+     */
     public function setContactChangeRequestRetentionDays(int $days, ?User $actor = null): void
     {
         $normalized = max(1, min(3650, $days));
@@ -110,11 +166,19 @@ class RegistrationSettingsService
         );
     }
 
+    /**
+     * @return int
+     */
     public function milestoneCalendarGenerationYears(): int
     {
         return AppSetting::milestoneCalendarGenerationYears();
     }
 
+    /**
+     * @param  int  $years
+     * @param  User|null  $actor
+     * @return void
+     */
     public function setMilestoneCalendarGenerationYears(int $years, ?User $actor = null): void
     {
         $normalized = max(1, min(25, $years));

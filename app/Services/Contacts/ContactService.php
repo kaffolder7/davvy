@@ -381,6 +381,11 @@ class ContactService
             ->all();
     }
 
+    /**
+     * @param  User  $actor
+     * @param  Contact  $contact
+     * @return bool
+     */
     public function canUserWriteContact(User $actor, Contact $contact): bool
     {
         $assignments = $contact->assignments()->with('addressBook')->get();
@@ -450,6 +455,11 @@ class ContactService
         return $this->persistContactUpdate($contact, $payload, $addressBooks);
     }
 
+    /**
+     * @param  User  $actor
+     * @param  Contact  $contact
+     * @return void
+     */
     public function delete(User $actor, Contact $contact): void
     {
         $this->assertCanMutateContact($actor, $contact);
@@ -468,11 +478,20 @@ class ContactService
         return $this->persistContactUpdate($contact, $payload, $addressBooks);
     }
 
+    /**
+     * @param  Contact  $contact
+     * @return void
+     */
     public function applyApprovedDelete(Contact $contact): void
     {
         $this->destroyContact($contact);
     }
 
+    /**
+     * @param  User  $actor
+     * @param  Contact  $contact
+     * @return void
+     */
     private function assertCanMutateContact(User $actor, Contact $contact): void
     {
         if (! $this->canUserWriteContact($actor, $contact)) {
@@ -600,6 +619,10 @@ class ContactService
         return $updatedResult['contact'];
     }
 
+    /**
+     * @param  Contact  $contact
+     * @return void
+     */
     private function destroyContact(Contact $contact): void
     {
         $assignedAddressBookIds = $this->addressBookIdsForContact($contact);
@@ -967,6 +990,11 @@ class ContactService
         }
     }
 
+    /**
+     * @param  Contact  $contact
+     * @param  AddressBook  $addressBook
+     * @return void
+     */
     private function createAssignment(Contact $contact, AddressBook $addressBook): void
     {
         $cardData = $this->normalizedCardData($contact);
@@ -994,6 +1022,12 @@ class ContactService
         ]);
     }
 
+    /**
+     * @param  Contact  $contact
+     * @param  AddressBook  $addressBook
+     * @param  ContactAddressBookAssignment  $assignment
+     * @return void
+     */
     private function upsertAssignmentCard(Contact $contact, AddressBook $addressBook, ContactAddressBookAssignment $assignment): void
     {
         $cardData = $this->normalizedCardData($contact);
@@ -1053,6 +1087,10 @@ class ContactService
         }
     }
 
+    /**
+     * @param  ContactAddressBookAssignment  $assignment
+     * @return void
+     */
     private function deleteAssignmentCard(ContactAddressBookAssignment $assignment): void
     {
         $card = $assignment->card;
@@ -1066,6 +1104,12 @@ class ContactService
         $this->mirrorService->handleSourceCardDeleted($assignment->address_book_id, $card->uri);
     }
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @param  string  $uid
+     * @param  int|null  $exceptCardId
+     * @return void
+     */
     private function assertNoUidConflict(AddressBook $addressBook, string $uid, ?int $exceptCardId = null): void
     {
         $query = Card::query()
@@ -1089,6 +1133,10 @@ class ContactService
         }
     }
 
+    /**
+     * @param  Contact  $contact
+     * @return string
+     */
     private function normalizedCardData(Contact $contact): string
     {
         $raw = $this->vCardService->build($contact);
@@ -1097,6 +1145,13 @@ class ContactService
         return $normalized['data'];
     }
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @param  Contact  $contact
+     * @param  string|null  $preferredUri
+     * @param  int|null  $exceptCardId
+     * @return string
+     */
     private function nextAvailableCardUri(
         AddressBook $addressBook,
         Contact $contact,
@@ -1122,6 +1177,10 @@ class ContactService
         return $candidate;
     }
 
+    /**
+     * @param  string|null  $value
+     * @return string|null
+     */
     private function sanitizeCardUri(?string $value): ?string
     {
         $uri = trim((string) ($value ?? ''));
@@ -1138,6 +1197,12 @@ class ContactService
         return str_ends_with(strtolower($uri), '.vcf') ? $uri : $uri.'.vcf';
     }
 
+    /**
+     * @param  int  $addressBookId
+     * @param  string  $uri
+     * @param  int|null  $exceptCardId
+     * @return bool
+     */
     private function cardUriExists(int $addressBookId, string $uri, ?int $exceptCardId): bool
     {
         $query = Card::query()
@@ -1151,6 +1216,10 @@ class ContactService
         return $query->exists();
     }
 
+    /**
+     * @param  Contact  $contact
+     * @return void
+     */
     private function syncAssignmentsForExistingContact(Contact $contact): void
     {
         $addressBookIds = $this->addressBookIdsForContact($contact);
@@ -1583,6 +1652,11 @@ class ContactService
         ];
     }
 
+    /**
+     * @param  string|null  $existingToken
+     * @param  string|null  $incomingToken
+     * @return bool
+     */
     private function shouldPreserveExistingSpecificReciprocalLabel(
         ?string $existingToken,
         ?string $incomingToken,
@@ -1640,6 +1714,11 @@ class ContactService
         return $customToken !== 'other';
     }
 
+    /**
+     * @param  string  $inverseToken
+     * @param  Contact  $sourceContact
+     * @return string
+     */
     private function genderAwareInverseToken(string $inverseToken, Contact $sourceContact): string
     {
         $variants = self::RELATED_INVERSE_GENDERED_VARIANTS[$inverseToken] ?? null;
@@ -1655,6 +1734,10 @@ class ContactService
         return $variants[$gender] ?? $inverseToken;
     }
 
+    /**
+     * @param  Contact  $contact
+     * @return string|null
+     */
     private function inferredGenderForContact(Contact $contact): ?string
     {
         $payload = is_array($contact->payload) ? $contact->payload : [];
@@ -1664,6 +1747,10 @@ class ContactService
         return $this->inferredGenderFromPronouns($pronouns);
     }
 
+    /**
+     * @param  string|null  $value
+     * @return string|null
+     */
     private function inferredGenderFromPronouns(?string $value): ?string
     {
         $normalized = strtolower(trim((string) ($value ?? '')));
@@ -1801,6 +1888,10 @@ class ContactService
         ];
     }
 
+    /**
+     * @param  string|null  $value
+     * @return string|null
+     */
     private function normalizeRelatedLabelToken(?string $value): ?string
     {
         $normalized = strtolower(trim((string) ($value ?? '')));
@@ -1825,6 +1916,10 @@ class ContactService
         return $leftRows === $this->normalizeRelatedRowsForSync($rightRows);
     }
 
+    /**
+     * @param  mixed  $value
+     * @return string|null
+     */
     private function normalizeString(mixed $value): ?string
     {
         if (! is_scalar($value) && $value !== null) {
@@ -1836,6 +1931,10 @@ class ContactService
         return $normalized !== '' ? $normalized : null;
     }
 
+    /**
+     * @param  mixed  $value
+     * @return int|null
+     */
     private function normalizeInt(mixed $value): ?int
     {
         if ($value === null || $value === '') {

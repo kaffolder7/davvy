@@ -7,6 +7,10 @@ use App\Models\ResourceShare;
 
 class ResourceShareCleanupService
 {
+    /**
+     * @param  int|array  $addressBookIds
+     * @return void
+     */
     public function deleteAddressBookShares(int|array $addressBookIds): void
     {
         $ids = $this->normalizeIds($addressBookIds);
@@ -21,6 +25,10 @@ class ResourceShareCleanupService
             ->delete();
     }
 
+    /**
+     * @param  int|array  $calendarIds
+     * @return void
+     */
     public function deleteCalendarShares(int|array $calendarIds): void
     {
         $ids = $this->normalizeIds($calendarIds);

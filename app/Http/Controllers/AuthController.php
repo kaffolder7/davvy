@@ -31,6 +31,10 @@ class AuthController extends Controller
         private readonly AppPasswordService $appPasswords,
     ) {}
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function register(Request $request): JsonResponse
     {
         if (! $this->registrationSettings->isPublicRegistrationEnabled()) {
@@ -79,11 +83,18 @@ class AuthController extends Controller
         );
     }
 
+    /**
+     * @return JsonResponse
+     */
     public function publicConfig(): JsonResponse
     {
         return response()->json($this->publicSettingsPayload());
     }
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function login(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -130,11 +141,19 @@ class AuthController extends Controller
         );
     }
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function loginTwoFactorStatus(Request $request): JsonResponse
     {
         return response()->json($this->pendingTwoFactorLogin->status($request));
     }
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function completeTwoFactorLogin(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -168,6 +187,10 @@ class AuthController extends Controller
         );
     }
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function logout(Request $request): JsonResponse
     {
         $this->pendingTwoFactorLogin->clear($request);
@@ -181,6 +204,10 @@ class AuthController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function me(Request $request): JsonResponse
     {
         return response()->json(
@@ -188,6 +215,10 @@ class AuthController extends Controller
         );
     }
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function changePassword(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -204,6 +235,10 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function twoFactorStatus(Request $request): JsonResponse
     {
         $user = $request->user()->fresh();
@@ -220,6 +255,10 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function startTwoFactorSetup(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -238,6 +277,10 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function enableTwoFactor(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -271,6 +314,10 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function disableTwoFactor(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -295,6 +342,10 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function regenerateBackupCodes(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -318,6 +369,10 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function listAppPasswords(Request $request): JsonResponse
     {
         $user = $request->user()->fresh();
@@ -342,6 +397,10 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function createAppPassword(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -373,6 +432,11 @@ class AuthController extends Controller
         ], 201);
     }
 
+    /**
+     * @param  Request  $request
+     * @param  UserAppPassword  $appPassword
+     * @return JsonResponse
+     */
     public function revokeAppPassword(Request $request, UserAppPassword $appPassword): JsonResponse
     {
         $data = $request->validate([
@@ -402,6 +466,9 @@ class AuthController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    /**
+     * @return array
+     */
     private function publicSettingsPayload(): array
     {
         return [
@@ -417,6 +484,10 @@ class AuthController extends Controller
         ];
     }
 
+    /**
+     * @param  User  $user
+     * @return array
+     */
     private function authenticatedSettingsPayload(User $user): array
     {
         $graceDeadline = $this->twoFactorSettings->graceDeadlineFor($user);

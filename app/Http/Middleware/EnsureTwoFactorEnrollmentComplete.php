@@ -13,6 +13,11 @@ class EnsureTwoFactorEnrollmentComplete
         private readonly TwoFactorSettingsService $twoFactorSettings,
     ) {}
 
+    /**
+     * @param  Request  $request
+     * @param  Closure  $next
+     * @return Response
+     */
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();

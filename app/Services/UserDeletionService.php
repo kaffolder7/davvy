@@ -65,6 +65,10 @@ class UserDeletionService
         ];
     }
 
+    /**
+     * @param  int  $ownerId
+     * @return void
+     */
     private function deleteOwnedResources(int $ownerId): void
     {
         $addressBooks = AddressBook::query()

@@ -17,6 +17,12 @@ class ManagedContactSyncService
         private readonly ContactMilestoneCalendarService $milestoneCalendarService,
     ) {}
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @param  Card  $card
+     * @param  User|null  $actor
+     * @return void
+     */
     public function syncCardUpsert(
         AddressBook $addressBook,
         Card $card,
@@ -202,6 +208,10 @@ class ManagedContactSyncService
         ]);
     }
 
+    /**
+     * @param  Card  $card
+     * @return void
+     */
     public function syncCardDeleted(Card $card): void
     {
         if (! $this->schemaAvailable()) {
@@ -240,6 +250,10 @@ class ManagedContactSyncService
         }
     }
 
+    /**
+     * @param  AddressBook  $addressBook
+     * @return void
+     */
     public function syncAddressBookDeleted(AddressBook $addressBook): void
     {
         if (! $this->schemaAvailable()) {
@@ -309,17 +323,27 @@ class ManagedContactSyncService
         return $relatedAddressBookIds;
     }
 
+    /**
+     * @return ContactService
+     */
     private function contactService(): ContactService
     {
         return app(ContactService::class);
     }
 
+    /**
+     * @return bool
+     */
     private function schemaAvailable(): bool
     {
         return Schema::hasTable('contacts') &&
             Schema::hasTable('contact_address_book_assignments');
     }
 
+    /**
+     * @param  mixed  $value
+     * @return int|null
+     */
     private function toInteger(mixed $value): ?int
     {
         if ($value === null || $value === '') {
@@ -337,6 +361,10 @@ class ManagedContactSyncService
         return null;
     }
 
+    /**
+     * @param  mixed  $value
+     * @return string|null
+     */
     private function cleanString(mixed $value): ?string
     {
         if (! is_scalar($value) && $value !== null) {
