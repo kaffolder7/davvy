@@ -25,6 +25,7 @@ export default function RegisterPage({
   });
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [actionLink, setActionLink] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   if (auth.user) {
@@ -40,6 +41,7 @@ export default function RegisterPage({
     setSubmitting(true);
     setError("");
     setNotice("");
+    setActionLink("");
 
     try {
       const { data } = await api.post("/api/auth/register", form);
@@ -60,6 +62,31 @@ export default function RegisterPage({
         setNotice(
           data?.message ||
             "Registration submitted. An administrator must approve your account before you can sign in.",
+        );
+        setActionLink(
+          typeof data?.verification_url === "string"
+            ? data.verification_url
+            : "",
+        );
+
+        return;
+      }
+
+      if (data?.registration_pending_verification) {
+        setForm({
+          name: "",
+          email: "",
+          password: "",
+          password_confirmation: "",
+        });
+        setNotice(
+          data?.message ||
+            "Registration submitted. Verify your email address before signing in.",
+        );
+        setActionLink(
+          typeof data?.verification_url === "string"
+            ? data.verification_url
+            : "",
         );
 
         return;
@@ -120,6 +147,17 @@ export default function RegisterPage({
         </Field>
         {error ? <p className="text-sm text-app-danger">{error}</p> : null}
         {notice ? <p className="text-sm text-app-accent">{notice}</p> : null}
+        {actionLink ? (
+          <p className="text-xs text-app-muted">
+            Verification link:{" "}
+            <a
+              href={actionLink}
+              className="font-semibold text-app-accent underline"
+            >
+              Open verification
+            </a>
+          </p>
+        ) : null}
         <button className="btn w-full" disabled={submitting}>
           {submitting ? "Creating account..." : "Register"}
         </button>

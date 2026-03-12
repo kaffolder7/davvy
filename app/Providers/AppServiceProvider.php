@@ -34,6 +34,12 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->ip());
         });
 
+        RateLimiter::for('auth-onboarding', function (Request $request): Limit {
+            $tokenFragment = substr((string) $request->input('token', ''), 0, 24);
+
+            return Limit::perMinute(20)->by($request->ip().'|'.$tokenFragment);
+        });
+
         RateLimiter::for('auth-password', function (Request $request): Limit {
             $userKey = (string) ($request->user()?->id ?? 'guest');
 

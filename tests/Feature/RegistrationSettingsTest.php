@@ -49,6 +49,8 @@ class RegistrationSettingsTest extends TestCase
 
     public function test_registration_creates_default_calendar_and_address_book_when_approval_requirement_is_disabled(): void
     {
+        config()->set('onboarding.require_public_email_verification', false);
+
         $settings = app(RegistrationSettingsService::class);
         $settings->setPublicRegistrationEnabled(true);
         $settings->setPublicRegistrationApprovalRequired(false);
@@ -83,6 +85,8 @@ class RegistrationSettingsTest extends TestCase
 
     public function test_registration_normalizes_email_and_rejects_case_variant_duplicates(): void
     {
+        config()->set('onboarding.require_public_email_verification', false);
+
         $settings = app(RegistrationSettingsService::class);
         $settings->setPublicRegistrationEnabled(true);
         $settings->setPublicRegistrationApprovalRequired(false);
@@ -154,6 +158,16 @@ class RegistrationSettingsTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('registration_approval_required', true);
+    }
+
+    public function test_public_config_includes_email_verification_requirement_setting(): void
+    {
+        config()->set('onboarding.require_public_email_verification', true);
+
+        $response = $this->getJson('/api/public/config');
+
+        $response->assertOk();
+        $response->assertJsonPath('email_verification_required', true);
     }
 
     public function test_public_config_includes_dav_compatibility_mode_setting(): void

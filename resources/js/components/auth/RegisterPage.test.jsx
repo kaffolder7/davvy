@@ -201,4 +201,53 @@ describe("RegisterPage", () => {
     ).toBeInTheDocument();
     expect(props.auth.setAuth).not.toHaveBeenCalled();
   });
+
+  it("shows verification link when registration requires email verification", async () => {
+    const user = userEvent.setup();
+    const props = buildProps({
+      api: {
+        post: vi.fn().mockResolvedValue({
+          data: {
+            registration_pending_verification: true,
+            verification_url:
+              "https://davvy.example.test/verify-email?token=abc123",
+            message:
+              "Registration submitted. Verify your email address before signing in.",
+            registration_enabled: true,
+            registration_approval_required: false,
+            email_verification_required: true,
+            owner_share_management_enabled: false,
+            dav_compatibility_mode_enabled: false,
+            contact_management_enabled: true,
+            contact_change_moderation_enabled: false,
+            sponsorship: {
+              enabled: false,
+              links: [],
+            },
+          },
+        }),
+      },
+    });
+
+    renderPage(props);
+
+    await user.type(screen.getByLabelText("Name"), "Pending Verify");
+    await user.type(screen.getByLabelText("Email"), "verify@example.com");
+    await user.type(screen.getByLabelText("Password"), "secret123");
+    await user.type(screen.getByLabelText("Confirm Password"), "secret123");
+    await user.click(screen.getByRole("button", { name: "Register" }));
+
+    expect(
+      await screen.findByText(
+        "Registration submitted. Verify your email address before signing in.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Open verification" }),
+    ).toHaveAttribute(
+      "href",
+      "https://davvy.example.test/verify-email?token=abc123",
+    );
+    expect(props.auth.setAuth).not.toHaveBeenCalled();
+  });
 });

@@ -71,9 +71,9 @@ export default function AdminPage({
   const [userForm, setUserForm] = useState({
     name: "",
     email: "",
-    password: "",
     role: "regular",
   });
+  const [userInviteResult, setUserInviteResult] = useState(null);
   const [shareForm, setShareForm] = useState({
     resource_type: "calendar",
     resource_id: "",
@@ -363,9 +363,27 @@ export default function AdminPage({
 
   const createUser = async (event) => {
     event.preventDefault();
+    setUserInviteResult(null);
     try {
-      await api.post("/api/admin/users", userForm);
-      setUserForm({ name: "", email: "", password: "", role: "regular" });
+      const submittedEmail = userForm.email;
+      const response = await api.post("/api/admin/users", userForm);
+      const created = response?.data ?? {};
+      const targetEmail =
+        typeof created?.email === "string" && created.email
+          ? created.email
+          : submittedEmail;
+      setUserForm({ name: "", email: "", role: "regular" });
+      setUserInviteResult({
+        message: created?.invitation_sent
+          ? `Invitation email sent to ${targetEmail}.`
+          : created?.invitation_url
+            ? `User created. Share this invitation link with ${targetEmail}.`
+            : `User ${targetEmail} created.`,
+        invitationUrl:
+          typeof created?.invitation_url === "string"
+            ? created.invitation_url
+            : "",
+      });
       await load();
     } catch (err) {
       setState((prev) => ({
@@ -2116,16 +2134,6 @@ export default function AdminPage({
                 }
                 required
               />
-              <input
-                className="input"
-                type="password"
-                placeholder="Password"
-                value={userForm.password}
-                onChange={(e) =>
-                  setUserForm({ ...userForm, password: e.target.value })
-                }
-                required
-              />
               <select
                 className="input"
                 value={userForm.role}
@@ -2140,6 +2148,16 @@ export default function AdminPage({
                 Create User
               </button>
             </form>
+            {userInviteResult ? (
+              <div className="mt-3 rounded-xl border border-app-edge bg-app-panel p-3 text-xs text-app-muted">
+                <p className="font-semibold text-app-strong">
+                  {userInviteResult.message}
+                </p>
+                {userInviteResult.invitationUrl ? (
+                  <p className="mt-1 break-all">{userInviteResult.invitationUrl}</p>
+                ) : null}
+              </div>
+            ) : null}
 
             <div className="mt-5 space-y-2">
               {state.users.map((user) => {

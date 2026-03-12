@@ -189,6 +189,34 @@ docker compose exec app php artisan app:preflight
 docker compose exec app php artisan migrate:status
 ```
 
+## Email Template Preview
+
+### Preview onboarding emails without sending or creating accounts
+
+Generate local HTML + plaintext previews for:
+- admin invitation email
+- public registration email verification
+
+```bash
+# DDEV
+ddev exec php artisan app:mail:preview-onboarding
+
+# Docker Compose
+docker compose exec app php artisan app:mail:preview-onboarding
+```
+
+Output files:
+- `storage/app/mail-previews/admin-invite.html`
+- `storage/app/mail-previews/admin-invite.txt`
+- `storage/app/mail-previews/verify-email.html`
+- `storage/app/mail-previews/verify-email.txt`
+
+Optional custom output directory:
+
+```bash
+php artisan app:mail:preview-onboarding --output=/tmp/davvy-mail-previews
+```
+
 ## Related Docs
 
 - [Configuration Reference](./configuration.md)

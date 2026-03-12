@@ -18,11 +18,11 @@ use App\Services\RegistrationSettingsService;
 use App\Services\Security\TwoFactorService;
 use App\Services\Security\TwoFactorSettingsService;
 use App\Services\UserDeletionService;
+use App\Services\UserOnboardingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\Password;
 use Throwable;
 
 class AdminController extends Controller
@@ -35,6 +35,7 @@ class AdminController extends Controller
         private readonly BackupRestoreService $backupRestoreService,
         private readonly TwoFactorSettingsService $twoFactorSettings,
         private readonly TwoFactorService $twoFactor,
+        private readonly UserOnboardingService $onboarding,
         private readonly UserDeletionService $userDeletionService,
     ) {}
 
@@ -60,7 +61,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Creates a new admin-provisioned user account.
+     * Creates an approved user account and issues a one-time invitation link.
      */
     public function createUser(Request $request): JsonResponse
     {
@@ -72,21 +73,36 @@ class AdminController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', Password::min(8)],
             'role' => ['required', 'in:admin,regular'],
         ]);
 
         $user = User::query()->create([
             'name' => $data['name'],
             'email' => $data['email'],
-            'password' => $data['password'],
+            'password' => Str::random(48),
             'role' => Role::from($data['role']),
+            'email_verified_at' => null,
             'is_approved' => true,
             'approved_at' => now(),
             'approved_by' => $request->user()?->id,
         ]);
 
-        return response()->json($user, 201);
+        $invitation = $this->onboarding->issueInvite($user);
+        $invitationSent = $this->onboarding->sendInviteEmail(
+            user: $user,
+            inviteUrl: $invitation['url'],
+            expiresAt: $invitation['expires_at'],
+        );
+
+        $payload = $user->toArray();
+        $payload['invitation_sent'] = $invitationSent;
+        $payload['invitation_expires_at'] = $invitation['expires_at']->toISOString();
+
+        if (! $invitationSent && $this->onboarding->shouldExposeLinksWithoutMailer()) {
+            $payload['invitation_url'] = $invitation['url'];
+        }
+
+        return response()->json($payload, 201);
     }
 
     /**

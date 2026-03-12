@@ -1,13 +1,67 @@
 <?php
 
+use App\Mail\AdminUserInviteMail;
+use App\Mail\PublicRegistrationVerificationMail;
+use App\Models\User;
 use App\Services\Backups\BackupRestoreService;
 use App\Services\Backups\BackupService;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('app:about', function (): void {
     $this->comment('Davvy MVP - Laravel + SabreDAV');
 });
+
+Artisan::command('app:mail:preview-onboarding {--output= : Output directory for preview files}', function (): int {
+    $outputDirectory = trim((string) $this->option('output'));
+    if ($outputDirectory === '') {
+        $outputDirectory = storage_path('app/mail-previews');
+    }
+
+    File::ensureDirectoryExists($outputDirectory);
+
+    $previewUser = new User([
+        'name' => 'Preview User',
+        'email' => 'preview@example.com',
+    ]);
+
+    $inviteExpiresAt = now()->addHours(max(1, (int) config('onboarding.invite_expires_hours', 72)));
+    $verifyExpiresAt = now()->addHours(max(1, (int) config('onboarding.verification_expires_hours', 24)));
+    $baseUrl = rtrim((string) config('app.url', 'http://localhost'), '/');
+    $inviteUrl = $baseUrl.'/invite?token='.str_repeat('i', 64);
+    $verifyUrl = $baseUrl.'/verify-email?token='.str_repeat('v', 64);
+
+    $inviteMailable = new AdminUserInviteMail($previewUser, $inviteUrl, $inviteExpiresAt);
+    $verifyMailable = new PublicRegistrationVerificationMail($previewUser, $verifyUrl, $verifyExpiresAt);
+
+    $files = [
+        'admin-invite.html' => $inviteMailable->render(),
+        'admin-invite.txt' => view('emails.auth.admin-invite-text', [
+            'user' => $previewUser,
+            'inviteUrl' => $inviteUrl,
+            'expiresAt' => $inviteExpiresAt,
+        ])->render(),
+        'verify-email.html' => $verifyMailable->render(),
+        'verify-email.txt' => view('emails.auth.verify-email-text', [
+            'user' => $previewUser,
+            'verificationUrl' => $verifyUrl,
+            'expiresAt' => $verifyExpiresAt,
+        ])->render(),
+    ];
+
+    foreach ($files as $fileName => $contents) {
+        $path = $outputDirectory.DIRECTORY_SEPARATOR.$fileName;
+        file_put_contents($path, $contents);
+        $this->line("Wrote: {$path}");
+    }
+
+    $this->newLine();
+    $this->info('Email previews generated successfully.');
+    $this->line('Tip: open the .html files in your browser and .txt files in your editor.');
+
+    return 0;
+})->purpose('Generate local preview files for onboarding emails without sending mail');
 
 Artisan::command('app:preflight', function (): int {
     $appEnv = (string) config('app.env', 'production');

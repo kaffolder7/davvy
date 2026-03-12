@@ -12,6 +12,7 @@ use App\Models\Contact;
 use App\Models\ContactChangeRequest;
 use App\Models\ResourceShare;
 use App\Models\User;
+use App\Models\UserOnboardingToken;
 use App\Services\RegistrationSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -24,6 +25,9 @@ class AdminUserManagementTest extends TestCase
 
     public function test_admin_can_create_users_with_roles_and_defaults(): void
     {
+        config()->set('onboarding.send_emails', false);
+        config()->set('onboarding.expose_links_without_mailer', true);
+
         $admin = User::factory()->admin()->create();
 
         $response = $this
@@ -31,17 +35,27 @@ class AdminUserManagementTest extends TestCase
             ->postJson('/api/admin/users', [
                 'name' => 'Managed User',
                 'email' => 'managed@example.com',
-                'password' => 'Password123!',
                 'role' => 'regular',
             ]);
 
         $response->assertCreated();
+        $response->assertJsonPath('invitation_sent', false);
+        $response->assertJsonPath('email', 'managed@example.com');
+        $this->assertNotNull($response->json('invitation_url'));
+        $this->assertNotNull($response->json('invitation_expires_at'));
 
         $createdUser = User::query()->where('email', 'managed@example.com')->firstOrFail();
+        $inviteToken = UserOnboardingToken::query()
+            ->where('user_id', $createdUser->id)
+            ->where('purpose', 'invite')
+            ->whereNull('used_at')
+            ->first();
 
         $this->assertTrue((bool) $createdUser->is_approved);
         $this->assertSame($admin->id, $createdUser->approved_by);
         $this->assertNotNull($createdUser->approved_at);
+        $this->assertNull($createdUser->email_verified_at);
+        $this->assertNotNull($inviteToken);
         $this->assertDatabaseHas('calendars', ['owner_id' => $createdUser->id, 'is_default' => true]);
         $this->assertDatabaseHas('address_books', ['owner_id' => $createdUser->id, 'is_default' => true]);
     }
@@ -55,7 +69,6 @@ class AdminUserManagementTest extends TestCase
             ->postJson('/api/admin/users', [
                 'name' => 'Blocked User',
                 'email' => 'blocked@example.com',
-                'password' => 'Password123!',
                 'role' => 'regular',
             ]);
 
@@ -71,7 +84,6 @@ class AdminUserManagementTest extends TestCase
             ->postJson('/api/admin/users', [
                 'name' => 'Case Managed User',
                 'email' => 'Case.Managed@Example.com',
-                'password' => 'Password123!',
                 'role' => 'regular',
             ]);
 
@@ -86,7 +98,6 @@ class AdminUserManagementTest extends TestCase
             ->postJson('/api/admin/users', [
                 'name' => 'Case Duplicate User',
                 'email' => 'CASE.MANAGED@EXAMPLE.COM',
-                'password' => 'Password123!',
                 'role' => 'regular',
             ]);
 
