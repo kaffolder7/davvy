@@ -16,7 +16,7 @@ It is designed for:
 | Login | Dashboard |
 | --- | --- |
 | ![Davvy login screen](docs/screenshots/login.webp) | ![Davvy dashboard with calendars and address books](docs/screenshots/dashboard.webp) |
-| ![Davvy admin control center](docs/screenshots/admin.webp) | ![Davvy backup configuration drawer](docs/screenshots/admin-backup-config.webp) |
+| ![Davvy admin control center](docs/screenshots/admin.webp) | ![Davvy backup configuration drawer](docs/screenshots/admin-backups.webp) |
 
 ## Core Capabilities 🚀
 
