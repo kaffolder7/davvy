@@ -510,9 +510,6 @@ export default function ProfilePage({
                 </span>
               ) : null}
             </div>
-            <p className="mt-2 text-xs text-app-muted">
-              Click inside the code block to select all codes.
-            </p>
           </div>
         ) : null}
 
