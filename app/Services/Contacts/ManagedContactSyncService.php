@@ -240,6 +240,49 @@ class ManagedContactSyncService
         }
     }
 
+    public function syncAddressBookDeleted(AddressBook $addressBook): void
+    {
+        if (! $this->schemaAvailable()) {
+            return;
+        }
+
+        $contactIds = ContactAddressBookAssignment::query()
+            ->where('address_book_id', $addressBook->id)
+            ->pluck('contact_id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($contactIds === []) {
+            return;
+        }
+
+        $relatedAddressBookIds = [];
+
+        DB::transaction(function () use (
+            $addressBook,
+            $contactIds,
+            &$relatedAddressBookIds,
+        ): void {
+            ContactAddressBookAssignment::query()
+                ->where('address_book_id', $addressBook->id)
+                ->delete();
+
+            foreach ($contactIds as $contactId) {
+                $relatedAddressBookIds = [
+                    ...$relatedAddressBookIds,
+                    ...$this->deleteContactIfOrphaned((int) $contactId),
+                ];
+            }
+        });
+
+        $this->syncMilestoneCalendarsForAddressBooks([
+            $addressBook->id,
+            ...is_array($relatedAddressBookIds) ? $relatedAddressBookIds : [],
+        ]);
+    }
+
     /**
      * @return array<int, int>
      */
