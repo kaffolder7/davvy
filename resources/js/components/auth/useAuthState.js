@@ -5,6 +5,20 @@ import {
   createSignedOutAuthState,
 } from "./authStateMapper";
 
+/**
+ * Hydrates and exposes authentication state from authenticated and public APIs.
+ *
+ * @param {{api: {get: (url: string) => Promise<{data: any}>}}} deps
+ * @returns {{
+ *   auth: ReturnType<typeof createDefaultAuthState>,
+ *   value: ReturnType<typeof createDefaultAuthState> & {
+ *     setAuth: Function,
+ *     refreshAuth: () => Promise<void>
+ *   },
+ *   setAuth: Function,
+ *   refreshAuth: () => Promise<void>
+ * }}
+ */
 export default function useAuthState({ api }) {
   const [auth, setAuth] = useState(createDefaultAuthState);
 

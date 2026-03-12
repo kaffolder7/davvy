@@ -1,5 +1,14 @@
 import { useRef, useState } from "react";
 
+/**
+ * Returns a shallow-copied array with one item moved to a target index.
+ *
+ * @template T
+ * @param {T[]} items
+ * @param {number} fromIndex
+ * @param {number} toIndex
+ * @returns {T[]}
+ */
 export function moveArrayItem(items, fromIndex, toIndex) {
   if (!Array.isArray(items) || items.length === 0) {
     return [];
@@ -21,6 +30,22 @@ export function moveArrayItem(items, fromIndex, toIndex) {
   return next;
 }
 
+/**
+ * Provides pointer-based drag handlers and keyboard-style row move helpers.
+ *
+ * @template T
+ * @param {T[]} rows
+ * @param {(nextRows: T[]) => void} setRows
+ * @returns {{
+ *   handleDragStart: (index: number, event: PointerEvent|any) => void,
+ *   handleDragMove: (event: PointerEvent|any) => void,
+ *   completeDrag: (event: PointerEvent|any, cancel?: boolean) => void,
+ *   moveRowUp: (index: number) => void,
+ *   moveRowDown: (index: number) => void,
+ *   isDragSource: (index: number) => boolean,
+ *   isDropTarget: (index: number) => boolean
+ * }}
+ */
 export function useRowReorder(rows, setRows) {
   const [dragFromIndex, setDragFromIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);

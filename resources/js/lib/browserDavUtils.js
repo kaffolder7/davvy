@@ -1,3 +1,10 @@
+/**
+ * Builds a lowercase filesystem-safe file stem for client-side exports.
+ *
+ * @param {unknown} value
+ * @param {string} [fallback='export']
+ * @returns {string}
+ */
 export function fileStem(value, fallback = "export") {
   const stem = String(value ?? "")
     .toLowerCase()
@@ -8,6 +15,12 @@ export function fileStem(value, fallback = "export") {
   return stem || fallback;
 }
 
+/**
+ * Parses a filename from a Content-Disposition response header.
+ *
+ * @param {string|null} header
+ * @returns {string|null}
+ */
 export function parseDispositionFilename(header) {
   if (!header) {
     return null;
@@ -26,6 +39,12 @@ export function parseDispositionFilename(header) {
   return standardMatch?.[1] ?? null;
 }
 
+/**
+ * Copies text to the clipboard using the async API with a legacy fallback.
+ *
+ * @param {string} value
+ * @returns {Promise<void>}
+ */
 export async function copyTextToClipboard(value) {
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(value);
@@ -47,6 +66,14 @@ export async function copyTextToClipboard(value) {
   }
 }
 
+/**
+ * Builds an absolute DAV collection URL for a calendar or address book resource.
+ *
+ * @param {'calendar'|'addressbook'} resourceKind
+ * @param {string|number} principalId
+ * @param {string} resourceUri
+ * @returns {string}
+ */
 export function buildDavCollectionUrl(resourceKind, principalId, resourceUri) {
   const collectionRoot =
     resourceKind === "calendar" ? "calendars" : "addressbooks";
@@ -58,6 +85,13 @@ export function buildDavCollectionUrl(resourceKind, principalId, resourceUri) {
   return `${window.location.origin}/dav/${collectionRoot}/${principalId}/${normalizedUri}`;
 }
 
+/**
+ * Downloads an export file and triggers a browser save dialog.
+ *
+ * @param {string} url
+ * @param {string} fallbackName
+ * @returns {Promise<void>}
+ */
 export async function downloadExport(url, fallbackName) {
   const response = await fetch(url, {
     credentials: "include",

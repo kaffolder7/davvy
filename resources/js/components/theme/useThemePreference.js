@@ -3,6 +3,11 @@ import { useEffect, useState } from "react";
 const THEME_STORAGE_KEY = "davvy-theme";
 const VALID_THEMES = new Set(["system", "light", "dark"]);
 
+/**
+ * Resolves the user's system color-scheme preference.
+ *
+ * @returns {'light'|'dark'}
+ */
 export function getSystemTheme() {
   if (typeof window === "undefined" || !window.matchMedia) {
     return "light";
@@ -13,14 +18,32 @@ export function getSystemTheme() {
     : "light";
 }
 
+/**
+ * Restricts theme input to supported values.
+ *
+ * @param {unknown} value
+ * @returns {'system'|'light'|'dark'}
+ */
 export function normalizeTheme(value) {
   return VALID_THEMES.has(value) ? value : "system";
 }
 
+/**
+ * Resolves the effective theme, expanding "system" into a concrete value.
+ *
+ * @param {'system'|'light'|'dark'} theme
+ * @returns {'light'|'dark'}
+ */
 export function resolveTheme(theme) {
   return theme === "system" ? getSystemTheme() : theme;
 }
 
+/**
+ * Applies the current theme to the document root and color-scheme.
+ *
+ * @param {'system'|'light'|'dark'} theme
+ * @returns {void}
+ */
 export function applyTheme(theme) {
   if (typeof document === "undefined") {
     return;
@@ -34,6 +57,11 @@ export function applyTheme(theme) {
   root.style.colorScheme = resolved;
 }
 
+/**
+ * Persists and synchronizes the user's theme preference.
+ *
+ * @returns {{theme: 'system'|'light'|'dark', setTheme: import('react').Dispatch<import('react').SetStateAction<'system'|'light'|'dark'>>}}
+ */
 export default function useThemePreference() {
   const [theme, setTheme] = useState(() => {
     if (typeof window === "undefined") {

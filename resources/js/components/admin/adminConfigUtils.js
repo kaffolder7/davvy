@@ -76,6 +76,12 @@ function formatTimezoneDisplayName(timeZone) {
   return timeZone.replace(/_/g, " ");
 }
 
+/**
+ * Builds grouped timezone options sorted by offset then region.
+ *
+ * @param {Date} [referenceDate=new Date()]
+ * @returns {Array<{region: string, minOffset: number, options: Array<{value: string, offset: number, region: string, label: string}>}>}
+ */
 export function buildTimezoneGroups(referenceDate = new Date()) {
   let names = ["UTC"];
 
@@ -133,6 +139,12 @@ export function buildTimezoneGroups(referenceDate = new Date()) {
     );
 }
 
+/**
+ * Parses comma/newline-separated HH:mm schedule values into sorted unique times.
+ *
+ * @param {unknown} value
+ * @returns {string[]}
+ */
 export function parseBackupScheduleTimes(value) {
   const parsed = String(value ?? "")
     .split(/[,\n]/g)
@@ -143,6 +155,12 @@ export function parseBackupScheduleTimes(value) {
   return Array.from(new Set(parsed)).sort();
 }
 
+/**
+ * Checks whether a retention config matches the recommended preset.
+ *
+ * @param {{daily: unknown, weekly: unknown, monthly: unknown, yearly: unknown}} retention
+ * @returns {boolean}
+ */
 export function isRecommendedBackupRetention({
   daily,
   weekly,
@@ -185,6 +203,13 @@ function normalizeBackupConfigSnapshot(snapshot) {
   };
 }
 
+/**
+ * Compares two backup config snapshots by normalized persisted fields.
+ *
+ * @param {unknown} left
+ * @param {unknown} right
+ * @returns {boolean}
+ */
 export function areBackupConfigSnapshotsEqual(left, right) {
   const normalizedLeft = normalizeBackupConfigSnapshot(left);
   const normalizedRight = normalizeBackupConfigSnapshot(right);
@@ -202,6 +227,12 @@ export function areBackupConfigSnapshotsEqual(left, right) {
   return true;
 }
 
+/**
+ * Formats admin timestamps used in status and backup history displays.
+ *
+ * @param {string|null|undefined} value
+ * @returns {string}
+ */
 export function formatAdminTimestamp(value) {
   if (!value) {
     return "Never";
