@@ -754,6 +754,22 @@ class AdminUserManagementTest extends TestCase
             'data' => 'BEGIN:VCALENDAR',
         ]);
 
+        $recipient = User::factory()->create();
+        $birthdayShare = ResourceShare::query()->create([
+            'resource_type' => 'calendar',
+            'resource_id' => $birthdayCalendar->id,
+            'owner_id' => $owner->id,
+            'shared_with_id' => $recipient->id,
+            'permission' => 'read_only',
+        ]);
+        $anniversaryShare = ResourceShare::query()->create([
+            'resource_type' => 'calendar',
+            'resource_id' => $anniversaryCalendar->id,
+            'owner_id' => $owner->id,
+            'shared_with_id' => $recipient->id,
+            'permission' => 'read_only',
+        ]);
+
         $response = $this
             ->actingAs($admin)
             ->postJson('/api/admin/contact-milestones/purge-generated-calendars')
@@ -767,6 +783,8 @@ class AdminUserManagementTest extends TestCase
         $this->assertDatabaseMissing('calendars', ['id' => $anniversaryCalendar->id]);
         $this->assertDatabaseMissing('calendar_objects', ['calendar_id' => $birthdayCalendar->id]);
         $this->assertDatabaseMissing('calendar_objects', ['calendar_id' => $anniversaryCalendar->id]);
+        $this->assertDatabaseMissing('resource_shares', ['id' => $birthdayShare->id]);
+        $this->assertDatabaseMissing('resource_shares', ['id' => $anniversaryShare->id]);
         $this->assertDatabaseHas('address_book_contact_milestone_calendars', [
             'id' => $birthdaySetting->id,
             'enabled' => false,
