@@ -8,9 +8,6 @@ class PrincipalUriService
 {
     /**
      * Returns URI for user.
-     *
-     * @param  User  $user
-     * @return string
      */
     public function uriForUser(User $user): string
     {
@@ -19,9 +16,6 @@ class PrincipalUriService
 
     /**
      * Returns user from principal URI.
-     *
-     * @param  string  $principalUri
-     * @return User|null
      */
     public function userFromPrincipalUri(string $principalUri): ?User
     {

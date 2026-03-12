@@ -12,9 +12,6 @@ class AddressBookMirrorController extends Controller
 
     /**
      * Updates an existing resource.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function update(Request $request): JsonResponse
     {

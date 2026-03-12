@@ -109,10 +109,6 @@ class BackupSettingsService
 
     /**
      * Checks whether a backup tier already captured the period key.
-     *
-     * @param  string  $tier
-     * @param  string  $periodKey
-     * @return bool
      */
     public function wasPeriodCaptured(string $tier, string $periodKey): bool
     {
@@ -121,10 +117,6 @@ class BackupSettingsService
 
     /**
      * Records the most recently captured period key for a tier.
-     *
-     * @param  string  $tier
-     * @param  string  $periodKey
-     * @return void
      */
     public function markPeriodCaptured(string $tier, string $periodKey): void
     {
@@ -140,11 +132,6 @@ class BackupSettingsService
 
     /**
      * Records the latest backup run result metadata.
-     *
-     * @param  string  $status
-     * @param  string  $message
-     * @param  CarbonImmutable|null  $executedAtUtc
-     * @return void
      */
     public function recordRun(string $status, string $message, ?CarbonImmutable $executedAtUtc = null): void
     {
@@ -186,11 +173,6 @@ class BackupSettingsService
 
     /**
      * Sets boolean.
-     *
-     * @param  string  $key
-     * @param  bool  $value
-     * @param  User|null  $actor
-     * @return void
      */
     private function setBoolean(string $key, bool $value, ?User $actor = null): void
     {
@@ -202,11 +184,6 @@ class BackupSettingsService
 
     /**
      * Sets integer.
-     *
-     * @param  string  $key
-     * @param  int  $value
-     * @param  User|null  $actor
-     * @return void
      */
     private function setInteger(string $key, int $value, ?User $actor = null): void
     {
@@ -218,11 +195,6 @@ class BackupSettingsService
 
     /**
      * Sets string.
-     *
-     * @param  string  $key
-     * @param  string  $value
-     * @param  User|null  $actor
-     * @return void
      */
     private function setString(string $key, string $value, ?User $actor = null): void
     {

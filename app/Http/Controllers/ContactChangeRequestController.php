@@ -15,9 +15,6 @@ class ContactChangeRequestController extends Controller
 
     /**
      * Lists resources.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
@@ -40,9 +37,6 @@ class ContactChangeRequestController extends Controller
 
     /**
      * Returns summary data.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function summary(Request $request): JsonResponse
     {
@@ -53,10 +47,6 @@ class ContactChangeRequestController extends Controller
 
     /**
      * Approves the request.
-     *
-     * @param  Request  $request
-     * @param  ContactChangeRequest  $contactChangeRequest
-     * @return JsonResponse
      */
     public function approve(Request $request, ContactChangeRequest $contactChangeRequest): JsonResponse
     {
@@ -82,10 +72,6 @@ class ContactChangeRequestController extends Controller
 
     /**
      * Denies the request.
-     *
-     * @param  Request  $request
-     * @param  ContactChangeRequest  $contactChangeRequest
-     * @return JsonResponse
      */
     public function deny(Request $request, ContactChangeRequest $contactChangeRequest): JsonResponse
     {
@@ -98,9 +84,6 @@ class ContactChangeRequestController extends Controller
 
     /**
      * Processes a bulk action.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function bulk(Request $request): JsonResponse
     {
@@ -121,9 +104,6 @@ class ContactChangeRequestController extends Controller
 
     /**
      * Returns serialize row.
-     *
-     * @param  ContactChangeRequest  $row
-     * @return array
      */
     private function serializeRow(ContactChangeRequest $row): array
     {
@@ -208,10 +188,6 @@ class ContactChangeRequestController extends Controller
 
     /**
      * Checks whether values equal.
-     *
-     * @param  mixed  $left
-     * @param  mixed  $right
-     * @return bool
      */
     private function valuesEqual(mixed $left, mixed $right): bool
     {

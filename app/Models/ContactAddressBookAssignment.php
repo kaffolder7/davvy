@@ -19,8 +19,6 @@ class ContactAddressBookAssignment extends Model
 
     /**
      * Returns contact.
-     *
-     * @return BelongsTo
      */
     public function contact(): BelongsTo
     {
@@ -29,8 +27,6 @@ class ContactAddressBookAssignment extends Model
 
     /**
      * Returns address book.
-     *
-     * @return BelongsTo
      */
     public function addressBook(): BelongsTo
     {
@@ -39,8 +35,6 @@ class ContactAddressBookAssignment extends Model
 
     /**
      * Returns card.
-     *
-     * @return BelongsTo
      */
     public function card(): BelongsTo
     {

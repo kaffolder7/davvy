@@ -12,10 +12,6 @@ class DavSyncService
 
     /**
      * Returns the current sync token for a resource.
-     *
-     * @param  ShareResourceType  $resourceType
-     * @param  int  $resourceId
-     * @return int
      */
     public function currentToken(ShareResourceType $resourceType, int $resourceId): int
     {
@@ -35,10 +31,6 @@ class DavSyncService
 
     /**
      * Ensures a sync tracker exists for the resource.
-     *
-     * @param  ShareResourceType  $resourceType
-     * @param  int  $resourceId
-     * @return void
      */
     public function ensureResource(ShareResourceType $resourceType, int $resourceId): void
     {
@@ -47,11 +39,6 @@ class DavSyncService
 
     /**
      * Records an added resource URI for sync tracking.
-     *
-     * @param  ShareResourceType  $resourceType
-     * @param  int  $resourceId
-     * @param  string  $uri
-     * @return void
      */
     public function recordAdded(ShareResourceType $resourceType, int $resourceId, string $uri): void
     {
@@ -60,11 +47,6 @@ class DavSyncService
 
     /**
      * Records a modified resource URI for sync tracking.
-     *
-     * @param  ShareResourceType  $resourceType
-     * @param  int  $resourceId
-     * @param  string  $uri
-     * @return void
      */
     public function recordModified(ShareResourceType $resourceType, int $resourceId, string $uri): void
     {
@@ -73,11 +55,6 @@ class DavSyncService
 
     /**
      * Records a deleted resource URI for sync tracking.
-     *
-     * @param  ShareResourceType  $resourceType
-     * @param  int  $resourceId
-     * @param  string  $uri
-     * @return void
      */
     public function recordDeleted(ShareResourceType $resourceType, int $resourceId, string $uri): void
     {
@@ -86,12 +63,6 @@ class DavSyncService
 
     /**
      * Returns DAV sync changes since the given token.
-     *
-     * @param  ShareResourceType  $resourceType
-     * @param  int  $resourceId
-     * @param  int  $syncToken
-     * @param  int|null  $limit
-     * @return array
      */
     public function getChangesSince(
         ShareResourceType $resourceType,
@@ -142,12 +113,6 @@ class DavSyncService
 
     /**
      * Records change.
-     *
-     * @param  ShareResourceType  $resourceType
-     * @param  int  $resourceId
-     * @param  string  $uri
-     * @param  string  $operation
-     * @return void
      */
     private function recordChange(ShareResourceType $resourceType, int $resourceId, string $uri, string $operation): void
     {
@@ -197,10 +162,6 @@ class DavSyncService
 
     /**
      * Initializes state.
-     *
-     * @param  ShareResourceType  $resourceType
-     * @param  int  $resourceId
-     * @return void
      */
     private function initializeState(ShareResourceType $resourceType, int $resourceId): void
     {
@@ -215,11 +176,6 @@ class DavSyncService
 
     /**
      * Normalizes persisted token.
-     *
-     * @param  ShareResourceType  $resourceType
-     * @param  int  $resourceId
-     * @param  int  $syncToken
-     * @return int
      */
     private function normalizePersistedToken(
         ShareResourceType $resourceType,

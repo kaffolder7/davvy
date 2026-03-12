@@ -958,9 +958,6 @@ class BackupRestoreService
 
     /**
      * Returns legacy collection URI candidate from stem.
-     *
-     * @param  string  $fileStem
-     * @return string|null
      */
     private function legacyCollectionUriCandidateFromStem(string $fileStem): ?string
     {
@@ -1060,11 +1057,6 @@ class BackupRestoreService
 
     /**
      * Normalizes resource URI.
-     *
-     * @param  string  $candidate
-     * @param  string  $extension
-     * @param  string  $fallbackStem
-     * @return string
      */
     private function normalizeResourceUri(string $candidate, string $extension, string $fallbackStem): string
     {

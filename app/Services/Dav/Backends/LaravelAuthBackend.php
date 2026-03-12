@@ -25,10 +25,6 @@ class LaravelAuthBackend extends AbstractBasic
 
     /**
      * Authenticates DAV credentials and resolves the principal URI.
-     *
-     * @param  RequestInterface  $request
-     * @param  ResponseInterface  $response
-     * @return array
      */
     public function check(RequestInterface $request, ResponseInterface $response): array
     {
@@ -53,7 +49,6 @@ class LaravelAuthBackend extends AbstractBasic
      *
      * @param  mixed  $username
      * @param  mixed  $password
-     * @return bool
      */
     protected function validateUserPass($username, $password): bool
     {
@@ -62,10 +57,6 @@ class LaravelAuthBackend extends AbstractBasic
 
     /**
      * Resolves user.
-     *
-     * @param  string  $username
-     * @param  string  $password
-     * @return User|null
      */
     private function resolveUser(string $username, string $password): ?User
     {
@@ -97,9 +88,6 @@ class LaravelAuthBackend extends AbstractBasic
 
     /**
      * Checks whether it should require app password.
-     *
-     * @param  User  $user
-     * @return bool
      */
     private function shouldRequireAppPassword(User $user): bool
     {

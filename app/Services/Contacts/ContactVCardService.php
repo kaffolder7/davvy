@@ -201,9 +201,6 @@ class ContactVCardService
 
     /**
      * Builds a display name from contact payload fields.
-     *
-     * @param  array  $payload
-     * @return string
      */
     public function displayName(array $payload): string
     {
@@ -238,9 +235,6 @@ class ContactVCardService
 
     /**
      * Builds a vCard payload from normalized contact data.
-     *
-     * @param  Contact  $contact
-     * @return string
      */
     public function build(Contact $contact): string
     {
@@ -670,10 +664,6 @@ class ContactVCardService
 
     /**
      * Returns apple date label for property.
-     *
-     * @param  VCard  $vCard
-     * @param  mixed  $property
-     * @return string|null
      */
     private function appleDateLabelForProperty(VCard $vCard, mixed $property): ?string
     {
@@ -703,9 +693,6 @@ class ContactVCardService
 
     /**
      * Normalizes apple date label.
-     *
-     * @param  string|null  $value
-     * @return string|null
      */
     private function normalizeAppleDateLabel(?string $value): ?string
     {
@@ -740,11 +727,6 @@ class ContactVCardService
 
     /**
      * Performs the add simple property operation.
-     *
-     * @param  VCard  $vCard
-     * @param  string  $property
-     * @param  mixed  $value
-     * @return void
      */
     private function addSimpleProperty(VCard $vCard, string $property, mixed $value): void
     {
@@ -798,10 +780,6 @@ class ContactVCardService
 
     /**
      * Returns first property.
-     *
-     * @param  VCard  $vCard
-     * @param  string  $propertyName
-     * @return mixed
      */
     private function firstProperty(VCard $vCard, string $propertyName): mixed
     {
@@ -812,10 +790,6 @@ class ContactVCardService
 
     /**
      * Returns first property value.
-     *
-     * @param  VCard  $vCard
-     * @param  string  $propertyName
-     * @return string|null
      */
     private function firstPropertyValue(VCard $vCard, string $propertyName): ?string
     {
@@ -857,10 +831,6 @@ class ContactVCardService
 
     /**
      * Returns property parameter value.
-     *
-     * @param  mixed  $property
-     * @param  string  $name
-     * @return string|null
      */
     private function propertyParameterValue(mixed $property, string $name): ?string
     {
@@ -910,9 +880,6 @@ class ContactVCardService
 
     /**
      * Returns phone label from types.
-     *
-     * @param  array  $types
-     * @return string
      */
     private function phoneLabelFromTypes(array $types): string
     {
@@ -1088,11 +1055,6 @@ class ContactVCardService
 
     /**
      * Sets singleton property.
-     *
-     * @param  VCard  $vCard
-     * @param  string  $propertyName
-     * @param  string|array  $value
-     * @return void
      */
     private function setSingletonProperty(VCard $vCard, string $propertyName, string|array $value): void
     {
@@ -1187,9 +1149,6 @@ class ContactVCardService
 
     /**
      * Returns related type from custom label.
-     *
-     * @param  mixed  $customLabel
-     * @return string|null
      */
     private function relatedTypeFromCustomLabel(mixed $customLabel): ?string
     {
@@ -1233,9 +1192,6 @@ class ContactVCardService
 
     /**
      * Returns related display label for token.
-     *
-     * @param  string  $token
-     * @return string
      */
     private function relatedDisplayLabelForToken(string $token): string
     {
@@ -1248,9 +1204,6 @@ class ContactVCardService
 
     /**
      * Normalizes related label token.
-     *
-     * @param  mixed  $value
-     * @return string|null
      */
     private function normalizeRelatedLabelToken(mixed $value): ?string
     {
@@ -1270,9 +1223,6 @@ class ContactVCardService
 
     /**
      * Returns custom label or label.
-     *
-     * @param  array  $row
-     * @return string
      */
     private function customLabelOrLabel(array $row): string
     {
@@ -1283,9 +1233,6 @@ class ContactVCardService
 
     /**
      * Returns clean string.
-     *
-     * @param  mixed  $value
-     * @return string|null
      */
     private function cleanString(mixed $value): ?string
     {
@@ -1322,9 +1269,6 @@ class ContactVCardService
 
     /**
      * Returns to integer.
-     *
-     * @param  mixed  $value
-     * @return int|null
      */
     private function toInteger(mixed $value): ?int
     {
@@ -1345,9 +1289,6 @@ class ContactVCardService
 
     /**
      * Checks whether to boolean.
-     *
-     * @param  mixed  $value
-     * @return bool
      */
     private function toBoolean(mixed $value): bool
     {

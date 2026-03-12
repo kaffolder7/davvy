@@ -18,8 +18,6 @@ class AddressBookMirrorConfig extends Model
 
     /**
      * Returns casts.
-     *
-     * @return array
      */
     protected function casts(): array
     {
@@ -30,8 +28,6 @@ class AddressBookMirrorConfig extends Model
 
     /**
      * Returns user.
-     *
-     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -40,8 +36,6 @@ class AddressBookMirrorConfig extends Model
 
     /**
      * Returns sources.
-     *
-     * @return HasMany
      */
     public function sources(): HasMany
     {

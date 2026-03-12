@@ -20,8 +20,6 @@ class Contact extends Model
 
     /**
      * Returns casts.
-     *
-     * @return array
      */
     protected function casts(): array
     {
@@ -32,8 +30,6 @@ class Contact extends Model
 
     /**
      * Returns owner.
-     *
-     * @return BelongsTo
      */
     public function owner(): BelongsTo
     {
@@ -42,8 +38,6 @@ class Contact extends Model
 
     /**
      * Returns assignments.
-     *
-     * @return HasMany
      */
     public function assignments(): HasMany
     {

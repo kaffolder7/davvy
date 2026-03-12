@@ -275,9 +275,6 @@ class SponsorshipLinksService
 
     /**
      * Normalizes handle.
-     *
-     * @param  string  $value
-     * @return string
      */
     private function normalizeHandle(string $value): string
     {
@@ -338,9 +335,6 @@ class SponsorshipLinksService
 
     /**
      * Parses inline funding value.
-     *
-     * @param  string  $value
-     * @return string|array
      */
     private function parseInlineFundingValue(string $value): string|array
     {
@@ -371,9 +365,6 @@ class SponsorshipLinksService
 
     /**
      * Normalizes yaml scalar.
-     *
-     * @param  string  $value
-     * @return string
      */
     private function normalizeYamlScalar(string $value): string
     {
@@ -396,9 +387,6 @@ class SponsorshipLinksService
 
     /**
      * Returns strip inline comment.
-     *
-     * @param  string  $value
-     * @return string
      */
     private function stripInlineComment(string $value): string
     {

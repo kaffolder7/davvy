@@ -24,8 +24,6 @@ class CalendarObject extends Model
 
     /**
      * Returns casts.
-     *
-     * @return array
      */
     protected function casts(): array
     {
@@ -37,8 +35,6 @@ class CalendarObject extends Model
 
     /**
      * Returns calendar.
-     *
-     * @return BelongsTo
      */
     public function calendar(): BelongsTo
     {

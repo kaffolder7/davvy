@@ -24,9 +24,6 @@ class ExportController extends Controller
 
     /**
      * Returns export all calendars.
-     *
-     * @param  Request  $request
-     * @return BinaryFileResponse
      */
     public function exportAllCalendars(Request $request): BinaryFileResponse
     {
@@ -46,10 +43,6 @@ class ExportController extends Controller
 
     /**
      * Returns export calendar.
-     *
-     * @param  Request  $request
-     * @param  Calendar  $calendar
-     * @return Response
      */
     public function exportCalendar(Request $request, Calendar $calendar): Response
     {
@@ -73,9 +66,6 @@ class ExportController extends Controller
 
     /**
      * Returns export all address books.
-     *
-     * @param  Request  $request
-     * @return BinaryFileResponse
      */
     public function exportAllAddressBooks(Request $request): BinaryFileResponse
     {
@@ -95,10 +85,6 @@ class ExportController extends Controller
 
     /**
      * Returns export address book.
-     *
-     * @param  Request  $request
-     * @param  AddressBook  $addressBook
-     * @return Response
      */
     public function exportAddressBook(Request $request, AddressBook $addressBook): Response
     {
@@ -182,9 +168,6 @@ class ExportController extends Controller
 
     /**
      * Builds calendar payload.
-     *
-     * @param  Calendar  $calendar
-     * @return string
      */
     private function buildCalendarPayload(Calendar $calendar): string
     {
@@ -214,9 +197,6 @@ class ExportController extends Controller
 
     /**
      * Builds address book payload.
-     *
-     * @param  AddressBook  $addressBook
-     * @return string
      */
     private function buildAddressBookPayload(AddressBook $addressBook): string
     {
@@ -294,9 +274,6 @@ class ExportController extends Controller
 
     /**
      * Returns attachment header.
-     *
-     * @param  string  $fileName
-     * @return string
      */
     private function attachmentHeader(string $fileName): string
     {
@@ -305,11 +282,6 @@ class ExportController extends Controller
 
     /**
      * Returns resource file name.
-     *
-     * @param  string  $displayName
-     * @param  string  $fallbackStem
-     * @param  string  $extension
-     * @return string
      */
     private function resourceFileName(string $displayName, string $fallbackStem, string $extension): string
     {
@@ -324,9 +296,6 @@ class ExportController extends Controller
 
     /**
      * Returns export archive name.
-     *
-     * @param  string  $resourceType
-     * @return string
      */
     private function exportArchiveName(string $resourceType): string
     {

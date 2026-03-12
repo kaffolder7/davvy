@@ -21,9 +21,6 @@ class AddressBookController extends Controller
 
     /**
      * Creates a new resource.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
@@ -52,10 +49,6 @@ class AddressBookController extends Controller
 
     /**
      * Updates an existing resource.
-     *
-     * @param  Request  $request
-     * @param  AddressBook  $addressBook
-     * @return JsonResponse
      */
     public function update(Request $request, AddressBook $addressBook): JsonResponse
     {
@@ -78,10 +71,6 @@ class AddressBookController extends Controller
 
     /**
      * Deletes an existing resource.
-     *
-     * @param  Request  $request
-     * @param  AddressBook  $addressBook
-     * @return JsonResponse
      */
     public function destroy(Request $request, AddressBook $addressBook): JsonResponse
     {
@@ -98,10 +87,6 @@ class AddressBookController extends Controller
 
     /**
      * Performs the authorize ownership operation.
-     *
-     * @param  Request  $request
-     * @param  AddressBook  $addressBook
-     * @return void
      */
     private function authorizeOwnership(Request $request, AddressBook $addressBook): void
     {
@@ -114,10 +99,6 @@ class AddressBookController extends Controller
 
     /**
      * Returns unique URI.
-     *
-     * @param  int  $ownerId
-     * @param  string  $baseUri
-     * @return string
      */
     private function uniqueUri(int $ownerId, string $baseUri): string
     {

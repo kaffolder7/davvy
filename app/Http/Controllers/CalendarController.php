@@ -19,9 +19,6 @@ class CalendarController extends Controller
 
     /**
      * Creates a new resource.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
@@ -54,10 +51,6 @@ class CalendarController extends Controller
 
     /**
      * Updates an existing resource.
-     *
-     * @param  Request  $request
-     * @param  Calendar  $calendar
-     * @return JsonResponse
      */
     public function update(Request $request, Calendar $calendar): JsonResponse
     {
@@ -78,10 +71,6 @@ class CalendarController extends Controller
 
     /**
      * Deletes an existing resource.
-     *
-     * @param  Request  $request
-     * @param  Calendar  $calendar
-     * @return JsonResponse
      */
     public function destroy(Request $request, Calendar $calendar): JsonResponse
     {
@@ -98,10 +87,6 @@ class CalendarController extends Controller
 
     /**
      * Performs the authorize ownership operation.
-     *
-     * @param  Request  $request
-     * @param  Calendar  $calendar
-     * @return void
      */
     private function authorizeOwnership(Request $request, Calendar $calendar): void
     {
@@ -114,10 +99,6 @@ class CalendarController extends Controller
 
     /**
      * Returns unique URI.
-     *
-     * @param  int  $ownerId
-     * @param  string  $baseUri
-     * @return string
      */
     private function uniqueUri(int $ownerId, string $baseUri): string
     {

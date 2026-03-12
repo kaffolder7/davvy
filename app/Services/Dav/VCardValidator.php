@@ -14,9 +14,6 @@ class VCardValidator
 
     /**
      * Validates and normalizes vCard payload content.
-     *
-     * @param  string  $cardData
-     * @return array
      */
     public function validateAndNormalize(string $cardData): array
     {
@@ -45,9 +42,6 @@ class VCardValidator
 
     /**
      * Extracts the UID from a vCard payload.
-     *
-     * @param  string  $cardData
-     * @return string|null
      */
     public function extractUid(string $cardData): ?string
     {
@@ -70,9 +64,6 @@ class VCardValidator
 
     /**
      * Parses v card.
-     *
-     * @param  string  $cardData
-     * @return VCard
      */
     private function parseVCard(string $cardData): VCard
     {
@@ -91,10 +82,6 @@ class VCardValidator
 
     /**
      * Validates version.
-     *
-     * @param  VCard  $card
-     * @param  bool  $strictModeEnabled
-     * @return string
      */
     private function validateVersion(VCard $card, bool $strictModeEnabled): string
     {
@@ -119,10 +106,6 @@ class VCardValidator
 
     /**
      * Validates full name.
-     *
-     * @param  VCard  $card
-     * @param  bool  $strictModeEnabled
-     * @return string
      */
     private function validateFullName(VCard $card, bool $strictModeEnabled): string
     {
@@ -153,10 +136,6 @@ class VCardValidator
 
     /**
      * Validates uid.
-     *
-     * @param  VCard  $card
-     * @param  bool  $strictModeEnabled
-     * @return string|null
      */
     private function validateUid(VCard $card, bool $strictModeEnabled): ?string
     {
@@ -177,10 +156,6 @@ class VCardValidator
 
     /**
      * Validates email addresses.
-     *
-     * @param  VCard  $card
-     * @param  bool  $strictModeEnabled
-     * @return void
      */
     private function validateEmailAddresses(VCard $card, bool $strictModeEnabled): void
     {

@@ -14,9 +14,6 @@ class DavResourceIdPlugin extends ServerPlugin
 {
     /**
      * Initializes the component.
-     *
-     * @param  Server  $server
-     * @return void
      */
     public function initialize(Server $server): void
     {
@@ -25,8 +22,6 @@ class DavResourceIdPlugin extends ServerPlugin
 
     /**
      * Returns plugin name.
-     *
-     * @return string
      */
     public function getPluginName(): string
     {
@@ -35,10 +30,6 @@ class DavResourceIdPlugin extends ServerPlugin
 
     /**
      * Handles the PROPFIND request.
-     *
-     * @param  PropFind  $propFind
-     * @param  INode  $node
-     * @return void
      */
     public function propFind(PropFind $propFind, INode $node): void
     {
@@ -60,9 +51,6 @@ class DavResourceIdPlugin extends ServerPlugin
 
     /**
      * Returns stable UUID for path.
-     *
-     * @param  string  $path
-     * @return string
      */
     private function stableUuidForPath(string $path): string
     {
@@ -87,9 +75,6 @@ class DavResourceIdPlugin extends ServerPlugin
 
     /**
      * Returns address book home sync token.
-     *
-     * @param  string  $path
-     * @return string
      */
     private function addressBookHomeSyncToken(string $path): string
     {

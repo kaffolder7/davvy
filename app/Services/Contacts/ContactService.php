@@ -391,10 +391,6 @@ class ContactService
 
     /**
      * Checks whether the actor can write all assigned address books for the contact.
-     *
-     * @param  User  $actor
-     * @param  Contact  $contact
-     * @return bool
      */
     public function canUserWriteContact(User $actor, Contact $contact): bool
     {
@@ -471,10 +467,6 @@ class ContactService
 
     /**
      * Deletes a contact and cleans derived relationship artifacts.
-     *
-     * @param  User  $actor
-     * @param  Contact  $contact
-     * @return void
      */
     public function delete(User $actor, Contact $contact): void
     {
@@ -498,9 +490,6 @@ class ContactService
 
     /**
      * Applies an approved moderation delete for a contact.
-     *
-     * @param  Contact  $contact
-     * @return void
      */
     public function applyApprovedDelete(Contact $contact): void
     {
@@ -509,10 +498,6 @@ class ContactService
 
     /**
      * Asserts can mutate contact.
-     *
-     * @param  User  $actor
-     * @param  Contact  $contact
-     * @return void
      */
     private function assertCanMutateContact(User $actor, Contact $contact): void
     {
@@ -649,9 +634,6 @@ class ContactService
 
     /**
      * Deletes contact.
-     *
-     * @param  Contact  $contact
-     * @return void
      */
     private function destroyContact(Contact $contact): void
     {
@@ -1028,10 +1010,6 @@ class ContactService
 
     /**
      * Creates assignment.
-     *
-     * @param  Contact  $contact
-     * @param  AddressBook  $addressBook
-     * @return void
      */
     private function createAssignment(Contact $contact, AddressBook $addressBook): void
     {
@@ -1062,11 +1040,6 @@ class ContactService
 
     /**
      * Performs the upsert assignment card operation.
-     *
-     * @param  Contact  $contact
-     * @param  AddressBook  $addressBook
-     * @param  ContactAddressBookAssignment  $assignment
-     * @return void
      */
     private function upsertAssignmentCard(Contact $contact, AddressBook $addressBook, ContactAddressBookAssignment $assignment): void
     {
@@ -1129,9 +1102,6 @@ class ContactService
 
     /**
      * Deletes assignment card.
-     *
-     * @param  ContactAddressBookAssignment  $assignment
-     * @return void
      */
     private function deleteAssignmentCard(ContactAddressBookAssignment $assignment): void
     {
@@ -1148,11 +1118,6 @@ class ContactService
 
     /**
      * Asserts no uid conflict.
-     *
-     * @param  AddressBook  $addressBook
-     * @param  string  $uid
-     * @param  int|null  $exceptCardId
-     * @return void
      */
     private function assertNoUidConflict(AddressBook $addressBook, string $uid, ?int $exceptCardId = null): void
     {
@@ -1179,9 +1144,6 @@ class ContactService
 
     /**
      * Returns normalized card data.
-     *
-     * @param  Contact  $contact
-     * @return string
      */
     private function normalizedCardData(Contact $contact): string
     {
@@ -1193,12 +1155,6 @@ class ContactService
 
     /**
      * Returns next available card URI.
-     *
-     * @param  AddressBook  $addressBook
-     * @param  Contact  $contact
-     * @param  string|null  $preferredUri
-     * @param  int|null  $exceptCardId
-     * @return string
      */
     private function nextAvailableCardUri(
         AddressBook $addressBook,
@@ -1227,9 +1183,6 @@ class ContactService
 
     /**
      * Returns sanitize card URI.
-     *
-     * @param  string|null  $value
-     * @return string|null
      */
     private function sanitizeCardUri(?string $value): ?string
     {
@@ -1249,11 +1202,6 @@ class ContactService
 
     /**
      * Checks whether card URI exists.
-     *
-     * @param  int  $addressBookId
-     * @param  string  $uri
-     * @param  int|null  $exceptCardId
-     * @return bool
      */
     private function cardUriExists(int $addressBookId, string $uri, ?int $exceptCardId): bool
     {
@@ -1270,9 +1218,6 @@ class ContactService
 
     /**
      * Synchronizes assignments for existing contact.
-     *
-     * @param  Contact  $contact
-     * @return void
      */
     private function syncAssignmentsForExistingContact(Contact $contact): void
     {
@@ -1728,10 +1673,6 @@ class ContactService
 
     /**
      * Checks whether it should preserve existing specific reciprocal label.
-     *
-     * @param  string|null  $existingToken
-     * @param  string|null  $incomingToken
-     * @return bool
      */
     private function shouldPreserveExistingSpecificReciprocalLabel(
         ?string $existingToken,
@@ -1792,10 +1733,6 @@ class ContactService
 
     /**
      * Returns gender aware inverse token.
-     *
-     * @param  string  $inverseToken
-     * @param  Contact  $sourceContact
-     * @return string
      */
     private function genderAwareInverseToken(string $inverseToken, Contact $sourceContact): string
     {
@@ -1814,9 +1751,6 @@ class ContactService
 
     /**
      * Returns inferred gender for contact.
-     *
-     * @param  Contact  $contact
-     * @return string|null
      */
     private function inferredGenderForContact(Contact $contact): ?string
     {
@@ -1829,9 +1763,6 @@ class ContactService
 
     /**
      * Returns inferred gender from pronouns.
-     *
-     * @param  string|null  $value
-     * @return string|null
      */
     private function inferredGenderFromPronouns(?string $value): ?string
     {
@@ -1980,9 +1911,6 @@ class ContactService
 
     /**
      * Normalizes related label token.
-     *
-     * @param  string|null  $value
-     * @return string|null
      */
     private function normalizeRelatedLabelToken(?string $value): ?string
     {
@@ -2012,9 +1940,6 @@ class ContactService
 
     /**
      * Normalizes string.
-     *
-     * @param  mixed  $value
-     * @return string|null
      */
     private function normalizeString(mixed $value): ?string
     {
@@ -2029,9 +1954,6 @@ class ContactService
 
     /**
      * Normalizes int.
-     *
-     * @param  mixed  $value
-     * @return int|null
      */
     private function normalizeInt(mixed $value): ?int
     {

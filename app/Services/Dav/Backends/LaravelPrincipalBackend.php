@@ -15,7 +15,6 @@ class LaravelPrincipalBackend extends AbstractBackend
      * Returns principals matching a DAV prefix.
      *
      * @param  mixed  $prefixPath
-     * @return array
      */
     public function getPrincipalsByPrefix($prefixPath): array
     {
@@ -34,7 +33,6 @@ class LaravelPrincipalBackend extends AbstractBackend
      * Returns a principal record for a DAV path.
      *
      * @param  mixed  $path
-     * @return array|null
      */
     public function getPrincipalByPath($path): ?array
     {
@@ -51,8 +49,6 @@ class LaravelPrincipalBackend extends AbstractBackend
      * Updates mutable principal properties.
      *
      * @param  mixed  $path
-     * @param  PropPatch  $propPatch
-     * @return void
      */
     public function updatePrincipal($path, PropPatch $propPatch): void
     {
@@ -84,9 +80,7 @@ class LaravelPrincipalBackend extends AbstractBackend
      * Searches principals by property criteria.
      *
      * @param  mixed  $prefixPath
-     * @param  array  $searchProperties
      * @param  mixed  $test
-     * @return array
      */
     public function searchPrincipals($prefixPath, array $searchProperties, $test = 'allof'): array
     {
@@ -144,7 +138,6 @@ class LaravelPrincipalBackend extends AbstractBackend
      * Returns group members for a principal.
      *
      * @param  mixed  $principal
-     * @return array
      */
     public function getGroupMemberSet($principal): array
     {
@@ -155,7 +148,6 @@ class LaravelPrincipalBackend extends AbstractBackend
      * Returns groups containing the principal.
      *
      * @param  mixed  $principal
-     * @return array
      */
     public function getGroupMembership($principal): array
     {
@@ -166,8 +158,6 @@ class LaravelPrincipalBackend extends AbstractBackend
      * Updates group membership for a principal.
      *
      * @param  mixed  $principal
-     * @param  array  $members
-     * @return void
      */
     public function setGroupMemberSet($principal, array $members): void
     {
@@ -176,9 +166,6 @@ class LaravelPrincipalBackend extends AbstractBackend
 
     /**
      * Returns transform user.
-     *
-     * @param  User  $user
-     * @return array
      */
     private function transformUser(User $user): array
     {

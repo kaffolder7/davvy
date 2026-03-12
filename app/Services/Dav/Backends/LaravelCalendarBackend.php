@@ -39,7 +39,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
      * Returns calendars accessible to the principal.
      *
      * @param  mixed  $principalUri
-     * @return array
      */
     public function getCalendarsForUser($principalUri): array
     {
@@ -74,8 +73,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
      *
      * @param  mixed  $principalUri
      * @param  mixed  $calendarUri
-     * @param  array  $properties
-     * @return void
      */
     public function createCalendar($principalUri, $calendarUri, array $properties): void
     {
@@ -103,8 +100,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
      * Updates properties for a writable calendar.
      *
      * @param  mixed  $calendarId
-     * @param  PropPatch  $propPatch
-     * @return void
      */
     public function updateCalendar($calendarId, PropPatch $propPatch): void
     {
@@ -148,7 +143,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
      * Deletes a writable calendar.
      *
      * @param  mixed  $calendarId
-     * @return void
      */
     public function deleteCalendar($calendarId): void
     {
@@ -167,7 +161,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
      * Returns calendar objects for a calendar.
      *
      * @param  mixed  $calendarId
-     * @return array
      */
     public function getCalendarObjects($calendarId): array
     {
@@ -186,7 +179,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
      *
      * @param  mixed  $calendarId
      * @param  mixed  $objectUri
-     * @return array|null
      */
     public function getCalendarObject($calendarId, $objectUri): ?array
     {
@@ -208,8 +200,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
      * Returns multiple calendar objects by URI.
      *
      * @param  mixed  $calendarId
-     * @param  array  $uris
-     * @return array
      */
     public function getMultipleCalendarObjects($calendarId, array $uris): array
     {
@@ -229,7 +219,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
      * @param  mixed  $calendarId
      * @param  mixed  $objectUri
      * @param  mixed  $calendarData
-     * @return string
      */
     public function createCalendarObject($calendarId, $objectUri, $calendarData): string
     {
@@ -290,7 +279,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
      * @param  mixed  $calendarId
      * @param  mixed  $objectUri
      * @param  mixed  $calendarData
-     * @return string
      */
     public function updateCalendarObject($calendarId, $objectUri, $calendarData): string
     {
@@ -348,7 +336,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
      *
      * @param  mixed  $calendarId
      * @param  mixed  $objectUri
-     * @return void
      */
     public function deleteCalendarObject($calendarId, $objectUri): void
     {
@@ -378,8 +365,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
      * Executes a calendar-query filter against stored objects.
      *
      * @param  mixed  $calendarId
-     * @param  array  $filters
-     * @return array
      */
     public function calendarQuery($calendarId, array $filters): array
     {
@@ -398,7 +383,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
      * @param  mixed  $syncToken
      * @param  mixed  $syncLevel
      * @param  mixed  $limit
-     * @return array
      */
     public function getChangesForCalendar($calendarId, $syncToken, $syncLevel, $limit = null): array
     {
@@ -430,11 +414,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
 
     /**
      * Returns transform calendar.
-     *
-     * @param  Calendar  $calendar
-     * @param  SharePermission  $permission
-     * @param  string  $principalUri
-     * @return array
      */
     private function transformCalendar(Calendar $calendar, SharePermission $permission, string $principalUri): array
     {
@@ -459,9 +438,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
 
     /**
      * Checks whether initial sync request.
-     *
-     * @param  mixed  $syncToken
-     * @return bool
      */
     private function isInitialSyncRequest(mixed $syncToken): bool
     {
@@ -474,10 +450,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
 
     /**
      * Returns transform calendar object.
-     *
-     * @param  CalendarObject  $object
-     * @param  bool  $withData
-     * @return array
      */
     private function transformCalendarObject(CalendarObject $object, bool $withData): array
     {
@@ -498,9 +470,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
 
     /**
      * Returns readable calendar.
-     *
-     * @param  int  $calendarId
-     * @return Calendar
      */
     private function loadReadableCalendar(int $calendarId): Calendar
     {
@@ -521,9 +490,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
 
     /**
      * Asserts writable calendar.
-     *
-     * @param  Calendar  $calendar
-     * @return void
      */
     private function assertWritableCalendar(Calendar $calendar): void
     {
@@ -536,9 +502,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
 
     /**
      * Asserts deletable calendar.
-     *
-     * @param  Calendar  $calendar
-     * @return void
      */
     private function assertDeletableCalendar(Calendar $calendar): void
     {
@@ -551,9 +514,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
 
     /**
      * Parses sync token.
-     *
-     * @param  mixed  $syncToken
-     * @return int
      */
     private function parseSyncToken(mixed $syncToken): int
     {
@@ -574,11 +534,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
 
     /**
      * Checks whether uid conflict exists.
-     *
-     * @param  int  $calendarId
-     * @param  string  $uid
-     * @param  int|null  $exceptObjectId
-     * @return bool
      */
     private function uidConflictExists(int $calendarId, string $uid, ?int $exceptObjectId = null): bool
     {
@@ -595,9 +550,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
 
     /**
      * Returns fallback uid for legacy payload.
-     *
-     * @param  string  $objectUri
-     * @return string
      */
     private function fallbackUidForLegacyPayload(string $objectUri): string
     {
@@ -606,9 +558,6 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
 
     /**
      * Checks whether uid unique constraint violation.
-     *
-     * @param  QueryException  $exception
-     * @return bool
      */
     private function isUidUniqueConstraintViolation(QueryException $exception): bool
     {

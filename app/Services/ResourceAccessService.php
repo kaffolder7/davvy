@@ -13,10 +13,6 @@ class ResourceAccessService
 {
     /**
      * Returns calendar permission.
-     *
-     * @param  User  $user
-     * @param  Calendar  $calendar
-     * @return SharePermission|null
      */
     public function calendarPermission(User $user, Calendar $calendar): ?SharePermission
     {
@@ -35,10 +31,6 @@ class ResourceAccessService
 
     /**
      * Returns address book permission.
-     *
-     * @param  User  $user
-     * @param  AddressBook  $addressBook
-     * @return SharePermission|null
      */
     public function addressBookPermission(User $user, AddressBook $addressBook): ?SharePermission
     {
@@ -57,10 +49,6 @@ class ResourceAccessService
 
     /**
      * Checks whether user can read calendar.
-     *
-     * @param  User  $user
-     * @param  Calendar  $calendar
-     * @return bool
      */
     public function userCanReadCalendar(User $user, Calendar $calendar): bool
     {
@@ -69,10 +57,6 @@ class ResourceAccessService
 
     /**
      * Checks whether user can write calendar.
-     *
-     * @param  User  $user
-     * @param  Calendar  $calendar
-     * @return bool
      */
     public function userCanWriteCalendar(User $user, Calendar $calendar): bool
     {
@@ -83,10 +67,6 @@ class ResourceAccessService
 
     /**
      * Checks whether user can delete calendar.
-     *
-     * @param  User  $user
-     * @param  Calendar  $calendar
-     * @return bool
      */
     public function userCanDeleteCalendar(User $user, Calendar $calendar): bool
     {
@@ -97,10 +77,6 @@ class ResourceAccessService
 
     /**
      * Checks whether user can read address book.
-     *
-     * @param  User  $user
-     * @param  AddressBook  $addressBook
-     * @return bool
      */
     public function userCanReadAddressBook(User $user, AddressBook $addressBook): bool
     {
@@ -109,10 +85,6 @@ class ResourceAccessService
 
     /**
      * Checks whether user can write address book.
-     *
-     * @param  User  $user
-     * @param  AddressBook  $addressBook
-     * @return bool
      */
     public function userCanWriteAddressBook(User $user, AddressBook $addressBook): bool
     {
@@ -123,10 +95,6 @@ class ResourceAccessService
 
     /**
      * Checks whether user can delete address book.
-     *
-     * @param  User  $user
-     * @param  AddressBook  $addressBook
-     * @return bool
      */
     public function userCanDeleteAddressBook(User $user, AddressBook $addressBook): bool
     {

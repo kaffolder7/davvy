@@ -23,8 +23,6 @@ class AddressBook extends Model
 
     /**
      * Returns casts.
-     *
-     * @return array
      */
     protected function casts(): array
     {
@@ -36,8 +34,6 @@ class AddressBook extends Model
 
     /**
      * Returns owner.
-     *
-     * @return BelongsTo
      */
     public function owner(): BelongsTo
     {
@@ -46,8 +42,6 @@ class AddressBook extends Model
 
     /**
      * Returns cards.
-     *
-     * @return HasMany
      */
     public function cards(): HasMany
     {
@@ -56,8 +50,6 @@ class AddressBook extends Model
 
     /**
      * Returns contact assignments.
-     *
-     * @return HasMany
      */
     public function contactAssignments(): HasMany
     {
@@ -66,8 +58,6 @@ class AddressBook extends Model
 
     /**
      * Returns milestone calendars.
-     *
-     * @return HasMany
      */
     public function milestoneCalendars(): HasMany
     {
@@ -76,8 +66,6 @@ class AddressBook extends Model
 
     /**
      * Returns contacts.
-     *
-     * @return HasManyThrough
      */
     public function contacts(): HasManyThrough
     {
@@ -93,8 +81,6 @@ class AddressBook extends Model
 
     /**
      * Returns shares.
-     *
-     * @return HasMany
      */
     public function shares(): HasMany
     {

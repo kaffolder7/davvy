@@ -23,9 +23,6 @@ class DashboardController extends Controller
 
     /**
      * Lists resources.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {

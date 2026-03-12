@@ -20,9 +20,6 @@ class DavController extends Controller
 
     /**
      * Handles the incoming request.
-     *
-     * @param  Request  $request
-     * @return Response
      */
     public function handle(Request $request): Response
     {
@@ -115,9 +112,6 @@ class DavController extends Controller
 
     /**
      * Checks whether it should log client DAV traffic.
-     *
-     * @param  Request  $request
-     * @return bool
      */
     private function shouldLogClientDavTraffic(Request $request): bool
     {
@@ -140,9 +134,6 @@ class DavController extends Controller
 
     /**
      * Returns serialize DAV exception.
-     *
-     * @param  DavException  $exception
-     * @return string
      */
     private function serializeDavException(DavException $exception): string
     {

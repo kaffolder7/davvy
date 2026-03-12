@@ -9,9 +9,6 @@ class ResourceShareCleanupService
 {
     /**
      * Deletes address book shares.
-     *
-     * @param  int|array  $addressBookIds
-     * @return void
      */
     public function deleteAddressBookShares(int|array $addressBookIds): void
     {
@@ -29,9 +26,6 @@ class ResourceShareCleanupService
 
     /**
      * Deletes calendar shares.
-     *
-     * @param  int|array  $calendarIds
-     * @return void
      */
     public function deleteCalendarShares(int|array $calendarIds): void
     {

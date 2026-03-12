@@ -10,8 +10,6 @@ class TwoFactorSettingsService
 {
     /**
      * Checks whether it is enforced.
-     *
-     * @return bool
      */
     public function isEnforced(): bool
     {
@@ -20,10 +18,6 @@ class TwoFactorSettingsService
 
     /**
      * Sets enforced.
-     *
-     * @param  bool  $enabled
-     * @param  User|null  $actor
-     * @return void
      */
     public function setEnforced(bool $enabled, ?User $actor = null): void
     {
@@ -52,8 +46,6 @@ class TwoFactorSettingsService
 
     /**
      * Returns grace period days.
-     *
-     * @return int
      */
     public function gracePeriodDays(): int
     {
@@ -64,8 +56,6 @@ class TwoFactorSettingsService
 
     /**
      * Returns enforcement started.
-     *
-     * @return CarbonImmutable|null
      */
     public function enforcementStartedAt(): ?CarbonImmutable
     {
@@ -83,9 +73,6 @@ class TwoFactorSettingsService
 
     /**
      * Returns grace deadline.
-     *
-     * @param  User  $user
-     * @return CarbonImmutable|null
      */
     public function graceDeadlineFor(User $user): ?CarbonImmutable
     {
@@ -108,9 +95,6 @@ class TwoFactorSettingsService
 
     /**
      * Checks whether setup is required.
-     *
-     * @param  User  $user
-     * @return bool
      */
     public function isSetupRequired(User $user): bool
     {
@@ -125,9 +109,6 @@ class TwoFactorSettingsService
 
     /**
      * Checks whether within grace.
-     *
-     * @param  User  $user
-     * @return bool
      */
     public function isWithinGrace(User $user): bool
     {

@@ -18,9 +18,6 @@ class ResourceDeletionService
 
     /**
      * Deletes address book.
-     *
-     * @param  AddressBook  $addressBook
-     * @return void
      */
     public function deleteAddressBook(AddressBook $addressBook): void
     {
@@ -34,9 +31,6 @@ class ResourceDeletionService
 
     /**
      * Deletes calendar.
-     *
-     * @param  Calendar  $calendar
-     * @return void
      */
     public function deleteCalendar(Calendar $calendar): void
     {

@@ -11,11 +11,6 @@ class PendingTwoFactorLoginService
 
     /**
      * Stores a pending two-factor login challenge in session.
-     *
-     * @param  Request  $request
-     * @param  User  $user
-     * @param  bool  $remember
-     * @return void
      */
     public function start(Request $request, User $user, bool $remember): void
     {
@@ -29,9 +24,6 @@ class PendingTwoFactorLoginService
 
     /**
      * Returns the pending user for an active login challenge.
-     *
-     * @param  Request  $request
-     * @return User|null
      */
     public function pendingUser(Request $request): ?User
     {
@@ -59,9 +51,6 @@ class PendingTwoFactorLoginService
 
     /**
      * Returns whether the pending login should set a remember cookie.
-     *
-     * @param  Request  $request
-     * @return bool
      */
     public function remember(Request $request): bool
     {
@@ -72,9 +61,6 @@ class PendingTwoFactorLoginService
 
     /**
      * Returns pending two-factor challenge status details.
-     *
-     * @param  Request  $request
-     * @return array
      */
     public function status(Request $request): array
     {
@@ -94,9 +80,6 @@ class PendingTwoFactorLoginService
 
     /**
      * Records a failed two-factor attempt and enforces attempt limits.
-     *
-     * @param  Request  $request
-     * @return int
      */
     public function registerFailedAttempt(Request $request): int
     {
@@ -118,9 +101,6 @@ class PendingTwoFactorLoginService
 
     /**
      * Clears any pending two-factor login challenge from session.
-     *
-     * @param  Request  $request
-     * @return void
      */
     public function clear(Request $request): void
     {
@@ -129,9 +109,6 @@ class PendingTwoFactorLoginService
 
     /**
      * Returns session data.
-     *
-     * @param  Request  $request
-     * @return array|null
      */
     private function sessionData(Request $request): ?array
     {

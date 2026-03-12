@@ -458,12 +458,6 @@ class BackupService
 
     /**
      * Stores local snapshot.
-     *
-     * @param  string  $archivePath
-     * @param  string  $localRoot
-     * @param  string  $tier
-     * @param  string  $fileName
-     * @return string
      */
     private function storeLocalSnapshot(string $archivePath, string $localRoot, string $tier, string $fileName): string
     {
@@ -485,13 +479,6 @@ class BackupService
 
     /**
      * Stores remote snapshot.
-     *
-     * @param  string  $archivePath
-     * @param  string  $diskName
-     * @param  string  $prefix
-     * @param  string  $tier
-     * @param  string  $fileName
-     * @return string
      */
     private function storeRemoteSnapshot(
         string $archivePath,
@@ -566,11 +553,6 @@ class BackupService
 
     /**
      * Prunes local tier.
-     *
-     * @param  string  $localRoot
-     * @param  string  $tier
-     * @param  int  $limit
-     * @return void
      */
     private function pruneLocalTier(string $localRoot, string $tier, int $limit): void
     {
@@ -600,12 +582,6 @@ class BackupService
 
     /**
      * Prunes remote tier.
-     *
-     * @param  string  $diskName
-     * @param  string  $prefix
-     * @param  string  $tier
-     * @param  int  $limit
-     * @return void
      */
     private function pruneRemoteTier(string $diskName, string $prefix, string $tier, int $limit): void
     {
@@ -632,9 +608,6 @@ class BackupService
 
     /**
      * Builds calendar payload.
-     *
-     * @param  Calendar  $calendar
-     * @return string
      */
     private function buildCalendarPayload(Calendar $calendar): string
     {
@@ -661,9 +634,6 @@ class BackupService
 
     /**
      * Builds address book payload.
-     *
-     * @param  AddressBook  $addressBook
-     * @return string
      */
     private function buildAddressBookPayload(AddressBook $addressBook): string
     {
@@ -675,11 +645,6 @@ class BackupService
 
     /**
      * Returns resource file name.
-     *
-     * @param  string  $displayName
-     * @param  string  $fallbackStem
-     * @param  string  $extension
-     * @return string
      */
     private function resourceFileName(string $displayName, string $fallbackStem, string $extension): string
     {

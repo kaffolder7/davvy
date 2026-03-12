@@ -16,9 +16,6 @@ class IcsValidator
 
     /**
      * Validates and normalizes ICS payload content.
-     *
-     * @param  string  $calendarData
-     * @return array
      */
     public function validateAndNormalize(string $calendarData): array
     {
@@ -47,9 +44,6 @@ class IcsValidator
 
     /**
      * Extracts the UID from an ICS payload.
-     *
-     * @param  string  $calendarData
-     * @return string|null
      */
     public function extractUid(string $calendarData): ?string
     {
@@ -72,9 +66,6 @@ class IcsValidator
 
     /**
      * Parses v calendar.
-     *
-     * @param  string  $calendarData
-     * @return VCalendar
      */
     private function parseVCalendar(string $calendarData): VCalendar
     {
@@ -93,10 +84,6 @@ class IcsValidator
 
     /**
      * Validates calendar envelope.
-     *
-     * @param  VCalendar  $calendar
-     * @param  bool  $strictModeEnabled
-     * @return void
      */
     private function validateCalendarEnvelope(VCalendar $calendar, bool $strictModeEnabled): void
     {
@@ -237,9 +224,6 @@ class IcsValidator
 
     /**
      * Validates event component.
-     *
-     * @param  Component  $component
-     * @return void
      */
     private function validateEventComponent(Component $component): void
     {
@@ -261,9 +245,6 @@ class IcsValidator
 
     /**
      * Validates todo component.
-     *
-     * @param  Component  $component
-     * @return void
      */
     private function validateTodoComponent(Component $component): void
     {
@@ -278,9 +259,6 @@ class IcsValidator
 
     /**
      * Validates sequence.
-     *
-     * @param  Component  $component
-     * @return void
      */
     private function validateSequence(Component $component): void
     {
@@ -297,10 +275,6 @@ class IcsValidator
 
     /**
      * Validates r rule.
-     *
-     * @param  Component  $component
-     * @param  bool  $strictModeEnabled
-     * @return void
      */
     private function validateRRule(Component $component, bool $strictModeEnabled): void
     {
@@ -363,9 +337,6 @@ class IcsValidator
 
     /**
      * Returns detect occurrence bounds.
-     *
-     * @param  VCalendar  $calendar
-     * @return array
      */
     private function detectOccurrenceBounds(VCalendar $calendar): array
     {
@@ -398,9 +369,6 @@ class IcsValidator
 
     /**
      * Returns safe date time.
-     *
-     * @param  mixed  $property
-     * @return DateTimeImmutable|null
      */
     private function safeDateTime(mixed $property): ?DateTimeImmutable
     {

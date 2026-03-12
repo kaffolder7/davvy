@@ -21,8 +21,6 @@ class UserAppPassword extends Model
 
     /**
      * Returns casts.
-     *
-     * @return array
      */
     protected function casts(): array
     {
@@ -34,8 +32,6 @@ class UserAppPassword extends Model
 
     /**
      * Returns user.
-     *
-     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -44,8 +40,6 @@ class UserAppPassword extends Model
 
     /**
      * Checks whether it is revoked.
-     *
-     * @return bool
      */
     public function isRevoked(): bool
     {

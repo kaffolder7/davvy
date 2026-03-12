@@ -19,11 +19,6 @@ class ManagedContactSyncService
 
     /**
      * Applies CardDAV upsert payloads to managed contacts.
-     *
-     * @param  AddressBook  $addressBook
-     * @param  Card  $card
-     * @param  User|null  $actor
-     * @return void
      */
     public function syncCardUpsert(
         AddressBook $addressBook,
@@ -212,9 +207,6 @@ class ManagedContactSyncService
 
     /**
      * Removes managed contacts associated with a deleted CardDAV card.
-     *
-     * @param  Card  $card
-     * @return void
      */
     public function syncCardDeleted(Card $card): void
     {
@@ -256,9 +248,6 @@ class ManagedContactSyncService
 
     /**
      * Removes managed contacts after source address-book deletion.
-     *
-     * @param  AddressBook  $addressBook
-     * @return void
      */
     public function syncAddressBookDeleted(AddressBook $addressBook): void
     {
@@ -333,8 +322,6 @@ class ManagedContactSyncService
 
     /**
      * Returns contact service.
-     *
-     * @return ContactService
      */
     private function contactService(): ContactService
     {
@@ -343,8 +330,6 @@ class ManagedContactSyncService
 
     /**
      * Checks whether schema available.
-     *
-     * @return bool
      */
     private function schemaAvailable(): bool
     {
@@ -354,9 +339,6 @@ class ManagedContactSyncService
 
     /**
      * Returns to integer.
-     *
-     * @param  mixed  $value
-     * @return int|null
      */
     private function toInteger(mixed $value): ?int
     {
@@ -377,9 +359,6 @@ class ManagedContactSyncService
 
     /**
      * Returns clean string.
-     *
-     * @param  mixed  $value
-     * @return string|null
      */
     private function cleanString(mixed $value): ?string
     {

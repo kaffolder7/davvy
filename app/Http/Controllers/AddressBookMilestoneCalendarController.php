@@ -15,10 +15,6 @@ class AddressBookMilestoneCalendarController extends Controller
 
     /**
      * Updates an existing resource.
-     *
-     * @param  Request  $request
-     * @param  AddressBook  $addressBook
-     * @return JsonResponse
      */
     public function update(Request $request, AddressBook $addressBook): JsonResponse
     {

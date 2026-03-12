@@ -15,9 +15,6 @@ class DefaultResourceProvisioner
 
     /**
      * Provisions default resources.
-     *
-     * @param  User  $user
-     * @return void
      */
     public function provisionFor(User $user): void
     {
@@ -76,10 +73,6 @@ class DefaultResourceProvisioner
 
     /**
      * Returns unique URI.
-     *
-     * @param  string  $base
-     * @param  callable  $exists
-     * @return string
      */
     private function uniqueUri(string $base, callable $exists): string
     {

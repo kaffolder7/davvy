@@ -22,8 +22,6 @@ class Card extends Model
 
     /**
      * Returns address book.
-     *
-     * @return BelongsTo
      */
     public function addressBook(): BelongsTo
     {
@@ -32,8 +30,6 @@ class Card extends Model
 
     /**
      * Returns contact assignment.
-     *
-     * @return HasOne
      */
     public function contactAssignment(): HasOne
     {

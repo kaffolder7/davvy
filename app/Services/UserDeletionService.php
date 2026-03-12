@@ -69,9 +69,6 @@ class UserDeletionService
 
     /**
      * Deletes owned resources.
-     *
-     * @param  int  $ownerId
-     * @return void
      */
     private function deleteOwnedResources(int $ownerId): void
     {

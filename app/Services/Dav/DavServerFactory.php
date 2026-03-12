@@ -29,8 +29,6 @@ class DavServerFactory
 
     /**
      * Builds a configured SabreDAV server instance.
-     *
-     * @return Server
      */
     public function make(): Server
     {

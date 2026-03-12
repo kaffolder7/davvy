@@ -10,8 +10,6 @@ enum SharePermission: string
 
     /**
      * Checks whether it can write.
-     *
-     * @return bool
      */
     public function canWrite(): bool
     {
@@ -20,8 +18,6 @@ enum SharePermission: string
 
     /**
      * Checks whether it can delete.
-     *
-     * @return bool
      */
     public function canDelete(): bool
     {

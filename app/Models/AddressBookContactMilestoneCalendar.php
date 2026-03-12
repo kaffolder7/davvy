@@ -24,8 +24,6 @@ class AddressBookContactMilestoneCalendar extends Model
 
     /**
      * Returns casts.
-     *
-     * @return array
      */
     protected function casts(): array
     {
@@ -36,8 +34,6 @@ class AddressBookContactMilestoneCalendar extends Model
 
     /**
      * Returns address book.
-     *
-     * @return BelongsTo
      */
     public function addressBook(): BelongsTo
     {
@@ -46,8 +42,6 @@ class AddressBookContactMilestoneCalendar extends Model
 
     /**
      * Returns calendar.
-     *
-     * @return BelongsTo
      */
     public function calendar(): BelongsTo
     {

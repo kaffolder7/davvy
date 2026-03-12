@@ -22,9 +22,6 @@ class ShareController extends Controller
 
     /**
      * Lists resources.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
@@ -64,9 +61,6 @@ class ShareController extends Controller
 
     /**
      * Creates or updates a resource.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function upsert(Request $request): JsonResponse
     {
@@ -121,10 +115,6 @@ class ShareController extends Controller
 
     /**
      * Deletes an existing resource.
-     *
-     * @param  Request  $request
-     * @param  ResourceShare  $share
-     * @return JsonResponse
      */
     public function destroy(Request $request, ResourceShare $share): JsonResponse
     {
@@ -152,10 +142,6 @@ class ShareController extends Controller
 
     /**
      * Returns resource ownership and sharable state.
-     *
-     * @param  ShareResourceType  $type
-     * @param  int  $resourceId
-     * @return array
      */
     private function resourceOwnershipAndSharableState(ShareResourceType $type, int $resourceId): array
     {
@@ -172,8 +158,6 @@ class ShareController extends Controller
 
     /**
      * Asserts owner share management allowed.
-     *
-     * @return void
      */
     private function assertOwnerShareManagementAllowed(): void
     {

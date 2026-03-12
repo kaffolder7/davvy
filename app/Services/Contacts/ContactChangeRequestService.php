@@ -198,9 +198,6 @@ class ContactChangeRequestService
 
     /**
      * Returns the number of pending review requests for a reviewer.
-     *
-     * @param  User  $reviewer
-     * @return int
      */
     public function pendingReviewCount(User $reviewer): int
     {
@@ -303,10 +300,6 @@ class ContactChangeRequestService
 
     /**
      * Denies a request group and marks pending siblings as denied.
-     *
-     * @param  User  $reviewer
-     * @param  ContactChangeRequest  $request
-     * @return ContactChangeRequest
      */
     public function deny(User $reviewer, ContactChangeRequest $request): ContactChangeRequest
     {
@@ -410,8 +403,6 @@ class ContactChangeRequestService
 
     /**
      * Deletes old applied or denied requests past retention.
-     *
-     * @return int
      */
     public function purgeExpiredTerminalRequests(): int
     {
@@ -630,10 +621,6 @@ class ContactChangeRequestService
 
     /**
      * Applies status filter.
-     *
-     * @param  Builder  $query
-     * @param  string  $statusFilter
-     * @return void
      */
     private function applyStatusFilter(Builder $query, string $statusFilter): void
     {
@@ -679,10 +666,6 @@ class ContactChangeRequestService
 
     /**
      * Asserts reviewer can act.
-     *
-     * @param  User  $reviewer
-     * @param  ContactChangeRequest  $request
-     * @return void
      */
     private function assertReviewerCanAct(User $reviewer, ContactChangeRequest $request): void
     {
@@ -999,10 +982,6 @@ class ContactChangeRequestService
 
     /**
      * Checks whether values equal.
-     *
-     * @param  mixed  $left
-     * @param  mixed  $right
-     * @return bool
      */
     private function valuesEqual(mixed $left, mixed $right): bool
     {

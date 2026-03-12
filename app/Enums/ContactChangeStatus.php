@@ -12,8 +12,6 @@ enum ContactChangeStatus: string
 
     /**
      * Checks whether it is terminal.
-     *
-     * @return bool
      */
     public function isTerminal(): bool
     {

@@ -39,8 +39,6 @@ class User extends Authenticatable
 
     /**
      * Returns casts.
-     *
-     * @return array
      */
     protected function casts(): array
     {
@@ -58,8 +56,6 @@ class User extends Authenticatable
 
     /**
      * Returns email.
-     *
-     * @return Attribute
      */
     protected function email(): Attribute
     {
@@ -85,8 +81,6 @@ class User extends Authenticatable
 
     /**
      * Returns calendars.
-     *
-     * @return HasMany
      */
     public function calendars(): HasMany
     {
@@ -95,8 +89,6 @@ class User extends Authenticatable
 
     /**
      * Returns address books.
-     *
-     * @return HasMany
      */
     public function addressBooks(): HasMany
     {
@@ -105,8 +97,6 @@ class User extends Authenticatable
 
     /**
      * Returns contacts.
-     *
-     * @return HasMany
      */
     public function contacts(): HasMany
     {
@@ -115,8 +105,6 @@ class User extends Authenticatable
 
     /**
      * Returns incoming shares.
-     *
-     * @return HasMany
      */
     public function incomingShares(): HasMany
     {
@@ -125,8 +113,6 @@ class User extends Authenticatable
 
     /**
      * Returns address book mirror config.
-     *
-     * @return HasOne
      */
     public function addressBookMirrorConfig(): HasOne
     {
@@ -135,8 +121,6 @@ class User extends Authenticatable
 
     /**
      * Returns app passwords.
-     *
-     * @return HasMany
      */
     public function appPasswords(): HasMany
     {
@@ -145,8 +129,6 @@ class User extends Authenticatable
 
     /**
      * Checks whether it is admin.
-     *
-     * @return bool
      */
     public function isAdmin(): bool
     {
@@ -155,8 +137,6 @@ class User extends Authenticatable
 
     /**
      * Returns principal URI.
-     *
-     * @return string
      */
     public function principalUri(): string
     {
@@ -165,8 +145,6 @@ class User extends Authenticatable
 
     /**
      * Checks whether two-factor authentication is enabled.
-     *
-     * @return bool
      */
     public function hasTwoFactorEnabled(): bool
     {

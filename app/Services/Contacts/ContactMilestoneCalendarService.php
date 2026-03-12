@@ -145,9 +145,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Synchronizes generated milestone calendar names after address-book rename.
-     *
-     * @param  AddressBook  $addressBook
-     * @return void
      */
     public function handleAddressBookRenamed(AddressBook $addressBook): void
     {
@@ -171,9 +168,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Removes generated milestone calendars after address-book deletion.
-     *
-     * @param  AddressBook  $addressBook
-     * @return void
      */
     public function handleAddressBookDeleted(AddressBook $addressBook): void
     {
@@ -363,11 +357,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Ensures calendar for setting.
-     *
-     * @param  AddressBook  $addressBook
-     * @param  AddressBookContactMilestoneCalendar  $setting
-     * @param  string  $type
-     * @return Calendar
      */
     private function ensureCalendarForSetting(
         AddressBook $addressBook,
@@ -412,11 +401,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Synchronizes calendar display name.
-     *
-     * @param  AddressBook  $addressBook
-     * @param  AddressBookContactMilestoneCalendar  $setting
-     * @param  string  $type
-     * @return void
      */
     private function syncCalendarDisplayName(
         AddressBook $addressBook,
@@ -440,11 +424,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Synchronizes calendar objects for setting.
-     *
-     * @param  AddressBook  $addressBook
-     * @param  AddressBookContactMilestoneCalendar  $setting
-     * @param  Calendar  $calendar
-     * @return void
      */
     private function syncCalendarObjectsForSetting(
         AddressBook $addressBook,
@@ -481,12 +460,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Performs the upsert calendar object operation.
-     *
-     * @param  Calendar  $calendar
-     * @param  string  $uri
-     * @param  string  $rawData
-     * @param  CalendarObject|null  $existingObject
-     * @return void
      */
     private function upsertCalendarObject(
         Calendar $calendar,
@@ -837,9 +810,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Returns anniversary contact ID key.
-     *
-     * @param  mixed  $value
-     * @return string|null
      */
     private function anniversaryContactIdKey(mixed $value): ?string
     {
@@ -868,9 +838,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Returns anniversary name key.
-     *
-     * @param  mixed  $value
-     * @return string|null
      */
     private function anniversaryNameKey(mixed $value): ?string
     {
@@ -1182,16 +1149,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Builds all day event.
-     *
-     * @param  string  $uid
-     * @param  string  $summary
-     * @param  int  $year
-     * @param  int  $month
-     * @param  int  $day
-     * @param  int  $addressBookId
-     * @param  int  $contactId
-     * @param  string  $milestoneType
-     * @return string
      */
     private function buildAllDayEvent(
         string $uid,
@@ -1229,11 +1186,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Returns birthday summary.
-     *
-     * @param  string  $contactName
-     * @param  int|null  $baseYear
-     * @param  int  $occurrenceYear
-     * @return string
      */
     private function birthdaySummary(string $contactName, ?int $baseYear, int $occurrenceYear): string
     {
@@ -1246,11 +1198,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Returns anniversary summary.
-     *
-     * @param  string  $contactName
-     * @param  int|null  $baseYear
-     * @param  int  $occurrenceYear
-     * @return string
      */
     private function anniversarySummary(string $contactName, ?int $baseYear, int $occurrenceYear): string
     {
@@ -1263,9 +1210,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Returns contact milestone name.
-     *
-     * @param  Contact  $contact
-     * @return string|null
      */
     private function contactMilestoneName(Contact $contact): ?string
     {
@@ -1288,9 +1232,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Performs the reconcile legacy cards for address book operation.
-     *
-     * @param  AddressBook  $addressBook
-     * @return void
      */
     private function reconcileLegacyCardsForAddressBook(AddressBook $addressBook): void
     {
@@ -1315,10 +1256,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Performs the upsert legacy managed contact operation.
-     *
-     * @param  AddressBook  $addressBook
-     * @param  Card  $card
-     * @return void
      */
     private function upsertLegacyManagedContact(AddressBook $addressBook, Card $card): void
     {
@@ -1449,10 +1386,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Returns milestone ordinal.
-     *
-     * @param  int|null  $baseYear
-     * @param  int  $occurrenceYear
-     * @return string|null
      */
     private function milestoneOrdinal(?int $baseYear, int $occurrenceYear): ?string
     {
@@ -1480,11 +1413,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Returns managed URI.
-     *
-     * @param  string  $type
-     * @param  int  $contactId
-     * @param  string|null  $suffix
-     * @return string
      */
     private function managedUri(string $type, int $contactId, ?string $suffix = null): string
     {
@@ -1498,12 +1426,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Returns managed uid.
-     *
-     * @param  string  $type
-     * @param  int  $addressBookId
-     * @param  int  $contactId
-     * @param  string|null  $suffix
-     * @return string
      */
     private function managedUid(
         string $type,
@@ -1521,9 +1443,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Returns managed URI prefix.
-     *
-     * @param  string  $type
-     * @return string
      */
     private function managedUriPrefix(string $type): string
     {
@@ -1532,11 +1451,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Returns display name for setting.
-     *
-     * @param  AddressBook  $addressBook
-     * @param  AddressBookContactMilestoneCalendar  $setting
-     * @param  string  $type
-     * @return string
      */
     private function displayNameForSetting(
         AddressBook $addressBook,
@@ -1549,10 +1463,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Returns default calendar name.
-     *
-     * @param  AddressBook  $addressBook
-     * @param  string  $type
-     * @return string
      */
     private function defaultCalendarName(AddressBook $addressBook, string $type): string
     {
@@ -1567,10 +1477,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Returns unique calendar URI.
-     *
-     * @param  int  $ownerId
-     * @param  string  $baseUri
-     * @return string
      */
     private function uniqueCalendarUri(int $ownerId, string $baseUri): string
     {
@@ -1593,9 +1499,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Normalizes string.
-     *
-     * @param  mixed  $value
-     * @return string|null
      */
     private function normalizeString(mixed $value): ?string
     {
@@ -1620,9 +1523,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Checks whether payload boolean.
-     *
-     * @param  mixed  $value
-     * @return bool
      */
     private function payloadBoolean(mixed $value): bool
     {
@@ -1643,9 +1543,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Returns to integer.
-     *
-     * @param  mixed  $value
-     * @return int|null
      */
     private function toInteger(mixed $value): ?int
     {
@@ -1666,9 +1563,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Returns escape ICS text.
-     *
-     * @param  string  $value
-     * @return string
      */
     private function escapeIcsText(string $value): string
     {
@@ -1694,9 +1588,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Returns settings key for type.
-     *
-     * @param  string  $type
-     * @return string
      */
     private function settingsKeyForType(string $type): string
     {
@@ -1707,9 +1598,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Returns enabled field for type.
-     *
-     * @param  string  $type
-     * @return string
      */
     private function enabledFieldForType(string $type): string
     {
@@ -1720,9 +1608,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Returns custom name field for type.
-     *
-     * @param  string  $type
-     * @return string
      */
     private function customNameFieldForType(string $type): string
     {
@@ -1733,9 +1618,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Marks milestone purge control visible.
-     *
-     * @param  User|null  $actor
-     * @return void
      */
     private function markMilestonePurgeControlVisible(?User $actor = null): void
     {
@@ -1747,8 +1629,6 @@ class ContactMilestoneCalendarService
 
     /**
      * Checks whether schema available.
-     *
-     * @return bool
      */
     private function schemaAvailable(): bool
     {

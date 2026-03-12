@@ -8,9 +8,6 @@ class TotpService
 
     /**
      * Generates a new base32 TOTP secret.
-     *
-     * @param  int  $bytes
-     * @return string
      */
     public function generateSecret(int $bytes = 20): string
     {
@@ -21,11 +18,6 @@ class TotpService
 
     /**
      * Builds a provisioning URI for authenticator apps.
-     *
-     * @param  string  $email
-     * @param  string  $secret
-     * @param  string|null  $issuer
-     * @return string
      */
     public function provisioningUri(string $email, string $secret, ?string $issuer = null): string
     {
@@ -48,12 +40,6 @@ class TotpService
 
     /**
      * Verifies a TOTP code within the allowed clock drift.
-     *
-     * @param  string  $secret
-     * @param  string  $code
-     * @param  int  $window
-     * @param  int|null  $timestamp
-     * @return bool
      */
     public function verify(string $secret, string $code, int $window = 1, ?int $timestamp = null): bool
     {
@@ -78,10 +64,6 @@ class TotpService
 
     /**
      * Generates the current TOTP code for a secret.
-     *
-     * @param  string  $secret
-     * @param  int|null  $timestamp
-     * @return string
      */
     public function currentCode(string $secret, ?int $timestamp = null): string
     {
@@ -92,9 +74,6 @@ class TotpService
 
     /**
      * Formats a secret into human-readable groups.
-     *
-     * @param  string  $secret
-     * @return string
      */
     public function formatSecretForHumans(string $secret): string
     {
@@ -108,9 +87,6 @@ class TotpService
 
     /**
      * Normalizes user input into a six-digit TOTP code.
-     *
-     * @param  string  $code
-     * @return string|null
      */
     public function normalizeTotpCode(string $code): ?string
     {
@@ -125,10 +101,6 @@ class TotpService
 
     /**
      * Returns code for timeslice.
-     *
-     * @param  string  $secret
-     * @param  int  $slice
-     * @return string
      */
     private function codeForTimeslice(string $secret, int $slice): string
     {
@@ -155,9 +127,6 @@ class TotpService
 
     /**
      * Returns base32 encode.
-     *
-     * @param  string  $bytes
-     * @return string
      */
     private function base32Encode(string $bytes): string
     {
@@ -190,9 +159,6 @@ class TotpService
 
     /**
      * Returns base32 decode.
-     *
-     * @param  string  $secret
-     * @return string
      */
     private function base32Decode(string $secret): string
     {

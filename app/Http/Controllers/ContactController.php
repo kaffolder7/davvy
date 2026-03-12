@@ -18,9 +18,6 @@ class ContactController extends Controller
 
     /**
      * Lists resources.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
@@ -39,9 +36,6 @@ class ContactController extends Controller
 
     /**
      * Creates a new resource.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
@@ -62,10 +56,6 @@ class ContactController extends Controller
 
     /**
      * Updates an existing resource.
-     *
-     * @param  Request  $request
-     * @param  int  $contact
-     * @return JsonResponse
      */
     public function update(Request $request, int $contact): JsonResponse
     {
@@ -104,10 +94,6 @@ class ContactController extends Controller
 
     /**
      * Deletes an existing resource.
-     *
-     * @param  Request  $request
-     * @param  int  $contact
-     * @return JsonResponse
      */
     public function destroy(Request $request, int $contact): JsonResponse
     {
@@ -271,9 +257,6 @@ class ContactController extends Controller
 
     /**
      * Returns serialize contact.
-     *
-     * @param  Contact  $contact
-     * @return array
      */
     private function serializeContact(Contact $contact): array
     {
@@ -499,9 +482,6 @@ class ContactController extends Controller
 
     /**
      * Normalizes string.
-     *
-     * @param  mixed  $value
-     * @return string|null
      */
     private function normalizeString(mixed $value): ?string
     {
@@ -516,9 +496,6 @@ class ContactController extends Controller
 
     /**
      * Normalizes int.
-     *
-     * @param  mixed  $value
-     * @return int|null
      */
     private function normalizeInt(mixed $value): ?int
     {

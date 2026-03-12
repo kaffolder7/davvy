@@ -10,9 +10,6 @@ class DavRequestContext
 
     /**
      * Sets authenticated user.
-     *
-     * @param  User  $user
-     * @return void
      */
     public function setAuthenticatedUser(User $user): void
     {
@@ -21,8 +18,6 @@ class DavRequestContext
 
     /**
      * Returns authenticated user.
-     *
-     * @return User|null
      */
     public function getAuthenticatedUser(): ?User
     {
@@ -31,8 +26,6 @@ class DavRequestContext
 
     /**
      * Clears the value.
-     *
-     * @return void
      */
     public function clear(): void
     {

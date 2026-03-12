@@ -16,9 +16,6 @@ class TwoFactorService
 
     /**
      * Starts two-factor setup and returns enrollment details.
-     *
-     * @param  User  $user
-     * @return array
      */
     public function beginSetup(User $user): array
     {
@@ -33,10 +30,6 @@ class TwoFactorService
 
     /**
      * Verifies an enrollment code during two-factor setup.
-     *
-     * @param  string  $secret
-     * @param  string  $code
-     * @return bool
      */
     public function verifyEnrollmentCode(string $secret, string $code): bool
     {
@@ -79,10 +72,6 @@ class TwoFactorService
 
     /**
      * Disables two-factor auth and clears related fields.
-     *
-     * @param  User  $user
-     * @param  bool  $revokeAppPasswords
-     * @return void
      */
     public function disable(User $user, bool $revokeAppPasswords = true): void
     {
@@ -99,10 +88,6 @@ class TwoFactorService
 
     /**
      * Verifies a TOTP code or consumes a backup code.
-     *
-     * @param  User  $user
-     * @param  string  $input
-     * @return bool
      */
     public function verifyTotpOrBackupCode(User $user, string $input): bool
     {
@@ -120,10 +105,6 @@ class TwoFactorService
 
     /**
      * Verifies a TOTP code against the stored secret.
-     *
-     * @param  User  $user
-     * @param  string  $input
-     * @return bool
      */
     public function verifyTotpCode(User $user, string $input): bool
     {
@@ -141,9 +122,6 @@ class TwoFactorService
 
     /**
      * Generates the current TOTP code for the stored secret.
-     *
-     * @param  string  $secret
-     * @return string
      */
     public function currentCode(string $secret): string
     {
@@ -152,10 +130,6 @@ class TwoFactorService
 
     /**
      * Checks whether consume backup code.
-     *
-     * @param  User  $user
-     * @param  string  $input
-     * @return bool
      */
     private function consumeBackupCode(User $user, string $input): bool
     {
@@ -205,8 +179,6 @@ class TwoFactorService
 
     /**
      * Generates backup code.
-     *
-     * @return string
      */
     private function generateBackupCode(): string
     {
@@ -250,9 +222,6 @@ class TwoFactorService
 
     /**
      * Normalizes backup code.
-     *
-     * @param  string  $code
-     * @return string|null
      */
     private function normalizeBackupCode(string $code): ?string
     {

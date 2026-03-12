@@ -10,10 +10,6 @@ class AppPasswordService
 {
     /**
      * Creates an app password and returns the plaintext token once.
-     *
-     * @param  User  $user
-     * @param  string  $name
-     * @return array
      */
     public function create(User $user, string $name): array
     {
@@ -50,10 +46,6 @@ class AppPasswordService
 
     /**
      * Revokes an app password owned by the user.
-     *
-     * @param  User  $user
-     * @param  int  $appPasswordId
-     * @return bool
      */
     public function revoke(User $user, int $appPasswordId): bool
     {
@@ -75,9 +67,6 @@ class AppPasswordService
 
     /**
      * Revokes all app passwords for a user.
-     *
-     * @param  User  $user
-     * @return int
      */
     public function revokeAll(User $user): int
     {
@@ -88,10 +77,6 @@ class AppPasswordService
 
     /**
      * Verifies an app-password token and updates last-used metadata.
-     *
-     * @param  User  $user
-     * @param  string  $token
-     * @return bool
      */
     public function verifyAndTouch(User $user, string $token): bool
     {
@@ -121,8 +106,6 @@ class AppPasswordService
 
     /**
      * Generates token.
-     *
-     * @return string
      */
     private function generateToken(): string
     {
@@ -131,9 +114,6 @@ class AppPasswordService
 
     /**
      * Returns hash token.
-     *
-     * @param  string  $token
-     * @return string
      */
     private function hashToken(string $token): string
     {
