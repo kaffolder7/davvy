@@ -19,6 +19,7 @@ use Throwable;
 class UserOnboardingService
 {
     public const PURPOSE_INVITE = 'invite';
+
     public const PURPOSE_EMAIL_VERIFICATION = 'verify_email';
 
     /**
