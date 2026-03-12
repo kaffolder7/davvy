@@ -1,6 +1,12 @@
 import React from "react";
 import Field from "../common/Field";
 
+/**
+ * Renders the Contact Change Edit Modal.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function ContactChangeEditModal({
   row,
   payloadText,

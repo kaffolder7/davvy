@@ -1,5 +1,11 @@
 import React from "react";
 
+/**
+ * Renders the Address Editor component.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function AddressEditor({
   rows,
   setRows,

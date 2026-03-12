@@ -1,5 +1,11 @@
 import React from "react";
 
+/**
+ * Renders the Field component.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function Field({ label, children }) {
   return (
     <label className="block">

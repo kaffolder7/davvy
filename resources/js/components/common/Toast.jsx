@@ -1,5 +1,11 @@
 import React from "react";
 
+/**
+ * Renders the Toast component.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function Toast({ status = "status", message = "" }) {
   const normalizedStatus = String(status || "").toLowerCase();
   const toneClass =

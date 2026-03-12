@@ -5,6 +5,12 @@ import {
   queueStatusLabel,
 } from "./queueDisplayUtils";
 
+/**
+ * Renders the Contact Change Request Card component.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function ContactChangeRequestCard({
   row,
   submitting,

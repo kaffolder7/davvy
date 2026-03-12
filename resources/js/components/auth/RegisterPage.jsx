@@ -2,6 +2,12 @@ import React, { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { buildAuthStateFromPayload } from "./authStateMapper";
 
+/**
+ * Renders the Register Page.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function RegisterPage({
   auth,
   theme,

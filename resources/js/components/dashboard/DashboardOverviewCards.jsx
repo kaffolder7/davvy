@@ -1,5 +1,11 @@
 import React from "react";
 
+/**
+ * Renders the Dashboard Overview Cards component.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function DashboardOverviewCards({ auth, InfoCard }) {
   return (
     <section className="fade-up grid gap-4 md:grid-cols-3">

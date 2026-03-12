@@ -2,6 +2,12 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import useContactsPageState from "./useContactsPageState";
 
+/**
+ * Renders the Contacts Page.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function ContactsPage({
   auth,
   theme,

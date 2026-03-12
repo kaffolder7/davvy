@@ -1,5 +1,11 @@
 import React from "react";
 
+/**
+ * Renders the Row Reorder Controls component.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function RowReorderControls({
   rowLabel,
   rowGroup,

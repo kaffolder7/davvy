@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
 
+/**
+ * Renders the Info Card component.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function InfoCard({
   title,
   value,

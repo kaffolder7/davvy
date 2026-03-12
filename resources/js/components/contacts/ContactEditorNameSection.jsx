@@ -1,5 +1,11 @@
 import React from "react";
 
+/**
+ * Renders the Contact Editor Name Section component.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function ContactEditorNameSection({
   isOpen,
   onToggle,

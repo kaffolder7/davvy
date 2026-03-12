@@ -1,6 +1,12 @@
 import React from "react";
 import { getSystemTheme, resolveTheme } from "./useThemePreference";
 
+/**
+ * Renders the Theme Control component.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function ThemeControl({ theme, setTheme, className = "" }) {
   const resolvedTheme = resolveTheme(theme);
   const isDark = resolvedTheme === "dark";
