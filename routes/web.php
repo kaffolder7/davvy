@@ -18,6 +18,8 @@ Route::post('/api/auth/login', [AuthController::class, 'login'])->middleware('th
 Route::get('/api/auth/login/2fa/status', [AuthController::class, 'loginTwoFactorStatus']);
 Route::post('/api/auth/login/2fa', [AuthController::class, 'completeTwoFactorLogin'])->middleware('throttle:auth-login-2fa');
 Route::post('/api/auth/register', [AuthController::class, 'register'])->middleware('throttle:auth-register');
+Route::post('/api/auth/verify-email', [AuthController::class, 'verifyEmail'])->middleware('throttle:auth-onboarding');
+Route::post('/api/auth/invite/accept', [AuthController::class, 'acceptInvite'])->middleware('throttle:auth-onboarding');
 Route::get('/api/public/config', [AuthController::class, 'publicConfig']);
 Route::redirect('/.well-known/caldav', '/dav', 301);
 Route::redirect('/.well-known/carddav', '/dav', 301);

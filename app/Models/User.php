@@ -103,6 +103,11 @@ class User extends Authenticatable
         return $this->hasMany(UserAppPassword::class);
     }
 
+    public function onboardingTokens(): HasMany
+    {
+        return $this->hasMany(UserOnboardingToken::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === Role::Admin;

@@ -21,7 +21,9 @@ import LoginPageComponent from "./components/auth/LoginPage";
 import LoginTwoFactorPageComponent from "./components/auth/LoginTwoFactorPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import RegisterPageComponent from "./components/auth/RegisterPage";
+import InviteAcceptPageComponent from "./components/auth/InviteAcceptPage";
 import useAuthState from "./components/auth/useAuthState";
+import VerifyEmailPageComponent from "./components/auth/VerifyEmailPage";
 import CopyableResourceUriComponent from "./components/common/CopyableResourceUri";
 import FieldComponent from "./components/common/Field";
 import FullPageState from "./components/common/FullPageState";
@@ -120,6 +122,14 @@ function App() {
         element={<RegisterPage auth={value} theme={theme} />}
       />
       <Route
+        path="/verify-email"
+        element={<VerifyEmailPage auth={value} theme={theme} />}
+      />
+      <Route
+        path="/invite"
+        element={<InviteAcceptPage auth={value} theme={theme} />}
+      />
+      <Route
         path="/"
         element={
           <ProtectedRoute auth={value}>
@@ -204,6 +214,31 @@ function LoginTwoFactorPage({ auth, theme }) {
 function RegisterPage({ auth, theme }) {
   return (
     <RegisterPageComponent
+      auth={auth}
+      theme={theme}
+      api={api}
+      extractError={extractError}
+      AuthShell={AuthShellComponent}
+      Field={Field}
+    />
+  );
+}
+
+function VerifyEmailPage({ auth, theme }) {
+  return (
+    <VerifyEmailPageComponent
+      auth={auth}
+      theme={theme}
+      api={api}
+      extractError={extractError}
+      AuthShell={AuthShellComponent}
+    />
+  );
+}
+
+function InviteAcceptPage({ auth, theme }) {
+  return (
+    <InviteAcceptPageComponent
       auth={auth}
       theme={theme}
       api={api}

@@ -11,6 +11,7 @@ use App\Services\Security\PendingTwoFactorLoginService;
 use App\Services\Security\TwoFactorService;
 use App\Services\Security\TwoFactorSettingsService;
 use App\Services\SponsorshipLinksService;
+use App\Services\UserOnboardingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,6 +30,7 @@ class AuthController extends Controller
         private readonly TwoFactorSettingsService $twoFactorSettings,
         private readonly PendingTwoFactorLoginService $pendingTwoFactorLogin,
         private readonly AppPasswordService $appPasswords,
+        private readonly UserOnboardingService $onboarding,
     ) {}
 
     public function register(Request $request): JsonResponse
@@ -49,16 +51,45 @@ class AuthController extends Controller
         ]);
 
         $approvalRequired = $this->registrationSettings->isPublicRegistrationApprovalRequired();
+        $verificationRequired = $this->onboarding->shouldRequirePublicEmailVerification();
 
         $user = User::query()->create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => $data['password'],
             'role' => Role::Regular,
+            'email_verified_at' => $verificationRequired ? null : now(),
             'is_approved' => ! $approvalRequired,
             'approved_at' => $approvalRequired ? null : now(),
             'approved_by' => null,
         ]);
+
+        if ($verificationRequired) {
+            $verification = $this->onboarding->issueEmailVerification($user);
+            $verificationSent = $this->onboarding->sendVerificationEmail(
+                user: $user,
+                verificationUrl: $verification['url'],
+                expiresAt: $verification['expires_at'],
+            );
+
+            $payload = array_merge([
+                'registration_pending_verification' => true,
+                'registration_pending_approval' => $approvalRequired,
+                'message' => $approvalRequired
+                    ? 'Registration submitted. Verify your email address and wait for administrator approval before signing in.'
+                    : 'Registration submitted. Verify your email address before signing in.',
+                'verification_email_sent' => $verificationSent,
+            ], $this->publicSettingsPayload());
+
+            if (
+                ! $verificationSent
+                && $this->onboarding->shouldExposeLinksWithoutMailer()
+            ) {
+                $payload['verification_url'] = $verification['url'];
+            }
+
+            return response()->json($payload, 202);
+        }
 
         if ($approvalRequired) {
             return response()->json(
@@ -76,6 +107,88 @@ class AuthController extends Controller
         return response()->json(
             array_merge(['user' => $user], $this->authenticatedSettingsPayload($user)),
             201,
+        );
+    }
+
+    /**
+     * Verifies a public registration email token and signs in approved accounts.
+     */
+    public function verifyEmail(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'token' => ['required', 'string', 'size:64'],
+        ]);
+
+        $record = $this->onboarding->consumeEmailVerification($data['token']);
+        if (! $record || ! $record->user) {
+            abort(422, 'Verification link is invalid or expired.');
+        }
+
+        $user = $record->user;
+
+        if ($user->email_verified_at === null) {
+            $user->email_verified_at = now();
+            $user->save();
+        }
+
+        if (! $user->is_approved) {
+            return response()->json(array_merge([
+                'registration_pending_approval' => true,
+                'email_verified' => true,
+                'message' => 'Email verified. Your account is pending administrator approval.',
+            ], $this->publicSettingsPayload()), 202);
+        }
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        $fresh = $user->fresh();
+
+        return response()->json(
+            array_merge([
+                'email_verified' => true,
+                'user' => $fresh,
+            ], $this->authenticatedSettingsPayload($fresh)),
+        );
+    }
+
+    /**
+     * Accepts an admin invitation token, sets an initial password, and signs in the user.
+     */
+    public function acceptInvite(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'token' => ['required', 'string', 'size:64'],
+            'password' => ['required', 'confirmed', Password::min(8)],
+        ]);
+
+        $record = $this->onboarding->consumeInvite($data['token']);
+        if (! $record || ! $record->user) {
+            abort(422, 'Invitation link is invalid or expired.');
+        }
+
+        $user = $record->user;
+        $user->password = $data['password'];
+        $user->email_verified_at = now();
+        $user->save();
+
+        if (! $user->is_approved) {
+            return response()->json(array_merge([
+                'registration_pending_approval' => true,
+                'message' => 'Invitation accepted. Your account is pending administrator approval.',
+            ], $this->publicSettingsPayload()), 202);
+        }
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        $fresh = $user->fresh();
+
+        return response()->json(
+            array_merge([
+                'invitation_accepted' => true,
+                'user' => $fresh,
+            ], $this->authenticatedSettingsPayload($fresh)),
         );
     }
 
@@ -105,6 +218,15 @@ class AuthController extends Controller
         if (! $user->is_approved) {
             return response()->json([
                 'message' => 'Your account is pending administrator approval.',
+            ], 403);
+        }
+
+        if (
+            $this->onboarding->shouldRequirePublicEmailVerification()
+            && $user->email_verified_at === null
+        ) {
+            return response()->json([
+                'message' => 'Verify your email address before signing in.',
             ], 403);
         }
 
@@ -407,6 +529,7 @@ class AuthController extends Controller
         return [
             'registration_enabled' => $this->registrationSettings->isPublicRegistrationEnabled(),
             'registration_approval_required' => $this->registrationSettings->isPublicRegistrationApprovalRequired(),
+            'email_verification_required' => $this->onboarding->shouldRequirePublicEmailVerification(),
             'owner_share_management_enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
             'dav_compatibility_mode_enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
             'contact_management_enabled' => $this->registrationSettings->isContactManagementEnabled(),
