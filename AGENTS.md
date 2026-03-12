@@ -83,6 +83,14 @@ Prefer test guidance aligned to the change:
 - frontend tests for state/effect/data-fetching and API error handling
 - DAV/backup/restore regression coverage (automated where practical, otherwise explicit manual verification steps)
 
+## Helpful Tooling
+
+If the local development environment does not have `php` or `npm` installed and you are trying to run tests, try using DDEV instead. Some commands that might be helpful:
+- `ddev php artisan test` (for running PHPUnit tests)
+- `ddev composer test` (for running PHPUnit tests)
+- `ddev pint` (for formatting)
+- `ddev npm test` (for running frontend tests)
+
 ## Optional non-blocking improvements
 
 When appropriate, include concise, evidence-based suggestions for:
