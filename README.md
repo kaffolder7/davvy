@@ -13,10 +13,16 @@ It is designed for:
 
 ## Screenshots 🖼️
 
-| Login | Dashboard |
-| --- | --- |
-| ![Davvy login screen](docs/screenshots/login.webp) | ![Davvy dashboard with calendars and address books](docs/screenshots/dashboard.webp) |
-| ![Davvy admin control center](docs/screenshots/admin.webp) | ![Davvy backup configuration drawer](docs/screenshots/admin-backups.webp) |
+<table>
+  <tr>
+    <td><img src="docs/screenshots/dashboard.webp" alt="Davvy dashboard with calendars and address books" style="width: 100%"/><small><strong>Dashboard</strong></small></td>
+    <td><img src="docs/screenshots/admin.webp" alt="Davvy admin control center" style="width: 100%"/><small><strong>Admin Control Center</strong></small></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/" alt="" style="width: 100%"/><small><strong></strong></small></td>
+    <td><img src="docs/screenshots/login.webp" alt="Davvy login screen" style="width: 100%"/><small><strong>Login</strong></small></td>
+  </tr>
+</table>
 
 ## Core Capabilities 🚀
 
