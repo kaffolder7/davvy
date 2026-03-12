@@ -231,15 +231,47 @@ class BackupRestoreService
             $calendarObjectUriPools = [];
             /** @var array<string, array<int, string>> $cardUriPools */
             $cardUriPools = [];
+            /** @var array<string, int> $legacyCollectionUriCounts */
+            $legacyCollectionUriCounts = [];
+
+            foreach ($processableEntries as $entry) {
+                $legacyUriCandidate = $this->legacyCollectionUriCandidateFromStem((string) $entry['file_stem']);
+                if (! is_string($legacyUriCandidate) || $legacyUriCandidate === '') {
+                    continue;
+                }
+
+                $legacyKey = sprintf(
+                    '%s|%d|%s',
+                    (string) $entry['type'],
+                    (int) $entry['resolved_owner_id'],
+                    $legacyUriCandidate,
+                );
+                $legacyCollectionUriCounts[$legacyKey] = ($legacyCollectionUriCounts[$legacyKey] ?? 0) + 1;
+            }
 
             foreach ($processableEntries as $entry) {
                 $summary['files_processed']++;
                 $resolvedOwnerId = (int) $entry['resolved_owner_id'];
+                $legacyUriCandidate = $this->legacyCollectionUriCandidateFromStem((string) $entry['file_stem']);
+                $legacyKey = $legacyUriCandidate === null
+                    ? null
+                    : sprintf('%s|%d|%s', (string) $entry['type'], $resolvedOwnerId, $legacyUriCandidate);
+                $allowLegacyUriMatch = $legacyKey !== null
+                    && (($legacyCollectionUriCounts[$legacyKey] ?? 0) === 1);
+                $collectionUri = isset($entry['collection_uri']) && is_string($entry['collection_uri'])
+                    ? trim((string) $entry['collection_uri'])
+                    : null;
+                if ($collectionUri === '') {
+                    $collectionUri = null;
+                }
 
                 if ($entry['type'] === 'calendar') {
                     $calendar = $this->upsertCalendarCollection(
                         ownerId: $resolvedOwnerId,
                         fileStem: (string) $entry['file_stem'],
+                        collectionUri: $collectionUri,
+                        legacyUriCandidate: $legacyUriCandidate,
+                        allowLegacyUriMatch: $allowLegacyUriMatch,
                         dryRun: $dryRun,
                         mode: $normalizedMode,
                         uriPool: $calendarUriPools[$resolvedOwnerId],
@@ -386,6 +418,9 @@ class BackupRestoreService
                 $addressBook = $this->upsertAddressBookCollection(
                     ownerId: $resolvedOwnerId,
                     fileStem: (string) $entry['file_stem'],
+                    collectionUri: $collectionUri,
+                    legacyUriCandidate: $legacyUriCandidate,
+                    allowLegacyUriMatch: $allowLegacyUriMatch,
                     dryRun: $dryRun,
                     mode: $normalizedMode,
                     uriPool: $addressBookUriPools[$resolvedOwnerId],
@@ -581,6 +616,7 @@ class BackupRestoreService
      *     archive_path:string,
      *     owner_id:int,
      *     file_stem:string,
+     *     collection_uri:?string,
      *     contents:string
      *   }>,
      *   1:array<string, mixed>|null,
@@ -648,11 +684,23 @@ class BackupRestoreService
                     'archive_path' => $entryName,
                     'owner_id' => $ownerId,
                     'file_stem' => $fileStem,
+                    'collection_uri' => null,
                     'contents' => $contents,
                 ];
             }
         } finally {
             $zip->close();
+        }
+
+        $collectionUriMap = $this->collectionUriMapFromManifest($manifest);
+        if ($collectionUriMap !== []) {
+            foreach ($entries as &$entry) {
+                $manifestKey = (string) $entry['type'].'|'.(string) $entry['archive_path'];
+                if (isset($collectionUriMap[$manifestKey])) {
+                    $entry['collection_uri'] = $collectionUriMap[$manifestKey];
+                }
+            }
+            unset($entry);
         }
 
         $ownerIds = array_values(array_unique($ownerIds));
@@ -669,12 +717,18 @@ class BackupRestoreService
     private function upsertCalendarCollection(
         int $ownerId,
         string $fileStem,
+        ?string $collectionUri,
+        ?string $legacyUriCandidate,
+        bool $allowLegacyUriMatch,
         bool $dryRun,
         string $mode,
         array &$uriPool,
         array &$summary,
     ): array {
         [$uriBase, $displayName] = $this->collectionIdentityFromStem($fileStem, 'calendar', 'Calendar');
+        if (is_string($collectionUri) && trim($collectionUri) !== '') {
+            $uriBase = trim($collectionUri);
+        }
 
         $existing = $mode === 'merge'
             ? Calendar::query()
@@ -682,6 +736,20 @@ class BackupRestoreService
                 ->where('uri', $uriBase)
                 ->first()
             : null;
+
+        if (
+            ! $existing
+            && $mode === 'merge'
+            && $allowLegacyUriMatch
+            && is_string($legacyUriCandidate)
+            && $legacyUriCandidate !== ''
+            && $legacyUriCandidate !== $uriBase
+        ) {
+            $existing = Calendar::query()
+                ->where('owner_id', $ownerId)
+                ->where('uri', $legacyUriCandidate)
+                ->first();
+        }
 
         if ($existing) {
             if ($existing->display_name !== $displayName) {
@@ -745,12 +813,18 @@ class BackupRestoreService
     private function upsertAddressBookCollection(
         int $ownerId,
         string $fileStem,
+        ?string $collectionUri,
+        ?string $legacyUriCandidate,
+        bool $allowLegacyUriMatch,
         bool $dryRun,
         string $mode,
         array &$uriPool,
         array &$summary,
     ): array {
         [$uriBase, $displayName] = $this->collectionIdentityFromStem($fileStem, 'address-book', 'Address Book');
+        if (is_string($collectionUri) && trim($collectionUri) !== '') {
+            $uriBase = trim($collectionUri);
+        }
 
         $existing = $mode === 'merge'
             ? AddressBook::query()
@@ -758,6 +832,20 @@ class BackupRestoreService
                 ->where('uri', $uriBase)
                 ->first()
             : null;
+
+        if (
+            ! $existing
+            && $mode === 'merge'
+            && $allowLegacyUriMatch
+            && is_string($legacyUriCandidate)
+            && $legacyUriCandidate !== ''
+            && $legacyUriCandidate !== $uriBase
+        ) {
+            $existing = AddressBook::query()
+                ->where('owner_id', $ownerId)
+                ->where('uri', $legacyUriCandidate)
+                ->first();
+        }
 
         if ($existing) {
             if ($existing->display_name !== $displayName) {
@@ -809,6 +897,65 @@ class BackupRestoreService
             'uri' => $nextUri,
             'display_name' => $displayName,
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $manifest
+     * @return array<string, string>
+     */
+    private function collectionUriMapFromManifest(?array $manifest): array
+    {
+        if (! is_array($manifest)) {
+            return [];
+        }
+
+        $collections = $manifest['collections'] ?? null;
+        if (! is_array($collections)) {
+            return [];
+        }
+
+        $map = [];
+        foreach ([
+            'calendars' => 'calendar',
+            'address_books' => 'address_book',
+        ] as $manifestKey => $entryType) {
+            $items = $collections[$manifestKey] ?? null;
+            if (! is_array($items)) {
+                continue;
+            }
+
+            foreach ($items as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+
+                $archivePath = (isset($item['archive_path']) && is_string($item['archive_path']))
+                    ? trim($item['archive_path'])
+                    : '';
+                $uri = (isset($item['uri']) && is_string($item['uri']))
+                    ? trim($item['uri'])
+                    : '';
+                if ($archivePath === '' || $uri === '') {
+                    continue;
+                }
+
+                $map[$entryType.'|'.$archivePath] = $uri;
+            }
+        }
+
+        return $map;
+    }
+
+    private function legacyCollectionUriCandidateFromStem(string $fileStem): ?string
+    {
+        $rawStem = trim($fileStem);
+        if (preg_match('/^\d+-(.+)$/', $rawStem, $matches) !== 1) {
+            return null;
+        }
+
+        $candidate = Str::slug((string) ($matches[1] ?? ''));
+
+        return $candidate === '' ? null : $candidate;
     }
 
     /**

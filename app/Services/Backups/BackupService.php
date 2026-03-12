@@ -273,6 +273,8 @@ class BackupService
         $addressBookCount = 0;
         $calendarObjectCount = 0;
         $cardCount = 0;
+        $calendarCollections = [];
+        $addressBookCollections = [];
 
         $calendars = Calendar::query()
             ->with([
@@ -299,6 +301,13 @@ class BackupService
             );
 
             $zip->addFromString($entryPath, $this->buildCalendarPayload($calendar));
+            $calendarCollections[] = [
+                'archive_path' => $entryPath,
+                'owner_id' => (int) $calendar->owner_id,
+                'id' => (int) $calendar->id,
+                'uri' => (string) $calendar->uri,
+                'display_name' => (string) $calendar->display_name,
+            ];
         }
 
         if ($calendarCount === 0) {
@@ -330,6 +339,13 @@ class BackupService
             );
 
             $zip->addFromString($entryPath, $this->buildAddressBookPayload($addressBook));
+            $addressBookCollections[] = [
+                'archive_path' => $entryPath,
+                'owner_id' => (int) $addressBook->owner_id,
+                'id' => (int) $addressBook->id,
+                'uri' => (string) $addressBook->uri,
+                'display_name' => (string) $addressBook->display_name,
+            ];
         }
 
         if ($addressBookCount === 0) {
@@ -352,6 +368,10 @@ class BackupService
                 'address_books' => $addressBookCount,
                 'calendar_objects' => $calendarObjectCount,
                 'cards' => $cardCount,
+            ],
+            'collections' => [
+                'calendars' => $calendarCollections,
+                'address_books' => $addressBookCollections,
             ],
         ];
 
