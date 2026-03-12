@@ -60,14 +60,30 @@ updates:
       - "dependencies"
       - "npm"
     groups:
+      npm-react-ecosystem:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
       npm-non-major:
         update-types:
           - "minor"
           - "patch"
         patterns:
           - "*"
+        exclude-patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
       npm-major:
         update-types:
           - "major"
         patterns:
           - "*"
+        exclude-patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"

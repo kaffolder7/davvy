@@ -23,6 +23,7 @@ on:
       - "vite.config.js"
       - "tailwind.config.js"
       - "postcss.config.js"
+      - "scripts/**"
       - ".github/workflows/pr-tests.yml"
       - ".github/workflows/lint-checks.yml"
       - ".github/workflows/release-image.yml"

@@ -20,7 +20,9 @@ RUN composer install --no-scripts --prefer-dist --no-interaction \
 FROM ${NODE_IMAGE} AS frontend
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
+COPY scripts/check-react-major-parity.mjs ./scripts/check-react-major-parity.mjs
+RUN node ./scripts/check-react-major-parity.mjs \
+    && npm ci --no-audit --no-fund
 COPY resources ./resources
 COPY vite.config.js tailwind.config.js postcss.config.js ./
 RUN npm run build

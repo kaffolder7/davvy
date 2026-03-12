@@ -21,6 +21,7 @@ on:
       - "vite.config.js"
       - "tailwind.config.js"
       - "postcss.config.js"
+      - "scripts/**"
       - ".github/workflows/lint-checks.yml"
       - ".github/workflows/pr-tests.yml"
       - ".github/workflows/release-image.yml"
@@ -44,6 +45,7 @@ on:
       - "vite.config.js"
       - "tailwind.config.js"
       - "postcss.config.js"
+      - "scripts/**"
       - ".github/workflows/lint-checks.yml"
       - ".github/workflows/pr-tests.yml"
       - ".github/workflows/release-image.yml"
@@ -126,6 +128,9 @@ jobs:
           node-version: "24"
           cache: npm
           cache-dependency-path: package-lock.json
+
+      - name: Verify React major parity
+        run: npm run check:react-parity
 
       - name: Install frontend dependencies
         run: npm ci
