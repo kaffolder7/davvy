@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
 export default function ProfilePage({
@@ -9,6 +9,7 @@ export default function ProfilePage({
   AppShell,
   InfoCard,
   Field,
+  copyTextToClipboard,
 }) {
   const [passwordSubmitting, setPasswordSubmitting] = useState(false);
   const [passwordError, setPasswordError] = useState("");
@@ -27,6 +28,8 @@ export default function ProfilePage({
   const [twoFactorCode, setTwoFactorCode] = useState("");
   const [twoFactorActionCode, setTwoFactorActionCode] = useState("");
   const [backupCodes, setBackupCodes] = useState([]);
+  const [backupCodesCopyState, setBackupCodesCopyState] = useState("idle");
+  const backupCodesFieldRef = useRef(null);
 
   const [appPasswords, setAppPasswords] = useState([]);
   const [appPasswordLoading, setAppPasswordLoading] = useState(false);
@@ -46,6 +49,43 @@ export default function ProfilePage({
 
     return parsed.toLocaleString();
   }, [auth.twoFactorGraceExpiresAt]);
+  const backupCodesText = useMemo(() => backupCodes.join("\n"), [backupCodes]);
+
+  useEffect(() => {
+    if (backupCodesCopyState === "idle") {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => setBackupCodesCopyState("idle"), 1800);
+    return () => window.clearTimeout(timer);
+  }, [backupCodesCopyState]);
+
+  const selectAllBackupCodes = () => {
+    if (!backupCodesFieldRef.current) {
+      return;
+    }
+
+    backupCodesFieldRef.current.focus();
+    backupCodesFieldRef.current.select();
+  };
+
+  const copyAllBackupCodes = async () => {
+    if (!backupCodesText || !copyTextToClipboard) {
+      return;
+    }
+
+    try {
+      await copyTextToClipboard(backupCodesText);
+      setBackupCodesCopyState("copied");
+    } catch {
+      setBackupCodesCopyState("failed");
+    }
+  };
+
+  const selectAndCopyBackupCodes = async () => {
+    selectAllBackupCodes();
+    await copyAllBackupCodes();
+  };
 
   const loadAppPasswords = async () => {
     setAppPasswordLoading(true);
@@ -432,16 +472,47 @@ export default function ProfilePage({
               Each backup code can be used once. You will not be able to view
               these exact codes again.
             </p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {backupCodes.map((code) => (
-                <code
-                  key={code}
-                  className="rounded border border-app-edge bg-app-panel px-2 py-1 text-sm"
-                >
-                  {code}
-                </code>
-              ))}
+            <div className="mt-3">
+              <textarea
+                ref={backupCodesFieldRef}
+                className="input min-h-36 resize-y font-mono leading-6"
+                value={backupCodesText}
+                rows={Math.max(4, backupCodes.length)}
+                aria-label="Backup codes"
+                readOnly
+                onFocus={selectAllBackupCodes}
+                onClick={selectAllBackupCodes}
+              />
             </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                className="btn-outline btn-outline-sm"
+                type="button"
+                onClick={selectAllBackupCodes}
+              >
+                Select All
+              </button>
+              <button
+                className="btn-outline btn-outline-sm"
+                type="button"
+                onClick={() => void selectAndCopyBackupCodes()}
+              >
+                Copy All Codes
+              </button>
+              {backupCodesCopyState === "copied" ? (
+                <span className="text-xs font-semibold text-app-accent">
+                  Copied all codes.
+                </span>
+              ) : null}
+              {backupCodesCopyState === "failed" ? (
+                <span className="text-xs font-semibold text-app-danger">
+                  Copy failed. Use Select All, then copy manually.
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-2 text-xs text-app-muted">
+              Click inside the code block to select all codes.
+            </p>
           </div>
         ) : null}
 

@@ -35,15 +35,18 @@ function buildProps(overrides = {}) {
         email: "admin@example.com",
         role: "admin",
       },
+      twoFactorEnabled: false,
     },
     theme: {},
     api: {
       patch: vi.fn().mockResolvedValue({}),
+      post: vi.fn().mockResolvedValue({ data: {} }),
     },
     extractError: vi.fn((_, fallback) => fallback),
     AppShell: AppShellStub,
     InfoCard: InfoCardStub,
     Field: FieldStub,
+    copyTextToClipboard: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
@@ -114,5 +117,94 @@ describe("ProfilePage", () => {
       err,
       "Unable to update password.",
     );
+  });
+
+  it("consolidates backup codes and only copies via the copy action", async () => {
+    const user = userEvent.setup();
+    const backupCodes = ["2GXW-3KXY", "V8XS-Q5CZ", "TZKH-32Z5", "EF75-BRXJ"];
+    const props = buildProps({
+      api: {
+        patch: vi.fn().mockResolvedValue({}),
+        post: vi
+          .fn()
+          .mockResolvedValueOnce({
+            data: {
+              otpauth_uri:
+                "otpauth://totp/Davvy:admin@example.com?secret=ABC123&issuer=Davvy",
+              manual_key: "ABC123",
+            },
+          })
+          .mockResolvedValueOnce({
+            data: {
+              backup_codes: backupCodes,
+            },
+          }),
+      },
+    });
+
+    render(<ProfilePage {...props} />);
+
+    await user.click(screen.getByRole("button", { name: "Start 2FA Setup" }));
+    await user.type(screen.getByLabelText("3. Verification code"), "123456");
+    await user.click(screen.getByRole("button", { name: "Enable 2FA" }));
+
+    const backupCodeField = await screen.findByLabelText("Backup codes");
+    const expectedCodes = backupCodes.join("\n");
+
+    expect(backupCodeField).toHaveValue(expectedCodes);
+
+    await user.click(backupCodeField);
+
+    expect(props.copyTextToClipboard).not.toHaveBeenCalled();
+    expect(backupCodeField.selectionStart).toBe(0);
+    expect(backupCodeField.selectionEnd).toBe(expectedCodes.length);
+
+    await user.click(screen.getByRole("button", { name: "Copy All Codes" }));
+
+    expect(props.copyTextToClipboard).toHaveBeenCalledWith(expectedCodes);
+    expect(backupCodeField.selectionStart).toBe(0);
+    expect(backupCodeField.selectionEnd).toBe(expectedCodes.length);
+    expect(screen.getByText("Copied all codes.")).toBeInTheDocument();
+  });
+
+  it("supports select-all without forcing clipboard writes", async () => {
+    const user = userEvent.setup();
+    const backupCodes = ["AAAA-BBBB", "CCCC-DDDD"];
+    const copyTextToClipboard = vi.fn().mockResolvedValue(undefined);
+    const props = buildProps({
+      copyTextToClipboard,
+      api: {
+        patch: vi.fn().mockResolvedValue({}),
+        post: vi
+          .fn()
+          .mockResolvedValueOnce({
+            data: {
+              otpauth_uri:
+                "otpauth://totp/Davvy:admin@example.com?secret=ABC123&issuer=Davvy",
+              manual_key: "ABC123",
+            },
+          })
+          .mockResolvedValueOnce({
+            data: {
+              backup_codes: backupCodes,
+            },
+          }),
+      },
+    });
+
+    render(<ProfilePage {...props} />);
+
+    await user.click(screen.getByRole("button", { name: "Start 2FA Setup" }));
+    await user.type(screen.getByLabelText("3. Verification code"), "123456");
+    await user.click(screen.getByRole("button", { name: "Enable 2FA" }));
+
+    const backupCodeField = await screen.findByLabelText("Backup codes");
+    const expectedCodes = backupCodes.join("\n");
+
+    await user.click(screen.getByRole("button", { name: "Select All" }));
+
+    expect(copyTextToClipboard).not.toHaveBeenCalled();
+    expect(backupCodeField.selectionStart).toBe(0);
+    expect(backupCodeField.selectionEnd).toBe(expectedCodes.length);
   });
 });

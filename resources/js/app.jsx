@@ -484,6 +484,7 @@ function ProfilePage({ auth, theme }) {
       AppShell={AppShell}
       InfoCard={InfoCard}
       Field={Field}
+      copyTextToClipboard={copyTextToClipboard}
     />
   );
 }
