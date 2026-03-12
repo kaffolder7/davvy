@@ -525,7 +525,7 @@ class ContactManagementTest extends TestCase
         $book = AddressBook::factory()->create(['owner_id' => $user->id, 'uri' => 'in-law-spouse-propagation']);
 
         $father = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
-            'first_name' => 'Dennis',
+            'first_name' => 'Calvin',
             'last_name' => 'Hargrove',
             'related_names' => [],
             'address_book_ids' => [$book->id],
@@ -534,7 +534,7 @@ class ContactManagementTest extends TestCase
         $fatherId = (int) $father->json('id');
 
         $mother = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
-            'first_name' => 'Melanie',
+            'first_name' => 'Marisol',
             'last_name' => 'Hargrove',
             'related_names' => [],
             'address_book_ids' => [$book->id],
@@ -543,7 +543,7 @@ class ContactManagementTest extends TestCase
         $motherId = (int) $mother->json('id');
 
         $daughterInLaw = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
-            'first_name' => 'Melissa',
+            'first_name' => 'Talia',
             'last_name' => 'Hargrove',
             'related_names' => [],
             'address_book_ids' => [$book->id],
@@ -553,7 +553,7 @@ class ContactManagementTest extends TestCase
 
         $this->actingAs($user)
             ->patchJson('/api/contacts/'.$fatherId, $this->payload([
-                'first_name' => 'Dennis',
+                'first_name' => 'Calvin',
                 'last_name' => 'Hargrove',
                 'related_names' => [
                     [
@@ -602,7 +602,7 @@ class ContactManagementTest extends TestCase
         $book = AddressBook::factory()->create(['owner_id' => $user->id, 'uri' => 'in-law-spouse-propagation-cleanup']);
 
         $father = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
-            'first_name' => 'Dennis',
+            'first_name' => 'Calvin',
             'last_name' => 'Hargrove',
             'related_names' => [],
             'address_book_ids' => [$book->id],
@@ -611,7 +611,7 @@ class ContactManagementTest extends TestCase
         $fatherId = (int) $father->json('id');
 
         $mother = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
-            'first_name' => 'Melanie',
+            'first_name' => 'Marisol',
             'last_name' => 'Hargrove',
             'related_names' => [],
             'address_book_ids' => [$book->id],
@@ -620,7 +620,7 @@ class ContactManagementTest extends TestCase
         $motherId = (int) $mother->json('id');
 
         $daughterInLaw = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
-            'first_name' => 'Melissa',
+            'first_name' => 'Talia',
             'last_name' => 'Hargrove',
             'related_names' => [],
             'address_book_ids' => [$book->id],
@@ -630,7 +630,7 @@ class ContactManagementTest extends TestCase
 
         $this->actingAs($user)
             ->patchJson('/api/contacts/'.$fatherId, $this->payload([
-                'first_name' => 'Dennis',
+                'first_name' => 'Calvin',
                 'last_name' => 'Hargrove',
                 'related_names' => [
                     [
@@ -652,7 +652,7 @@ class ContactManagementTest extends TestCase
 
         $this->actingAs($user)
             ->patchJson('/api/contacts/'.$fatherId, $this->payload([
-                'first_name' => 'Dennis',
+                'first_name' => 'Calvin',
                 'last_name' => 'Hargrove',
                 'related_names' => [
                     [
@@ -794,7 +794,7 @@ class ContactManagementTest extends TestCase
         $book = AddressBook::factory()->create(['owner_id' => $user->id, 'uri' => 'other-to-specific']);
 
         $father = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
-            'first_name' => 'Dennis',
+            'first_name' => 'Calvin',
             'last_name' => 'Hargrove',
             'pronouns' => 'he/him',
             'pronouns_custom' => '',
@@ -805,7 +805,7 @@ class ContactManagementTest extends TestCase
         $fatherId = (int) $father->json('id');
 
         $son = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
-            'first_name' => 'Kyle',
+            'first_name' => 'Gavin',
             'last_name' => 'Hargrove',
             'pronouns' => 'he/him',
             'pronouns_custom' => '',
@@ -817,7 +817,7 @@ class ContactManagementTest extends TestCase
 
         $this->actingAs($user)
             ->patchJson('/api/contacts/'.$sonId, $this->payload([
-                'first_name' => 'Kyle',
+                'first_name' => 'Gavin',
                 'last_name' => 'Hargrove',
                 'pronouns' => 'he/him',
                 'pronouns_custom' => '',
@@ -836,7 +836,7 @@ class ContactManagementTest extends TestCase
 
         $this->actingAs($user)
             ->patchJson('/api/contacts/'.$sonId, $this->payload([
-                'first_name' => 'Kyle',
+                'first_name' => 'Gavin',
                 'last_name' => 'Hargrove',
                 'pronouns' => 'he/him',
                 'pronouns_custom' => '',
@@ -919,7 +919,7 @@ class ContactManagementTest extends TestCase
         $book = AddressBook::factory()->create(['owner_id' => $user->id, 'uri' => 'other-does-not-clobber']);
 
         $father = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
-            'first_name' => 'Dennis',
+            'first_name' => 'Calvin',
             'last_name' => 'Hargrove',
             'pronouns' => 'he/him',
             'pronouns_custom' => '',
@@ -930,7 +930,7 @@ class ContactManagementTest extends TestCase
         $fatherId = (int) $father->json('id');
 
         $son = $this->actingAs($user)->postJson('/api/contacts', $this->payload([
-            'first_name' => 'Kyle',
+            'first_name' => 'Gavin',
             'last_name' => 'Hargrove',
             'pronouns' => 'he/him',
             'pronouns_custom' => '',
@@ -942,7 +942,7 @@ class ContactManagementTest extends TestCase
 
         $this->actingAs($user)
             ->patchJson('/api/contacts/'.$sonId, $this->payload([
-                'first_name' => 'Kyle',
+                'first_name' => 'Gavin',
                 'last_name' => 'Hargrove',
                 'pronouns' => 'he/him',
                 'pronouns_custom' => '',
@@ -961,7 +961,7 @@ class ContactManagementTest extends TestCase
 
         $this->actingAs($user)
             ->patchJson('/api/contacts/'.$sonId, $this->payload([
-                'first_name' => 'Kyle',
+                'first_name' => 'Gavin',
                 'last_name' => 'Hargrove',
                 'pronouns' => 'he/him',
                 'pronouns_custom' => '',

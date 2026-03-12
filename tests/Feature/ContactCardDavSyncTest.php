@@ -170,13 +170,13 @@ class ContactCardDavSyncTest extends TestCase
                 [
                     'label' => 'custom',
                     'custom_label' => 'Daughter-in-Law',
-                    'value' => 'Melissa Kay Hargrove',
+                    'value' => 'Talia Kay Hargrove',
                     'related_contact_id' => null,
                 ],
                 [
                     'label' => 'custom',
                     'custom_label' => 'Son',
-                    'value' => 'Gavin Cole Hargrove',
+                    'value' => 'Gavin Calvin Hargrove',
                     'related_contact_id' => null,
                 ],
             ],
@@ -198,7 +198,7 @@ class ContactCardDavSyncTest extends TestCase
         $this->assertStringContainsString('RELATED;TYPE=SPOUSE', (string) $card->data);
         $this->assertStringContainsString('X-ABLABEL=Daughter-in-Law', (string) $card->data);
         $this->assertStringContainsString(
-            'RELATED;TYPE=CHILD;X-ABLABEL=Son:Gavin Cole Hargrove',
+            'RELATED;TYPE=CHILD;X-ABLABEL=Son:Gavin Calvin Hargrove',
             (string) $card->data,
         );
 

@@ -118,7 +118,7 @@ class ContactMilestoneCalendarTest extends TestCase
             'BEGIN:VCARD',
             'VERSION:3.0',
             'FN:Rowan Hargrove',
-            'N:Hargrove;Collin;;;',
+            'N:Hargrove;Rowan;;;',
             'ORG:First Bank of Berne;Business Banking',
             'BDAY:1995-11-07',
             'ITEM1.X-ABDATE:2018-09-23',
