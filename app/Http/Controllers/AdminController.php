@@ -15,6 +15,8 @@ use App\Services\Backups\BackupService;
 use App\Services\Backups\BackupSettingsService;
 use App\Services\Contacts\ContactMilestoneCalendarService;
 use App\Services\RegistrationSettingsService;
+use App\Services\Security\TwoFactorService;
+use App\Services\Security\TwoFactorSettingsService;
 use App\Services\UserDeletionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,6 +33,8 @@ class AdminController extends Controller
         private readonly BackupSettingsService $backupSettings,
         private readonly BackupService $backupService,
         private readonly BackupRestoreService $backupRestoreService,
+        private readonly TwoFactorSettingsService $twoFactorSettings,
+        private readonly TwoFactorService $twoFactor,
         private readonly UserDeletionService $userDeletionService,
     ) {}
 
@@ -39,7 +43,15 @@ class AdminController extends Controller
         $users = User::query()
             ->withCount(['calendars', 'addressBooks'])
             ->orderBy('id')
-            ->get();
+            ->get()
+            ->map(function (User $user): array {
+                $payload = $user->toArray();
+                $payload['two_factor_enabled'] = $user->hasTwoFactorEnabled();
+
+                return $payload;
+            })
+            ->values()
+            ->all();
 
         return response()->json(['data' => $users]);
     }
@@ -335,6 +347,40 @@ class AdminController extends Controller
 
         return response()->json([
             'enabled' => $this->registrationSettings->isContactChangeModerationEnabled(),
+        ]);
+    }
+
+    public function setTwoFactorEnforcementSetting(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'enabled' => ['required', 'boolean'],
+        ]);
+
+        $this->twoFactorSettings->setEnforced(
+            enabled: (bool) $data['enabled'],
+            actor: $request->user(),
+        );
+
+        return response()->json([
+            'enabled' => $this->twoFactorSettings->isEnforced(),
+            'grace_period_days' => $this->twoFactorSettings->gracePeriodDays(),
+        ]);
+    }
+
+    public function resetUserTwoFactor(Request $request, User $user): JsonResponse
+    {
+        $data = $request->validate([
+            'revoke_app_passwords' => ['sometimes', 'boolean'],
+        ]);
+
+        $revokeAppPasswords = (bool) ($data['revoke_app_passwords'] ?? true);
+
+        $this->twoFactor->disable($user, revokeAppPasswords: $revokeAppPasswords);
+
+        return response()->json([
+            'ok' => true,
+            'two_factor_enabled' => false,
+            'app_passwords_revoked' => $revokeAppPasswords,
         ]);
     }
 

@@ -568,6 +568,21 @@ class AdminUserManagementTest extends TestCase
         $response->assertJsonPath('enabled', true);
     }
 
+    public function test_admin_can_toggle_two_factor_enforcement_setting(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this
+            ->actingAs($admin)
+            ->patchJson('/api/admin/settings/two-factor-enforcement', [
+                'enabled' => true,
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('enabled', true);
+        $response->assertJsonPath('grace_period_days', 14);
+    }
+
     public function test_disabling_contact_change_moderation_requires_resolved_queue_requests(): void
     {
         $admin = User::factory()->admin()->create();

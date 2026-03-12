@@ -11,13 +11,16 @@ Davvy's web API is served from Laravel web routes (`routes/web.php`) and primari
   - CSRF token header for state-changing web requests (`X-CSRF-TOKEN`)
   - CORS is same-origin by default; configure explicit origins when cross-origin access is required
 - Auth for `/dav/*`:
-  - HTTP Basic auth (email + password)
+  - HTTP Basic auth
+  - default: email + account password
+  - when 2FA is enabled (or mandated and grace expired): email + DAV app password
 - Common response codes:
   - `200` success
   - `201` created
   - `202` accepted (queued for contact review)
   - `401` unauthenticated
   - `403` forbidden
+  - `423` locked (2FA setup required after grace)
   - `422` validation/business rule failure
   - `429` rate limited
 
@@ -39,6 +42,26 @@ Response:
   - `dav_compatibility_mode_enabled`
   - `contact_management_enabled`
   - `contact_change_moderation_enabled`
+  - `two_factor_enforcement_enabled`
+  - `two_factor_grace_period_days`
+  - `two_factor_enabled` (authenticated response only)
+  - `two_factor_setup_required` (authenticated response only)
+  - `two_factor_mandated` (authenticated response only)
+  - `two_factor_grace_expires_at` (authenticated response only)
+
+When 2FA is enabled for the user, login returns `202` with:
+- `two_factor_required=true`
+- `challenge_expires_at`
+- no authenticated session until challenge completion
+
+#### `GET /api/auth/login/2fa/status`
+Returns whether a pending login challenge exists for this browser session.
+
+#### `POST /api/auth/login/2fa`
+Complete pending login challenge.
+
+Request body:
+- `code` (required, TOTP or backup code)
 
 ### `POST /api/auth/register`
 Create regular user account when public registration is enabled.
@@ -64,6 +87,8 @@ Response includes:
 - `dav_compatibility_mode_enabled`
 - `contact_management_enabled`
 - `contact_change_moderation_enabled`
+- `two_factor_enforcement_enabled`
+- `two_factor_grace_period_days`
 
 ## Authenticated Endpoints
 
@@ -84,6 +109,50 @@ Request body:
 - `password_confirmation` (required)
 
 Rate limited.
+
+#### `GET /api/auth/2fa`
+Current 2FA status for signed-in user.
+
+#### `POST /api/auth/2fa/setup`
+Generate a pending 2FA setup secret for enrollment.
+
+#### `POST /api/auth/2fa/enable`
+Enable 2FA using current pending setup secret.
+
+Request body:
+- `code` (required TOTP)
+
+Response:
+- `enabled`
+- `backup_codes` (8 codes, shown once)
+
+#### `POST /api/auth/2fa/disable`
+Disable 2FA and revoke DAV app passwords.
+
+Request body:
+- `code` (required TOTP or backup code)
+
+#### `POST /api/auth/2fa/backup-codes/regenerate`
+Regenerate backup codes.
+
+Request body:
+- `code` (required TOTP or backup code)
+
+#### `GET /api/auth/app-passwords`
+List active DAV app passwords.
+
+#### `POST /api/auth/app-passwords`
+Create a DAV app password (shown once).
+
+Request body:
+- `name` (required)
+- `code` (required TOTP or backup code)
+
+#### `DELETE /api/auth/app-passwords/{appPassword}`
+Revoke one DAV app password.
+
+Request body:
+- `code` (required TOTP or backup code)
 
 ### Dashboard and Resource Views
 
@@ -265,6 +334,9 @@ Deny one queued request.
 
 ## Admin-Only Endpoints
 
+When global 2FA enforcement is enabled and an admin has passed grace without enrolling,
+admin endpoints return `423` until that admin completes 2FA setup.
+
 ### Users and Resource Discovery
 
 #### `GET /api/admin/users`
@@ -321,6 +393,12 @@ Approve all currently pending user accounts.
 Response:
 - `approved_count`
 
+#### `POST /api/admin/users/{user}/two-factor/reset`
+Emergency reset for a user's 2FA enrollment.
+
+Body:
+- `revoke_app_passwords` (optional bool, defaults `true`)
+
 #### `GET /api/admin/resources`
 List sharable calendars/address books across users.
 
@@ -350,6 +428,9 @@ Toggle review queue moderation for cross-owner contact changes.
 
 Disable guard:
 - returns `422` if unresolved queue requests still exist
+
+#### `PATCH /api/admin/settings/two-factor-enforcement`
+Toggle global 2FA enforcement with grace-period rollout.
 
 #### `GET /api/admin/settings/contact-change-retention`
 Get queue history retention days.

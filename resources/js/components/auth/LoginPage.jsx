@@ -26,6 +26,10 @@ export default function LoginPage({
 
     try {
       const { data } = await api.post("/api/auth/login", form);
+      if (data?.two_factor_required) {
+        navigate("/login/2fa", { replace: true });
+        return;
+      }
       auth.setAuth(buildAuthStateFromPayload(data, { user: data.user }));
       navigate("/");
     } catch (err) {

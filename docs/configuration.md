@@ -54,6 +54,8 @@ When an `app_settings` key exists, it overrides env defaults.
 | `ENABLE_CONTACT_MANAGEMENT` | `false` | Enables managed contacts UI/API |
 | `ENABLE_CONTACT_CHANGE_MODERATION` | `false` | Enables Review Queue workflow for cross-owner contact edits (recommended for families/teams, optional for personal use) |
 | `CONTACT_CHANGE_REQUEST_RETENTION_DAYS` | `90` | Purge horizon for applied/denied queue history |
+| `ENABLE_TWO_FACTOR_ENFORCEMENT` | `false` | Admin-controlled default for global 2FA mandate (persisted in `app_settings` once toggled) |
+| `TWO_FACTOR_GRACE_PERIOD_DAYS` | `14` | Grace period days before mandatory 2FA is enforced for users without 2FA enabled |
 | `ENABLE_AUTOMATED_BACKUPS` | `false` | Enables scheduled automated backups |
 | `BACKUPS_LOCAL_ENABLED` | `true` | Write backup snapshots to local filesystem path |
 | `BACKUPS_LOCAL_PATH` | `/var/www/html/storage/app/backups` | Root folder for local snapshots (`daily/weekly/monthly/yearly` subfolders) |
@@ -127,6 +129,8 @@ Admin Control Center toggles map to these settings keys:
 - `dav_compatibility_mode_enabled`
 - `contact_management_enabled`
 - `contact_change_moderation_enabled`
+- `two_factor_enforcement_enabled`
+- `two_factor_enforcement_started_at`
 - `contact_change_request_retention_days`
 - `backups_enabled`
 - `backup_local_enabled`

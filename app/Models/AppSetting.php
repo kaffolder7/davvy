@@ -67,6 +67,19 @@ class AppSetting extends Model
         );
     }
 
+    public static function twoFactorEnforcementEnabled(): bool
+    {
+        return self::booleanSetting(
+            key: 'two_factor_enforcement_enabled',
+            default: (bool) config('services.auth.two_factor_enforcement_enabled', false),
+        );
+    }
+
+    public static function twoFactorEnforcementStartedAt(): ?string
+    {
+        return self::nullableStringSetting('two_factor_enforcement_started_at');
+    }
+
     public static function contactChangeRequestRetentionDays(): int
     {
         return self::integerSetting(

@@ -6,7 +6,9 @@ Use this guide to connect Apple, Android, Thunderbird, and other DAV clients.
 
 - Server URL: `https://your-domain.tld/dav`
 - Username: account email (for example: `alice@example.com`)
-- Password: account password
+- Password:
+  - account password when 2FA is not enabled/required
+  - DAV app password when 2FA is enabled (or globally required after grace)
 - Principal URI (manual only): `principals/{user_id}`
 
 Autodiscovery URLs:
@@ -26,6 +28,12 @@ Given user ID `{id}`:
 Tip: The dashboard shows your principal and collection URI snippets.
 
 ## Platform Setup
+
+Before configuring clients when 2FA is enabled:
+1. Open Profile -> Security in Davvy web UI
+2. Create a DAV app password (for example `iPhone`, `MacBook`, `Thunderbird`)
+3. Copy the value shown once
+4. Use that app password in place of account password in DAV client setup
 
 ### macOS / iOS
 
@@ -77,7 +85,7 @@ Admins can enable **DAV compatibility mode** when legacy clients send non-strict
 ## Troubleshooting
 
 - `401 Unauthorized`
-  - Verify email/password
+  - Verify email/password (or DAV app password when 2FA is active)
   - Confirm client is using basic auth with correct account
 
 - `403 Forbidden`

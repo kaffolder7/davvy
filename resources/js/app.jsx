@@ -18,6 +18,7 @@ import {
 } from "./components/admin/adminConfigUtils";
 import AuthShellComponent from "./components/auth/AuthShell";
 import LoginPageComponent from "./components/auth/LoginPage";
+import LoginTwoFactorPageComponent from "./components/auth/LoginTwoFactorPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import RegisterPageComponent from "./components/auth/RegisterPage";
 import useAuthState from "./components/auth/useAuthState";
@@ -111,6 +112,10 @@ function App() {
     <Routes>
       <Route path="/login" element={<LoginPage auth={value} theme={theme} />} />
       <Route
+        path="/login/2fa"
+        element={<LoginTwoFactorPage auth={value} theme={theme} />}
+      />
+      <Route
         path="/register"
         element={<RegisterPage auth={value} theme={theme} />}
       />
@@ -173,6 +178,19 @@ function App() {
 function LoginPage({ auth, theme }) {
   return (
     <LoginPageComponent
+      auth={auth}
+      theme={theme}
+      api={api}
+      extractError={extractError}
+      AuthShell={AuthShellComponent}
+      Field={Field}
+    />
+  );
+}
+
+function LoginTwoFactorPage({ auth, theme }) {
+  return (
+    <LoginTwoFactorPageComponent
       auth={auth}
       theme={theme}
       api={api}

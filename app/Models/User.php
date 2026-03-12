@@ -22,6 +22,9 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'two_factor_secret',
+        'two_factor_backup_codes',
+        'two_factor_enabled_at',
         'is_approved',
         'approved_at',
         'approved_by',
@@ -30,6 +33,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_backup_codes',
     ];
 
     protected function casts(): array
@@ -38,6 +43,9 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => Role::class,
+            'two_factor_secret' => 'encrypted',
+            'two_factor_backup_codes' => 'array',
+            'two_factor_enabled_at' => 'datetime',
             'is_approved' => 'bool',
             'approved_at' => 'datetime',
         ];
@@ -90,6 +98,11 @@ class User extends Authenticatable
         return $this->hasOne(AddressBookMirrorConfig::class);
     }
 
+    public function appPasswords(): HasMany
+    {
+        return $this->hasMany(UserAppPassword::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === Role::Admin;
@@ -98,5 +111,12 @@ class User extends Authenticatable
     public function principalUri(): string
     {
         return 'principals/'.$this->id;
+    }
+
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->two_factor_enabled_at !== null
+            && is_string($this->two_factor_secret)
+            && trim($this->two_factor_secret) !== '';
     }
 }

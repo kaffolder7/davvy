@@ -33,6 +33,8 @@ Set these in your app service environment.
 | `ENABLE_CONTACT_MANAGEMENT` | `false` | Secure default for gated contacts UI/API |
 | `ENABLE_CONTACT_CHANGE_MODERATION` | `false` | Default-off moderation mode for collaborative deployments |
 | `CONTACT_CHANGE_REQUEST_RETENTION_DAYS` | `90` | Queue history purge horizon for applied/denied requests |
+| `ENABLE_TWO_FACTOR_ENFORCEMENT` | `false` | Admin UI can toggle mandatory 2FA rollout |
+| `TWO_FACTOR_GRACE_PERIOD_DAYS` | `14` | Days before mandatory 2FA lock applies for non-enrolled users |
 | `ENABLE_AUTOMATED_BACKUPS` | `false` | Enable scheduled local/S3 backup rotation |
 | `BACKUPS_LOCAL_ENABLED` | `true` | Keep local backup destination enabled unless intentionally remote-only |
 | `BACKUPS_LOCAL_PATH` | `/var/www/html/storage/app/backups` | Local backup root path in container |

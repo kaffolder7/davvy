@@ -135,13 +135,16 @@
               <h3>Identity &amp; Access</h3>
               <p>
                 Unified account model for web dashboard and DAV clients.
-                Session-based web auth and HTTP Basic auth for DAV share the
-                same principals, roles, and settings. Two roles: admin and
-                regular.
+                Session-based web auth supports TOTP 2FA with backup codes.
+                DAV uses HTTP Basic auth and supports app passwords for
+                non-interactive clients when 2FA is enabled. Two roles: admin
+                and regular.
               </p>
               <div class="feature-details">
                 <span class="feature-tag">Session Auth</span>
                 <span class="feature-tag">Basic Auth</span>
+                <span class="feature-tag">TOTP 2FA</span>
+                <span class="feature-tag">DAV App Passwords</span>
                 <span class="feature-tag">Rate Limiting</span>
                 <span class="feature-tag">CSRF Protection</span>
               </div>

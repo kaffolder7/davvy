@@ -4,12 +4,17 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { render, screen } from "@testing-library/react";
 import ProtectedRoute from "./ProtectedRoute";
 
-function renderRoute({ path = "/private", auth, adminOnly = false } = {}) {
+function renderRoute({
+  path = "/private",
+  routePath = "/private",
+  auth,
+  adminOnly = false,
+} = {}) {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route
-          path="/private"
+          path={routePath}
           element={
             <ProtectedRoute auth={auth} adminOnly={adminOnly}>
               <div>Protected Content</div>
@@ -18,6 +23,7 @@ function renderRoute({ path = "/private", auth, adminOnly = false } = {}) {
         />
         <Route path="/login" element={<div>Login Screen</div>} />
         <Route path="/" element={<div>Dashboard Home</div>} />
+        <Route path="/profile" element={<div>Profile Screen</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -57,6 +63,36 @@ describe("ProtectedRoute", () => {
         },
       },
       adminOnly: true,
+    });
+
+    expect(screen.getByText("Protected Content")).toBeInTheDocument();
+  });
+
+  it("redirects users with required 2FA enrollment to profile", () => {
+    renderRoute({
+      auth: {
+        user: {
+          id: 3,
+          role: "regular",
+        },
+        twoFactorSetupRequired: true,
+      },
+    });
+
+    expect(screen.getByText("Profile Screen")).toBeInTheDocument();
+  });
+
+  it("allows profile route while 2FA setup is required", () => {
+    renderRoute({
+      path: "/profile",
+      routePath: "/profile",
+      auth: {
+        user: {
+          id: 4,
+          role: "regular",
+        },
+        twoFactorSetupRequired: true,
+      },
     });
 
     expect(screen.getByText("Protected Content")).toBeInTheDocument();

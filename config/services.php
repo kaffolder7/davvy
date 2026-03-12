@@ -39,4 +39,8 @@ return [
         'funding_file' => base_path('.github/FUNDING.yml'),
         'button_hidden' => (bool) env('DAVVY_HIDE_SPONSOR_BUTTON', false),
     ],
+    'auth' => [
+        'two_factor_enforcement_enabled' => (bool) env('ENABLE_TWO_FACTOR_ENFORCEMENT', false),
+        'two_factor_grace_period_days' => (int) env('TWO_FACTOR_GRACE_PERIOD_DAYS', 14),
+    ],
 ];

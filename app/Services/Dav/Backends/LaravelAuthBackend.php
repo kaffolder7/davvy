@@ -5,6 +5,8 @@ namespace App\Services\Dav\Backends;
 use App\Models\User;
 use App\Services\DavRequestContext;
 use App\Services\PrincipalUriService;
+use App\Services\Security\AppPasswordService;
+use App\Services\Security\TwoFactorSettingsService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Sabre\DAV\Auth\Backend\AbstractBasic;
@@ -17,6 +19,8 @@ class LaravelAuthBackend extends AbstractBasic
     public function __construct(
         private readonly DavRequestContext $context,
         private readonly PrincipalUriService $principalUriService,
+        private readonly AppPasswordService $appPasswords,
+        private readonly TwoFactorSettingsService $twoFactorSettings,
     ) {}
 
     public function check(RequestInterface $request, ResponseInterface $response): array
@@ -47,12 +51,31 @@ class LaravelAuthBackend extends AbstractBasic
         $normalizedUsername = Str::lower(trim($username));
         $user = User::query()->where('email', $normalizedUsername)->first();
 
-        if (! $user || ! $user->is_approved || ! Hash::check($password, $user->password)) {
+        if (! $user || ! $user->is_approved) {
+            return null;
+        }
+
+        if ($this->appPasswords->verifyAndTouch($user, $password)) {
+            $this->context->setAuthenticatedUser($user);
+
+            return $user;
+        }
+
+        if ($this->shouldRequireAppPassword($user)) {
+            return null;
+        }
+
+        if (! Hash::check($password, $user->password)) {
             return null;
         }
 
         $this->context->setAuthenticatedUser($user);
 
         return $user;
+    }
+
+    private function shouldRequireAppPassword(User $user): bool
+    {
+        return $user->hasTwoFactorEnabled() || $this->twoFactorSettings->isSetupRequired($user);
     }
 }
