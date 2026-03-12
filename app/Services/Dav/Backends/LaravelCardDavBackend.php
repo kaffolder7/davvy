@@ -19,6 +19,7 @@ use App\Services\ResourceAccessService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
 use Sabre\CardDAV\Backend\AbstractBackend;
+use Sabre\CardDAV\Backend\SyncSupport;
 use Sabre\DAV\Exception\BadRequest;
 use Sabre\DAV\Exception\Conflict;
 use Sabre\DAV\Exception\Forbidden;
@@ -27,7 +28,7 @@ use Sabre\DAV\Exception\NotFound;
 use Sabre\DAV\PropPatch;
 use Throwable;
 
-class LaravelCardDavBackend extends AbstractBackend implements \Sabre\CardDAV\Backend\SyncSupport
+class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
 {
     public function __construct(
         private readonly PrincipalUriService $principalUriService,
