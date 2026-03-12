@@ -183,8 +183,8 @@
 </head>
 <body>
 @php($baseUrl = rtrim((string) config('app.url', ''), '/'))
-@php($lightLogo = $baseUrl !== '' ? $baseUrl.'/davvy_dark.png' : '/davvy_dark.png')
-@php($darkLogo = $baseUrl !== '' ? $baseUrl.'/davvy.png' : '/davvy.png')
+@php($lightLogo = $baseUrl !== '' ? $baseUrl.'/davvy.png' : '/davvy.png')
+@php($darkLogo = $baseUrl !== '' ? $baseUrl.'/davvy_dark.png' : '/davvy_dark.png')
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="email-shell">
   <tr>
     <td align="center">
