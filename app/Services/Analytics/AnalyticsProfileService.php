@@ -8,9 +8,6 @@ class AnalyticsProfileService
 {
     /**
      * Return a stable, non-reversible profile identifier for the user.
-     *
-     * @param  User  $user
-     * @return string
      */
     public function profileIdForUser(User $user): string
     {
@@ -19,9 +16,6 @@ class AnalyticsProfileService
 
     /**
      * Return a stable, non-reversible profile identifier for a user ID.
-     *
-     * @param  string  $userId
-     * @return string
      */
     public function profileIdForUserId(string $userId): string
     {

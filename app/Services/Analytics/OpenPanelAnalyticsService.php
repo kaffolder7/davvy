@@ -21,8 +21,6 @@ class OpenPanelAnalyticsService
     /**
      * Create a new OpenPanel analytics service instance.
      *
-     * @param  OpenPanelSettings  $settings
-     * @param  AnalyticsProfileService  $profiles
      * @return void
      */
     public function __construct(
@@ -33,10 +31,7 @@ class OpenPanelAnalyticsService
     /**
      * Track an event to OpenPanel when enabled.
      *
-     * @param  string  $name
      * @param  array<string, bool|int|float|string|null>  $properties
-     * @param  User|null  $user
-     * @return void
      */
     public function track(string $name, array $properties = [], ?User $user = null): void
     {
@@ -77,7 +72,6 @@ class OpenPanelAnalyticsService
     /**
      * Return the browser bootstrap payload.
      *
-     * @param  User|null  $user
      * @return array{enabled:bool,client_id?:string,api_url?:string,script_url?:string,profile_id?:string}
      */
     public function browserConfig(?User $user = null): array
@@ -145,9 +139,6 @@ class OpenPanelAnalyticsService
 
     /**
      * Determine whether the key likely contains PII.
-     *
-     * @param  string  $value
-     * @return bool
      */
     private function hasBlockedToken(string $value): bool
     {
@@ -163,9 +154,6 @@ class OpenPanelAnalyticsService
 
     /**
      * Determine whether the value appears to be an email address.
-     *
-     * @param  string  $value
-     * @return bool
      */
     private function looksLikeEmail(string $value): bool
     {

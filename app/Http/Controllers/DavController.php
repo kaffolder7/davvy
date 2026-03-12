@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Analytics\OpenPanelAnalyticsService;
 use App\Services\Dav\DavServerFactory;
 use App\Services\DavRequestContext;
-use App\Services\Analytics\OpenPanelAnalyticsService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -17,9 +17,6 @@ class DavController extends Controller
     /**
      * Create a new DAV controller instance.
      *
-     * @param  DavServerFactory  $davServerFactory
-     * @param  DavRequestContext  $davContext
-     * @param  OpenPanelAnalyticsService  $analytics
      * @return void
      */
     public function __construct(
@@ -30,9 +27,6 @@ class DavController extends Controller
 
     /**
      * Handle the incoming request.
-     *
-     * @param  Request  $request
-     * @return Response
      */
     public function handle(Request $request): Response
     {
@@ -126,9 +120,6 @@ class DavController extends Controller
 
     /**
      * Determine whether to log client DAV traffic.
-     *
-     * @param  Request  $request
-     * @return bool
      */
     private function shouldLogClientDavTraffic(Request $request): bool
     {
@@ -151,9 +142,6 @@ class DavController extends Controller
 
     /**
      * Serialize a DAV exception payload.
-     *
-     * @param  DavException  $exception
-     * @return string
      */
     private function serializeDavException(DavException $exception): string
     {
@@ -169,10 +157,6 @@ class DavController extends Controller
 
     /**
      * Track anonymized DAV usage and failure metrics.
-     *
-     * @param  Request  $request
-     * @param  int  $status
-     * @return void
      */
     private function trackDavRequest(Request $request, int $status): void
     {
@@ -194,9 +178,6 @@ class DavController extends Controller
 
     /**
      * Return normalized DAV client family from user-agent.
-     *
-     * @param  string|null  $userAgent
-     * @return string
      */
     private function classifyDavClient(?string $userAgent): string
     {

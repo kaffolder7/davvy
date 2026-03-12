@@ -31,16 +31,6 @@ class AdminController extends Controller
     /**
      * Create a new admin controller instance.
      *
-     * @param  RegistrationSettingsService  $registrationSettings
-     * @param  OpenPanelAnalyticsService  $analytics
-     * @param  ContactMilestoneCalendarService  $milestoneCalendarService
-     * @param  BackupSettingsService  $backupSettings
-     * @param  BackupService  $backupService
-     * @param  BackupRestoreService  $backupRestoreService
-     * @param  TwoFactorSettingsService  $twoFactorSettings
-     * @param  TwoFactorService  $twoFactor
-     * @param  UserOnboardingService  $onboarding
-     * @param  UserDeletionService  $userDeletionService
      * @return void
      */
     public function __construct(
@@ -58,8 +48,6 @@ class AdminController extends Controller
 
     /**
      * Return users for the admin dashboard.
-     *
-     * @return JsonResponse
      */
     public function users(): JsonResponse
     {
@@ -81,9 +69,6 @@ class AdminController extends Controller
 
     /**
      * Create an approved user account and issue a one-time invitation link.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function createUser(Request $request): JsonResponse
     {
@@ -129,10 +114,6 @@ class AdminController extends Controller
 
     /**
      * Delete a user account and related data.
-     *
-     * @param  Request  $request
-     * @param  User  $user
-     * @return JsonResponse
      */
     public function destroyUser(Request $request, User $user): JsonResponse
     {
@@ -187,10 +168,6 @@ class AdminController extends Controller
 
     /**
      * Approve a pending user account.
-     *
-     * @param  Request  $request
-     * @param  User  $user
-     * @return JsonResponse
      */
     public function approveUser(Request $request, User $user): JsonResponse
     {
@@ -207,9 +184,6 @@ class AdminController extends Controller
 
     /**
      * Approve all pending user accounts.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function approvePendingUsers(Request $request): JsonResponse
     {
@@ -237,8 +211,6 @@ class AdminController extends Controller
 
     /**
      * Return resources the selected user can share.
-     *
-     * @return JsonResponse
      */
     public function sharableResources(): JsonResponse
     {
@@ -288,9 +260,6 @@ class AdminController extends Controller
 
     /**
      * Enable or disable public registration.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function setRegistrationSetting(Request $request): JsonResponse
     {
@@ -311,9 +280,6 @@ class AdminController extends Controller
 
     /**
      * Enable or disable registration approval requirements.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function setRegistrationApprovalSetting(Request $request): JsonResponse
     {
@@ -333,9 +299,6 @@ class AdminController extends Controller
 
     /**
      * Enable or disable owner-managed sharing.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function setOwnerShareManagementSetting(Request $request): JsonResponse
     {
@@ -355,9 +318,6 @@ class AdminController extends Controller
 
     /**
      * Enable or disable DAV compatibility mode.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function setDavCompatibilityModeSetting(Request $request): JsonResponse
     {
@@ -377,9 +337,6 @@ class AdminController extends Controller
 
     /**
      * Enable or disable contact management features.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function setContactManagementSetting(Request $request): JsonResponse
     {
@@ -409,9 +366,6 @@ class AdminController extends Controller
 
     /**
      * Enable or disable contact change moderation.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function setContactChangeModerationSetting(Request $request): JsonResponse
     {
@@ -457,9 +411,6 @@ class AdminController extends Controller
 
     /**
      * Update two-factor enforcement settings.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function setTwoFactorEnforcementSetting(Request $request): JsonResponse
     {
@@ -480,10 +431,6 @@ class AdminController extends Controller
 
     /**
      * Clear two-factor enrollment and backup codes for a user.
-     *
-     * @param  Request  $request
-     * @param  User  $user
-     * @return JsonResponse
      */
     public function resetUserTwoFactor(Request $request, User $user): JsonResponse
     {
@@ -504,8 +451,6 @@ class AdminController extends Controller
 
     /**
      * Return contact-change request retention settings.
-     *
-     * @return JsonResponse
      */
     public function contactChangeRequestRetentionSetting(): JsonResponse
     {
@@ -516,9 +461,6 @@ class AdminController extends Controller
 
     /**
      * Update contact-change request retention settings.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function setContactChangeRequestRetentionSetting(Request $request): JsonResponse
     {
@@ -538,8 +480,6 @@ class AdminController extends Controller
 
     /**
      * Return milestone calendar generation-year settings.
-     *
-     * @return JsonResponse
      */
     public function milestoneGenerationYearsSetting(): JsonResponse
     {
@@ -550,9 +490,6 @@ class AdminController extends Controller
 
     /**
      * Update milestone calendar generation-year settings.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function setMilestoneGenerationYearsSetting(Request $request): JsonResponse
     {
@@ -585,8 +522,6 @@ class AdminController extends Controller
 
     /**
      * Purge generated milestone calendars for selected address books.
-     *
-     * @return JsonResponse
      */
     public function purgeGeneratedMilestoneCalendars(): JsonResponse
     {
@@ -597,8 +532,6 @@ class AdminController extends Controller
 
     /**
      * Return backup configuration and last-run status.
-     *
-     * @return JsonResponse
      */
     public function backupSettings(): JsonResponse
     {
@@ -607,9 +540,6 @@ class AdminController extends Controller
 
     /**
      * Update backup configuration settings.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function setBackupSettings(Request $request): JsonResponse
     {
@@ -651,9 +581,6 @@ class AdminController extends Controller
 
     /**
      * Run a backup immediately from the admin panel.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function runBackupNow(Request $request): JsonResponse
     {
@@ -678,9 +605,6 @@ class AdminController extends Controller
 
     /**
      * Restore data from an uploaded backup archive.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function restoreBackup(Request $request): JsonResponse
     {

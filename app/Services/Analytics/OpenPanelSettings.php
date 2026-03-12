@@ -6,8 +6,6 @@ class OpenPanelSettings
 {
     /**
      * Determine whether tracking should run for the current runtime.
-     *
-     * @return bool
      */
     public function trackingEnabled(): bool
     {
@@ -16,8 +14,6 @@ class OpenPanelSettings
 
     /**
      * Determine whether browser tracking can be initialized safely.
-     *
-     * @return bool
      */
     public function clientTrackingEnabled(): bool
     {
@@ -29,8 +25,6 @@ class OpenPanelSettings
 
     /**
      * Determine whether server-side tracking can be sent.
-     *
-     * @return bool
      */
     public function serverTrackingEnabled(): bool
     {
@@ -39,8 +33,6 @@ class OpenPanelSettings
 
     /**
      * Return the OpenPanel browser client ID.
-     *
-     * @return string
      */
     public function clientId(): string
     {
@@ -49,8 +41,6 @@ class OpenPanelSettings
 
     /**
      * Return the OpenPanel server client secret.
-     *
-     * @return string
      */
     public function clientSecret(): string
     {
@@ -59,8 +49,6 @@ class OpenPanelSettings
 
     /**
      * Return the OpenPanel API base URL.
-     *
-     * @return string
      */
     public function apiUrl(): string
     {
@@ -69,8 +57,6 @@ class OpenPanelSettings
 
     /**
      * Return the script source for browser runtime.
-     *
-     * @return string
      */
     public function scriptUrl(): string
     {
@@ -98,9 +84,6 @@ class OpenPanelSettings
 
     /**
      * Determine whether a config value is present and not a placeholder.
-     *
-     * @param  string  $value
-     * @return bool
      */
     private function isConfiguredValue(string $value): bool
     {

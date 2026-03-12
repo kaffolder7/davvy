@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Enums\Role;
 use App\Models\User;
 use App\Models\UserAppPassword;
-use App\Services\RegistrationSettingsService;
 use App\Services\Analytics\OpenPanelAnalyticsService;
+use App\Services\RegistrationSettingsService;
 use App\Services\Security\AppPasswordService;
 use App\Services\Security\PendingTwoFactorLoginService;
 use App\Services\Security\TwoFactorService;
@@ -27,14 +27,6 @@ class AuthController extends Controller
     /**
      * Create a new auth controller instance.
      *
-     * @param  RegistrationSettingsService  $registrationSettings
-     * @param  OpenPanelAnalyticsService  $analytics
-     * @param  SponsorshipLinksService  $sponsorshipLinks
-     * @param  TwoFactorService  $twoFactor
-     * @param  TwoFactorSettingsService  $twoFactorSettings
-     * @param  PendingTwoFactorLoginService  $pendingTwoFactorLogin
-     * @param  AppPasswordService  $appPasswords
-     * @param  UserOnboardingService  $onboarding
      * @return void
      */
     public function __construct(
@@ -50,9 +42,6 @@ class AuthController extends Controller
 
     /**
      * Register a new user account and return auth bootstrap data.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function register(Request $request): JsonResponse
     {
@@ -133,9 +122,6 @@ class AuthController extends Controller
 
     /**
      * Verify a public registration email token and sign in approved accounts.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function verifyEmail(Request $request): JsonResponse
     {
@@ -178,9 +164,6 @@ class AuthController extends Controller
 
     /**
      * Accept an admin invitation token, set an initial password, and sign in the user.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function acceptInvite(Request $request): JsonResponse
     {
@@ -221,8 +204,6 @@ class AuthController extends Controller
 
     /**
      * Return public feature configuration for unauthenticated clients.
-     *
-     * @return JsonResponse
      */
     public function publicConfig(): JsonResponse
     {
@@ -231,9 +212,6 @@ class AuthController extends Controller
 
     /**
      * Authenticate credentials and begin or complete sign-in.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function login(Request $request): JsonResponse
     {
@@ -296,9 +274,6 @@ class AuthController extends Controller
 
     /**
      * Return pending two-factor challenge metadata for sign-in.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function loginTwoFactorStatus(Request $request): JsonResponse
     {
@@ -307,9 +282,6 @@ class AuthController extends Controller
 
     /**
      * Verify a two-factor code and complete sign-in.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function completeTwoFactorLogin(Request $request): JsonResponse
     {
@@ -350,9 +322,6 @@ class AuthController extends Controller
 
     /**
      * Log out the current user and invalidate the session.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function logout(Request $request): JsonResponse
     {
@@ -372,9 +341,6 @@ class AuthController extends Controller
 
     /**
      * Return the authenticated user with feature flags.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function me(Request $request): JsonResponse
     {
@@ -385,9 +351,6 @@ class AuthController extends Controller
 
     /**
      * Change the authenticated user's password.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function changePassword(Request $request): JsonResponse
     {
@@ -407,9 +370,6 @@ class AuthController extends Controller
 
     /**
      * Return current two-factor enrollment status for the user.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function twoFactorStatus(Request $request): JsonResponse
     {
@@ -429,9 +389,6 @@ class AuthController extends Controller
 
     /**
      * Start two-factor enrollment and return setup details.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function startTwoFactorSetup(Request $request): JsonResponse
     {
@@ -453,9 +410,6 @@ class AuthController extends Controller
 
     /**
      * Enable two-factor authentication after code verification.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function enableTwoFactor(Request $request): JsonResponse
     {
@@ -492,9 +446,6 @@ class AuthController extends Controller
 
     /**
      * Disable two-factor authentication and clear related state.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function disableTwoFactor(Request $request): JsonResponse
     {
@@ -522,9 +473,6 @@ class AuthController extends Controller
 
     /**
      * Regenerate two-factor backup codes.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function regenerateBackupCodes(Request $request): JsonResponse
     {
@@ -551,9 +499,6 @@ class AuthController extends Controller
 
     /**
      * List active app passwords for the current user.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function listAppPasswords(Request $request): JsonResponse
     {
@@ -581,9 +526,6 @@ class AuthController extends Controller
 
     /**
      * Create a new app password for the current user.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function createAppPassword(Request $request): JsonResponse
     {
@@ -618,10 +560,6 @@ class AuthController extends Controller
 
     /**
      * Revoke the specified app password for the current user.
-     *
-     * @param  Request  $request
-     * @param  UserAppPassword  $appPassword
-     * @return JsonResponse
      */
     public function revokeAppPassword(Request $request, UserAppPassword $appPassword): JsonResponse
     {
@@ -677,7 +615,6 @@ class AuthController extends Controller
     /**
      * Return the authenticated settings payload.
      *
-     * @param  User  $user
      * @return array<string, mixed>
      */
     private function authenticatedSettingsPayload(User $user): array
