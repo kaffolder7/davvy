@@ -7,12 +7,12 @@ use App\Models\AddressBook;
 use App\Models\Calendar;
 use App\Models\CalendarObject;
 use App\Models\Card;
-use App\Models\ResourceShare;
 use App\Models\User;
 use App\Services\Contacts\ManagedContactSyncService;
 use App\Services\Dav\DavSyncService;
 use App\Services\Dav\IcsValidator;
 use App\Services\Dav\VCardValidator;
+use App\Services\ResourceDeletionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -29,6 +29,7 @@ class BackupRestoreService
         private readonly VCardValidator $vCardValidator,
         private readonly DavSyncService $syncService,
         private readonly ManagedContactSyncService $managedContactSync,
+        private readonly ResourceDeletionService $resourceDeletion,
     ) {}
 
     /**
@@ -183,13 +184,19 @@ class BackupRestoreService
 
             if ($normalizedMode === 'replace') {
                 foreach ($resolvedOwnerIds as $ownerId) {
-                    $calendarIds = Calendar::query()
+                    $calendars = Calendar::query()
                         ->where('owner_id', $ownerId)
+                        ->get();
+                    $calendarIds = $calendars
                         ->pluck('id')
+                        ->map(fn (mixed $id): int => (int) $id)
                         ->all();
-                    $addressBookIds = AddressBook::query()
+                    $addressBooks = AddressBook::query()
                         ->where('owner_id', $ownerId)
+                        ->get();
+                    $addressBookIds = $addressBooks
                         ->pluck('id')
+                        ->map(fn (mixed $id): int => (int) $id)
                         ->all();
 
                     if ($calendarIds !== []) {
@@ -210,22 +217,13 @@ class BackupRestoreService
                         continue;
                     }
 
-                    if ($calendarIds !== []) {
-                        ResourceShare::query()
-                            ->where('resource_type', ShareResourceType::Calendar->value)
-                            ->whereIn('resource_id', $calendarIds)
-                            ->delete();
+                    foreach ($addressBooks as $addressBook) {
+                        $this->resourceDeletion->deleteAddressBook($addressBook);
                     }
 
-                    if ($addressBookIds !== []) {
-                        ResourceShare::query()
-                            ->where('resource_type', ShareResourceType::AddressBook->value)
-                            ->whereIn('resource_id', $addressBookIds)
-                            ->delete();
+                    foreach ($calendars as $calendar) {
+                        $this->resourceDeletion->deleteCalendar($calendar);
                     }
-
-                    AddressBook::query()->where('owner_id', $ownerId)->delete();
-                    Calendar::query()->where('owner_id', $ownerId)->delete();
                 }
             }
 

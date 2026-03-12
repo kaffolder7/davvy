@@ -2,11 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Enums\SharePermission;
+use App\Enums\ShareResourceType;
 use App\Models\AddressBook;
 use App\Models\AppSetting;
 use App\Models\Calendar;
 use App\Models\CalendarObject;
 use App\Models\Card;
+use App\Models\ResourceShare;
 use App\Models\User;
 use App\Services\RegistrationSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -747,6 +750,51 @@ class ContactMilestoneCalendarTest extends TestCase
 
         $this->assertSame('Household Birthdays', $birthdayCalendar->display_name);
         $this->assertSame('Marriage Milestones', $anniversaryCalendar->display_name);
+    }
+
+    public function test_deleting_address_book_removes_shares_for_generated_milestone_calendars(): void
+    {
+        $owner = User::factory()->create();
+        $recipient = User::factory()->create();
+        $addressBook = AddressBook::factory()->create([
+            'owner_id' => $owner->id,
+            'display_name' => 'Family',
+            'uri' => 'family',
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->patchJson('/api/address-books/'.$addressBook->id.'/milestone-calendars', [
+                'birthdays_enabled' => true,
+                'anniversaries_enabled' => true,
+            ])
+            ->assertOk();
+
+        $birthdayCalendarId = (int) $response->json('milestone_calendars.birthdays.calendar_id');
+        $anniversaryCalendarId = (int) $response->json('milestone_calendars.anniversaries.calendar_id');
+
+        $birthdayShare = ResourceShare::query()->create([
+            'resource_type' => ShareResourceType::Calendar,
+            'resource_id' => $birthdayCalendarId,
+            'owner_id' => $owner->id,
+            'shared_with_id' => $recipient->id,
+            'permission' => SharePermission::ReadOnly,
+        ]);
+        $anniversaryShare = ResourceShare::query()->create([
+            'resource_type' => ShareResourceType::Calendar,
+            'resource_id' => $anniversaryCalendarId,
+            'owner_id' => $owner->id,
+            'shared_with_id' => $recipient->id,
+            'permission' => SharePermission::ReadOnly,
+        ]);
+
+        $this->actingAs($owner)
+            ->deleteJson('/api/address-books/'.$addressBook->id)
+            ->assertOk();
+
+        $this->assertDatabaseMissing('calendars', ['id' => $birthdayCalendarId]);
+        $this->assertDatabaseMissing('calendars', ['id' => $anniversaryCalendarId]);
+        $this->assertDatabaseMissing('resource_shares', ['id' => $birthdayShare->id]);
+        $this->assertDatabaseMissing('resource_shares', ['id' => $anniversaryShare->id]);
     }
 
     public function test_enabling_milestones_marks_admin_purge_control_as_visible(): void

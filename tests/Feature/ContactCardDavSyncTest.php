@@ -458,4 +458,123 @@ class ContactCardDavSyncTest extends TestCase
         $this->assertDatabaseMissing('contact_address_book_assignments', ['card_id' => $card->id]);
         $this->assertDatabaseMissing('contacts', ['id' => $assignment->contact_id]);
     }
+
+    public function test_deleting_address_book_via_api_removes_orphaned_managed_contact(): void
+    {
+        $user = User::factory()->create();
+        $addressBook = AddressBook::factory()->create([
+            'owner_id' => $user->id,
+            'is_default' => false,
+            'uri' => 'delete-book-api-sync',
+        ]);
+
+        app(DavRequestContext::class)->setAuthenticatedUser($user);
+
+        app(LaravelCardDavBackend::class)->createCard(
+            $addressBook->id,
+            'delete-book-api-sync.vcf',
+            "BEGIN:VCARD\nVERSION:4.0\nFN:Delete Book Sync\nN:Sync;Delete Book;;;\nUID:delete-book-api-sync-uid\nEMAIL:delete.book.sync@example.com\nEND:VCARD"
+        );
+
+        $card = Card::query()
+            ->where('address_book_id', $addressBook->id)
+            ->where('uri', 'delete-book-api-sync.vcf')
+            ->firstOrFail();
+
+        $assignment = ContactAddressBookAssignment::query()
+            ->where('card_id', $card->id)
+            ->firstOrFail();
+
+        $this->assertDatabaseHas('contacts', ['id' => $assignment->contact_id]);
+
+        $this->actingAs($user)
+            ->deleteJson('/api/address-books/'.$addressBook->id)
+            ->assertOk();
+
+        $this->assertDatabaseMissing('address_books', ['id' => $addressBook->id]);
+        $this->assertDatabaseMissing('contact_address_book_assignments', ['card_id' => $card->id]);
+        $this->assertDatabaseMissing('contacts', ['id' => $assignment->contact_id]);
+    }
+
+    public function test_deleting_address_book_via_carddav_removes_orphaned_managed_contact(): void
+    {
+        $user = User::factory()->create();
+        $addressBook = AddressBook::factory()->create([
+            'owner_id' => $user->id,
+            'is_default' => false,
+            'uri' => 'delete-book-dav-sync',
+        ]);
+
+        app(DavRequestContext::class)->setAuthenticatedUser($user);
+
+        app(LaravelCardDavBackend::class)->createCard(
+            $addressBook->id,
+            'delete-book-dav-sync.vcf',
+            "BEGIN:VCARD\nVERSION:4.0\nFN:Delete DAV Book Sync\nN:Sync;Delete DAV Book;;;\nUID:delete-book-dav-sync-uid\nEMAIL:delete.dav.book.sync@example.com\nEND:VCARD"
+        );
+
+        $card = Card::query()
+            ->where('address_book_id', $addressBook->id)
+            ->where('uri', 'delete-book-dav-sync.vcf')
+            ->firstOrFail();
+
+        $assignment = ContactAddressBookAssignment::query()
+            ->where('card_id', $card->id)
+            ->firstOrFail();
+
+        $this->assertDatabaseHas('contacts', ['id' => $assignment->contact_id]);
+
+        app(LaravelCardDavBackend::class)->deleteAddressBook($addressBook->id);
+
+        $this->assertDatabaseMissing('address_books', ['id' => $addressBook->id]);
+        $this->assertDatabaseMissing('contact_address_book_assignments', ['card_id' => $card->id]);
+        $this->assertDatabaseMissing('contacts', ['id' => $assignment->contact_id]);
+    }
+
+    public function test_deleting_address_book_keeps_contact_when_other_assignments_exist(): void
+    {
+        $user = User::factory()->create();
+        $bookA = AddressBook::factory()->create([
+            'owner_id' => $user->id,
+            'is_default' => false,
+            'uri' => 'delete-book-keep-contact-a',
+        ]);
+        $bookB = AddressBook::factory()->create([
+            'owner_id' => $user->id,
+            'is_default' => false,
+            'uri' => 'delete-book-keep-contact-b',
+        ]);
+
+        $created = $this->actingAs($user)->postJson('/api/contacts', [
+            'first_name' => 'Multi',
+            'last_name' => 'Book Contact',
+            'company' => null,
+            'address_book_ids' => [$bookA->id, $bookB->id],
+            'phones' => [],
+            'emails' => [],
+            'urls' => [],
+            'addresses' => [],
+            'dates' => [],
+            'related_names' => [],
+            'instant_messages' => [],
+        ]);
+        $created->assertCreated();
+
+        $contactId = (int) $created->json('id');
+
+        $this->actingAs($user)
+            ->deleteJson('/api/address-books/'.$bookA->id)
+            ->assertOk();
+
+        $this->assertDatabaseMissing('address_books', ['id' => $bookA->id]);
+        $this->assertDatabaseHas('contacts', ['id' => $contactId]);
+        $this->assertDatabaseMissing('contact_address_book_assignments', [
+            'contact_id' => $contactId,
+            'address_book_id' => $bookA->id,
+        ]);
+        $this->assertDatabaseHas('contact_address_book_assignments', [
+            'contact_id' => $contactId,
+            'address_book_id' => $bookB->id,
+        ]);
+    }
 }

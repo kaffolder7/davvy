@@ -7,6 +7,7 @@ use App\Models\AddressBookContactMilestoneCalendar;
 use App\Models\AppSetting;
 use App\Models\Calendar;
 use App\Models\CalendarObject;
+use App\Models\Card;
 use App\Models\Contact;
 use App\Models\ContactChangeRequest;
 use App\Models\ResourceShare;
@@ -145,6 +146,74 @@ class AdminUserManagementTest extends TestCase
         $this->assertDatabaseMissing('contacts', ['id' => $contact->id]);
         $this->assertDatabaseMissing('resource_shares', ['owner_id' => $doomed->id]);
         $this->assertDatabaseCount('users', 2);
+    }
+
+    public function test_admin_delete_without_transfer_cleans_up_apple_compat_mirror_links_and_cards(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $owner = User::factory()->create();
+        $recipient = User::factory()->create();
+
+        $sourceAddressBook = AddressBook::factory()->create([
+            'owner_id' => $owner->id,
+            'display_name' => 'Family',
+            'uri' => 'family',
+            'is_sharable' => true,
+        ]);
+
+        Card::query()->create([
+            'address_book_id' => $sourceAddressBook->id,
+            'uri' => 'source-person.vcf',
+            'uid' => 'source-person-uid',
+            'etag' => md5('source-person'),
+            'size' => 1,
+            'data' => "BEGIN:VCARD\nVERSION:4.0\nFN:Source Person\nUID:source-person-uid\nEMAIL:source@example.test\nEND:VCARD",
+        ]);
+
+        ResourceShare::query()->create([
+            'resource_type' => 'address_book',
+            'resource_id' => $sourceAddressBook->id,
+            'owner_id' => $owner->id,
+            'shared_with_id' => $recipient->id,
+            'permission' => 'read_only',
+        ]);
+
+        $this->actingAs($recipient)
+            ->patchJson('/api/address-books/apple-compat', [
+                'enabled' => true,
+                'source_ids' => [$sourceAddressBook->id],
+            ])
+            ->assertOk();
+
+        $recipientDefaultAddressBook = AddressBook::query()
+            ->where('owner_id', $recipient->id)
+            ->where('is_default', true)
+            ->firstOrFail();
+        $mirroredCard = Card::query()
+            ->where('address_book_id', $recipientDefaultAddressBook->id)
+            ->firstOrFail();
+
+        $this->assertDatabaseHas('address_book_mirror_links', [
+            'user_id' => $recipient->id,
+            'source_address_book_id' => $sourceAddressBook->id,
+            'source_card_uri' => 'source-person.vcf',
+        ]);
+        $this->assertStringContainsString('X-DAVVY-MIRROR-SOURCE:', $mirroredCard->data);
+
+        $this->actingAs($admin)
+            ->deleteJson('/api/admin/users/'.$owner->id, [
+                'confirmation_email' => $admin->email,
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseMissing('users', ['id' => $owner->id]);
+        $this->assertDatabaseMissing('address_books', ['id' => $sourceAddressBook->id]);
+        $this->assertDatabaseMissing('cards', ['id' => $mirroredCard->id]);
+        $this->assertDatabaseMissing('address_book_mirror_links', [
+            'user_id' => $recipient->id,
+            'source_address_book_id' => $sourceAddressBook->id,
+            'source_card_uri' => 'source-person.vcf',
+        ]);
     }
 
     public function test_admin_can_delete_user_with_transfer_and_ownership_moves_to_target_user(): void
@@ -754,6 +823,22 @@ class AdminUserManagementTest extends TestCase
             'data' => 'BEGIN:VCALENDAR',
         ]);
 
+        $recipient = User::factory()->create();
+        $birthdayShare = ResourceShare::query()->create([
+            'resource_type' => 'calendar',
+            'resource_id' => $birthdayCalendar->id,
+            'owner_id' => $owner->id,
+            'shared_with_id' => $recipient->id,
+            'permission' => 'read_only',
+        ]);
+        $anniversaryShare = ResourceShare::query()->create([
+            'resource_type' => 'calendar',
+            'resource_id' => $anniversaryCalendar->id,
+            'owner_id' => $owner->id,
+            'shared_with_id' => $recipient->id,
+            'permission' => 'read_only',
+        ]);
+
         $response = $this
             ->actingAs($admin)
             ->postJson('/api/admin/contact-milestones/purge-generated-calendars')
@@ -767,6 +852,8 @@ class AdminUserManagementTest extends TestCase
         $this->assertDatabaseMissing('calendars', ['id' => $anniversaryCalendar->id]);
         $this->assertDatabaseMissing('calendar_objects', ['calendar_id' => $birthdayCalendar->id]);
         $this->assertDatabaseMissing('calendar_objects', ['calendar_id' => $anniversaryCalendar->id]);
+        $this->assertDatabaseMissing('resource_shares', ['id' => $birthdayShare->id]);
+        $this->assertDatabaseMissing('resource_shares', ['id' => $anniversaryShare->id]);
         $this->assertDatabaseHas('address_book_contact_milestone_calendars', [
             'id' => $birthdaySetting->id,
             'enabled' => false,
