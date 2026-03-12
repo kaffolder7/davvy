@@ -11,6 +11,19 @@ It is designed for:
 - DAV client interoperability with strict validation plus compatibility mode when needed
 - Automated rotating backups (local + optional S3) with restore tooling
 
+## Screenshots 🖼️
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/dashboard.webp" alt="Davvy dashboard with calendars and address books" style="width: 100%"/><small><strong>Dashboard</strong></small></td>
+    <td><img src="docs/screenshots/admin.webp" alt="Davvy admin control center" style="width: 100%"/><small><strong>Admin Control Center</strong></small></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/contacts.webp" alt="Davvy contacts management page" style="width: 100%"/><small><strong>Contacts</strong></small></td>
+    <td><img src="docs/screenshots/login.webp" alt="Davvy login screen" style="width: 100%"/><small><strong>Login</strong></small></td>
+  </tr>
+</table>
+
 ## Core Capabilities 🚀
 
 ### Identity and Access 🔐
