@@ -1,6 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Toast from "../common/Toast";
 
+/**
+ * Renders the Admin Page.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function AdminPage({
   auth,
   theme,

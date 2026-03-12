@@ -16,6 +16,9 @@ class ResourceDeletionService
         private readonly ResourceShareCleanupService $shareCleanup,
     ) {}
 
+    /**
+     * Deletes address book.
+     */
     public function deleteAddressBook(AddressBook $addressBook): void
     {
         $this->milestoneCalendarService->handleAddressBookDeleted($addressBook);
@@ -26,6 +29,9 @@ class ResourceDeletionService
         $addressBook->delete();
     }
 
+    /**
+     * Deletes calendar.
+     */
     public function deleteCalendar(Calendar $calendar): void
     {
         $this->shareCleanup->deleteCalendarShares($calendar->id);

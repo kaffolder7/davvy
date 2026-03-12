@@ -6,11 +6,17 @@ use App\Models\User;
 
 class PrincipalUriService
 {
+    /**
+     * Returns URI for user.
+     */
     public function uriForUser(User $user): string
     {
         return 'principals/'.$user->id;
     }
 
+    /**
+     * Returns user from principal URI.
+     */
     public function userFromPrincipalUri(string $principalUri): ?User
     {
         if (! str_starts_with($principalUri, 'principals/')) {

@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
 
+/**
+ * Renders the Address Book Milestone Controls component.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function AddressBookMilestoneControls({
   item,
   onSave,

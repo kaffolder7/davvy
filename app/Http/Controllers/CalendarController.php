@@ -17,6 +17,9 @@ class CalendarController extends Controller
         private readonly ResourceDeletionService $resourceDeletion,
     ) {}
 
+    /**
+     * Creates a new resource.
+     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -46,6 +49,9 @@ class CalendarController extends Controller
         return response()->json($calendar, 201);
     }
 
+    /**
+     * Updates an existing resource.
+     */
     public function update(Request $request, Calendar $calendar): JsonResponse
     {
         $this->authorizeOwnership($request, $calendar);
@@ -63,6 +69,9 @@ class CalendarController extends Controller
         return response()->json($calendar->fresh());
     }
 
+    /**
+     * Deletes an existing resource.
+     */
     public function destroy(Request $request, Calendar $calendar): JsonResponse
     {
         $this->authorizeOwnership($request, $calendar);
@@ -76,6 +85,9 @@ class CalendarController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    /**
+     * Performs the authorize ownership operation.
+     */
     private function authorizeOwnership(Request $request, Calendar $calendar): void
     {
         $user = $request->user();
@@ -85,6 +97,9 @@ class CalendarController extends Controller
         }
     }
 
+    /**
+     * Returns unique URI.
+     */
     private function uniqueUri(int $ownerId, string $baseUri): string
     {
         $seed = $baseUri !== '' ? $baseUri : 'calendar';

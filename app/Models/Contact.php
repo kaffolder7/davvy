@@ -18,6 +18,9 @@ class Contact extends Model
         'payload',
     ];
 
+    /**
+     * Returns casts.
+     */
     protected function casts(): array
     {
         return [
@@ -25,11 +28,17 @@ class Contact extends Model
         ];
     }
 
+    /**
+     * Returns owner.
+     */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
 
+    /**
+     * Returns assignments.
+     */
     public function assignments(): HasMany
     {
         return $this->hasMany(ContactAddressBookAssignment::class);

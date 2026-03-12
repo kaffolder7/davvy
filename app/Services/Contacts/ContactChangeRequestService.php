@@ -28,6 +28,8 @@ class ContactChangeRequestService
     ) {}
 
     /**
+     * Queues moderated update requests for web-initiated contact edits when required.
+     *
      * @param  array<string, mixed>  $payload
      * @param  array<int, int>  $addressBookIds
      * @return array{group_uuid:string,request_ids:array<int,int>,owner_ids:array<int,int>}|null
@@ -56,6 +58,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Queues moderated delete requests for web-initiated contact deletes when required.
+     *
      * @return array{group_uuid:string,request_ids:array<int,int>,owner_ids:array<int,int>}|null
      */
     public function enqueueWebDeleteIfNeeded(User $actor, Contact $contact): ?array
@@ -76,6 +80,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Queues moderated update requests for CardDAV contact updates when required.
+     *
      * @return array{group_uuid:string,request_ids:array<int,int>,owner_ids:array<int,int>}|null
      */
     public function enqueueCardDavUpdateIfNeeded(
@@ -112,6 +118,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Queues moderated delete requests for CardDAV contact deletes when required.
+     *
      * @return array{group_uuid:string,request_ids:array<int,int>,owner_ids:array<int,int>}|null
      */
     public function enqueueCardDavDeleteIfNeeded(User $actor, AddressBook $addressBook, Card $card): ?array
@@ -139,6 +147,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Returns reviewable contact-change requests for a reviewer.
+     *
      * @param  array<string, mixed>  $filters
      * @return Collection<int, ContactChangeRequest>
      */
@@ -186,6 +196,9 @@ class ContactChangeRequestService
         return $query->get();
     }
 
+    /**
+     * Returns the number of pending review requests for a reviewer.
+     */
     public function pendingReviewCount(User $reviewer): int
     {
         $this->purgeExpiredTerminalRequests();
@@ -204,6 +217,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Approves a request group and applies resolved contact changes.
+     *
      * @param  array<string, mixed>|null  $resolvedPayload
      * @param  array<int, int>|null  $resolvedAddressBookIds
      */
@@ -283,6 +298,9 @@ class ContactChangeRequestService
         });
     }
 
+    /**
+     * Denies a request group and marks pending siblings as denied.
+     */
     public function deny(User $reviewer, ContactChangeRequest $request): ContactChangeRequest
     {
         $this->purgeExpiredTerminalRequests();
@@ -319,6 +337,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Processes bulk approve or deny actions for request groups.
+     *
      * @param  array<int, int>  $requestIds
      * @return array{processed:int,approved:int,denied:int,skipped:int}
      */
@@ -381,6 +401,9 @@ class ContactChangeRequestService
         return $summary;
     }
 
+    /**
+     * Deletes old applied or denied requests past retention.
+     */
     public function purgeExpiredTerminalRequests(): int
     {
         $retentionDays = $this->settingsService->contactChangeRequestRetentionDays();
@@ -392,6 +415,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Enqueues if needed.
+     *
      * @param  array<string, mixed>|null  $proposedPayload
      * @param  array<int, int>|null  $proposedAddressBookIds
      * @param  array<string, mixed>  $meta
@@ -526,6 +551,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Returns queue owner IDs.
+     *
      * @param  Collection<int, AddressBook>  $addressBooks
      * @return array<int, int>
      */
@@ -558,6 +585,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Asserts user can write address books.
+     *
      * @param  array<int, int>  $addressBookIds
      */
     private function assertUserCanWriteAddressBooks(User $actor, array $addressBookIds): void
@@ -590,6 +619,9 @@ class ContactChangeRequestService
         }
     }
 
+    /**
+     * Applies status filter.
+     */
     private function applyStatusFilter(Builder $query, string $statusFilter): void
     {
         if ($statusFilter === 'all') {
@@ -632,6 +664,9 @@ class ContactChangeRequestService
         $query->where('status', ContactChangeStatus::Pending->value);
     }
 
+    /**
+     * Asserts reviewer can act.
+     */
     private function assertReviewerCanAct(User $reviewer, ContactChangeRequest $request): void
     {
         if ($reviewer->isAdmin()) {
@@ -644,6 +679,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Applies resolution to group.
+     *
      * @param  array<string, mixed>|null  $resolvedPayload
      * @param  array<int, int>|null  $resolvedAddressBookIds
      */
@@ -676,6 +713,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Returns group rows for update.
+     *
      * @return Collection<int, ContactChangeRequest>
      */
     private function groupRowsForUpdate(string $groupUuid): Collection
@@ -688,6 +727,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Applies approved group.
+     *
      * @param  Collection<int, ContactChangeRequest>  $groupRows
      */
     private function applyApprovedGroup(Collection $groupRows, User $reviewer): void
@@ -714,6 +755,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Applies delete group.
+     *
      * @param  Collection<int, ContactChangeRequest>  $groupRows
      */
     private function applyDeleteGroup(Collection $groupRows, User $reviewer): void
@@ -738,6 +781,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Applies update group.
+     *
      * @param  Collection<int, ContactChangeRequest>  $groupRows
      */
     private function applyUpdateGroup(Collection $groupRows, User $reviewer): void
@@ -833,6 +878,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Checks whether manual resolution request.
+     *
      * @param  Collection<int, ContactChangeRequest>  $groupRows
      */
     private function isManualResolutionRequest(Collection $groupRows): bool
@@ -844,6 +891,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Returns changed top level keys.
+     *
      * @param  array<string, mixed>  $base
      * @param  array<string, mixed>  $updated
      * @return array<int, string>
@@ -873,6 +922,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Merges payload.
+     *
      * @param  array<string, mixed>  $current
      * @param  array<string, mixed>  $requested
      * @param  array<int, string>  $requestedChangedKeys
@@ -896,6 +947,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Checks whether it has assignment conflict.
+     *
      * @param  array<int, int>  $baseIds
      * @param  array<int, int>  $requestedIds
      * @param  array<int, int>  $currentIds
@@ -909,6 +962,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Resolves address book IDs.
+     *
      * @param  array<int, int>  $baseIds
      * @param  array<int, int>  $requestedIds
      * @param  array<int, int>  $currentIds
@@ -925,6 +980,9 @@ class ContactChangeRequestService
         return $requestedIds;
     }
 
+    /**
+     * Checks whether values equal.
+     */
     private function valuesEqual(mixed $left, mixed $right): bool
     {
         return json_encode($left, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
@@ -932,6 +990,8 @@ class ContactChangeRequestService
     }
 
     /**
+     * Normalizes address book IDs.
+     *
      * @param  array<int, mixed>  $addressBookIds
      * @return array<int, int>
      */

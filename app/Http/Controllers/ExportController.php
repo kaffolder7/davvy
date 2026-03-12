@@ -22,6 +22,9 @@ class ExportController extends Controller
 {
     public function __construct(private readonly ResourceAccessService $accessService) {}
 
+    /**
+     * Returns export all calendars.
+     */
     public function exportAllCalendars(Request $request): BinaryFileResponse
     {
         $calendars = $this->readableCalendars($request->user());
@@ -38,6 +41,9 @@ class ExportController extends Controller
         );
     }
 
+    /**
+     * Returns export calendar.
+     */
     public function exportCalendar(Request $request, Calendar $calendar): Response
     {
         $user = $request->user();
@@ -58,6 +64,9 @@ class ExportController extends Controller
         );
     }
 
+    /**
+     * Returns export all address books.
+     */
     public function exportAllAddressBooks(Request $request): BinaryFileResponse
     {
         $addressBooks = $this->readableAddressBooks($request->user());
@@ -74,6 +83,9 @@ class ExportController extends Controller
         );
     }
 
+    /**
+     * Returns export address book.
+     */
     public function exportAddressBook(Request $request, AddressBook $addressBook): Response
     {
         $user = $request->user();
@@ -95,6 +107,8 @@ class ExportController extends Controller
     }
 
     /**
+     * Returns readable calendars.
+     *
      * @return Collection<int, Calendar>
      */
     private function readableCalendars(User $user): Collection
@@ -123,6 +137,8 @@ class ExportController extends Controller
     }
 
     /**
+     * Returns readable address books.
+     *
      * @return Collection<int, AddressBook>
      */
     private function readableAddressBooks(User $user): Collection
@@ -150,6 +166,9 @@ class ExportController extends Controller
             ->get();
     }
 
+    /**
+     * Builds calendar payload.
+     */
     private function buildCalendarPayload(Calendar $calendar): string
     {
         $calendar->loadMissing(['objects' => fn ($query) => $query->orderBy('id')]);
@@ -176,6 +195,9 @@ class ExportController extends Controller
         return $export->serialize();
     }
 
+    /**
+     * Builds address book payload.
+     */
     private function buildAddressBookPayload(AddressBook $addressBook): string
     {
         $addressBook->loadMissing(['cards' => fn ($query) => $query->orderBy('id')]);
@@ -187,6 +209,8 @@ class ExportController extends Controller
     }
 
     /**
+     * Returns download zip.
+     *
      * @param  array<int, array{name: string, contents: string}>  $files
      */
     private function downloadZip(
@@ -227,6 +251,8 @@ class ExportController extends Controller
     }
 
     /**
+     * Returns unique archive entry name.
+     *
      * @param  array<string, true>  $usedNames
      */
     private function uniqueArchiveEntryName(string $name, array &$usedNames): string
@@ -246,11 +272,17 @@ class ExportController extends Controller
         return $candidate;
     }
 
+    /**
+     * Returns attachment header.
+     */
     private function attachmentHeader(string $fileName): string
     {
         return sprintf('attachment; filename="%s"', $fileName);
     }
 
+    /**
+     * Returns resource file name.
+     */
     private function resourceFileName(string $displayName, string $fallbackStem, string $extension): string
     {
         $stem = Str::slug($displayName);
@@ -262,6 +294,9 @@ class ExportController extends Controller
         return $stem.'.'.$extension;
     }
 
+    /**
+     * Returns export archive name.
+     */
     private function exportArchiveName(string $resourceType): string
     {
         return sprintf('davvy-%s-%s.zip', $resourceType, now()->format('Ymd-His'));

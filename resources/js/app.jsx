@@ -338,6 +338,12 @@ function LabeledValueEditor({
   );
 }
 
+/**
+ * Renders the Related Name Editor component.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export function RelatedNameEditor({
   rows,
   setRows,

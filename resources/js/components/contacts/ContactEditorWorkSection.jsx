@@ -1,5 +1,11 @@
 import React from "react";
 
+/**
+ * Renders the Contact Editor Work Section component.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function ContactEditorWorkSection({
   isOpen,
   onToggle,

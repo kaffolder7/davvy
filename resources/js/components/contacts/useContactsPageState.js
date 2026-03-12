@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 
+/**
+ * Central state manager for contact list filtering, editor form state, and CRUD actions.
+ *
+ * @param {Record<string, any>} deps
+ * @returns {Record<string, any>}
+ */
 export default function useContactsPageState({
   auth,
   api,

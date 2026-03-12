@@ -17,6 +17,12 @@ export const OPTIONAL_CONTACT_FIELDS = [
   { id: "dates", label: "Date" },
 ];
 
+/**
+ * Returns true when a string contains non-whitespace text.
+ *
+ * @param {unknown} value
+ * @returns {boolean}
+ */
 export function hasTextValue(value) {
   return typeof value === "string" ? value.trim() !== "" : false;
 }
@@ -27,6 +33,13 @@ function sanitizeDatePartInput(value, maxLength) {
     .slice(0, maxLength);
 }
 
+/**
+ * Normalizes an editable date field value for controlled inputs.
+ *
+ * @param {'year'|'month'|'day'|string} field
+ * @param {unknown} value
+ * @returns {string}
+ */
 export function normalizeDatePartInput(field, value) {
   if (field === "month" || field === "day") {
     return sanitizeDatePartInput(value, 2);
@@ -58,6 +71,12 @@ function normalizeDatePartForPayload(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/**
+ * Normalizes birthday/date parts into backend payload numbers or nulls.
+ *
+ * @param {{year?: unknown, month?: unknown, day?: unknown}|null|undefined} parts
+ * @returns {{year: number|null, month: number|null, day: number|null}}
+ */
 export function normalizeDatePartsForPayload(parts) {
   return {
     year: normalizeDatePartForPayload(parts?.year),
@@ -66,6 +85,12 @@ export function normalizeDatePartsForPayload(parts) {
   };
 }
 
+/**
+ * Normalizes date row collections into payload-friendly numeric values.
+ *
+ * @param {unknown} rows
+ * @returns {Array<Record<string, unknown>>}
+ */
 export function normalizeDateRowsForPayload(rows) {
   if (!Array.isArray(rows)) {
     return [];
@@ -79,6 +104,12 @@ export function normalizeDateRowsForPayload(rows) {
   }));
 }
 
+/**
+ * Parses a positive integer, returning null for invalid values.
+ *
+ * @param {unknown} value
+ * @returns {number|null}
+ */
 export function normalizePositiveInt(value) {
   const parsed = Number.parseInt(String(value ?? ""), 10);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
@@ -112,6 +143,11 @@ function hasAddressRowContent(rows) {
     : false;
 }
 
+/**
+ * Creates the default expanded/collapsed state for the contact editor sections.
+ *
+ * @returns {{name: boolean, work: boolean, personal: boolean, communication: boolean, addressBooks: boolean}}
+ */
 export function createContactSectionOpenState() {
   return {
     name: true,
@@ -122,6 +158,12 @@ export function createContactSectionOpenState() {
   };
 }
 
+/**
+ * Derives section expansion state from current form content.
+ *
+ * @param {Record<string, any>} form
+ * @returns {{name: boolean, work: boolean, personal: boolean, communication: boolean, addressBooks: boolean}}
+ */
 export function deriveContactSectionOpenState(form) {
   const defaults = createContactSectionOpenState();
 
@@ -161,6 +203,12 @@ export function deriveContactSectionOpenState(form) {
   };
 }
 
+/**
+ * Returns optional field ids that should be visible for the current form state.
+ *
+ * @param {Record<string, any>} form
+ * @returns {string[]}
+ */
 export function deriveOptionalFieldVisibility(form) {
   return OPTIONAL_CONTACT_FIELDS.filter((field) => {
     if (field.id === "instant_messages") {
@@ -179,6 +227,13 @@ export function deriveOptionalFieldVisibility(form) {
   }).map((field) => field.id);
 }
 
+/**
+ * Returns true when an optional field currently has a meaningful value.
+ *
+ * @param {Record<string, any>} form
+ * @param {string} fieldId
+ * @returns {boolean}
+ */
 export function optionalFieldHasValue(form, fieldId) {
   if (fieldId === "instant_messages") {
     return hasValueRowContent(form.instant_messages);
@@ -195,6 +250,13 @@ export function optionalFieldHasValue(form, fieldId) {
   return hasTextValue(form[fieldId]);
 }
 
+/**
+ * Clears an optional field and restores default row structures when needed.
+ *
+ * @param {Record<string, any>} form
+ * @param {string} fieldId
+ * @returns {Record<string, any>}
+ */
 export function clearOptionalFieldValue(form, fieldId) {
   switch (fieldId) {
     case "instant_messages":
@@ -212,14 +274,32 @@ export function clearOptionalFieldValue(form, fieldId) {
   }
 }
 
+/**
+ * Creates an empty label/value row.
+ *
+ * @param {string} [label='other']
+ * @returns {{label: string, custom_label: string, value: string}}
+ */
 export function createEmptyLabeledValue(label = "other") {
   return { label, custom_label: "", value: "" };
 }
 
+/**
+ * Creates an empty related-name row.
+ *
+ * @param {string} [label='other']
+ * @returns {{label: string, custom_label: string, value: string, related_contact_id: number|null}}
+ */
 export function createEmptyRelatedName(label = "other") {
   return { label, custom_label: "", value: "", related_contact_id: null };
 }
 
+/**
+ * Creates an empty postal-address row.
+ *
+ * @param {string} [label='home']
+ * @returns {{label: string, custom_label: string, street: string, city: string, state: string, postal_code: string, country: string}}
+ */
 export function createEmptyAddress(label = "home") {
   return {
     label,
@@ -232,10 +312,22 @@ export function createEmptyAddress(label = "home") {
   };
 }
 
+/**
+ * Creates an empty date row.
+ *
+ * @param {string} [label='other']
+ * @returns {{label: string, custom_label: string, year: string, month: string, day: string}}
+ */
 export function createEmptyDate(label = "other") {
   return { label, custom_label: "", year: "", month: "", day: "" };
 }
 
+/**
+ * Creates a new contact form model with default row scaffolding.
+ *
+ * @param {number[]} [defaultAddressBookIds=[]]
+ * @returns {Record<string, any>}
+ */
 export function createEmptyContactForm(defaultAddressBookIds = []) {
   return {
     id: null,
@@ -280,6 +372,13 @@ function datePartsToFormValue(parts) {
   };
 }
 
+/**
+ * Maps a persisted contact payload into editable form state.
+ *
+ * @param {Record<string, any>|null|undefined} contact
+ * @param {number[]} [defaultAddressBookIds=[]]
+ * @returns {Record<string, any>}
+ */
 export function hydrateContactForm(contact, defaultAddressBookIds = []) {
   const fallback = createEmptyContactForm(defaultAddressBookIds);
 

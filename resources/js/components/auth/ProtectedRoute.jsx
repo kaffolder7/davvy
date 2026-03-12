@@ -1,6 +1,12 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
+/**
+ * Renders the Protected Route.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function ProtectedRoute({
   auth,
   adminOnly = false,

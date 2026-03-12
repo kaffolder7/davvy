@@ -8,6 +8,9 @@ use Illuminate\Support\Collection;
 
 class AppPasswordService
 {
+    /**
+     * Creates an app password and returns the plaintext token once.
+     */
     public function create(User $user, string $name): array
     {
         $trimmedName = trim($name);
@@ -29,6 +32,8 @@ class AppPasswordService
     }
 
     /**
+     * Returns active app passwords for a user.
+     *
      * @return Collection<int, UserAppPassword>
      */
     public function activeFor(User $user): Collection
@@ -39,6 +44,9 @@ class AppPasswordService
             ->get();
     }
 
+    /**
+     * Revokes an app password owned by the user.
+     */
     public function revoke(User $user, int $appPasswordId): bool
     {
         $password = $user->appPasswords()
@@ -57,6 +65,9 @@ class AppPasswordService
         return true;
     }
 
+    /**
+     * Revokes all app passwords for a user.
+     */
     public function revokeAll(User $user): int
     {
         return $user->appPasswords()
@@ -64,6 +75,9 @@ class AppPasswordService
             ->update(['revoked_at' => now()]);
     }
 
+    /**
+     * Verifies an app-password token and updates last-used metadata.
+     */
     public function verifyAndTouch(User $user, string $token): bool
     {
         $candidate = trim($token);
@@ -90,11 +104,17 @@ class AppPasswordService
         return true;
     }
 
+    /**
+     * Generates token.
+     */
     private function generateToken(): string
     {
         return 'dvap_'.bin2hex(random_bytes(20));
     }
 
+    /**
+     * Returns hash token.
+     */
     private function hashToken(string $token): string
     {
         return hash_hmac('sha256', $token, (string) config('app.key', 'davvy-app-passwords'));

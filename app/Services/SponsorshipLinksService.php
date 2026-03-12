@@ -5,6 +5,8 @@ namespace App\Services;
 class SponsorshipLinksService
 {
     /**
+     * Returns public configuration.
+     *
      * @return array{enabled: bool, links: array<int, array{name: string, url: string}>}
      */
     public function publicConfig(): array
@@ -25,6 +27,8 @@ class SponsorshipLinksService
     }
 
     /**
+     * Returns links from funding file.
+     *
      * @return array<int, array{name: string, url: string}>
      */
     private function linksFromFundingFile(): array
@@ -134,6 +138,8 @@ class SponsorshipLinksService
     }
 
     /**
+     * Performs the append platform links operation.
+     *
      * @param  array<int, array{name: string, url: string}>  $links
      * @param  array<string, true>  $seenUrls
      */
@@ -165,6 +171,8 @@ class SponsorshipLinksService
     }
 
     /**
+     * Performs the append custom links operation.
+     *
      * @param  array<int, array{name: string, url: string}>  $links
      * @param  array<string, true>  $seenUrls
      */
@@ -193,6 +201,8 @@ class SponsorshipLinksService
     }
 
     /**
+     * Performs the append validated link operation.
+     *
      * @param  array<int, array{name: string, url: string}>  $links
      * @param  array<string, true>  $seenUrls
      */
@@ -219,6 +229,8 @@ class SponsorshipLinksService
     }
 
     /**
+     * Normalizes values.
+     *
      * @return array<int, string>
      */
     private function normalizeValues(mixed $rawValue, bool $splitCommaValues = false): array
@@ -261,6 +273,9 @@ class SponsorshipLinksService
         return array_values(array_unique($values));
     }
 
+    /**
+     * Normalizes handle.
+     */
     private function normalizeHandle(string $value): string
     {
         $normalized = trim($value);
@@ -318,6 +333,9 @@ class SponsorshipLinksService
         return $parsed;
     }
 
+    /**
+     * Parses inline funding value.
+     */
     private function parseInlineFundingValue(string $value): string|array
     {
         $value = $this->stripInlineComment($value);
@@ -345,6 +363,9 @@ class SponsorshipLinksService
         return $this->normalizeYamlScalar($value);
     }
 
+    /**
+     * Normalizes yaml scalar.
+     */
     private function normalizeYamlScalar(string $value): string
     {
         $trimmed = trim($this->stripInlineComment($value));
@@ -364,6 +385,9 @@ class SponsorshipLinksService
         return trim($trimmed);
     }
 
+    /**
+     * Returns strip inline comment.
+     */
     private function stripInlineComment(string $value): string
     {
         $inSingleQuote = false;

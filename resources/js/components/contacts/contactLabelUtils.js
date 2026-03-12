@@ -171,6 +171,12 @@ function savedCustomOptionValue(label) {
   return `${SAVED_CUSTOM_LABEL_VALUE_PREFIX}${customLabelKey(label)}`;
 }
 
+/**
+ * Collects custom labels used across contacts, grouped by contact field key.
+ *
+ * @param {unknown} contacts
+ * @returns {Record<string, string[]>}
+ */
 export function buildSavedCustomLabelsByField(contacts) {
   const mapsByField = Object.fromEntries(
     CONTACT_LABEL_FIELD_KEYS.map((fieldKey) => [fieldKey, new Map()]),
@@ -221,6 +227,13 @@ export function buildSavedCustomLabelsByField(contacts) {
   );
 }
 
+/**
+ * Builds label select options with saved custom labels inserted before "Custom...".
+ *
+ * @param {Array<{value: string, label: string}>} baseOptions
+ * @param {string[]} [savedCustomLabels=[]]
+ * @returns {Array<{value: string, label: string, saved_custom_label?: string, saved_custom_key?: string}>}
+ */
 export function buildLabelOptions(baseOptions, savedCustomLabels = []) {
   const primaryOptions = baseOptions.filter((option) => option.value !== "custom");
   const customOption = baseOptions.find((option) => option.value === "custom");
@@ -255,6 +268,12 @@ function formatRelatedLabelOptionLabel(value) {
     .join(" ");
 }
 
+/**
+ * Derives additional related-name label options from existing contact data.
+ *
+ * @param {unknown} contacts
+ * @returns {Array<{value: string, label: string}>}
+ */
 export function buildDerivedRelatedLabelOptions(contacts) {
   if (!Array.isArray(contacts) || contacts.length === 0) {
     return [];
@@ -293,6 +312,13 @@ export function buildDerivedRelatedLabelOptions(contacts) {
     }));
 }
 
+/**
+ * Builds related-name label options with built-in, saved custom, and derived labels.
+ *
+ * @param {unknown} contacts
+ * @param {string[]} [savedCustomLabels=[]]
+ * @returns {Array<{value: string, label: string, saved_custom_label?: string, saved_custom_key?: string}>}
+ */
 export function buildRelatedNameLabelOptions(contacts, savedCustomLabels = []) {
   const baseOptions = buildLabelOptions(RELATED_LABEL_OPTIONS, savedCustomLabels);
   const derivedOptions = buildDerivedRelatedLabelOptions(contacts);
@@ -328,6 +354,14 @@ export function buildRelatedNameLabelOptions(contacts, savedCustomLabels = []) {
   return [...dedupedOptions, ...dedupedDerivedOptions, customOption];
 }
 
+/**
+ * Resolves the selected option value for a row's current label/custom-label state.
+ *
+ * @param {Record<string, any>} row
+ * @param {Array<{value: string, saved_custom_key?: string}>} labelOptions
+ * @param {string} [fallbackValue='other']
+ * @returns {string}
+ */
 export function resolveLabelSelectValue(
   row,
   labelOptions,

@@ -10,6 +10,9 @@ class DavSyncService
 {
     private const INITIAL_SYNC_TOKEN = 1;
 
+    /**
+     * Returns the current sync token for a resource.
+     */
     public function currentToken(ShareResourceType $resourceType, int $resourceId): int
     {
         $this->initializeState($resourceType, $resourceId);
@@ -26,26 +29,41 @@ class DavSyncService
         );
     }
 
+    /**
+     * Ensures a sync tracker exists for the resource.
+     */
     public function ensureResource(ShareResourceType $resourceType, int $resourceId): void
     {
         $this->initializeState($resourceType, $resourceId);
     }
 
+    /**
+     * Records an added resource URI for sync tracking.
+     */
     public function recordAdded(ShareResourceType $resourceType, int $resourceId, string $uri): void
     {
         $this->recordChange($resourceType, $resourceId, $uri, 'added');
     }
 
+    /**
+     * Records a modified resource URI for sync tracking.
+     */
     public function recordModified(ShareResourceType $resourceType, int $resourceId, string $uri): void
     {
         $this->recordChange($resourceType, $resourceId, $uri, 'modified');
     }
 
+    /**
+     * Records a deleted resource URI for sync tracking.
+     */
     public function recordDeleted(ShareResourceType $resourceType, int $resourceId, string $uri): void
     {
         $this->recordChange($resourceType, $resourceId, $uri, 'deleted');
     }
 
+    /**
+     * Returns DAV sync changes since the given token.
+     */
     public function getChangesSince(
         ShareResourceType $resourceType,
         int $resourceId,
@@ -93,6 +111,9 @@ class DavSyncService
         ];
     }
 
+    /**
+     * Records change.
+     */
     private function recordChange(ShareResourceType $resourceType, int $resourceId, string $uri, string $operation): void
     {
         DB::transaction(function () use ($resourceType, $resourceId, $uri, $operation): void {
@@ -139,6 +160,9 @@ class DavSyncService
         });
     }
 
+    /**
+     * Initializes state.
+     */
     private function initializeState(ShareResourceType $resourceType, int $resourceId): void
     {
         DB::table('dav_resource_sync_states')->insertOrIgnore([
@@ -150,6 +174,9 @@ class DavSyncService
         ]);
     }
 
+    /**
+     * Normalizes persisted token.
+     */
     private function normalizePersistedToken(
         ShareResourceType $resourceType,
         int $resourceId,

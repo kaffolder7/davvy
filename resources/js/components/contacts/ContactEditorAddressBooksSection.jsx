@@ -1,5 +1,11 @@
 import React from "react";
 
+/**
+ * Renders the Contact Editor Address Books Section component.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function ContactEditorAddressBooksSection({
   isOpen,
   onToggle,

@@ -37,6 +37,9 @@ class User extends Authenticatable
         'two_factor_backup_codes',
     ];
 
+    /**
+     * Returns casts.
+     */
     protected function casts(): array
     {
         return [
@@ -51,6 +54,9 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Returns email.
+     */
     protected function email(): Attribute
     {
         return Attribute::make(
@@ -73,31 +79,49 @@ class User extends Authenticatable
         });
     }
 
+    /**
+     * Returns calendars.
+     */
     public function calendars(): HasMany
     {
         return $this->hasMany(Calendar::class, 'owner_id');
     }
 
+    /**
+     * Returns address books.
+     */
     public function addressBooks(): HasMany
     {
         return $this->hasMany(AddressBook::class, 'owner_id');
     }
 
+    /**
+     * Returns contacts.
+     */
     public function contacts(): HasMany
     {
         return $this->hasMany(Contact::class, 'owner_id');
     }
 
+    /**
+     * Returns incoming shares.
+     */
     public function incomingShares(): HasMany
     {
         return $this->hasMany(ResourceShare::class, 'shared_with_id');
     }
 
+    /**
+     * Returns address book mirror config.
+     */
     public function addressBookMirrorConfig(): HasOne
     {
         return $this->hasOne(AddressBookMirrorConfig::class);
     }
 
+    /**
+     * Returns app passwords.
+     */
     public function appPasswords(): HasMany
     {
         return $this->hasMany(UserAppPassword::class);
@@ -113,11 +137,17 @@ class User extends Authenticatable
         return $this->role === Role::Admin;
     }
 
+    /**
+     * Returns principal URI.
+     */
     public function principalUri(): string
     {
         return 'principals/'.$this->id;
     }
 
+    /**
+     * Checks whether two-factor authentication is enabled.
+     */
     public function hasTwoFactorEnabled(): bool
     {
         return $this->two_factor_enabled_at !== null

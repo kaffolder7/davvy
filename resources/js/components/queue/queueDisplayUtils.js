@@ -1,3 +1,9 @@
+/**
+ * Formats a queue timestamp for local display.
+ *
+ * @param {string|null|undefined} value
+ * @returns {string}
+ */
 export function formatQueueTimestamp(value) {
   if (!value) {
     return "n/a";
@@ -11,6 +17,12 @@ export function formatQueueTimestamp(value) {
   return parsed.toLocaleString();
 }
 
+/**
+ * Maps a queue status code to its user-facing label.
+ *
+ * @param {string|null|undefined} status
+ * @returns {string}
+ */
 export function queueStatusLabel(status) {
   switch (status) {
     case "pending":
@@ -28,6 +40,12 @@ export function queueStatusLabel(status) {
   }
 }
 
+/**
+ * Maps queue operation type to a user-facing label.
+ *
+ * @param {string|null|undefined} operation
+ * @returns {string}
+ */
 export function queueOperationLabel(operation) {
   return operation === "delete" ? "Delete" : "Update";
 }

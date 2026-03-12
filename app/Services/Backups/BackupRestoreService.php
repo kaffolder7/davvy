@@ -33,6 +33,8 @@ class BackupRestoreService
     ) {}
 
     /**
+     * Restores application resources from a backup archive.
+     *
      * @return array{
      *   status:'success',
      *   trigger:string,
@@ -609,6 +611,8 @@ class BackupRestoreService
     }
 
     /**
+     * Returns archive entries.
+     *
      * @param  array<int, string>  $warnings
      * @return array{
      *   0:array<int, array{
@@ -710,6 +714,8 @@ class BackupRestoreService
     }
 
     /**
+     * Returns upsert calendar collection.
+     *
      * @param  array<int, string>  $uriPool
      * @param  array<string, int|null>  $summary
      * @return array{id:int|null,uri:string,display_name:string}
@@ -806,6 +812,8 @@ class BackupRestoreService
     }
 
     /**
+     * Returns upsert address book collection.
+     *
      * @param  array<int, string>  $uriPool
      * @param  array<string, int|null>  $summary
      * @return array{id:int|null,uri:string,display_name:string}
@@ -900,6 +908,8 @@ class BackupRestoreService
     }
 
     /**
+     * Returns collection URI map from manifest.
+     *
      * @param  array<string, mixed>|null  $manifest
      * @return array<string, string>
      */
@@ -946,6 +956,9 @@ class BackupRestoreService
         return $map;
     }
 
+    /**
+     * Returns legacy collection URI candidate from stem.
+     */
     private function legacyCollectionUriCandidateFromStem(string $fileStem): ?string
     {
         $rawStem = trim($fileStem);
@@ -959,6 +972,8 @@ class BackupRestoreService
     }
 
     /**
+     * Returns collection identity from stem.
+     *
      * @return array{0:string,1:string}
      */
     private function collectionIdentityFromStem(string $fileStem, string $fallbackUriStem, string $fallbackDisplayName): array
@@ -990,6 +1005,8 @@ class BackupRestoreService
     }
 
     /**
+     * Returns next unique collection URI.
+     *
      * @param  array<int, string>  $uriPool
      */
     private function nextUniqueCollectionUri(string $baseUri, array &$uriPool): string
@@ -1012,6 +1029,8 @@ class BackupRestoreService
     }
 
     /**
+     * Returns next unique resource URI.
+     *
      * @param  array<int, string>  $uriPool
      */
     private function nextUniqueResourceUri(
@@ -1036,6 +1055,9 @@ class BackupRestoreService
         return $next;
     }
 
+    /**
+     * Normalizes resource URI.
+     */
     private function normalizeResourceUri(string $candidate, string $extension, string $fallbackStem): string
     {
         $stem = Str::slug(pathinfo(trim($candidate), PATHINFO_FILENAME));
@@ -1052,6 +1074,8 @@ class BackupRestoreService
     }
 
     /**
+     * Returns split calendar payload.
+     *
      * @return array<int, array{uri_candidate:string,payload:string}>
      */
     private function splitCalendarPayload(string $payload, string $archivePath): array
@@ -1130,6 +1154,8 @@ class BackupRestoreService
     }
 
     /**
+     * Returns split address book payload.
+     *
      * @return array<int, array{uri_candidate:string,payload:string}>
      */
     private function splitAddressBookPayload(string $payload, string $archivePath): array

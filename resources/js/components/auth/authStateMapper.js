@@ -1,3 +1,27 @@
+/**
+ * @typedef {{name: string, url: string}} SponsorshipLink
+ */
+
+/**
+ * @typedef {{
+ *   loading: boolean,
+ *   user: object|null,
+ *   registrationEnabled: boolean,
+ *   registrationApprovalRequired: boolean,
+ *   ownerShareManagementEnabled: boolean,
+ *   davCompatibilityModeEnabled: boolean,
+ *   contactManagementEnabled: boolean,
+ *   contactChangeModerationEnabled: boolean,
+ *   twoFactorEnforcementEnabled: boolean,
+ *   twoFactorGracePeriodDays: number,
+ *   twoFactorEnabled: boolean,
+ *   twoFactorSetupRequired: boolean,
+ *   twoFactorMandated: boolean,
+ *   twoFactorGraceExpiresAt: string|null,
+ *   sponsorship: {enabled: boolean, links: SponsorshipLink[]}
+ * }} AuthState
+ */
+
 function createDefaultSponsorship() {
   return {
     enabled: false,
@@ -5,6 +29,11 @@ function createDefaultSponsorship() {
   };
 }
 
+/**
+ * Creates an initial loading auth state used before bootstrap requests complete.
+ *
+ * @returns {AuthState}
+ */
 export function createDefaultAuthState() {
   return {
     loading: true,
@@ -26,6 +55,11 @@ export function createDefaultAuthState() {
   };
 }
 
+/**
+ * Creates an unauthenticated auth state once bootstrap has completed.
+ *
+ * @returns {AuthState}
+ */
 export function createSignedOutAuthState() {
   return {
     ...createDefaultAuthState(),
@@ -33,6 +67,12 @@ export function createSignedOutAuthState() {
   };
 }
 
+/**
+ * Normalizes the public sponsorship config payload.
+ *
+ * @param {unknown} rawConfig
+ * @returns {{enabled: boolean, links: SponsorshipLink[]}}
+ */
 export function parseSponsorshipConfig(rawConfig) {
   if (!rawConfig || typeof rawConfig !== "object") {
     return createDefaultSponsorship();
@@ -56,6 +96,13 @@ export function parseSponsorshipConfig(rawConfig) {
   };
 }
 
+/**
+ * Maps backend auth/public-config payloads into frontend auth state.
+ *
+ * @param {unknown} payload
+ * @param {{user?: object|null}} [options]
+ * @returns {AuthState}
+ */
 export function buildAuthStateFromPayload(payload, { user = null } = {}) {
   const source = payload && typeof payload === "object" ? payload : {};
 

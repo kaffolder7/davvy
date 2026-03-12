@@ -1,5 +1,11 @@
 import React, { useMemo } from "react";
 
+/**
+ * Renders the Labeled Value Editor component.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function LabeledValueEditor({
   title,
   rows,

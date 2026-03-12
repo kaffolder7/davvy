@@ -17,6 +17,8 @@ class UserDeletionService
     ) {}
 
     /**
+     * Deletes user.
+     *
      * @return array{
      *   deleted_user_id:int,
      *   transferred_to_user_id:?int,
@@ -65,6 +67,9 @@ class UserDeletionService
         ];
     }
 
+    /**
+     * Deletes owned resources.
+     */
     private function deleteOwnedResources(int $ownerId): void
     {
         $addressBooks = AddressBook::query()
@@ -84,6 +89,8 @@ class UserDeletionService
     }
 
     /**
+     * Returns transfer owned resources.
+     *
      * @return array{calendars:int,address_books:int,contacts:int,shares_reassigned:int,shares_removed:int}
      */
     private function transferOwnedResources(int $sourceUserId, int $targetUserId): array
@@ -256,6 +263,8 @@ class UserDeletionService
     }
 
     /**
+     * Returns next unique identifier.
+     *
      * @param  array<string, bool>  $lookup
      */
     private function nextUniqueIdentifier(string $seed, string $fallback, array &$lookup): string

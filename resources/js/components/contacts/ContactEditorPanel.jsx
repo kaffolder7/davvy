@@ -6,6 +6,12 @@ import ContactEditorOptionalFieldsSection from "./ContactEditorOptionalFieldsSec
 import ContactEditorPersonalSection from "./ContactEditorPersonalSection";
 import ContactEditorWorkSection from "./ContactEditorWorkSection";
 
+/**
+ * Renders the Contact Editor Panel.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function ContactEditorPanel({
   form,
   submitting,

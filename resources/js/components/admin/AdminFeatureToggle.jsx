@@ -1,5 +1,11 @@
 import React from "react";
 
+/**
+ * Renders the Admin Feature Toggle component.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function AdminFeatureToggle({ label, enabled, onClick }) {
   return (
     <button

@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
+/**
+ * Renders the App Shell.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function AppShell({
   auth,
   theme,

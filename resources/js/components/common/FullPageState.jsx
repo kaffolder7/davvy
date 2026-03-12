@@ -1,5 +1,11 @@
 import React from "react";
 
+/**
+ * Renders the Full Page State component.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function FullPageState({ label, compact = false }) {
   return (
     <div

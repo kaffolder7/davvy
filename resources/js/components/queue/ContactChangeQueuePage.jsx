@@ -2,6 +2,12 @@ import React, { useEffect, useRef, useState } from "react";
 import ContactChangeEditModal from "./ContactChangeEditModal";
 import ContactChangeRequestCard from "./ContactChangeRequestCard";
 
+/**
+ * Renders the Contact Change Queue Page.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function ContactChangeQueuePage({
   auth,
   theme,

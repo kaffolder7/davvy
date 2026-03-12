@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
 
+/**
+ * Renders the Copyable Resource Uri component.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function CopyableResourceUri({
   resourceKind,
   principalId,

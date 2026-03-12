@@ -1,5 +1,11 @@
 import React from "react";
 
+/**
+ * Renders the download icon.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export function DownloadIcon({ className }) {
   return (
     <svg
@@ -19,6 +25,12 @@ export function DownloadIcon({ className }) {
   );
 }
 
+/**
+ * Renders the pencil icon.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export function PencilIcon({ className }) {
   return (
     <svg
@@ -37,6 +49,12 @@ export function PencilIcon({ className }) {
   );
 }
 
+/**
+ * Renders the check icon.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export function CheckIcon({ className }) {
   return (
     <svg
@@ -54,6 +72,12 @@ export function CheckIcon({ className }) {
   );
 }
 
+/**
+ * Renders the times icon.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export function TimesIcon({ className }) {
   return (
     <svg
@@ -72,6 +96,12 @@ export function TimesIcon({ className }) {
   );
 }
 
+/**
+ * Renders the reset icon.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export function ResetIcon({ className }) {
   return (
     <svg
@@ -90,6 +120,12 @@ export function ResetIcon({ className }) {
   );
 }
 
+/**
+ * Renders the chevron-right icon.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export function ChevronRightIcon({ className }) {
   return (
     <svg

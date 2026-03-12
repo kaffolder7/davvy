@@ -9,6 +9,9 @@ class PendingTwoFactorLoginService
 {
     private const SESSION_KEY = 'auth.pending_two_factor_login';
 
+    /**
+     * Stores a pending two-factor login challenge in session.
+     */
     public function start(Request $request, User $user, bool $remember): void
     {
         $request->session()->put(self::SESSION_KEY, [
@@ -19,6 +22,9 @@ class PendingTwoFactorLoginService
         ]);
     }
 
+    /**
+     * Returns the pending user for an active login challenge.
+     */
     public function pendingUser(Request $request): ?User
     {
         $data = $this->sessionData($request);
@@ -43,6 +49,9 @@ class PendingTwoFactorLoginService
         return $user;
     }
 
+    /**
+     * Returns whether the pending login should set a remember cookie.
+     */
     public function remember(Request $request): bool
     {
         $data = $this->sessionData($request);
@@ -50,6 +59,9 @@ class PendingTwoFactorLoginService
         return (bool) ($data['remember'] ?? false);
     }
 
+    /**
+     * Returns pending two-factor challenge status details.
+     */
     public function status(Request $request): array
     {
         $data = $this->sessionData($request);
@@ -66,6 +78,9 @@ class PendingTwoFactorLoginService
         ];
     }
 
+    /**
+     * Records a failed two-factor attempt and enforces attempt limits.
+     */
     public function registerFailedAttempt(Request $request): int
     {
         $data = $this->sessionData($request);
@@ -84,11 +99,17 @@ class PendingTwoFactorLoginService
         return $attempts;
     }
 
+    /**
+     * Clears any pending two-factor login challenge from session.
+     */
     public function clear(Request $request): void
     {
         $request->session()->forget(self::SESSION_KEY);
     }
 
+    /**
+     * Returns session data.
+     */
     private function sessionData(Request $request): ?array
     {
         $data = $request->session()->get(self::SESSION_KEY);

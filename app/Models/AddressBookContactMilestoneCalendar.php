@@ -22,6 +22,9 @@ class AddressBookContactMilestoneCalendar extends Model
         'custom_display_name',
     ];
 
+    /**
+     * Returns casts.
+     */
     protected function casts(): array
     {
         return [
@@ -29,11 +32,17 @@ class AddressBookContactMilestoneCalendar extends Model
         ];
     }
 
+    /**
+     * Returns address book.
+     */
     public function addressBook(): BelongsTo
     {
         return $this->belongsTo(AddressBook::class);
     }
 
+    /**
+     * Returns calendar.
+     */
     public function calendar(): BelongsTo
     {
         return $this->belongsTo(Calendar::class);

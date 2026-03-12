@@ -3,6 +3,12 @@ import DashboardAppleCompatPanelComponent from "./DashboardAppleCompatPanel";
 import DashboardOverviewCardsComponent from "./DashboardOverviewCards";
 import DashboardSharingPanelComponent from "./DashboardSharingPanel";
 
+/**
+ * Renders the Dashboard Page.
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function DashboardPage({
   auth,
   theme,
