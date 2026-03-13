@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Role;
+use App\Facades\Analytics;
 use App\Models\User;
 use App\Models\UserAppPassword;
 use App\Services\RegistrationSettingsService;
@@ -25,9 +26,6 @@ class AuthController extends Controller
 
     /**
      * Create a new auth controller instance.
-     *
-     * @param  OpenPanelAnalyticsService  $analytics
-     * @return void
      */
     public function __construct(
         private readonly RegistrationSettingsService $registrationSettings,
@@ -112,6 +110,7 @@ class AuthController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+        $this->trackUserLogin($user, 'register');
 
         return response()->json(
             array_merge(['user' => $user], $this->authenticatedSettingsPayload($user)),
@@ -150,6 +149,7 @@ class AuthController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+        $this->trackUserLogin($user, 'email_verification');
 
         $fresh = $user->fresh();
 
@@ -190,6 +190,7 @@ class AuthController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+        $this->trackUserLogin($user, 'invite_accept');
 
         $fresh = $user->fresh();
 
@@ -261,6 +262,7 @@ class AuthController extends Controller
 
         Auth::login($user, (bool) ($data['remember'] ?? false));
         $request->session()->regenerate();
+        $this->trackUserLogin($user, 'password');
 
         return response()->json(
             array_merge(['user' => $request->user()], $this->authenticatedSettingsPayload($request->user())),
@@ -305,6 +307,7 @@ class AuthController extends Controller
 
         Auth::login($user, $remember);
         $request->session()->regenerate();
+        $this->trackUserLogin($user, 'two_factor');
 
         return response()->json(
             array_merge(['user' => $request->user()], $this->authenticatedSettingsPayload($request->user())),
@@ -614,5 +617,21 @@ class AuthController extends Controller
             'two_factor_mandated' => $this->twoFactorSettings->isEnforced(),
             'two_factor_grace_expires_at' => $graceDeadline?->toISOString(),
         ]);
+    }
+
+    /**
+     * Records a successful interactive user login event.
+     */
+    private function trackUserLogin(User $user, string $method): void
+    {
+        $role = $user->role instanceof Role
+            ? $user->role->value
+            : (string) $user->role;
+
+        Analytics::capture('user_logged_in', [
+            'auth_method' => trim($method),
+            'two_factor_enabled' => $user->hasTwoFactorEnabled(),
+            'role' => $role,
+        ], $user);
     }
 }

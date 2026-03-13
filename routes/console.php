@@ -1,5 +1,6 @@
 <?php
 
+use App\Facades\Analytics;
 use App\Mail\AdminUserInviteMail;
 use App\Mail\PublicRegistrationVerificationMail;
 use App\Models\User;
@@ -376,6 +377,16 @@ Artisan::command('app:backup {--force : Run immediately, ignoring enabled flag a
     return 1;
 })->purpose('Run automated data backups with retention (local and optional S3)');
 
+Artisan::command('app:analytics:heartbeat', function (): int {
+    Analytics::capture('app_installation_heartbeat', [
+        'trigger' => 'scheduler',
+    ]);
+
+    $this->info('Analytics heartbeat captured.');
+
+    return 0;
+})->purpose('Emit a daily anonymous analytics heartbeat event');
+
 Artisan::command(
     'app:backup:restore
     {archive : Path to backup ZIP archive}
@@ -446,4 +457,8 @@ Artisan::command(
 
 Schedule::command('app:backup')
     ->everyMinute()
+    ->withoutOverlapping();
+
+Schedule::command('app:analytics:heartbeat')
+    ->dailyAt('03:17')
     ->withoutOverlapping();

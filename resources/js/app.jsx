@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import AdminFeatureToggleComponent from "./components/admin/AdminFeatureToggle";
 import AdminPageComponent from "./components/admin/AdminPage";
 import {
@@ -36,6 +36,11 @@ import {
   downloadExport,
   fileStem,
 } from "./lib/browserDavUtils";
+import {
+  refreshAnalyticsConfig,
+  trackFeatureSnapshot,
+  trackPageView,
+} from "./lib/analytics";
 import AddressBookMilestoneControlsComponent from "./components/contacts/AddressBookMilestoneControls";
 import AddressEditorComponent from "./components/contacts/AddressEditor";
 import ContactEditorHideFieldModalComponent from "./components/contacts/ContactEditorHideFieldModal";
@@ -102,9 +107,47 @@ import useThemePreference from "./components/theme/useThemePreference";
 
 function App() {
   const theme = useThemePreference();
+  const location = useLocation();
   const { auth, value } = useAuthState({
     api,
   });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const refresh = async () => {
+      if (cancelled) {
+        return;
+      }
+
+      await refreshAnalyticsConfig(api);
+    };
+
+    void refresh();
+    const interval = window.setInterval(() => {
+      void refresh();
+    }, 60_000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    trackPageView(location.pathname);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    trackFeatureSnapshot(value);
+  }, [
+    value.user,
+    value.ownerShareManagementEnabled,
+    value.davCompatibilityModeEnabled,
+    value.contactManagementEnabled,
+    value.contactChangeModerationEnabled,
+    value.twoFactorEnforcementEnabled,
+  ]);
 
   if (auth.loading) {
     return <FullPageState label="Loading Davvy..." />;

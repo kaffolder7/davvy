@@ -56,6 +56,11 @@ When an `app_settings` key exists, it overrides env defaults.
 | `CONTACT_CHANGE_REQUEST_RETENTION_DAYS` | `90` | Purge horizon for applied/denied queue history |
 | `ENABLE_TWO_FACTOR_ENFORCEMENT` | `false` | Admin-controlled default for global 2FA mandate (persisted in `app_settings` once toggled) |
 | `TWO_FACTOR_GRACE_PERIOD_DAYS` | `14` | Grace period days before mandatory 2FA is enforced for users without 2FA enabled |
+| `ANALYTICS_ENABLED` | `true` | Global kill switch for all analytics capture (server + browser) |
+| `ANALYTICS_QUEUE` | _(empty)_ | Optional queue name for analytics jobs; uses default queue when empty |
+| `POSTHOG_HOST` | `https://us.i.posthog.com` | PostHog ingestion host used by backend and browser bootstrap |
+| `POSTHOG_PROJECT_API_KEY` | _(empty)_ | PostHog project API key; analytics is effectively disabled when empty |
+| `ANALYTICS_HASH_KEY` | `APP_KEY` fallback | Secret used to HMAC-hash installation/user identifiers before capture |
 | `ENABLE_AUTOMATED_BACKUPS` | `false` | Enables scheduled automated backups |
 | `BACKUPS_LOCAL_ENABLED` | `true` | Write backup snapshots to local filesystem path |
 | `BACKUPS_LOCAL_PATH` | `/var/www/html/storage/app/backups` | Root folder for local snapshots (`daily/weekly/monthly/yearly` subfolders) |
@@ -112,7 +117,7 @@ User recovery tooling:
 | --- | --- | --- |
 | `RUN_DB_MIGRATIONS` | `true` | Runs migrations on startup |
 | `RUN_DB_SEED` | `false` | Runs seeder on startup |
-| `RUN_SCHEDULER` | `true` | Runs `php artisan schedule:work` in the container for scheduled tasks (including backups) |
+| `RUN_SCHEDULER` | `true` | Runs `php artisan schedule:work` in the container for scheduled tasks (including backups and analytics heartbeat) |
 | `DEFAULT_ADMIN_EMAIL` | _(empty)_ | Used by seeder when seeding enabled |
 | `DEFAULT_ADMIN_PASSWORD` | _(empty)_ | Used by seeder when seeding enabled |
 

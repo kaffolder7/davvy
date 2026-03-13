@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\ContactChangeStatus;
 use App\Enums\Role;
+use App\Facades\Analytics;
 use App\Models\AddressBook;
 use App\Models\AddressBookContactMilestoneCalendar;
 use App\Models\AppSetting;
@@ -326,8 +327,18 @@ class AdminController extends Controller
             actor: $request->user()
         );
 
+        $enabled = $this->registrationSettings->isDavCompatibilityModeEnabled();
+
+        Analytics::capture(
+            $enabled ? 'compat_mode_enabled' : 'compat_mode_disabled',
+            [
+                'source' => 'admin',
+            ],
+            $request->user(),
+        );
+
         return response()->json([
-            'enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
+            'enabled' => $enabled,
         ]);
     }
 
@@ -629,6 +640,7 @@ class AdminController extends Controller
                 dryRun: (bool) $dryRun,
                 fallbackOwnerId: $fallbackOwnerId,
                 trigger: 'manual-admin',
+                actor: $request->user(),
             );
         } catch (Throwable $throwable) {
             report($throwable);

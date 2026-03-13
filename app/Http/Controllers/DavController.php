@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Facades\Analytics;
+use App\Models\AppSetting;
 use App\Services\Dav\DavServerFactory;
 use App\Services\DavRequestContext;
 use Illuminate\Http\Request;
@@ -15,9 +17,6 @@ class DavController extends Controller
 {
     /**
      * Create a new DAV controller instance.
-     *
-     * @param  OpenPanelAnalyticsService  $analytics
-     * @return void
      */
     public function __construct(
         private readonly DavServerFactory $davServerFactory,
@@ -32,6 +31,7 @@ class DavController extends Controller
         $this->davContext->clear();
 
         $rawBody = $request->getContent();
+        $isSyncReportRequest = $this->isSyncReportRequest($request, $rawBody);
         $shouldLogClientDavTraffic = $this->shouldLogClientDavTraffic($request);
 
         $headers = [];
@@ -111,6 +111,22 @@ class DavController extends Controller
             $response->headers->set($name, $value);
         }
 
+        if ($isSyncReportRequest) {
+            $statusCode = (int) $sabreResponse->getStatus();
+            Analytics::capture(
+                $statusCode >= 200 && $statusCode < 400
+                    ? 'dav_sync_succeeded'
+                    : 'dav_sync_failed',
+                [
+                    'status_code' => $statusCode,
+                    'status_class' => floor($statusCode / 100).'xx',
+                    'client_family' => $this->clientFamily((string) $request->userAgent()),
+                    'compat_mode_enabled' => AppSetting::davCompatibilityModeEnabled(),
+                ],
+                $this->davContext->getAuthenticatedUser(),
+            );
+        }
+
         $this->davContext->clear();
 
         return $response;
@@ -136,6 +152,36 @@ class DavController extends Controller
         }
 
         return str_contains((string) $request->userAgent(), 'AddressBookCore');
+    }
+
+    /**
+     * Determines whether the DAV request is a sync collection report.
+     */
+    private function isSyncReportRequest(Request $request, string $rawBody): bool
+    {
+        if (strtoupper($request->method()) !== 'REPORT') {
+            return false;
+        }
+
+        return str_contains(strtolower($rawBody), 'sync-collection');
+    }
+
+    /**
+     * Reduces a full DAV user agent to a small client family label.
+     */
+    private function clientFamily(string $userAgent): string
+    {
+        $normalized = strtolower($userAgent);
+
+        return match (true) {
+            str_contains($normalized, 'addressbookcore'),
+            str_contains($normalized, 'calendaragent'),
+            str_contains($normalized, 'cfnetwork'), => 'apple',
+            str_contains($normalized, 'thunderbird') => 'thunderbird',
+            str_contains($normalized, 'davx') => 'davx5',
+            str_contains($normalized, 'outlook') => 'outlook',
+            default => 'other',
+        };
     }
 
     /**

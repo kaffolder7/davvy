@@ -43,4 +43,12 @@ return [
         'two_factor_enforcement_enabled' => (bool) env('ENABLE_TWO_FACTOR_ENFORCEMENT', false),
         'two_factor_grace_period_days' => (int) env('TWO_FACTOR_GRACE_PERIOD_DAYS', 14),
     ],
+    'analytics' => [
+        'enabled' => filter_var(env('ANALYTICS_ENABLED', true), FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? true,
+        'queue' => trim((string) env('ANALYTICS_QUEUE', '')),
+        'provider' => 'posthog',
+        'posthog_host' => rtrim((string) env('POSTHOG_HOST', 'https://us.i.posthog.com'), '/'),
+        'posthog_project_api_key' => trim((string) env('POSTHOG_PROJECT_API_KEY', '')),
+        'hash_key' => trim((string) env('ANALYTICS_HASH_KEY', env('APP_KEY', ''))),
+    ],
 ];

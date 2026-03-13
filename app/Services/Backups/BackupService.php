@@ -4,6 +4,7 @@ namespace App\Services\Backups;
 
 use App\Models\AddressBook;
 use App\Models\Calendar;
+use App\Services\Analytics\AnalyticsService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
@@ -18,7 +19,10 @@ use ZipArchive;
 
 class BackupService
 {
-    public function __construct(private readonly BackupSettingsService $settingsService) {}
+    public function __construct(
+        private readonly BackupSettingsService $settingsService,
+        private readonly AnalyticsService $analytics,
+    ) {}
 
     /**
      * Runs backup capture, retention pruning, and status recording.
@@ -73,6 +77,11 @@ class BackupService
                 timezone: $settings['timezone'],
             );
             $this->settingsService->recordRun('failed', $result['reason'], $nowUtc);
+            $this->analytics->capture('backup_failed', [
+                'trigger' => $trigger,
+                'failure_kind' => 'configuration',
+                'forced' => $force,
+            ]);
 
             return $result;
         }
@@ -127,6 +136,13 @@ class BackupService
                 return $result;
             }
 
+            $this->analytics->capture('backup_started', [
+                'trigger' => $trigger,
+                'forced' => $force,
+                'local_enabled' => (bool) $settings['local_enabled'],
+                's3_enabled' => (bool) $settings['s3_enabled'],
+            ]);
+
             [$archivePath, $resourceCounts] = $this->buildArchive(
                 trigger: $trigger,
                 nowUtc: $nowUtc,
@@ -168,6 +184,12 @@ class BackupService
             ];
 
             $this->settingsService->recordRun('success', $result['reason'], $nowUtc);
+            $this->analytics->capture('backup_completed', [
+                'trigger' => $trigger,
+                'forced' => $force,
+                'artifact_count' => (int) $result['artifact_count'],
+                'tiers_count' => count($result['tiers']),
+            ]);
 
             return $result;
         } catch (Throwable $throwable) {
@@ -182,6 +204,11 @@ class BackupService
             );
 
             $this->settingsService->recordRun('failed', $result['reason'], $nowUtc);
+            $this->analytics->capture('backup_failed', [
+                'trigger' => $trigger,
+                'failure_kind' => 'exception',
+                'forced' => $force,
+            ]);
 
             return $result;
         } finally {

@@ -10,6 +10,7 @@
         "laravel/tinker": "^2.10",
         "league/flysystem": "^3.26",
         "league/flysystem-aws-s3-v3": "^3.26",
+        "posthog/posthog-php": "^3.7",
         "sabre/dav": "^4.6"
     },
     "require-dev": {

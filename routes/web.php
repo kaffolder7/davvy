@@ -4,6 +4,7 @@ use App\Http\Controllers\AddressBookController;
 use App\Http\Controllers\AddressBookMilestoneCalendarController;
 use App\Http\Controllers\AddressBookMirrorController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AnalyticsSettingsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ContactChangeRequestController;
@@ -21,6 +22,7 @@ Route::post('/api/auth/register', [AuthController::class, 'register'])->middlewa
 Route::post('/api/auth/verify-email', [AuthController::class, 'verifyEmail'])->middleware('throttle:auth-onboarding');
 Route::post('/api/auth/invite/accept', [AuthController::class, 'acceptInvite'])->middleware('throttle:auth-onboarding');
 Route::get('/api/public/config', [AuthController::class, 'publicConfig']);
+Route::get('/api/settings/analytics', [AnalyticsSettingsController::class, 'show']);
 Route::redirect('/.well-known/caldav', '/dav', 301);
 Route::redirect('/.well-known/carddav', '/dav', 301);
 Route::match([

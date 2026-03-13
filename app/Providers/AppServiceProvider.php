@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\Analytics\AnalyticsService;
 use App\Services\DavRequestContext;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(DavRequestContext::class);
+        $this->app->singleton('analytics', fn ($app): AnalyticsService => $app->make(AnalyticsService::class));
     }
 
     /**
