@@ -34,6 +34,28 @@ Fix:
 - enable from admin UI (`Public registration` toggle), or
 - set desired state and ensure seed/app settings do not overwrite it
 
+### `403` with `Verify your email address before signing in.`
+The account has not passed onboarding checks (`email_verified_at` or admin approval).
+
+Recovery options:
+- complete normal onboarding (email verification + admin approval), or
+- run the break-glass CLI command from inside the app runtime.
+
+Examples:
+
+```bash
+# Docker Compose: approve + verify by default
+docker compose exec app php artisan app:user:approve you@example.com --force
+
+# DDEV: approve only
+ddev php artisan app:user:approve you@example.com --approve --force
+```
+
+Notes:
+- `identifier` accepts either exact email address or numeric user ID.
+- If no action flags are provided, the command applies both `--approve` and `--verify-email`.
+- Omit `--force` to require an interactive confirmation prompt.
+
 ## Sharing and Permissions
 
 ### `422` when creating share
