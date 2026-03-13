@@ -550,6 +550,150 @@ class ContactMilestoneCalendarTest extends TestCase
         $this->assertStringNotContainsString('SUMMARY:💍 John & Jane\'s 13th Anniversary', $anniversaryData);
     }
 
+    public function test_anniversary_pair_titles_use_trailing_apostrophe_when_second_first_name_ends_in_s(): void
+    {
+        config()->set('services.contacts.anniversary_pair_include_last_name', false);
+        $this->travelTo(Carbon::create(2026, 1, 15, 12, 0, 0, 'UTC'));
+
+        $user = User::factory()->create();
+        $addressBook = AddressBook::factory()->create([
+            'owner_id' => $user->id,
+            'display_name' => 'Family',
+            'uri' => 'family',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/api/contacts', $this->contactPayload([
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'head_of_household' => true,
+                'dates' => [
+                    [
+                        'label' => 'anniversary',
+                        'custom_label' => null,
+                        'year' => 2013,
+                        'month' => 11,
+                        'day' => 5,
+                    ],
+                ],
+                'related_names' => [
+                    ['label' => 'spouse', 'custom_label' => null, 'value' => 'Jess Doe'],
+                ],
+                'address_book_ids' => [$addressBook->id],
+            ]))
+            ->assertCreated();
+
+        $this->actingAs($user)
+            ->postJson('/api/contacts', $this->contactPayload([
+                'first_name' => 'Jess',
+                'last_name' => 'Doe',
+                'head_of_household' => false,
+                'dates' => [
+                    [
+                        'label' => 'anniversary',
+                        'custom_label' => null,
+                        'year' => null,
+                        'month' => 11,
+                        'day' => 5,
+                    ],
+                ],
+                'related_names' => [
+                    ['label' => 'wife', 'custom_label' => null, 'value' => 'John Doe'],
+                ],
+                'address_book_ids' => [$addressBook->id],
+            ]))
+            ->assertCreated();
+
+        $response = $this->actingAs($user)
+            ->patchJson('/api/address-books/'.$addressBook->id.'/milestone-calendars', [
+                'birthdays_enabled' => false,
+                'anniversaries_enabled' => true,
+            ])
+            ->assertOk();
+
+        $anniversaryCalendarId = (int) $response->json('milestone_calendars.anniversaries.calendar_id');
+        $anniversaryData = CalendarObject::query()
+            ->where('calendar_id', $anniversaryCalendarId)
+            ->get()
+            ->pluck('data')
+            ->implode("\n");
+
+        $this->assertStringContainsString('SUMMARY:💍 John & Jess\' 13th Anniversary', $anniversaryData);
+        $this->assertStringNotContainsString('SUMMARY:💍 John & Jess\'s 13th Anniversary', $anniversaryData);
+    }
+
+    public function test_anniversary_pair_titles_use_trailing_apostrophe_when_included_last_name_ends_in_s(): void
+    {
+        config()->set('services.contacts.anniversary_pair_include_last_name', true);
+        $this->travelTo(Carbon::create(2026, 1, 15, 12, 0, 0, 'UTC'));
+
+        $user = User::factory()->create();
+        $addressBook = AddressBook::factory()->create([
+            'owner_id' => $user->id,
+            'display_name' => 'Family',
+            'uri' => 'family',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/api/contacts', $this->contactPayload([
+                'first_name' => 'John',
+                'last_name' => 'Williams',
+                'head_of_household' => true,
+                'dates' => [
+                    [
+                        'label' => 'anniversary',
+                        'custom_label' => null,
+                        'year' => 2013,
+                        'month' => 11,
+                        'day' => 5,
+                    ],
+                ],
+                'related_names' => [
+                    ['label' => 'spouse', 'custom_label' => null, 'value' => 'Jess Williams'],
+                ],
+                'address_book_ids' => [$addressBook->id],
+            ]))
+            ->assertCreated();
+
+        $this->actingAs($user)
+            ->postJson('/api/contacts', $this->contactPayload([
+                'first_name' => 'Jess',
+                'last_name' => 'Williams',
+                'head_of_household' => false,
+                'dates' => [
+                    [
+                        'label' => 'anniversary',
+                        'custom_label' => null,
+                        'year' => null,
+                        'month' => 11,
+                        'day' => 5,
+                    ],
+                ],
+                'related_names' => [
+                    ['label' => 'wife', 'custom_label' => null, 'value' => 'John Williams'],
+                ],
+                'address_book_ids' => [$addressBook->id],
+            ]))
+            ->assertCreated();
+
+        $response = $this->actingAs($user)
+            ->patchJson('/api/address-books/'.$addressBook->id.'/milestone-calendars', [
+                'birthdays_enabled' => false,
+                'anniversaries_enabled' => true,
+            ])
+            ->assertOk();
+
+        $anniversaryCalendarId = (int) $response->json('milestone_calendars.anniversaries.calendar_id');
+        $anniversaryData = CalendarObject::query()
+            ->where('calendar_id', $anniversaryCalendarId)
+            ->get()
+            ->pluck('data')
+            ->implode("\n");
+
+        $this->assertStringContainsString('SUMMARY:💍 John & Jess Williams\' 13th Anniversary', $anniversaryData);
+        $this->assertStringNotContainsString('SUMMARY:💍 John & Jess Williams\'s 13th Anniversary', $anniversaryData);
+    }
+
     public function test_anniversary_events_are_not_combined_when_spouse_links_are_not_mutual(): void
     {
         $this->travelTo(Carbon::create(2026, 1, 15, 12, 0, 0, 'UTC'));

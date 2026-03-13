@@ -1043,11 +1043,12 @@ class ContactMilestoneCalendarService
             $name = trim((string) ($primaryEntry['contact_name'] ?? 'Anniversary'));
         }
 
+        $possessiveName = $this->anniversaryPossessiveName($name);
         $ordinal = $this->milestoneOrdinal($baseYear, $occurrenceYear);
 
         return $ordinal !== null
-            ? '💍 '.$name.'\'s '.$ordinal.' Anniversary'
-            : '💍 '.$name.'\'s Anniversary';
+            ? '💍 '.$possessiveName.' '.$ordinal.' Anniversary'
+            : '💍 '.$possessiveName.' Anniversary';
     }
 
     /**
@@ -1209,11 +1210,27 @@ class ContactMilestoneCalendarService
      */
     private function anniversarySummary(string $contactName, ?int $baseYear, int $occurrenceYear): string
     {
+        $possessiveName = $this->anniversaryPossessiveName($contactName);
         $ordinal = $this->milestoneOrdinal($baseYear, $occurrenceYear);
 
         return $ordinal !== null
-            ? '💍 '.$contactName.'\'s '.$ordinal.' Anniversary'
-            : '💍 '.$contactName.'\'s Anniversary';
+            ? '💍 '.$possessiveName.' '.$ordinal.' Anniversary'
+            : '💍 '.$possessiveName.' Anniversary';
+    }
+
+    /**
+     * Returns anniversary-safe possessive name.
+     */
+    private function anniversaryPossessiveName(string $name): string
+    {
+        $trimmed = trim($name);
+        if ($trimmed === '') {
+            return '';
+        }
+
+        return preg_match('/s$/iu', $trimmed) === 1
+            ? $trimmed.'\''
+            : $trimmed.'\'s';
     }
 
     /**
