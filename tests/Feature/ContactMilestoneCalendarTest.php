@@ -140,6 +140,47 @@ class ContactMilestoneCalendarTest extends TestCase
         $this->assertStringNotContainsString('SUMMARY:🎂 Dr. Alex Quinn Rivera Jr.\'s 36th Birthday', $birthdayData);
     }
 
+    public function test_birthday_events_fallback_to_full_name_before_company_when_first_and_last_are_missing(): void
+    {
+        $this->travelTo(Carbon::create(2026, 1, 15, 12, 0, 0, 'UTC'));
+
+        $user = User::factory()->create();
+        $addressBook = AddressBook::factory()->create([
+            'owner_id' => $user->id,
+            'display_name' => 'Family',
+            'uri' => 'family',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/api/contacts', $this->contactPayload([
+                'prefix' => 'Dr.',
+                'first_name' => '',
+                'middle_name' => 'Quinn',
+                'last_name' => '',
+                'suffix' => 'Jr.',
+                'company' => 'Davvy Labs',
+                'address_book_ids' => [$addressBook->id],
+            ]))
+            ->assertCreated();
+
+        $response = $this->actingAs($user)
+            ->patchJson('/api/address-books/'.$addressBook->id.'/milestone-calendars', [
+                'birthdays_enabled' => true,
+                'anniversaries_enabled' => false,
+            ])
+            ->assertOk();
+
+        $birthdayCalendarId = (int) $response->json('milestone_calendars.birthdays.calendar_id');
+        $birthdayData = CalendarObject::query()
+            ->where('calendar_id', $birthdayCalendarId)
+            ->get()
+            ->pluck('data')
+            ->implode("\n");
+
+        $this->assertStringContainsString('SUMMARY:🎂 Dr. Quinn Jr.\'s 36th Birthday', $birthdayData);
+        $this->assertStringNotContainsString('SUMMARY:🎂 Davvy Labs\'s 36th Birthday', $birthdayData);
+    }
+
     public function test_enabling_milestones_backfills_legacy_cards_and_parses_apple_anniversary_labels(): void
     {
         $this->travelTo(Carbon::create(2026, 1, 15, 12, 0, 0, 'UTC'));

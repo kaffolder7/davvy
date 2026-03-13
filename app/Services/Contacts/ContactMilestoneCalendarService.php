@@ -1214,15 +1214,18 @@ class ContactMilestoneCalendarService
     private function birthdayMilestoneName(Contact $contact): ?string
     {
         $payload = is_array($contact->payload) ? $contact->payload : [];
-        $firstName = $this->normalizeString($payload['first_name'] ?? null);
-        $lastName = $this->normalizeString($payload['last_name'] ?? null);
-        $name = trim(implode(' ', array_filter([$firstName, $lastName])));
+        $name = $this->firstLastMilestoneName($payload);
 
         if ($name !== '') {
             return $name;
         }
 
-        return $this->contactMilestoneName($contact);
+        $fullName = $this->normalizeString($contact->full_name);
+        if ($fullName !== null && strtolower($fullName) !== 'unnamed contact') {
+            return $fullName;
+        }
+
+        return $this->normalizeString($payload['company'] ?? null);
     }
 
     /**
@@ -1236,15 +1239,26 @@ class ContactMilestoneCalendarService
         }
 
         $payload = is_array($contact->payload) ? $contact->payload : [];
-        $firstName = $this->normalizeString($payload['first_name'] ?? null);
-        $lastName = $this->normalizeString($payload['last_name'] ?? null);
-        $name = trim(implode(' ', array_filter([$firstName, $lastName])));
+        $name = $this->firstLastMilestoneName($payload);
 
         if ($name !== '') {
             return $name;
         }
 
         return $this->normalizeString($payload['company'] ?? null);
+    }
+
+    /**
+     * Returns first + last milestone name.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function firstLastMilestoneName(array $payload): string
+    {
+        $firstName = $this->normalizeString($payload['first_name'] ?? null);
+        $lastName = $this->normalizeString($payload['last_name'] ?? null);
+
+        return trim(implode(' ', array_filter([$firstName, $lastName])));
     }
 
     /**
