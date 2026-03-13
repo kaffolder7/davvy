@@ -1035,7 +1035,7 @@ class ContactMilestoneCalendarService
         $primaryLastName = $this->normalizeString($primaryEntry['last_name'] ?? null);
 
         $name = trim($primaryFirstName.' & '.$secondaryFirstName);
-        if ($primaryLastName !== null) {
+        if ($this->anniversaryPairIncludesLastNameInTitle() && $primaryLastName !== null) {
             $name = trim($name.' '.$primaryLastName);
         }
 
@@ -1048,6 +1048,14 @@ class ContactMilestoneCalendarService
         return $ordinal !== null
             ? '💍 '.$name.'\'s '.$ordinal.' Anniversary'
             : '💍 '.$name.'\'s Anniversary';
+    }
+
+    /**
+     * Determines whether anniversary pair titles should include a last name.
+     */
+    private function anniversaryPairIncludesLastNameInTitle(): bool
+    {
+        return (bool) config('services.contacts.anniversary_pair_include_last_name', false);
     }
 
     /**

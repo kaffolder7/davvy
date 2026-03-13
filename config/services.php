@@ -16,6 +16,7 @@ return [
         'change_moderation_enabled' => (bool) env('ENABLE_CONTACT_CHANGE_MODERATION', false),
         'change_request_retention_days' => (int) env('CONTACT_CHANGE_REQUEST_RETENTION_DAYS', 90),
         'milestone_calendar_generation_years' => (int) env('MILESTONE_CALENDAR_GENERATION_YEARS', 3),
+        'anniversary_pair_include_last_name' => (bool) env('MILESTONE_ANNIVERSARY_PAIR_INCLUDE_LAST_NAME', false),
     ],
     'backups' => [
         'enabled' => (bool) env('ENABLE_AUTOMATED_BACKUPS', false),

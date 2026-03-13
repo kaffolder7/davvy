@@ -50,6 +50,7 @@ Generated calendars are read from contact data and auto-updated.
 Anniversary generation behavior:
 - Contacts with the same anniversary month/day can be combined into one event when they are mutually linked with spouse-like related-name labels (`spouse`, `partner`, `husband`, `wife`, including custom labels containing those terms).
 - `Head of Household` determines name order in the combined anniversary title.
+- `MILESTONE_ANNIVERSARY_PAIR_INCLUDE_LAST_NAME` controls whether combined titles include the shared last name (default is `false`, so `John & Jane`; set `true` for `John & Jane Doe`).
 - If either contact has an anniversary year, the combined title includes an ordinal (for example, `13th`). If neither contact has a year, the title omits the ordinal.
 - Contacts that do not match a mutual pair still generate individual anniversary events.
 
