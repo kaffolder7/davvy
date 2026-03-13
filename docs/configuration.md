@@ -127,6 +127,7 @@ Analytics settings note:
 - The only runtime analytics control is `ANALYTICS_ENABLED`.
 - Placeholder values (`REPLACE_WITH_OPENPANEL_*`) are treated as unconfigured and result in a safe no-op.
 - When disabled (`ANALYTICS_ENABLED=false`), Davvy does not initialize browser analytics and does not send server-side analytics events.
+- OpenPanel deployment routing can vary; use the exact base URL that exposes `POST /track` for `api_url` (some self-host deployments use the root domain instead of `/api`), and set `script_url` explicitly if your API host does not serve `op1.js`.
 
 OpenPanel event taxonomy:
 - `auth.login`: successful web login completion (`method`, `two_factor`)

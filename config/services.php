@@ -81,8 +81,9 @@ return [
         // Maintainers: replace these with your own OpenPanel values.
         "client_id" => "242640a8-e9d0-4c57-8861-862a25ac6815",
         "client_secret" => "sec_344775e2bbf34d569fd3",
-        "api_url" => "https://analytics.affolder.cloud/api",
-        // Optional explicit override; if empty, script URL is derived from the API host.
-        "script_url" => "",
+        // Self-hosted deployment routes track events at /track on the root host.
+        "api_url" => "https://analytics.affolder.cloud",
+        // Explicit script source for browser session/page events.
+        "script_url" => "https://openpanel.dev/op1.js",
     ],
 ];
