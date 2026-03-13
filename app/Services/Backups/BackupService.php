@@ -4,6 +4,7 @@ namespace App\Services\Backups;
 
 use App\Models\AddressBook;
 use App\Models\Calendar;
+use App\Services\Analytics\OpenPanelAnalyticsService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
@@ -18,7 +19,10 @@ use ZipArchive;
 
 class BackupService
 {
-    public function __construct(private readonly BackupSettingsService $settingsService) {}
+    public function __construct(
+        private readonly BackupSettingsService $settingsService,
+        private readonly OpenPanelAnalyticsService $analytics,
+    ) {}
 
     /**
      * Runs backup capture, retention pruning, and status recording.
@@ -148,7 +152,16 @@ class BackupService
                 $this->settingsService->markPeriodCaptured($tier, $period);
             }
 
-            $this->pruneByRetention($settings);
+            $pruneSummary = $this->pruneByRetention($settings);
+            $deletedCount = (int) ($pruneSummary['local_deleted'] ?? 0) + (int) ($pruneSummary['remote_deleted'] ?? 0);
+            if ($deletedCount > 0) {
+                $this->analytics->track('backups.prune', [
+                    'status' => 'success',
+                    'deleted_count' => $deletedCount,
+                    'local_deleted_count' => (int) ($pruneSummary['local_deleted'] ?? 0),
+                    'remote_deleted_count' => (int) ($pruneSummary['remote_deleted'] ?? 0),
+                ]);
+            }
 
             $result = [
                 'status' => 'success',
@@ -523,8 +536,9 @@ class BackupService
      *   retention_monthly: int,
      *   retention_yearly: int
      * } $settings
+     * @return array{local_deleted:int,remote_deleted:int}
      */
-    private function pruneByRetention(array $settings): void
+    private function pruneByRetention(array $settings): array
     {
         $retentions = [
             'daily' => (int) $settings['retention_daily'],
@@ -532,16 +546,18 @@ class BackupService
             'monthly' => (int) $settings['retention_monthly'],
             'yearly' => (int) $settings['retention_yearly'],
         ];
+        $localDeleted = 0;
+        $remoteDeleted = 0;
 
         if ((bool) $settings['local_enabled']) {
             foreach ($retentions as $tier => $limit) {
-                $this->pruneLocalTier((string) $settings['local_path'], $tier, $limit);
+                $localDeleted += $this->pruneLocalTier((string) $settings['local_path'], $tier, $limit);
             }
         }
 
         if ((bool) $settings['s3_enabled']) {
             foreach ($retentions as $tier => $limit) {
-                $this->pruneRemoteTier(
+                $remoteDeleted += $this->pruneRemoteTier(
                     diskName: (string) $settings['s3_disk'],
                     prefix: (string) $settings['s3_prefix'],
                     tier: $tier,
@@ -549,41 +565,51 @@ class BackupService
                 );
             }
         }
+
+        return [
+            'local_deleted' => $localDeleted,
+            'remote_deleted' => $remoteDeleted,
+        ];
     }
 
     /**
      * Prunes local tier.
      */
-    private function pruneLocalTier(string $localRoot, string $tier, int $limit): void
+    private function pruneLocalTier(string $localRoot, string $tier, int $limit): int
     {
         $root = rtrim($localRoot, '/\\');
         if ($root === '') {
-            return;
+            return 0;
         }
 
         $tierDirectory = $root.DIRECTORY_SEPARATOR.$tier;
         if (! is_dir($tierDirectory)) {
-            return;
+            return 0;
         }
 
         $pattern = $tierDirectory.DIRECTORY_SEPARATOR.'davvy-'.$tier.'-*.zip';
         $files = glob($pattern);
         if (! is_array($files) || $files === []) {
-            return;
+            return 0;
         }
 
         usort($files, fn (string $a, string $b): int => filemtime($b) <=> filemtime($a));
 
         $removeFromIndex = max($limit, 0);
+        $deleted = 0;
         foreach (array_slice($files, $removeFromIndex) as $path) {
-            @unlink($path);
+            if (@unlink($path)) {
+                $deleted++;
+            }
         }
+
+        return $deleted;
     }
 
     /**
      * Prunes remote tier.
      */
-    private function pruneRemoteTier(string $diskName, string $prefix, string $tier, int $limit): void
+    private function pruneRemoteTier(string $diskName, string $prefix, string $tier, int $limit): int
     {
         $disk = Storage::disk($diskName);
         $normalizedPrefix = trim($prefix, '/');
@@ -604,6 +630,8 @@ class BackupService
         if ($toDelete !== []) {
             $disk->delete($toDelete);
         }
+
+        return count($toDelete);
     }
 
     /**

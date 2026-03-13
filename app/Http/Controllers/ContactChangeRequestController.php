@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ContactChangeRequest;
+use App\Services\Analytics\OpenPanelAnalyticsService;
 use App\Services\Contacts\ContactChangeRequestService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -10,6 +11,7 @@ use Illuminate\Http\Request;
 class ContactChangeRequestController extends Controller
 {
     public function __construct(
+        private readonly OpenPanelAnalyticsService $analytics,
         private readonly ContactChangeRequestService $changeRequestService,
     ) {}
 
@@ -64,6 +66,11 @@ class ContactChangeRequestController extends Controller
                 ? $data['resolved_address_book_ids']
                 : null,
         );
+        $this->analytics->track('contacts.change_request_reviewed', [
+            'decision' => 'approved',
+            'operation' => (string) ($approved->operation?->value ?? $approved->operation),
+            'status' => (string) ($approved->status?->value ?? $approved->status),
+        ], $request->user());
 
         return response()->json([
             'data' => $this->serializeRow($approved),
@@ -76,6 +83,11 @@ class ContactChangeRequestController extends Controller
     public function deny(Request $request, ContactChangeRequest $contactChangeRequest): JsonResponse
     {
         $denied = $this->changeRequestService->deny($request->user(), $contactChangeRequest);
+        $this->analytics->track('contacts.change_request_reviewed', [
+            'decision' => 'denied',
+            'operation' => (string) ($denied->operation?->value ?? $denied->operation),
+            'status' => (string) ($denied->status?->value ?? $denied->status),
+        ], $request->user());
 
         return response()->json([
             'data' => $this->serializeRow($denied),
@@ -98,6 +110,15 @@ class ContactChangeRequestController extends Controller
             action: (string) $data['action'],
             requestIds: $data['request_ids'],
         );
+        $decision = (string) $data['action'] === 'approve' ? 'approved' : 'denied';
+        $this->analytics->track('contacts.change_request_reviewed', [
+            'decision' => $decision,
+            'operation' => 'bulk',
+            'processed_count' => (int) ($summary['processed'] ?? 0),
+            'approved_count' => (int) ($summary['approved'] ?? 0),
+            'denied_count' => (int) ($summary['denied'] ?? 0),
+            'skipped_count' => (int) ($summary['skipped'] ?? 0),
+        ], $request->user());
 
         return response()->json($summary);
     }

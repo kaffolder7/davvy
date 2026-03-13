@@ -8,6 +8,7 @@ use App\Models\AddressBook;
 use App\Models\Calendar;
 use App\Models\ResourceShare;
 use App\Models\User;
+use App\Services\Analytics\OpenPanelAnalyticsService;
 use App\Services\AddressBookMirrorService;
 use App\Services\RegistrationSettingsService;
 use Illuminate\Http\JsonResponse;
@@ -16,6 +17,7 @@ use Illuminate\Http\Request;
 class ShareController extends Controller
 {
     public function __construct(
+        private readonly OpenPanelAnalyticsService $analytics,
         private readonly RegistrationSettingsService $settings,
         private readonly AddressBookMirrorService $mirrorService,
     ) {}
@@ -110,6 +112,12 @@ class ShareController extends Controller
             $this->mirrorService->syncUserConfig($target);
         }
 
+        $this->analytics->track('sharing.created', [
+            'action' => $share->wasRecentlyCreated ? 'create' : 'update',
+            'resource_type' => $resourceType->value,
+            'permission' => $share->permission->value,
+        ], $actor);
+
         return response()->json($share->fresh(), 201);
     }
 
@@ -130,8 +138,14 @@ class ShareController extends Controller
 
         $sharedWith = $share->sharedWith;
         $resourceType = $share->resource_type;
+        $permission = $share->permission;
 
         $share->delete();
+
+        $this->analytics->track('sharing.revoked', [
+            'resource_type' => $resourceType->value,
+            'permission' => $permission->value,
+        ], $actor);
 
         if ($resourceType === ShareResourceType::AddressBook && $sharedWith) {
             $this->mirrorService->syncUserConfig($sharedWith);

@@ -37,15 +37,15 @@ class OpenPanelAnalyticsServiceTest extends TestCase
         config()->set("services.openpanel.enabled", true);
         config()->set(
             "services.openpanel.client_id",
-            "242640a8-e9d0-4c57-8861-862a25ac6815",
+            "REPLACE_WITH_OPENPANEL_CLIENT_ID",
         );
         config()->set(
             "services.openpanel.client_secret",
-            "sec_344775e2bbf34d569fd3",
+            "REPLACE_WITH_OPENPANEL_CLIENT_SECRET",
         );
         config()->set(
             "services.openpanel.api_url",
-            "https://analytics.affolder.cloud/api",
+            "REPLACE_WITH_OPENPANEL_API_URL",
         );
 
         Http::fake();

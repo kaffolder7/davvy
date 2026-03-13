@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Contact;
+use App\Services\Analytics\OpenPanelAnalyticsService;
 use App\Services\Contacts\ContactChangeRequestService;
 use App\Services\Contacts\ContactService;
 use Illuminate\Http\JsonResponse;
@@ -12,6 +13,7 @@ use Illuminate\Validation\ValidationException;
 class ContactController extends Controller
 {
     public function __construct(
+        private readonly OpenPanelAnalyticsService $analytics,
         private readonly ContactService $contactService,
         private readonly ContactChangeRequestService $changeRequestService,
     ) {}
@@ -50,6 +52,11 @@ class ContactController extends Controller
             payload: $payload,
             addressBookIds: $addressBookIds,
         );
+        $this->analytics->track('contacts.created', [
+            'source' => 'web',
+            'status' => 'success',
+            'address_book_count' => count($addressBookIds),
+        ], $request->user());
 
         return response()->json($this->serializeContact($contact), 201);
     }
@@ -74,6 +81,12 @@ class ContactController extends Controller
         );
 
         if ($queued !== null) {
+            $this->analytics->track('contacts.change_request_submitted', [
+                'source' => 'web',
+                'operation' => 'update',
+                'request_count' => is_array($queued['request_ids'] ?? null) ? count($queued['request_ids']) : 0,
+            ], $request->user());
+
             return response()->json([
                 'queued' => true,
                 'message' => 'This change was submitted for owner/admin approval.',
@@ -88,6 +101,11 @@ class ContactController extends Controller
             payload: $payload,
             addressBookIds: $addressBookIds,
         );
+        $this->analytics->track('contacts.updated', [
+            'source' => 'web',
+            'status' => 'success',
+            'address_book_count' => count($addressBookIds),
+        ], $request->user());
 
         return response()->json($this->serializeContact($updated));
     }
@@ -105,6 +123,12 @@ class ContactController extends Controller
         );
 
         if ($queued !== null) {
+            $this->analytics->track('contacts.change_request_submitted', [
+                'source' => 'web',
+                'operation' => 'delete',
+                'request_count' => is_array($queued['request_ids'] ?? null) ? count($queued['request_ids']) : 0,
+            ], $request->user());
+
             return response()->json([
                 'queued' => true,
                 'message' => 'This delete request was submitted for owner/admin approval.',
@@ -114,6 +138,10 @@ class ContactController extends Controller
         }
 
         $this->contactService->delete($request->user(), $model);
+        $this->analytics->track('contacts.deleted', [
+            'source' => 'web',
+            'status' => 'success',
+        ], $request->user());
 
         return response()->json(['ok' => true]);
     }

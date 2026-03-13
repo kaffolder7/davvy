@@ -3,6 +3,7 @@
 use App\Mail\AdminUserInviteMail;
 use App\Mail\PublicRegistrationVerificationMail;
 use App\Models\User;
+use App\Services\Analytics\OpenPanelAnalyticsService;
 use App\Services\Backups\BackupRestoreService;
 use App\Services\Backups\BackupService;
 use Illuminate\Support\Facades\Artisan;
@@ -187,10 +188,21 @@ Artisan::command('app:preflight', function (): int {
 Artisan::command('app:backup {--force : Run immediately, ignoring enabled flag and schedule window}', function (): int {
     /** @var BackupService $backupService */
     $backupService = app(BackupService::class);
+    /** @var OpenPanelAnalyticsService $analytics */
+    $analytics = app(OpenPanelAnalyticsService::class);
     $force = (bool) $this->option('force');
     $trigger = $force ? 'manual-cli' : 'scheduled';
 
     $result = $backupService->run(force: $force, trigger: $trigger);
+    if (! $force) {
+        $analytics->track('backups.scheduled_run', [
+            'status' => (string) ($result['status'] ?? 'unknown'),
+            'trigger' => (string) ($result['trigger'] ?? 'scheduled'),
+            'code' => (string) ($result['code'] ?? ''),
+            'tier_count' => is_array($result['tiers'] ?? null) ? count($result['tiers']) : 0,
+            'artifact_count' => (int) ($result['artifact_count'] ?? 0),
+        ]);
+    }
 
     if ($result['status'] === 'success') {
         $this->info($result['reason']);

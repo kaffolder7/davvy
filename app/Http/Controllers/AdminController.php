@@ -266,14 +266,17 @@ class AdminController extends Controller
         $data = $request->validate([
             'enabled' => ['required', 'boolean'],
         ]);
+        $before = $this->registrationSettings->isPublicRegistrationEnabled();
 
         $this->registrationSettings->setPublicRegistrationEnabled(
             enabled: (bool) $data['enabled'],
             actor: $request->user()
         );
+        $after = $this->registrationSettings->isPublicRegistrationEnabled();
+        $this->trackAdminSettingChange($request, 'registration.public_enabled', $before, $after);
 
         return response()->json([
-            'enabled' => $this->registrationSettings->isPublicRegistrationEnabled(),
+            'enabled' => $after,
             'require_approval' => $this->registrationSettings->isPublicRegistrationApprovalRequired(),
         ]);
     }
@@ -286,14 +289,17 @@ class AdminController extends Controller
         $data = $request->validate([
             'enabled' => ['required', 'boolean'],
         ]);
+        $before = $this->registrationSettings->isPublicRegistrationApprovalRequired();
 
         $this->registrationSettings->setPublicRegistrationApprovalRequired(
             enabled: (bool) $data['enabled'],
             actor: $request->user()
         );
+        $after = $this->registrationSettings->isPublicRegistrationApprovalRequired();
+        $this->trackAdminSettingChange($request, 'registration.approval_required', $before, $after);
 
         return response()->json([
-            'enabled' => $this->registrationSettings->isPublicRegistrationApprovalRequired(),
+            'enabled' => $after,
         ]);
     }
 
@@ -305,14 +311,17 @@ class AdminController extends Controller
         $data = $request->validate([
             'enabled' => ['required', 'boolean'],
         ]);
+        $before = $this->registrationSettings->isOwnerShareManagementEnabled();
 
         $this->registrationSettings->setOwnerShareManagementEnabled(
             enabled: (bool) $data['enabled'],
             actor: $request->user()
         );
+        $after = $this->registrationSettings->isOwnerShareManagementEnabled();
+        $this->trackAdminSettingChange($request, 'sharing.owner_management_enabled', $before, $after);
 
         return response()->json([
-            'enabled' => $this->registrationSettings->isOwnerShareManagementEnabled(),
+            'enabled' => $after,
         ]);
     }
 
@@ -324,14 +333,17 @@ class AdminController extends Controller
         $data = $request->validate([
             'enabled' => ['required', 'boolean'],
         ]);
+        $before = $this->registrationSettings->isDavCompatibilityModeEnabled();
 
         $this->registrationSettings->setDavCompatibilityModeEnabled(
             enabled: (bool) $data['enabled'],
             actor: $request->user()
         );
+        $after = $this->registrationSettings->isDavCompatibilityModeEnabled();
+        $this->trackAdminSettingChange($request, 'dav.compatibility_mode_enabled', $before, $after);
 
         return response()->json([
-            'enabled' => $this->registrationSettings->isDavCompatibilityModeEnabled(),
+            'enabled' => $after,
         ]);
     }
 
@@ -343,6 +355,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'enabled' => ['required', 'boolean'],
         ]);
+        $before = $this->registrationSettings->isContactManagementEnabled();
 
         if (
             (bool) $data['enabled']
@@ -358,9 +371,11 @@ class AdminController extends Controller
             enabled: (bool) $data['enabled'],
             actor: $request->user()
         );
+        $after = $this->registrationSettings->isContactManagementEnabled();
+        $this->trackAdminSettingChange($request, 'contacts.management_enabled', $before, $after);
 
         return response()->json([
-            'enabled' => $this->registrationSettings->isContactManagementEnabled(),
+            'enabled' => $after,
         ]);
     }
 
@@ -372,6 +387,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'enabled' => ['required', 'boolean'],
         ]);
+        $before = $this->registrationSettings->isContactChangeModerationEnabled();
 
         $enabled = (bool) $data['enabled'];
 
@@ -403,9 +419,11 @@ class AdminController extends Controller
             enabled: $enabled,
             actor: $request->user()
         );
+        $after = $this->registrationSettings->isContactChangeModerationEnabled();
+        $this->trackAdminSettingChange($request, 'contacts.change_moderation_enabled', $before, $after);
 
         return response()->json([
-            'enabled' => $this->registrationSettings->isContactChangeModerationEnabled(),
+            'enabled' => $after,
         ]);
     }
 
@@ -417,14 +435,17 @@ class AdminController extends Controller
         $data = $request->validate([
             'enabled' => ['required', 'boolean'],
         ]);
+        $before = $this->twoFactorSettings->isEnforced();
 
         $this->twoFactorSettings->setEnforced(
             enabled: (bool) $data['enabled'],
             actor: $request->user(),
         );
+        $after = $this->twoFactorSettings->isEnforced();
+        $this->trackAdminSettingChange($request, 'auth.two_factor_enforcement_enabled', $before, $after);
 
         return response()->json([
-            'enabled' => $this->twoFactorSettings->isEnforced(),
+            'enabled' => $after,
             'grace_period_days' => $this->twoFactorSettings->gracePeriodDays(),
         ]);
     }
@@ -467,14 +488,17 @@ class AdminController extends Controller
         $data = $request->validate([
             'days' => ['required', 'integer', 'min:1', 'max:3650'],
         ]);
+        $before = $this->registrationSettings->contactChangeRequestRetentionDays();
 
         $this->registrationSettings->setContactChangeRequestRetentionDays(
             days: (int) $data['days'],
             actor: $request->user(),
         );
+        $after = $this->registrationSettings->contactChangeRequestRetentionDays();
+        $this->trackAdminSettingChange($request, 'contacts.change_request_retention_days', $before, $after);
 
         return response()->json([
-            'days' => $this->registrationSettings->contactChangeRequestRetentionDays(),
+            'days' => $after,
         ]);
     }
 
@@ -496,6 +520,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'years' => ['required', 'integer', 'min:1', 'max:25'],
         ]);
+        $before = $this->registrationSettings->milestoneCalendarGenerationYears();
 
         $this->registrationSettings->setMilestoneCalendarGenerationYears(
             years: (int) $data['years'],
@@ -514,9 +539,11 @@ class AdminController extends Controller
 
             $this->milestoneCalendarService->syncAddressBooksByIds($addressBookIds);
         }
+        $after = $this->registrationSettings->milestoneCalendarGenerationYears();
+        $this->trackAdminSettingChange($request, 'contacts.milestone_generation_years', $before, $after);
 
         return response()->json([
-            'years' => $this->registrationSettings->milestoneCalendarGenerationYears(),
+            'years' => $after,
         ]);
     }
 
@@ -543,6 +570,7 @@ class AdminController extends Controller
      */
     public function setBackupSettings(Request $request): JsonResponse
     {
+        $before = $this->backupSettings->current();
         $data = $request->validate([
             'enabled' => ['required', 'boolean'],
             'local_enabled' => ['required', 'boolean'],
@@ -576,7 +604,20 @@ class AdminController extends Controller
             abort(422, 'At least one retention tier must be greater than zero.');
         }
 
-        return response()->json($this->backupSettings->update($data, $request->user()));
+        $result = $this->backupSettings->update($data, $request->user());
+        $this->analytics->track('admin.setting_changed', [
+            'setting_key' => 'backups.configuration',
+            'from_state' => (bool) ($before['enabled'] ?? false),
+            'to_state' => (bool) ($result['enabled'] ?? false),
+            'from_schedule_count' => is_array($before['schedule_times'] ?? null) ? count($before['schedule_times']) : 0,
+            'to_schedule_count' => is_array($result['schedule_times'] ?? null) ? count($result['schedule_times']) : 0,
+            'from_destination_count' => ((bool) ($before['local_enabled'] ?? false) ? 1 : 0)
+                + ((bool) ($before['s3_enabled'] ?? false) ? 1 : 0),
+            'to_destination_count' => ((bool) ($result['local_enabled'] ?? false) ? 1 : 0)
+                + ((bool) ($result['s3_enabled'] ?? false) ? 1 : 0),
+        ], $request->user());
+
+        return response()->json($result);
     }
 
     /**
@@ -662,5 +703,25 @@ class AdminController extends Controller
         ], $request->user());
 
         return response()->json($result);
+    }
+
+    /**
+     * Track an admin setting change when state differs.
+     */
+    private function trackAdminSettingChange(
+        Request $request,
+        string $settingKey,
+        bool|int|string $from,
+        bool|int|string $to,
+    ): void {
+        if ($from === $to) {
+            return;
+        }
+
+        $this->analytics->track('admin.setting_changed', [
+            'setting_key' => $settingKey,
+            'from_state' => $from,
+            'to_state' => $to,
+        ], $request->user());
     }
 }

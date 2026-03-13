@@ -162,18 +162,24 @@ class DavController extends Controller
     {
         $method = strtoupper($request->method());
         $isReadMethod = in_array($method, ['PROPFIND', 'REPORT', 'OPTIONS'], true);
-
-        if ($status < 400 && $isReadMethod) {
-            return;
-        }
-
-        $this->analytics->track('dav.request', [
+        $user = $this->davContext->getAuthenticatedUser();
+        $baseProperties = [
             'method' => $method,
             'status' => $status,
             'status_family' => sprintf('%dxx', intdiv($status, 100)),
             'client_family' => $this->classifyDavClient($request->userAgent()),
             'read_method' => $isReadMethod,
-        ], $this->davContext->getAuthenticatedUser());
+        ];
+
+        if (! $isReadMethod) {
+            $this->analytics->track('dav.write', $baseProperties, $user);
+        }
+
+        if ($status < 400 && $isReadMethod) {
+            return;
+        }
+
+        $this->analytics->track('dav.request', $baseProperties, $user);
     }
 
     /**

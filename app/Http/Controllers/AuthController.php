@@ -82,6 +82,13 @@ class AuthController extends Controller
                 expiresAt: $verification['expires_at'],
             );
 
+            $this->analytics->track('auth.register', [
+                'status' => 'pending_verification',
+                'requires_approval' => $approvalRequired,
+                'requires_verification' => true,
+                'verification_email_sent' => $verificationSent,
+            ], $user);
+
             $payload = array_merge([
                 'registration_pending_verification' => true,
                 'registration_pending_approval' => $approvalRequired,
@@ -102,6 +109,12 @@ class AuthController extends Controller
         }
 
         if ($approvalRequired) {
+            $this->analytics->track('auth.register', [
+                'status' => 'pending_approval',
+                'requires_approval' => true,
+                'requires_verification' => false,
+            ], $user);
+
             return response()->json(
                 array_merge([
                     'registration_pending_approval' => true,
@@ -113,6 +126,11 @@ class AuthController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+        $this->analytics->track('auth.register', [
+            'status' => 'completed',
+            'requires_approval' => false,
+            'requires_verification' => false,
+        ], $user);
 
         return response()->json(
             array_merge(['user' => $user], $this->authenticatedSettingsPayload($user)),
@@ -142,6 +160,10 @@ class AuthController extends Controller
         }
 
         if (! $user->is_approved) {
+            $this->analytics->track('auth.verify_email', [
+                'status' => 'pending_approval',
+            ], $user);
+
             return response()->json(array_merge([
                 'registration_pending_approval' => true,
                 'email_verified' => true,
@@ -153,6 +175,9 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         $fresh = $user->fresh();
+        $this->analytics->track('auth.verify_email', [
+            'status' => 'completed',
+        ], $fresh);
 
         return response()->json(
             array_merge([
@@ -183,6 +208,10 @@ class AuthController extends Controller
         $user->save();
 
         if (! $user->is_approved) {
+            $this->analytics->track('auth.invite_accept', [
+                'status' => 'pending_approval',
+            ], $user);
+
             return response()->json(array_merge([
                 'registration_pending_approval' => true,
                 'message' => 'Invitation accepted. Your account is pending administrator approval.',
@@ -193,6 +222,9 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         $fresh = $user->fresh();
+        $this->analytics->track('auth.invite_accept', [
+            'status' => 'completed',
+        ], $fresh);
 
         return response()->json(
             array_merge([
@@ -299,6 +331,10 @@ class AuthController extends Controller
         $verified = $this->twoFactor->verifyTotpOrBackupCode($user, $data['code']);
         if (! $verified) {
             $this->pendingTwoFactorLogin->registerFailedAttempt($request);
+            $this->analytics->track('auth.2fa_challenge_failed', [
+                'method' => 'password+totp',
+                'status' => 'invalid_code',
+            ], $user);
 
             return response()->json([
                 'message' => 'Invalid authentication code.',
@@ -436,6 +472,10 @@ class AuthController extends Controller
         $request->session()->forget(self::TWO_FACTOR_PENDING_SETUP_SESSION_KEY);
 
         $fresh = $user->fresh();
+        $this->analytics->track('auth.2fa_enabled', [
+            'method' => 'totp',
+            'backup_codes_issued' => count($backupCodes),
+        ], $fresh);
 
         return response()->json([
             'enabled' => true,
@@ -464,6 +504,10 @@ class AuthController extends Controller
         }
 
         $this->twoFactor->disable($user, revokeAppPasswords: true);
+        $this->analytics->track('auth.2fa_disabled', [
+            'method' => 'totp',
+            'revoke_app_passwords' => true,
+        ], $user);
 
         return response()->json([
             'enabled' => false,
