@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Enums\ShareResourceType;
 use App\Models\Calendar;
 use App\Services\Dav\DavSyncService;
-use App\Services\ResourceUriService;
 use App\Services\ResourceDeletionService;
+use App\Services\ResourceUriService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -99,5 +99,4 @@ class CalendarController extends Controller
             abort(403, 'You cannot modify this calendar.');
         }
     }
-
 }
