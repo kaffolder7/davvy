@@ -289,6 +289,22 @@ Artisan::command(
     },
 )->purpose('Restore calendars/address books from a backup ZIP archive');
 
+Artisan::command('app:analytics:heartbeat {--trigger=scheduler : Heartbeat trigger label}', function (): int {
+    /** @var OpenPanelAnalyticsService $analytics */
+    $analytics = app(OpenPanelAnalyticsService::class);
+
+    $trigger = trim((string) $this->option('trigger'));
+    $analytics->trackInstallationHeartbeat($trigger === '' ? 'scheduler' : $trigger);
+
+    $this->line('Analytics installation heartbeat processed.');
+
+    return 0;
+})->purpose('Track a stable installation heartbeat analytics event');
+
 Schedule::command('app:backup')
     ->everyMinute()
+    ->withoutOverlapping();
+
+Schedule::command('app:analytics:heartbeat')
+    ->hourly()
     ->withoutOverlapping();

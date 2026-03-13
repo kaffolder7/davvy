@@ -110,9 +110,50 @@ class OpenPanelAnalyticsServiceTest extends TestCase
             );
             $this->assertSame('success', $properties['status'] ?? null);
             $this->assertSame(3, $properties['resource_count'] ?? null);
+            $this->assertIsString($properties['installation_id'] ?? null);
             $this->assertArrayNotHasKey('admin_email', $properties);
             $this->assertArrayNotHasKey('api_token', $properties);
             $this->assertArrayNotHasKey('empty_field', $properties);
+
+            return true;
+        });
+    }
+
+    public function test_installation_heartbeat_tracks_with_installation_profile_id(): void
+    {
+        config()->set('services.openpanel.enabled', true);
+        config()->set('services.openpanel.client_id', 'client_123');
+        config()->set('services.openpanel.client_secret', 'secret_abc');
+        config()->set(
+            'services.openpanel.api_url',
+            'https://analytics.example.test',
+        );
+
+        Http::fake([
+            'https://analytics.example.test/track' => Http::response(
+                ['ok' => true],
+                200,
+            ),
+        ]);
+
+        app(OpenPanelAnalyticsService::class)->trackInstallationHeartbeat();
+
+        Http::assertSent(function ($request): bool {
+            if ($request->url() !== 'https://analytics.example.test/track') {
+                return false;
+            }
+
+            $payload = $request->data();
+            $properties = $payload['payload']['properties'] ?? [];
+
+            $this->assertSame('installation.heartbeat', $payload['payload']['name'] ?? null);
+            $this->assertSame('server', $properties['source'] ?? null);
+            $this->assertSame('scheduler', $properties['trigger'] ?? null);
+            $this->assertIsString($properties['installation_id'] ?? null);
+            $this->assertSame(
+                $properties['installation_id'] ?? null,
+                $payload['payload']['profileId'] ?? null,
+            );
 
             return true;
         });

@@ -132,6 +132,7 @@ Analytics settings note:
   - browser event ingest: `POST /api/davvy-events/track`
 - Browser analytics proxying requires `client_id`, `client_secret`, and `api_url` maintainer values to be configured.
 - `api_url` in `config/services.php` must point to the upstream OpenPanel host that accepts `POST /track` (some self-host deployments use the root domain instead of `/api`).
+- Davvy schedules `app:analytics:heartbeat` hourly (when scheduler runtime is enabled) to emit active-install heartbeat events.
 
 OpenPanel event taxonomy:
 - `auth.login`: successful web login completion (`method`, `two_factor`)
@@ -156,8 +157,9 @@ OpenPanel event taxonomy:
 - `dav.write`: DAV write request outcome (`method`, `status`, `status_family`, `client_family`, `read_method`)
 - `sharing.created`: share create/update result (`action`, `resource_type`, `permission`)
 - `sharing.revoked`: share revoke result (`resource_type`, `permission`)
+- `installation.heartbeat`: stable installation heartbeat marker (`source`, `trigger`, `installation_id`)
 - `ui.session_started`: browser session bootstrap marker (`path`)
-- `ui.page_view`: SPA route view (`path`)
+- `screen_view`: SPA route view for OpenPanel page metrics (`__path`)
 - `ui.feature_view`: route-derived feature view marker (`feature_key`, `path`)
 - `ui.feature_interaction`: explicit client feature interaction marker (`feature_key`, `action`, additional non-PII flags)
 - `ui.api_error`: client-side API failure marker (`route`, `method`, `status_family`)

@@ -34,6 +34,7 @@ Route::post('/api/davvy-events/track', [AnalyticsProxyController::class, 'track'
     ]);
 Route::get('/davvy-op1.js', [AnalyticsProxyController::class, 'script'])
     ->withoutMiddleware([
+        ValidateCsrfToken::class,
         StartSession::class,
         ShareErrorsFromSession::class,
     ]);

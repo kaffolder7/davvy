@@ -62,6 +62,10 @@ If script/event requests fail:
 - verify maintainers configured valid OpenPanel values in `config/services.php`
 - confirm the upstream OpenPanel host accepts `POST /track`
 
+For page analytics widgets in OpenPanel:
+- ensure browser events include `screen_view` with `__path`
+- run `php artisan app:analytics:heartbeat --trigger=manual-check` to verify installation heartbeat delivery
+
 ### `GET /davvy-op1.js` returns `503`
 Davvy could not fetch the OpenPanel browser script upstream.
 

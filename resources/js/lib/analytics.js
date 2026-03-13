@@ -78,7 +78,7 @@ export function configureAnalytics(rawConfig) {
 }
 
 /**
- * Tracks a SPA page-view event with sanitized route path.
+ * Tracks a SPA screen-view event with sanitized route path.
  *
  * @param {string} pathname
  * @returns {void}
@@ -94,8 +94,8 @@ export function trackPageView(pathname) {
   }
 
   lastTrackedPath = path;
-  trackClientEvent("ui.page_view", {
-    path,
+  trackClientEvent("screen_view", {
+    __path: path,
   });
 
   const featureKey = featureKeyFromPath(path);

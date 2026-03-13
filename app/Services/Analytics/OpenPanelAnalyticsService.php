@@ -26,6 +26,7 @@ class OpenPanelAnalyticsService
     public function __construct(
         private readonly OpenPanelSettings $settings,
         private readonly AnalyticsProfileService $profiles,
+        private readonly AnalyticsInstallationService $installation,
     ) {}
 
     /**
@@ -33,7 +34,7 @@ class OpenPanelAnalyticsService
      *
      * @param  array<string, bool|int|float|string|null>  $properties
      */
-    public function track(string $name, array $properties = [], ?User $user = null): void
+    public function track(string $name, array $properties = [], User|string|null $user = null): void
     {
         if (! $this->settings->serverTrackingEnabled()) {
             return;
@@ -48,12 +49,17 @@ class OpenPanelAnalyticsService
             'type' => 'track',
             'payload' => [
                 'name' => $eventName,
-                'properties' => $this->sanitizeProperties($properties),
+                'properties' => [
+                    ...$this->sanitizeProperties($properties),
+                    'installation_id' => $this->installation->installationId(),
+                ],
             ],
         ];
 
-        if ($user) {
+        if ($user instanceof User) {
             $payload['payload']['profileId'] = $this->profiles->profileIdForUser($user);
+        } elseif (is_string($user) && trim($user) !== '') {
+            $payload['payload']['profileId'] = trim($user);
         }
 
         if (app()->runningInConsole() || app()->runningUnitTests()) {
@@ -66,6 +72,21 @@ class OpenPanelAnalyticsService
         app()->terminating(function () use ($payload): void {
             $this->sendPayload($payload);
         });
+    }
+
+    /**
+     * Track a stable installation heartbeat event for active-install metrics.
+     */
+    public function trackInstallationHeartbeat(string $trigger = 'scheduler'): void
+    {
+        $this->track(
+            'installation.heartbeat',
+            [
+                'source' => 'server',
+                'trigger' => trim($trigger) === '' ? 'scheduler' : trim($trigger),
+            ],
+            $this->installation->profileId(),
+        );
     }
 
     /**

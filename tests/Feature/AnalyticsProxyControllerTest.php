@@ -95,9 +95,9 @@ class AnalyticsProxyControllerTest extends TestCase
         $this->postJson('/api/davvy-events/track', [
             'type' => 'track',
             'payload' => [
-                'name' => 'ui.page_view',
+                'name' => 'screen_view',
                 'properties' => [
-                    'path' => '/contacts',
+                    '__path' => '/contacts',
                 ],
             ],
         ])->assertStatus(202)->assertJsonPath('disabled', true);

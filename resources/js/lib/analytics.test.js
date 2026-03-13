@@ -79,8 +79,8 @@ describe("analytics", () => {
     trackPageView("/contacts/123");
 
     expect(window.op).toHaveBeenCalledTimes(2);
-    expect(window.op).toHaveBeenCalledWith("track", "ui.page_view", {
-      path: "/contacts/:id",
+    expect(window.op).toHaveBeenCalledWith("track", "screen_view", {
+      __path: "/contacts/:id",
     });
     expect(window.op).toHaveBeenCalledWith("track", "ui.feature_view", {
       feature_key: "contacts",
