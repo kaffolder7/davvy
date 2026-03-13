@@ -15,8 +15,8 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ShareController;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Session\Middleware\StartSession;
-use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 Route::post('/api/auth/login', [AuthController::class, 'login'])->middleware('throttle:auth-login');
 Route::get('/api/auth/login/2fa/status', [AuthController::class, 'loginTwoFactorStatus']);
