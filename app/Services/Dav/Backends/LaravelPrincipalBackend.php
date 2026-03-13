@@ -3,13 +3,17 @@
 namespace App\Services\Dav\Backends;
 
 use App\Models\User;
+use App\Services\DavRequestContext;
 use App\Services\PrincipalUriService;
 use Sabre\DAV\PropPatch;
 use Sabre\DAVACL\PrincipalBackend\AbstractBackend;
 
 class LaravelPrincipalBackend extends AbstractBackend
 {
-    public function __construct(private readonly PrincipalUriService $principalUriService) {}
+    public function __construct(
+        private readonly DavRequestContext $davContext,
+        private readonly PrincipalUriService $principalUriService,
+    ) {}
 
     /**
      * Returns principals matching a DAV prefix.
@@ -88,6 +92,11 @@ class LaravelPrincipalBackend extends AbstractBackend
             return [];
         }
 
+        $authenticatedUser = $this->davContext->getAuthenticatedUser();
+        if (! $authenticatedUser) {
+            return [];
+        }
+
         $supportedProperties = [];
         if (array_key_exists('{DAV:}displayname', $searchProperties)) {
             $supportedProperties[] = [
@@ -107,7 +116,7 @@ class LaravelPrincipalBackend extends AbstractBackend
             return [];
         }
 
-        $query = User::query();
+        $query = User::query()->whereKey($authenticatedUser->id);
         if ($test === 'anyof') {
             $query->where(function ($builder) use ($supportedProperties): void {
                 foreach ($supportedProperties as $index => $search) {
