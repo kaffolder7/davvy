@@ -44,27 +44,5 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: ['./resources/js/test/setupTests.js'],
     },
-    build: {
-      rollupOptions: {
-        output: {
-          manualChunks(id) {
-            if (id.includes('node_modules/react-router-dom')) {
-              return 'router';
-            }
-
-            if (
-              id.includes('node_modules/react') ||
-              id.includes('node_modules/react-dom')
-            ) {
-              return 'react-vendor';
-            }
-
-            if (id.includes('node_modules')) {
-              return 'vendor';
-            }
-          },
-        },
-      },
-    },
   };
 });
