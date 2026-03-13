@@ -84,7 +84,7 @@ return [
         ) ?? true,
         'queue' => 'analytics',
         'provider' => 'posthog',
-        'posthog_host' => 'https://us.i.posthog.com',
+        'posthog_host' => 'https://t.affolder.cloud',
         'posthog_project_api_key' => 'phc_Lpu5ojPCDSDSZfogbR4qb9Dtb21KxnPS4UE54bmAwpc',
         'hash_key' => trim(
             (string) env('ANALYTICS_HASH_KEY', env('APP_KEY', '')),
