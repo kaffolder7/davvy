@@ -594,7 +594,7 @@ class ContactMilestoneCalendarService
                 continue;
             }
 
-            $contactName = $this->contactMilestoneName($contact);
+            $contactName = $this->anniversaryMilestoneName($contact);
             if ($contactName === null) {
                 continue;
             }
@@ -860,14 +860,15 @@ class ContactMilestoneCalendarService
      */
     private function anniversaryFirstName(array $payload, string $contactName): string
     {
-        $firstName = $this->normalizeString($payload['first_name'] ?? null);
+        $firstName = $this->preferredFirstMilestoneName(
+            payload: $payload,
+            preferNickname: $this->anniversaryPrioritizesNicknameInTitle(),
+        );
         if ($firstName !== null) {
             return $firstName;
         }
 
-        $pieces = preg_split('/\s+/', $contactName) ?: [];
-
-        return $pieces[0] ?? $contactName;
+        return $this->firstNameToken($contactName) ?? $contactName;
     }
 
     /**
@@ -1240,7 +1241,10 @@ class ContactMilestoneCalendarService
     private function birthdayMilestoneName(Contact $contact): ?string
     {
         $payload = is_array($contact->payload) ? $contact->payload : [];
-        $firstName = $this->normalizeString($payload['first_name'] ?? null);
+        $firstName = $this->preferredFirstMilestoneName(
+            payload: $payload,
+            preferNickname: $this->birthdayPrioritizesNicknameInTitle(),
+        );
         $lastName = $this->normalizeString($payload['last_name'] ?? null);
         $includeLastName = $this->birthdayIncludesLastNameInTitle();
 
@@ -1277,6 +1281,51 @@ class ContactMilestoneCalendarService
     }
 
     /**
+     * Determines whether birthday titles should prioritize nickname before first name.
+     */
+    private function birthdayPrioritizesNicknameInTitle(): bool
+    {
+        return (bool) config('services.contacts.birthday_prioritize_nickname', true);
+    }
+
+    /**
+     * Returns anniversary contact milestone name.
+     */
+    private function anniversaryMilestoneName(Contact $contact): ?string
+    {
+        if (! $this->anniversaryPrioritizesNicknameInTitle()) {
+            return $this->contactMilestoneName($contact);
+        }
+
+        $payload = is_array($contact->payload) ? $contact->payload : [];
+        $firstName = $this->preferredFirstMilestoneName(
+            payload: $payload,
+            preferNickname: true,
+        );
+        $lastName = $this->normalizeString($payload['last_name'] ?? null);
+        $name = trim(implode(' ', array_filter([$firstName, $lastName])));
+
+        if ($name !== '') {
+            return $name;
+        }
+
+        $fullName = $this->normalizeString($contact->full_name);
+        if ($fullName !== null && strtolower($fullName) !== 'unnamed contact') {
+            return $fullName;
+        }
+
+        return $this->normalizeString($payload['company'] ?? null);
+    }
+
+    /**
+     * Determines whether anniversary titles should prioritize nickname before first name.
+     */
+    private function anniversaryPrioritizesNicknameInTitle(): bool
+    {
+        return (bool) config('services.contacts.anniversary_prioritize_nickname', true);
+    }
+
+    /**
      * Returns contact milestone name.
      */
     private function contactMilestoneName(Contact $contact): ?string
@@ -1307,6 +1356,23 @@ class ContactMilestoneCalendarService
         $lastName = $this->normalizeString($payload['last_name'] ?? null);
 
         return trim(implode(' ', array_filter([$firstName, $lastName])));
+    }
+
+    /**
+     * Returns preferred first milestone name.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function preferredFirstMilestoneName(array $payload, bool $preferNickname): ?string
+    {
+        if ($preferNickname) {
+            $nickname = $this->normalizeString($payload['nickname'] ?? null);
+            if ($nickname !== null) {
+                return $nickname;
+            }
+        }
+
+        return $this->normalizeString($payload['first_name'] ?? null);
     }
 
     /**

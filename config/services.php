@@ -17,7 +17,9 @@ return [
         'change_request_retention_days' => (int) env('CONTACT_CHANGE_REQUEST_RETENTION_DAYS', 90),
         'milestone_calendar_generation_years' => (int) env('MILESTONE_CALENDAR_GENERATION_YEARS', 3),
         'birthday_include_last_name' => (bool) env('MILESTONE_BIRTHDAY_INCLUDE_LAST_NAME', true),
+        'birthday_prioritize_nickname' => (bool) env('MILESTONE_BIRTHDAY_PRIORITIZE_NICKNAME', true),
         'anniversary_pair_include_last_name' => (bool) env('MILESTONE_ANNIVERSARY_PAIR_INCLUDE_LAST_NAME', false),
+        'anniversary_prioritize_nickname' => (bool) env('MILESTONE_ANNIVERSARY_PRIORITIZE_NICKNAME', true),
     ],
     'backups' => [
         'enabled' => (bool) env('ENABLE_AUTOMATED_BACKUPS', false),
