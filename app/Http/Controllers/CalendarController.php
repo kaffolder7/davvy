@@ -6,14 +6,15 @@ use App\Enums\ShareResourceType;
 use App\Models\Calendar;
 use App\Services\Dav\DavSyncService;
 use App\Services\ResourceDeletionService;
+use App\Services\ResourceUriService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class CalendarController extends Controller
 {
     public function __construct(
         private readonly DavSyncService $syncService,
+        private readonly ResourceUriService $resourceUriService,
         private readonly ResourceDeletionService $resourceDeletion,
     ) {}
 
@@ -31,8 +32,10 @@ class CalendarController extends Controller
             'is_sharable' => ['boolean'],
         ]);
 
-        $baseUri = Str::slug($data['uri'] ?? $data['display_name']);
-        $uri = $this->uniqueUri($request->user()->id, $baseUri);
+        $uri = $this->resourceUriService->nextCalendarUri(
+            ownerId: (int) $request->user()->id,
+            candidate: (string) ($data['uri'] ?? $data['display_name']),
+        );
 
         $calendar = Calendar::query()->create([
             'owner_id' => $request->user()->id,
@@ -95,27 +98,5 @@ class CalendarController extends Controller
         if ($calendar->owner_id !== $user->id && ! $user->isAdmin()) {
             abort(403, 'You cannot modify this calendar.');
         }
-    }
-
-    /**
-     * Returns unique URI.
-     */
-    private function uniqueUri(int $ownerId, string $baseUri): string
-    {
-        $seed = $baseUri !== '' ? $baseUri : 'calendar';
-        $uri = $seed;
-        $count = 1;
-
-        while (
-            Calendar::query()
-                ->where('owner_id', $ownerId)
-                ->where('uri', $uri)
-                ->exists()
-        ) {
-            $uri = $seed.'-'.$count;
-            $count++;
-        }
-
-        return $uri;
     }
 }

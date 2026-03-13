@@ -13,6 +13,7 @@ use App\Services\DavRequestContext;
 use App\Services\PrincipalUriService;
 use App\Services\ResourceAccessService;
 use App\Services\ResourceDeletionService;
+use App\Services\ResourceUriService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
 use Sabre\CalDAV\Backend\AbstractBackend;
@@ -28,6 +29,7 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
 {
     public function __construct(
         private readonly PrincipalUriService $principalUriService,
+        private readonly ResourceUriService $resourceUriService,
         private readonly ResourceAccessService $accessService,
         private readonly DavRequestContext $davContext,
         private readonly IcsValidator $icsValidator,
@@ -82,16 +84,29 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
             throw new NotFound('Principal does not exist.');
         }
 
-        $calendar = Calendar::query()->create([
-            'owner_id' => $user->id,
-            'uri' => Str::slug((string) $calendarUri),
-            'display_name' => (string) ($properties['{DAV:}displayname'] ?? 'Calendar'),
-            'description' => $properties['{urn:ietf:params:xml:ns:caldav}calendar-description'] ?? null,
-            'color' => $properties['{http://apple.com/ns/ical/}calendar-color'] ?? null,
-            'timezone' => $properties['{urn:ietf:params:xml:ns:caldav}calendar-timezone'] ?? null,
-            'is_default' => false,
-            'is_sharable' => false,
-        ]);
+        $uri = $this->resourceUriService->nextCalendarUri(
+            ownerId: (int) $user->id,
+            candidate: (string) $calendarUri,
+        );
+
+        try {
+            $calendar = Calendar::query()->create([
+                'owner_id' => $user->id,
+                'uri' => $uri,
+                'display_name' => (string) ($properties['{DAV:}displayname'] ?? 'Calendar'),
+                'description' => $properties['{urn:ietf:params:xml:ns:caldav}calendar-description'] ?? null,
+                'color' => $properties['{http://apple.com/ns/ical/}calendar-color'] ?? null,
+                'timezone' => $properties['{urn:ietf:params:xml:ns:caldav}calendar-timezone'] ?? null,
+                'is_default' => false,
+                'is_sharable' => false,
+            ]);
+        } catch (QueryException $exception) {
+            if ($this->isOwnerUriUniqueConstraintViolation($exception)) {
+                throw new Conflict('Calendar already exists for the requested URI.');
+            }
+
+            throw $exception;
+        }
 
         $this->syncService->ensureResource(ShareResourceType::Calendar, $calendar->id);
     }
@@ -530,6 +545,17 @@ class LaravelCalendarBackend extends AbstractBackend implements SyncSupport
         }
 
         throw new InvalidSyncToken('Sync token format is invalid.');
+    }
+
+    /**
+     * Checks whether owner URI unique constraint violation.
+     */
+    private function isOwnerUriUniqueConstraintViolation(QueryException $exception): bool
+    {
+        $message = Str::lower($exception->getMessage());
+
+        return str_contains($message, 'calendars_owner_id_uri_unique')
+            || str_contains($message, 'unique constraint failed: calendars.owner_id, calendars.uri');
     }
 
     /**
