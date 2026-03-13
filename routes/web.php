@@ -4,6 +4,7 @@ use App\Http\Controllers\AddressBookController;
 use App\Http\Controllers\AddressBookMilestoneCalendarController;
 use App\Http\Controllers\AddressBookMirrorController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AnalyticsProxyController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ContactChangeRequestController;
@@ -12,6 +13,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DavController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ShareController;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/api/auth/login', [AuthController::class, 'login'])->middleware('throttle:auth-login');
@@ -21,6 +25,18 @@ Route::post('/api/auth/register', [AuthController::class, 'register'])->middlewa
 Route::post('/api/auth/verify-email', [AuthController::class, 'verifyEmail'])->middleware('throttle:auth-onboarding');
 Route::post('/api/auth/invite/accept', [AuthController::class, 'acceptInvite'])->middleware('throttle:auth-onboarding');
 Route::get('/api/public/config', [AuthController::class, 'publicConfig']);
+Route::post('/api/davvy-events/track', [AnalyticsProxyController::class, 'track'])
+    ->middleware('throttle:600,1')
+    ->withoutMiddleware([
+        ValidateCsrfToken::class,
+        StartSession::class,
+        ShareErrorsFromSession::class,
+    ]);
+Route::get('/davvy-op1.js', [AnalyticsProxyController::class, 'script'])
+    ->withoutMiddleware([
+        StartSession::class,
+        ShareErrorsFromSession::class,
+    ]);
 Route::redirect('/.well-known/caldav', '/dav', 301);
 Route::redirect('/.well-known/carddav', '/dav', 301);
 Route::match([

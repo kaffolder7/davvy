@@ -4,6 +4,10 @@ namespace App\Services\Analytics;
 
 class OpenPanelSettings
 {
+    private const BROWSER_API_BASE_PATH = '/api/davvy-events';
+
+    private const BROWSER_SCRIPT_PATH = '/davvy-op1.js';
+
     /**
      * Determine whether tracking should run for the current runtime.
      */
@@ -19,8 +23,8 @@ class OpenPanelSettings
     {
         return $this->trackingEnabled()
             && $this->isConfiguredValue($this->clientId())
-            && $this->isConfiguredValue($this->apiUrl())
-            && $this->scriptUrl() !== '';
+            && $this->isConfiguredValue($this->clientSecret())
+            && $this->isConfiguredValue($this->apiUrl());
     }
 
     /**
@@ -28,7 +32,7 @@ class OpenPanelSettings
      */
     public function serverTrackingEnabled(): bool
     {
-        return $this->clientTrackingEnabled() && $this->isConfiguredValue($this->clientSecret());
+        return $this->clientTrackingEnabled();
     }
 
     /**
@@ -56,30 +60,19 @@ class OpenPanelSettings
     }
 
     /**
-     * Return the script source for browser runtime.
+     * Return the browser proxy API base URL.
+     */
+    public function browserApiUrl(): string
+    {
+        return self::BROWSER_API_BASE_PATH;
+    }
+
+    /**
+     * Return the browser proxy script URL.
      */
     public function scriptUrl(): string
     {
-        $configured = trim((string) config('services.openpanel.script_url', ''));
-        if ($this->isConfiguredValue($configured)) {
-            return $configured;
-        }
-
-        $apiUrl = $this->apiUrl();
-        if (! $this->isConfiguredValue($apiUrl)) {
-            return '';
-        }
-
-        $parts = parse_url($apiUrl);
-        $scheme = (string) ($parts['scheme'] ?? '');
-        $host = (string) ($parts['host'] ?? '');
-        $port = isset($parts['port']) ? ':'.$parts['port'] : '';
-
-        if ($scheme === '' || $host === '') {
-            return '';
-        }
-
-        return $scheme.'://'.$host.$port.'/op1.js';
+        return self::BROWSER_SCRIPT_PATH;
     }
 
     /**

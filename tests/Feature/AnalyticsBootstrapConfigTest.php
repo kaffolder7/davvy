@@ -19,8 +19,8 @@ class AnalyticsBootstrapConfigTest extends TestCase
             ->assertOk()
             ->assertJsonPath('analytics.enabled', true)
             ->assertJsonPath('analytics.client_id', 'client_public')
-            ->assertJsonPath('analytics.api_url', 'https://analytics.example.test')
-            ->assertJsonPath('analytics.script_url', 'https://analytics.example.test/op1.js')
+            ->assertJsonPath('analytics.api_url', '/api/davvy-events')
+            ->assertJsonPath('analytics.script_url', '/davvy-op1.js')
             ->assertJsonMissingPath('analytics.profile_id');
     }
 
@@ -55,12 +55,22 @@ class AnalyticsBootstrapConfigTest extends TestCase
             ->assertJsonMissingPath('analytics.profile_id');
     }
 
+    public function test_public_config_disables_analytics_when_secret_is_missing(): void
+    {
+        $this->configureOpenPanel(enabled: true);
+        config()->set('services.openpanel.client_secret', '');
+
+        $this->getJson('/api/public/config')
+            ->assertOk()
+            ->assertJsonPath('analytics.enabled', false)
+            ->assertJsonMissingPath('analytics.client_id');
+    }
+
     private function configureOpenPanel(bool $enabled): void
     {
         config()->set('services.openpanel.enabled', $enabled);
         config()->set('services.openpanel.client_id', 'client_public');
         config()->set('services.openpanel.client_secret', 'secret_private');
         config()->set('services.openpanel.api_url', 'https://analytics.example.test');
-        config()->set('services.openpanel.script_url', 'https://analytics.example.test/op1.js');
     }
 }

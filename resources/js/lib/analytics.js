@@ -21,6 +21,7 @@ let currentConfig = DEFAULT_ANALYTICS_CONFIG;
 let initializedConfigKey = "";
 let sessionTrackedConfigKey = "";
 let lastTrackedPath = "";
+let lastTrackedFeatureKey = "";
 
 /**
  * Configures OpenPanel runtime from auth bootstrap config.
@@ -36,6 +37,7 @@ export function configureAnalytics(rawConfig) {
     initializedConfigKey = "";
     sessionTrackedConfigKey = "";
     lastTrackedPath = "";
+    lastTrackedFeatureKey = "";
 
     return false;
   }
@@ -97,7 +99,8 @@ export function trackPageView(pathname) {
   });
 
   const featureKey = featureKeyFromPath(path);
-  if (featureKey) {
+  if (featureKey && featureKey !== lastTrackedFeatureKey) {
+    lastTrackedFeatureKey = featureKey;
     trackClientEvent("ui.feature_view", {
       feature_key: featureKey,
       path,
@@ -171,6 +174,7 @@ export function __resetAnalyticsForTests() {
   initializedConfigKey = "";
   sessionTrackedConfigKey = "";
   lastTrackedPath = "";
+  lastTrackedFeatureKey = "";
 
   if (typeof window !== "undefined" && window.op && Array.isArray(window.op.q)) {
     delete window.op;

@@ -56,17 +56,16 @@ class OpenPanelAnalyticsService
             $payload['payload']['profileId'] = $this->profiles->profileIdForUser($user);
         }
 
-        try {
-            Http::asJson()
-                ->timeout(2)
-                ->withHeaders([
-                    'openpanel-client-id' => $this->settings->clientId(),
-                    'openpanel-client-secret' => $this->settings->clientSecret(),
-                ])
-                ->post($this->settings->apiUrl().'/track', $payload);
-        } catch (Throwable $throwable) {
-            report($throwable);
+        if (app()->runningInConsole() || app()->runningUnitTests()) {
+            $this->sendPayload($payload);
+
+            return;
         }
+
+        // Defer outbound analytics I/O until request termination to avoid user-visible latency.
+        app()->terminating(function () use ($payload): void {
+            $this->sendPayload($payload);
+        });
     }
 
     /**
@@ -83,7 +82,7 @@ class OpenPanelAnalyticsService
         $payload = [
             'enabled' => true,
             'client_id' => $this->settings->clientId(),
-            'api_url' => $this->settings->apiUrl(),
+            'api_url' => $this->settings->browserApiUrl(),
             'script_url' => $this->settings->scriptUrl(),
         ];
 
@@ -158,5 +157,26 @@ class OpenPanelAnalyticsService
     private function looksLikeEmail(string $value): bool
     {
         return (bool) preg_match('/^[^\s@]+@[^\s@]+\.[^\s@]+$/', $value);
+    }
+
+    /**
+     * Send a prepared analytics payload to the OpenPanel track endpoint.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function sendPayload(array $payload): void
+    {
+        try {
+            Http::asJson()
+                ->timeout(2)
+                ->connectTimeout(1)
+                ->withHeaders([
+                    'openpanel-client-id' => $this->settings->clientId(),
+                    'openpanel-client-secret' => $this->settings->clientSecret(),
+                ])
+                ->post($this->settings->apiUrl().'/track', $payload);
+        } catch (Throwable $throwable) {
+            report($throwable);
+        }
     }
 }

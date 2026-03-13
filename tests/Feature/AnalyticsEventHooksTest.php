@@ -136,7 +136,6 @@ class AnalyticsEventHooksTest extends TestCase
         config()->set('services.openpanel.client_id', 'client_123');
         config()->set('services.openpanel.client_secret', 'secret_abc');
         config()->set('services.openpanel.api_url', 'https://analytics.example.test');
-        config()->set('services.openpanel.script_url', 'https://analytics.example.test/op1.js');
 
         Http::fake([
             'https://analytics.example.test/track' => Http::response(['ok' => true], 200),

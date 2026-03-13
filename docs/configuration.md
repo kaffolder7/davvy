@@ -127,7 +127,11 @@ Analytics settings note:
 - The only runtime analytics control is `ANALYTICS_ENABLED`.
 - Placeholder values (`REPLACE_WITH_OPENPANEL_*`) are treated as unconfigured and result in a safe no-op.
 - When disabled (`ANALYTICS_ENABLED=false`), Davvy does not initialize browser analytics and does not send server-side analytics events.
-- OpenPanel deployment routing can vary; use the exact base URL that exposes `POST /track` for `api_url` (some self-host deployments use the root domain instead of `/api`), and set `script_url` explicitly if your API host does not serve `op1.js`.
+- Browser analytics is proxied through Davvy first-party routes to reduce adblock interference:
+  - script bootstrap: `GET /davvy-op1.js`
+  - browser event ingest: `POST /api/davvy-events/track`
+- Browser analytics proxying requires `client_id`, `client_secret`, and `api_url` maintainer values to be configured.
+- `api_url` in `config/services.php` must point to the upstream OpenPanel host that accepts `POST /track` (some self-host deployments use the root domain instead of `/api`).
 
 OpenPanel event taxonomy:
 - `auth.login`: successful web login completion (`method`, `two_factor`)

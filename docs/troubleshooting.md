@@ -44,6 +44,32 @@ Common causes:
 ### `403` when non-admin manages shares
 Owner share management may be disabled by admin.
 
+## Analytics and OpenPanel
+
+### OpenPanel shows only `auth.*` or admin events
+This usually means browser analytics is not loading while server-side hooks still run.
+
+Check:
+- Browser dev tools for `GET /davvy-op1.js` (should return `200` from Davvy, not `ERR_BLOCKED_BY_CLIENT`)
+- Browser dev tools for `POST /api/davvy-events/track` (should return `200`/`202`)
+- `GET /api/public/config` includes:
+  - `analytics.enabled: true`
+  - `analytics.api_url: /api/davvy-events`
+  - `analytics.script_url: /davvy-op1.js`
+
+If script/event requests fail:
+- confirm `ANALYTICS_ENABLED=true`
+- verify maintainers configured valid OpenPanel values in `config/services.php`
+- confirm the upstream OpenPanel host accepts `POST /track`
+
+### `GET /davvy-op1.js` returns `503`
+Davvy could not fetch the OpenPanel browser script upstream.
+
+Check:
+- app server egress/network to `https://openpanel.dev/op1.js`
+- upstream availability
+- application logs for outbound HTTP failures
+
 ## Contacts and Queue
 
 ### `403` on `/api/contacts*`
