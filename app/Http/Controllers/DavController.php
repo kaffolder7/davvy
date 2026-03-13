@@ -13,13 +13,19 @@ use Sabre\HTTP\Response as SabreResponse;
 
 class DavController extends Controller
 {
+    /**
+     * Create a new DAV controller instance.
+     *
+     * @param  OpenPanelAnalyticsService  $analytics
+     * @return void
+     */
     public function __construct(
         private readonly DavServerFactory $davServerFactory,
         private readonly DavRequestContext $davContext,
     ) {}
 
     /**
-     * Handles the incoming request.
+     * Handle the incoming request.
      */
     public function handle(Request $request): Response
     {
@@ -111,7 +117,7 @@ class DavController extends Controller
     }
 
     /**
-     * Checks whether it should log client DAV traffic.
+     * Determine whether to log client DAV traffic.
      */
     private function shouldLogClientDavTraffic(Request $request): bool
     {
@@ -133,7 +139,7 @@ class DavController extends Controller
     }
 
     /**
-     * Returns serialize DAV exception.
+     * Serialize a DAV exception payload.
      */
     private function serializeDavException(DavException $exception): string
     {
