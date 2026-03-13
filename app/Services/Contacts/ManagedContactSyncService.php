@@ -48,7 +48,7 @@ class ManagedContactSyncService
         $hintContactId = $this->toInteger(
             $parsed['managed_contact_id'] ?? null,
         );
-        $hintOwnerId = $this->toInteger($parsed['managed_owner_id'] ?? null);
+        $trustManagedMetadataHints = $actor === null;
 
         $relatedAddressBookIds = [];
 
@@ -60,7 +60,7 @@ class ManagedContactSyncService
             $payload,
             $fullName,
             $hintContactId,
-            $hintOwnerId,
+            $trustManagedMetadataHints,
             &$relatedAddressBookIds,
         ): void {
             $assignment = ContactAddressBookAssignment::query()
@@ -68,11 +68,9 @@ class ManagedContactSyncService
                 ->where('card_id', $card->id)
                 ->first();
 
-            $ownerId =
-                $assignment?->contact?->owner_id ??
-                ($hintOwnerId ?? ($actor?->id ?? $addressBook->owner_id));
+            $ownerId = (int) ($assignment?->contact?->owner_id ?? $addressBook->owner_id);
 
-            if ($ownerId === null) {
+            if ($ownerId < 1) {
                 return;
             }
 
@@ -95,7 +93,7 @@ class ManagedContactSyncService
                 $targetContact = $uidContact;
             }
 
-            if ($targetContact === null && $hintContactId !== null) {
+            if ($targetContact === null && $hintContactId !== null && $trustManagedMetadataHints) {
                 $hintContact = Contact::query()
                     ->where('id', $hintContactId)
                     ->where('owner_id', $ownerId)

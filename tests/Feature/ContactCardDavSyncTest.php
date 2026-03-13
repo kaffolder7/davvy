@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Enums\SharePermission;
+use App\Enums\ShareResourceType;
 use App\Models\AddressBook;
 use App\Models\Card;
 use App\Models\Contact;
 use App\Models\ContactAddressBookAssignment;
+use App\Models\ResourceShare;
 use App\Models\User;
 use App\Services\Contacts\ContactMilestoneCalendarService;
 use App\Services\Contacts\ManagedContactSyncService;
@@ -68,6 +71,106 @@ class ContactCardDavSyncTest extends TestCase
             'address_book_id' => $addressBook->id,
             'card_id' => $card->id,
             'card_uri' => 'alex-sync.vcf',
+        ]);
+    }
+
+    public function test_shared_editor_carddav_create_ignores_managed_owner_hint(): void
+    {
+        $owner = User::factory()->create();
+        $editor = User::factory()->create();
+
+        $sharedBook = AddressBook::factory()->create([
+            'owner_id' => $owner->id,
+            'is_sharable' => true,
+            'uri' => 'shared-owner-hint-book',
+        ]);
+
+        ResourceShare::query()->create([
+            'resource_type' => ShareResourceType::AddressBook,
+            'resource_id' => $sharedBook->id,
+            'owner_id' => $owner->id,
+            'shared_with_id' => $editor->id,
+            'permission' => SharePermission::Editor,
+        ]);
+
+        app(DavRequestContext::class)->setAuthenticatedUser($editor);
+
+        app(LaravelCardDavBackend::class)->createCard(
+            $sharedBook->id,
+            'owner-hint.vcf',
+            "BEGIN:VCARD\nVERSION:4.0\nFN:Hinted Owner\nN:Owner;Hinted;;;\nUID:owner-hint-uid\nX-DAVVY-CONTACT-OWNER:{$editor->id}\nEND:VCARD"
+        );
+
+        $contact = Contact::query()
+            ->where('uid', 'owner-hint-uid')
+            ->first();
+
+        $this->assertNotNull($contact);
+        $this->assertSame($owner->id, (int) $contact->owner_id);
+        $this->assertDatabaseHas('contact_address_book_assignments', [
+            'contact_id' => $contact->id,
+            'address_book_id' => $sharedBook->id,
+            'card_uri' => 'owner-hint.vcf',
+        ]);
+    }
+
+    public function test_shared_editor_carddav_create_ignores_managed_contact_hint(): void
+    {
+        $owner = User::factory()->create();
+        $editor = User::factory()->create();
+
+        $sharedBook = AddressBook::factory()->create([
+            'owner_id' => $owner->id,
+            'is_sharable' => true,
+            'uri' => 'shared-contact-hint-book',
+        ]);
+        $privateBook = AddressBook::factory()->create([
+            'owner_id' => $owner->id,
+            'uri' => 'private-contact-hint-book',
+        ]);
+
+        ResourceShare::query()->create([
+            'resource_type' => ShareResourceType::AddressBook,
+            'resource_id' => $sharedBook->id,
+            'owner_id' => $owner->id,
+            'shared_with_id' => $editor->id,
+            'permission' => SharePermission::Editor,
+        ]);
+
+        $victimCreated = $this->actingAs($owner)->postJson('/api/contacts', [
+            'first_name' => 'Victim',
+            'last_name' => 'Contact',
+            'address_book_ids' => [$privateBook->id],
+        ]);
+        $victimCreated->assertCreated();
+
+        $victimId = (int) $victimCreated->json('id');
+
+        app(DavRequestContext::class)->setAuthenticatedUser($editor);
+
+        app(LaravelCardDavBackend::class)->createCard(
+            $sharedBook->id,
+            'contact-hint.vcf',
+            "BEGIN:VCARD\nVERSION:4.0\nFN:Injected Name\nN:Name;Injected;;;\nUID:contact-hint-uid\nX-DAVVY-CONTACT-OWNER:{$owner->id}\nX-DAVVY-CONTACT-ID:{$victimId}\nEND:VCARD"
+        );
+
+        $victim = Contact::query()->findOrFail($victimId);
+        $this->assertSame('Victim', $victim->payload['first_name'] ?? null);
+        $this->assertDatabaseMissing('contact_address_book_assignments', [
+            'contact_id' => $victimId,
+            'address_book_id' => $sharedBook->id,
+        ]);
+
+        $created = Contact::query()
+            ->where('owner_id', $owner->id)
+            ->where('uid', 'contact-hint-uid')
+            ->first();
+        $this->assertNotNull($created);
+        $this->assertNotSame($victimId, (int) $created->id);
+        $this->assertDatabaseHas('contact_address_book_assignments', [
+            'contact_id' => $created->id,
+            'address_book_id' => $sharedBook->id,
+            'card_uri' => 'contact-hint.vcf',
         ]);
     }
 
