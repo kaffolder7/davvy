@@ -1043,7 +1043,7 @@ class ContactMilestoneCalendarService
             $name = trim((string) ($primaryEntry['contact_name'] ?? 'Anniversary'));
         }
 
-        $possessiveName = $this->anniversaryPossessiveName($name);
+        $possessiveName = $this->milestonePossessiveName($name);
         $ordinal = $this->milestoneOrdinal($baseYear, $occurrenceYear);
 
         return $ordinal !== null
@@ -1198,11 +1198,12 @@ class ContactMilestoneCalendarService
      */
     private function birthdaySummary(string $contactName, ?int $baseYear, int $occurrenceYear): string
     {
+        $possessiveName = $this->milestonePossessiveName($contactName);
         $ordinal = $this->milestoneOrdinal($baseYear, $occurrenceYear);
 
         return $ordinal !== null
-            ? '🎂 '.$contactName.'\'s '.$ordinal.' Birthday'
-            : '🎂 '.$contactName.'\'s Birthday';
+            ? '🎂 '.$possessiveName.' '.$ordinal.' Birthday'
+            : '🎂 '.$possessiveName.' Birthday';
     }
 
     /**
@@ -1210,7 +1211,7 @@ class ContactMilestoneCalendarService
      */
     private function anniversarySummary(string $contactName, ?int $baseYear, int $occurrenceYear): string
     {
-        $possessiveName = $this->anniversaryPossessiveName($contactName);
+        $possessiveName = $this->milestonePossessiveName($contactName);
         $ordinal = $this->milestoneOrdinal($baseYear, $occurrenceYear);
 
         return $ordinal !== null
@@ -1219,9 +1220,9 @@ class ContactMilestoneCalendarService
     }
 
     /**
-     * Returns anniversary-safe possessive name.
+     * Returns milestone-safe possessive name.
      */
-    private function anniversaryPossessiveName(string $name): string
+    private function milestonePossessiveName(string $name): string
     {
         $trimmed = trim($name);
         if ($trimmed === '') {
@@ -1239,18 +1240,40 @@ class ContactMilestoneCalendarService
     private function birthdayMilestoneName(Contact $contact): ?string
     {
         $payload = is_array($contact->payload) ? $contact->payload : [];
-        $name = $this->firstLastMilestoneName($payload);
+        $firstName = $this->normalizeString($payload['first_name'] ?? null);
+        $lastName = $this->normalizeString($payload['last_name'] ?? null);
+        $includeLastName = $this->birthdayIncludesLastNameInTitle();
 
-        if ($name !== '') {
-            return $name;
+        if ($includeLastName) {
+            $name = trim(implode(' ', array_filter([$firstName, $lastName])));
+            if ($name !== '') {
+                return $name;
+            }
+        } elseif ($firstName !== null) {
+            return $firstName;
         }
 
         $fullName = $this->normalizeString($contact->full_name);
         if ($fullName !== null && strtolower($fullName) !== 'unnamed contact') {
-            return $fullName;
+            if ($includeLastName) {
+                return $fullName;
+            }
+
+            $firstToken = $this->firstNameToken($fullName);
+            if ($firstToken !== null) {
+                return $firstToken;
+            }
         }
 
         return $this->normalizeString($payload['company'] ?? null);
+    }
+
+    /**
+     * Determines whether birthday titles should include a last name.
+     */
+    private function birthdayIncludesLastNameInTitle(): bool
+    {
+        return (bool) config('services.contacts.birthday_include_last_name', true);
     }
 
     /**
@@ -1284,6 +1307,17 @@ class ContactMilestoneCalendarService
         $lastName = $this->normalizeString($payload['last_name'] ?? null);
 
         return trim(implode(' ', array_filter([$firstName, $lastName])));
+    }
+
+    /**
+     * Returns first token for a display-like name.
+     */
+    private function firstNameToken(string $name): ?string
+    {
+        $pieces = preg_split('/\s+/', trim($name)) ?: [];
+        $firstToken = trim((string) ($pieces[0] ?? ''));
+
+        return $firstToken !== '' ? $firstToken : null;
     }
 
     /**

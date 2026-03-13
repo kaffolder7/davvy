@@ -47,6 +47,9 @@ For each owned address book, you can configure:
 
 Generated calendars are read from contact data and auto-updated.
 
+Birthday generation behavior:
+- `MILESTONE_BIRTHDAY_INCLUDE_LAST_NAME` controls whether birthday titles include last names (default is `true`, so `Ben Williams`; set `false` for `Ben`).
+
 Anniversary generation behavior:
 - Contacts with the same anniversary month/day can be combined into one event when they are mutually linked with spouse-like related-name labels (`spouse`, `partner`, `husband`, `wife`, including custom labels containing those terms).
 - `Head of Household` determines name order in the combined anniversary title.

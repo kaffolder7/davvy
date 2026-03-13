@@ -54,6 +54,7 @@ When an `app_settings` key exists, it overrides env defaults.
 | `ENABLE_CONTACT_MANAGEMENT` | `false` | Enables managed contacts UI/API |
 | `ENABLE_CONTACT_CHANGE_MODERATION` | `false` | Enables Review Queue workflow for cross-owner contact edits (recommended for families/teams, optional for personal use) |
 | `CONTACT_CHANGE_REQUEST_RETENTION_DAYS` | `90` | Purge horizon for applied/denied queue history |
+| `MILESTONE_BIRTHDAY_INCLUDE_LAST_NAME` | `true` | When `true`, birthday milestone titles include last names (`Ben Williams` vs `Ben`) |
 | `MILESTONE_ANNIVERSARY_PAIR_INCLUDE_LAST_NAME` | `false` | When `true`, include shared last name in combined spouse anniversary milestone titles (`John & Jane Doe` vs `John & Jane`) |
 | `ENABLE_TWO_FACTOR_ENFORCEMENT` | `false` | Admin-controlled default for global 2FA mandate (persisted in `app_settings` once toggled) |
 | `TWO_FACTOR_GRACE_PERIOD_DAYS` | `14` | Grace period days before mandatory 2FA is enforced for users without 2FA enabled |
