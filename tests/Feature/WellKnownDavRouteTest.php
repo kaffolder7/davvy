@@ -165,6 +165,10 @@ class WellKnownDavRouteTest extends TestCase
             'email' => 'principal-search-owner@example.test',
             'password' => 'password1234',
         ]);
+        $otherUser = User::factory()->create([
+            'name' => 'Principal Search Other',
+            'email' => 'principal-search-other@example.test',
+        ]);
 
         $allOfResponse = $this->call(
             method: 'REPORT',
@@ -222,6 +226,7 @@ XML,
 
         $anyOfResponse->assertStatus(207);
         $this->assertStringContainsString('/dav/principals/'.$user->id.'/', (string) $anyOfResponse->getContent());
+        $this->assertStringNotContainsString('/dav/principals/'.$otherUser->id.'/', (string) $anyOfResponse->getContent());
     }
 
     public function test_address_book_home_propfind_exposes_display_name_and_sync_token(): void

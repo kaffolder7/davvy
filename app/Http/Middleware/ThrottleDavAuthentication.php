@@ -38,10 +38,6 @@ class ThrottleDavAuthentication
 
         if ($response->getStatusCode() === 401) {
             RateLimiter::hit($throttleKey, $decaySeconds);
-        } elseif ($this->hasBasicAuthorizationHeader($request)) {
-            // Successful or non-auth DAV responses with Basic credentials
-            // indicate credentials are not currently being brute-forced.
-            RateLimiter::clear($throttleKey);
         }
 
         return $response;
@@ -82,15 +78,5 @@ class ThrottleDavAuthentication
         $normalized = trim(Str::lower($username));
 
         return $normalized !== '' ? $normalized : 'anonymous';
-    }
-
-    /**
-     * Checks whether it has basic authorization header.
-     */
-    private function hasBasicAuthorizationHeader(Request $request): bool
-    {
-        $header = trim((string) $request->header('Authorization', ''));
-
-        return Str::startsWith(Str::lower($header), 'basic ');
     }
 }

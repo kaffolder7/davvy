@@ -245,7 +245,7 @@ class ContactChangeRequestService
             $groupRows = $this->groupRowsForUpdate($lockedRequest->group_uuid);
 
             if ($resolvedPayload !== null || $resolvedAddressBookIds !== null) {
-                $this->applyResolutionToGroup($lockedRequest->group_uuid, $resolvedPayload, $resolvedAddressBookIds);
+                $this->applyResolutionToGroup($groupRows, $resolvedPayload, $resolvedAddressBookIds);
                 $groupRows = $this->groupRowsForUpdate($lockedRequest->group_uuid);
             }
 
@@ -681,14 +681,19 @@ class ContactChangeRequestService
     /**
      * Applies resolution to group.
      *
+     * @param  Collection<int, ContactChangeRequest>  $groupRows
      * @param  array<string, mixed>|null  $resolvedPayload
      * @param  array<int, int>|null  $resolvedAddressBookIds
      */
     private function applyResolutionToGroup(
-        string $groupUuid,
+        Collection $groupRows,
         ?array $resolvedPayload,
         ?array $resolvedAddressBookIds,
     ): void {
+        if ($groupRows->isEmpty()) {
+            return;
+        }
+
         $attributes = [];
 
         if ($resolvedPayload !== null) {
@@ -696,15 +701,20 @@ class ContactChangeRequestService
         }
 
         if ($resolvedAddressBookIds !== null) {
-            $attributes['resolved_address_book_ids'] = $this->normalizeAddressBookIds($resolvedAddressBookIds);
+            $normalizedResolvedAddressBookIds = $this->normalizeAddressBookIds($resolvedAddressBookIds);
+            $this->assertAddressBookIdsWithinGroupScope($groupRows, $normalizedResolvedAddressBookIds);
+            $attributes['resolved_address_book_ids'] = $normalizedResolvedAddressBookIds;
         }
 
         if ($attributes === []) {
             return;
         }
 
+        /** @var ContactChangeRequest $canonical */
+        $canonical = $groupRows->first();
+
         ContactChangeRequest::query()
-            ->where('group_uuid', $groupUuid)
+            ->where('group_uuid', $canonical->group_uuid)
             ->whereNotIn('status', [
                 ContactChangeStatus::Applied->value,
                 ContactChangeStatus::Denied->value,
@@ -855,6 +865,8 @@ class ContactChangeRequestService
             );
         }
 
+        $this->assertAddressBookIdsWithinGroupScope($groupRows, $desiredAddressBookIds);
+
         $updated = $this->contactService->applyApprovedUpdate(
             contact: $contact,
             payload: $desiredPayload,
@@ -987,6 +999,49 @@ class ContactChangeRequestService
     {
         return json_encode($left, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
             === json_encode($right, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Asserts address book IDs remain within the request-group scope.
+     *
+     * @param  Collection<int, ContactChangeRequest>  $groupRows
+     * @param  array<int, int>  $addressBookIds
+     */
+    private function assertAddressBookIdsWithinGroupScope(Collection $groupRows, array $addressBookIds): void
+    {
+        if ($addressBookIds === []) {
+            return;
+        }
+
+        $scopeAddressBookIds = $this->groupScopeAddressBookIds($groupRows);
+        $outOfScopeIds = array_values(array_diff($addressBookIds, $scopeAddressBookIds));
+        if ($outOfScopeIds !== []) {
+            throw ValidationException::withMessages([
+                'resolved_address_book_ids' => ['Selected address books must remain within this request scope.'],
+            ]);
+        }
+    }
+
+    /**
+     * Returns address book IDs included in the request-group scope.
+     *
+     * @param  Collection<int, ContactChangeRequest>  $groupRows
+     * @return array<int, int>
+     */
+    private function groupScopeAddressBookIds(Collection $groupRows): array
+    {
+        $scopeAddressBookIds = [];
+
+        foreach ($groupRows as $row) {
+            $scopeAddressBookIds = [
+                ...$scopeAddressBookIds,
+                ...$this->normalizeAddressBookIds(
+                    is_array($row->scope_address_book_ids) ? $row->scope_address_book_ids : [],
+                ),
+            ];
+        }
+
+        return $this->normalizeAddressBookIds($scopeAddressBookIds);
     }
 
     /**

@@ -204,6 +204,56 @@ class ContactChangeModerationTest extends TestCase
         $this->assertSame('Jordan', Contact::query()->findOrFail($contactId)->payload['first_name'] ?? null);
     }
 
+    public function test_owner_cannot_resolve_update_to_out_of_scope_address_books(): void
+    {
+        [$owner, $editor, $book] = $this->ownerEditorAndSharedBook();
+        $unrelatedBook = AddressBook::factory()->create([
+            'owner_id' => $owner->id,
+            'is_sharable' => true,
+        ]);
+
+        $created = $this->actingAs($owner)->postJson('/api/contacts', [
+            'first_name' => 'Alex',
+            'last_name' => 'Rivera',
+            'address_book_ids' => [$book->id],
+        ]);
+        $created->assertCreated();
+
+        $contactId = (int) $created->json('id');
+
+        $this->actingAs($editor)->patchJson('/api/contacts/'.$contactId, [
+            'first_name' => 'Jordan',
+            'last_name' => 'Rivera',
+            'address_book_ids' => [$book->id],
+        ])->assertStatus(202);
+
+        $requestId = (int) ContactChangeRequest::query()
+            ->where('contact_id', $contactId)
+            ->where('operation', 'update')
+            ->where('source', 'web')
+            ->where('status', 'pending')
+            ->latest('id')
+            ->value('id');
+        $this->assertGreaterThan(0, $requestId);
+
+        $this->actingAs($owner)
+            ->patchJson('/api/contact-change-requests/'.$requestId.'/approve', [
+                'resolved_address_book_ids' => [$book->id, $unrelatedBook->id],
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['resolved_address_book_ids']);
+
+        $this->assertDatabaseHas('contact_address_book_assignments', [
+            'contact_id' => $contactId,
+            'address_book_id' => $book->id,
+        ]);
+        $this->assertDatabaseMissing('contact_address_book_assignments', [
+            'contact_id' => $contactId,
+            'address_book_id' => $unrelatedBook->id,
+        ]);
+        $this->assertSame('Alex', Contact::query()->findOrFail($contactId)->payload['first_name'] ?? null);
+    }
+
     public function test_editor_carddav_update_is_enqueued_and_returns_conflict(): void
     {
         [$owner, $editor, $book] = $this->ownerEditorAndSharedBook();
