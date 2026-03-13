@@ -540,7 +540,7 @@ class ContactMilestoneCalendarService
                 continue;
             }
 
-            $contactName = $this->contactMilestoneName($contact);
+            $contactName = $this->birthdayMilestoneName($contact);
             if ($contactName === null) {
                 continue;
             }
@@ -1206,6 +1206,23 @@ class ContactMilestoneCalendarService
         return $ordinal !== null
             ? '💍 '.$contactName.'\'s '.$ordinal.' Anniversary'
             : '💍 '.$contactName.'\'s Anniversary';
+    }
+
+    /**
+     * Returns birthday contact milestone name.
+     */
+    private function birthdayMilestoneName(Contact $contact): ?string
+    {
+        $payload = is_array($contact->payload) ? $contact->payload : [];
+        $firstName = $this->normalizeString($payload['first_name'] ?? null);
+        $lastName = $this->normalizeString($payload['last_name'] ?? null);
+        $name = trim(implode(' ', array_filter([$firstName, $lastName])));
+
+        if ($name !== '') {
+            return $name;
+        }
+
+        return $this->contactMilestoneName($contact);
     }
 
     /**
