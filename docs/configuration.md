@@ -100,6 +100,13 @@ Backup restore tooling:
 - Admin import endpoint: `POST /api/admin/backups/restore`
 - Restore is destination-agnostic; it reads a ZIP archive and writes resources back into the database.
 
+User recovery tooling:
+- CLI command: `php artisan app:user:approve {identifier} [--approve] [--verify-email] [--force]`
+- CLI command: `php artisan app:user:unapprove {identifier} [--unverify-email] [--force]`
+- `identifier` accepts a user email or numeric user ID.
+- If neither `--approve` nor `--verify-email` is provided, both are applied.
+- `app:user:unapprove` always revokes account approval; add `--unverify-email` to also clear `email_verified_at`.
+
 ### Startup Bootstrap Controls
 
 | Variable | Default | Notes |
