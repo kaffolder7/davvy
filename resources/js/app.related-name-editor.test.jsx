@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { RelatedNameEditor } from "./app.jsx";
+import { RelatedNameEditor } from "./routes/ContactsPageRoute.jsx";
 
 const LABEL_OPTIONS = [
   { value: "other", label: "Other" },
