@@ -5,15 +5,16 @@ namespace App\Http\Controllers;
 use App\Enums\ShareResourceType;
 use App\Models\Calendar;
 use App\Services\Dav\DavSyncService;
+use App\Services\ResourceUriService;
 use App\Services\ResourceDeletionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class CalendarController extends Controller
 {
     public function __construct(
         private readonly DavSyncService $syncService,
+        private readonly ResourceUriService $resourceUriService,
         private readonly ResourceDeletionService $resourceDeletion,
     ) {}
 
@@ -31,8 +32,10 @@ class CalendarController extends Controller
             'is_sharable' => ['boolean'],
         ]);
 
-        $baseUri = Str::slug($data['uri'] ?? $data['display_name']);
-        $uri = $this->uniqueUri($request->user()->id, $baseUri);
+        $uri = $this->resourceUriService->nextCalendarUri(
+            ownerId: (int) $request->user()->id,
+            candidate: (string) ($data['uri'] ?? $data['display_name']),
+        );
 
         $calendar = Calendar::query()->create([
             'owner_id' => $request->user()->id,
@@ -97,25 +100,4 @@ class CalendarController extends Controller
         }
     }
 
-    /**
-     * Returns unique URI.
-     */
-    private function uniqueUri(int $ownerId, string $baseUri): string
-    {
-        $seed = $baseUri !== '' ? $baseUri : 'calendar';
-        $uri = $seed;
-        $count = 1;
-
-        while (
-            Calendar::query()
-                ->where('owner_id', $ownerId)
-                ->where('uri', $uri)
-                ->exists()
-        ) {
-            $uri = $seed.'-'.$count;
-            $count++;
-        }
-
-        return $uri;
-    }
 }

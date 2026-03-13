@@ -17,6 +17,7 @@ use App\Services\DavRequestContext;
 use App\Services\PrincipalUriService;
 use App\Services\ResourceAccessService;
 use App\Services\ResourceDeletionService;
+use App\Services\ResourceUriService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
 use Sabre\CardDAV\Backend\AbstractBackend;
@@ -33,6 +34,7 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
 {
     public function __construct(
         private readonly PrincipalUriService $principalUriService,
+        private readonly ResourceUriService $resourceUriService,
         private readonly ResourceAccessService $accessService,
         private readonly DavRequestContext $davContext,
         private readonly VCardValidator $vCardValidator,
@@ -125,14 +127,27 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
             throw new NotFound('Principal does not exist.');
         }
 
-        $addressBook = AddressBook::query()->create([
-            'owner_id' => $user->id,
-            'uri' => Str::slug((string) $url),
-            'display_name' => (string) ($properties['{DAV:}displayname'] ?? 'Address Book'),
-            'description' => $properties['{urn:ietf:params:xml:ns:carddav}addressbook-description'] ?? null,
-            'is_default' => false,
-            'is_sharable' => false,
-        ]);
+        $uri = $this->resourceUriService->nextAddressBookUri(
+            ownerId: (int) $user->id,
+            candidate: (string) $url,
+        );
+
+        try {
+            $addressBook = AddressBook::query()->create([
+                'owner_id' => $user->id,
+                'uri' => $uri,
+                'display_name' => (string) ($properties['{DAV:}displayname'] ?? 'Address Book'),
+                'description' => $properties['{urn:ietf:params:xml:ns:carddav}addressbook-description'] ?? null,
+                'is_default' => false,
+                'is_sharable' => false,
+            ]);
+        } catch (QueryException $exception) {
+            if ($this->isOwnerUriUniqueConstraintViolation($exception)) {
+                throw new Conflict('Address book already exists for the requested URI.');
+            }
+
+            throw $exception;
+        }
 
         $this->syncService->ensureResource(ShareResourceType::AddressBook, $addressBook->id);
     }
@@ -578,6 +593,17 @@ class LaravelCardDavBackend extends AbstractBackend implements SyncSupport
     private function fallbackUidForLegacyPayload(string $cardUri): string
     {
         return 'legacy-card-'.sha1($cardUri);
+    }
+
+    /**
+     * Checks whether owner URI unique constraint violation.
+     */
+    private function isOwnerUriUniqueConstraintViolation(QueryException $exception): bool
+    {
+        $message = Str::lower($exception->getMessage());
+
+        return str_contains($message, 'address_books_owner_id_uri_unique')
+            || str_contains($message, 'unique constraint failed: address_books.owner_id, address_books.uri');
     }
 
     /**
