@@ -47,7 +47,7 @@ const ProfilePage = lazy(() => import("./routes/ProfilePageRoute"));
 
 function RouteLoader({ children }) {
   return (
-    <Suspense fallback={<FullPageState label="Loading Davvy..." compact />}>
+    <Suspense fallback={<FullPageState label="Loading Davvy..." />}>
       {children}
     </Suspense>
   );
