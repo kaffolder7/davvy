@@ -53,7 +53,13 @@ class AnalyticsProxyControllerTest extends TestCase
             ], 200),
         ]);
 
-        $this->postJson('/api/davvy-events/track', [
+        $this->withHeaders([
+            'User-Agent' => 'DavvyBrowser/1.0',
+            'Origin' => 'https://davvy.example.test',
+            'Referer' => 'https://davvy.example.test/contacts',
+            'openpanel-sdk-name' => 'web',
+            'openpanel-sdk-version' => '1.2.0',
+        ])->postJson('/api/davvy-events/track', [
             'type' => 'track',
             'payload' => [
                 'name' => 'ui.feature_interaction',
@@ -73,7 +79,12 @@ class AnalyticsProxyControllerTest extends TestCase
             }
 
             $this->assertSame('client_public', $request->header('openpanel-client-id')[0] ?? null);
-            $this->assertSame('secret_private', $request->header('openpanel-client-secret')[0] ?? null);
+            $this->assertSame('web', $request->header('openpanel-sdk-name')[0] ?? null);
+            $this->assertSame('1.2.0', $request->header('openpanel-sdk-version')[0] ?? null);
+            $this->assertSame('DavvyBrowser/1.0', $request->header('user-agent')[0] ?? null);
+            $this->assertSame('https://davvy.example.test', $request->header('origin')[0] ?? null);
+            $this->assertSame('https://davvy.example.test/contacts', $request->header('referer')[0] ?? null);
+            $this->assertNull($request->header('openpanel-client-secret')[0] ?? null);
 
             $payload = $request->data();
             $this->assertSame('track', $payload['type'] ?? null);

@@ -64,6 +64,7 @@ If script/event requests fail:
 
 For page analytics widgets in OpenPanel:
 - ensure browser events include `screen_view` with `__path`
+- ensure proxied browser events preserve SDK/browser context headers (`openpanel-sdk-name`, `openpanel-sdk-version`, `User-Agent`, `Origin`, `Referer`)
 - run `php artisan app:analytics:heartbeat --trigger=manual-check` to verify installation heartbeat delivery
 
 ### `GET /davvy-op1.js` returns `503`

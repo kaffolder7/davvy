@@ -104,10 +104,7 @@ class AnalyticsProxyController extends Controller
             $response = Http::asJson()
                 ->timeout(2)
                 ->connectTimeout(1)
-                ->withHeaders([
-                    'openpanel-client-id' => $this->settings->clientId(),
-                    'openpanel-client-secret' => $this->settings->clientSecret(),
-                ])
+                ->withHeaders($this->forwardHeaders($request))
                 ->post(
                     $this->settings->apiUrl().'/track',
                     [
@@ -156,6 +153,28 @@ class AnalyticsProxyController extends Controller
         $body = $response->body();
 
         return trim($body) === '' ? null : $body;
+    }
+
+    /**
+     * Build forwarded browser headers for upstream tracking ingestion.
+     *
+     * @return array<string, string>
+     */
+    private function forwardHeaders(Request $request): array
+    {
+        $headers = [
+            'openpanel-client-id' => $this->settings->clientId(),
+            'openpanel-sdk-name' => trim((string) $request->header('openpanel-sdk-name', 'web')),
+            'openpanel-sdk-version' => trim((string) $request->header('openpanel-sdk-version', '1.2.0')),
+            'User-Agent' => trim((string) $request->userAgent()),
+            'Origin' => trim((string) $request->header('Origin', '')),
+            'Referer' => trim((string) $request->header('Referer', '')),
+        ];
+
+        return array_filter(
+            $headers,
+            static fn (string $value): bool => $value !== '',
+        );
     }
 
     /**
