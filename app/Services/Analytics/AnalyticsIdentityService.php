@@ -29,17 +29,35 @@ class AnalyticsIdentityService
     public function distinctIdFor(User|string|int|null $actor = null): string
     {
         if ($actor instanceof User) {
-            return 'usr_'.substr($this->hash('user:'.$actor->getKey()), 0, 32);
+            return 'usr_'.substr(
+                $this->hash(
+                    $this->installationScopedValue('user', (string) $actor->getKey())
+                ),
+                0,
+                32,
+            );
         }
 
         if (is_int($actor) || is_string($actor)) {
             $normalized = trim((string) $actor);
             if ($normalized !== '') {
-                return 'act_'.substr($this->hash('actor:'.$normalized), 0, 32);
+                return 'act_'.substr(
+                    $this->hash($this->installationScopedValue('actor', $normalized)),
+                    0,
+                    32,
+                );
             }
         }
 
         return $this->installationDistinctId();
+    }
+
+    /**
+     * Returns a canonical value string scoped to this installation.
+     */
+    private function installationScopedValue(string $type, string $value): string
+    {
+        return sprintf('installation:%s:%s:%s', $this->installationId(), $type, $value);
     }
 
     /**
