@@ -174,4 +174,3 @@ class AnalyticsEventHooksTest extends TestCase
         });
     }
 }
-

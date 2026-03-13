@@ -15,18 +15,18 @@ class OpenPanelAnalyticsServiceTest extends TestCase
 
     public function test_track_is_a_noop_when_analytics_is_disabled(): void
     {
-        config()->set("services.openpanel.enabled", false);
-        config()->set("services.openpanel.client_id", "client_123");
-        config()->set("services.openpanel.client_secret", "secret_abc");
+        config()->set('services.openpanel.enabled', false);
+        config()->set('services.openpanel.client_id', 'client_123');
+        config()->set('services.openpanel.client_secret', 'secret_abc');
         config()->set(
-            "services.openpanel.api_url",
-            "https://analytics.example.test",
+            'services.openpanel.api_url',
+            'https://analytics.example.test',
         );
 
         Http::fake();
 
-        app(OpenPanelAnalyticsService::class)->track("auth.login", [
-            "method" => "password",
+        app(OpenPanelAnalyticsService::class)->track('auth.login', [
+            'method' => 'password',
         ]);
 
         Http::assertNothingSent();
@@ -34,24 +34,24 @@ class OpenPanelAnalyticsServiceTest extends TestCase
 
     public function test_track_is_a_noop_when_provider_values_are_not_configured(): void
     {
-        config()->set("services.openpanel.enabled", true);
+        config()->set('services.openpanel.enabled', true);
         config()->set(
-            "services.openpanel.client_id",
-            "REPLACE_WITH_OPENPANEL_CLIENT_ID",
+            'services.openpanel.client_id',
+            'REPLACE_WITH_OPENPANEL_CLIENT_ID',
         );
         config()->set(
-            "services.openpanel.client_secret",
-            "REPLACE_WITH_OPENPANEL_CLIENT_SECRET",
+            'services.openpanel.client_secret',
+            'REPLACE_WITH_OPENPANEL_CLIENT_SECRET',
         );
         config()->set(
-            "services.openpanel.api_url",
-            "REPLACE_WITH_OPENPANEL_API_URL",
+            'services.openpanel.api_url',
+            'REPLACE_WITH_OPENPANEL_API_URL',
         );
 
         Http::fake();
 
-        app(OpenPanelAnalyticsService::class)->track("auth.login", [
-            "method" => "password",
+        app(OpenPanelAnalyticsService::class)->track('auth.login', [
+            'method' => 'password',
         ]);
 
         Http::assertNothingSent();
@@ -59,12 +59,12 @@ class OpenPanelAnalyticsServiceTest extends TestCase
 
     public function test_track_posts_sanitized_payload_with_hashed_profile_id(): void
     {
-        config()->set("services.openpanel.enabled", true);
-        config()->set("services.openpanel.client_id", "client_123");
-        config()->set("services.openpanel.client_secret", "secret_abc");
+        config()->set('services.openpanel.enabled', true);
+        config()->set('services.openpanel.client_id', 'client_123');
+        config()->set('services.openpanel.client_secret', 'secret_abc');
         config()->set(
-            "services.openpanel.api_url",
-            "https://analytics.example.test",
+            'services.openpanel.api_url',
+            'https://analytics.example.test',
         );
 
         $user = User::factory()->create();
@@ -73,46 +73,46 @@ class OpenPanelAnalyticsServiceTest extends TestCase
         )->profileIdForUser($user);
 
         Http::fake([
-            "https://analytics.example.test/track" => Http::response(
-                ["ok" => true],
+            'https://analytics.example.test/track' => Http::response(
+                ['ok' => true],
                 200,
             ),
         ]);
 
         app(OpenPanelAnalyticsService::class)->track(
-            "backups.restore",
+            'backups.restore',
             [
-                "status" => "success",
-                "resource_count" => 3,
-                "admin_email" => "admin@example.com",
-                "api_token" => "secret-token-value",
-                "empty_field" => "  ",
+                'status' => 'success',
+                'resource_count' => 3,
+                'admin_email' => 'admin@example.com',
+                'api_token' => 'secret-token-value',
+                'empty_field' => '  ',
             ],
             $user,
         );
 
         Http::assertSent(function ($request) use ($expectedProfileId): bool {
-            if ($request->url() !== "https://analytics.example.test/track") {
+            if ($request->url() !== 'https://analytics.example.test/track') {
                 return false;
             }
 
             $payload = $request->data();
-            $properties = $payload["payload"]["properties"] ?? [];
+            $properties = $payload['payload']['properties'] ?? [];
 
-            $this->assertSame("track", $payload["type"] ?? null);
+            $this->assertSame('track', $payload['type'] ?? null);
             $this->assertSame(
-                "backups.restore",
-                $payload["payload"]["name"] ?? null,
+                'backups.restore',
+                $payload['payload']['name'] ?? null,
             );
             $this->assertSame(
                 $expectedProfileId,
-                $payload["payload"]["profileId"] ?? null,
+                $payload['payload']['profileId'] ?? null,
             );
-            $this->assertSame("success", $properties["status"] ?? null);
-            $this->assertSame(3, $properties["resource_count"] ?? null);
-            $this->assertArrayNotHasKey("admin_email", $properties);
-            $this->assertArrayNotHasKey("api_token", $properties);
-            $this->assertArrayNotHasKey("empty_field", $properties);
+            $this->assertSame('success', $properties['status'] ?? null);
+            $this->assertSame(3, $properties['resource_count'] ?? null);
+            $this->assertArrayNotHasKey('admin_email', $properties);
+            $this->assertArrayNotHasKey('api_token', $properties);
+            $this->assertArrayNotHasKey('empty_field', $properties);
 
             return true;
         });
