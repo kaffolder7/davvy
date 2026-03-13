@@ -95,6 +95,41 @@ export function trackPageView(pathname) {
   trackClientEvent("ui.page_view", {
     path,
   });
+
+  const featureKey = featureKeyFromPath(path);
+  if (featureKey) {
+    trackClientEvent("ui.feature_view", {
+      feature_key: featureKey,
+      path,
+    });
+  }
+}
+
+/**
+ * Tracks a named UI feature interaction event.
+ *
+ * @param {string} featureKey
+ * @param {string} [action]
+ * @param {Record<string, unknown>} [properties]
+ * @returns {void}
+ */
+export function trackFeatureInteraction(
+  featureKey,
+  action = "interact",
+  properties = {},
+) {
+  const normalizedFeatureKey = normalizeFeatureKey(featureKey);
+  if (!normalizedFeatureKey) {
+    return;
+  }
+
+  const normalizedAction = normalizeFeatureAction(action);
+
+  trackClientEvent("ui.feature_interaction", {
+    feature_key: normalizedFeatureKey,
+    action: normalizedAction,
+    ...properties,
+  });
 }
 
 /**
@@ -308,6 +343,88 @@ function sanitizePath(inputPath) {
 
   const rebuilt = segments.join("/");
   return rebuilt.startsWith("/") ? rebuilt : `/${rebuilt}`;
+}
+
+/**
+ * Maps a sanitized route path to a stable feature key.
+ *
+ * @param {string} path
+ * @returns {string|null}
+ */
+function featureKeyFromPath(path) {
+  const normalizedPath = String(path || "/").split("?")[0].split("#")[0];
+
+  if (normalizedPath === "/") {
+    return "dashboard";
+  }
+
+  if (normalizedPath.startsWith("/admin")) {
+    return "admin_control_center";
+  }
+
+  if (normalizedPath.startsWith("/contacts")) {
+    return "contacts";
+  }
+
+  if (normalizedPath.startsWith("/review-queue")) {
+    return "review_queue";
+  }
+
+  if (normalizedPath.startsWith("/profile")) {
+    return "profile_security";
+  }
+
+  if (normalizedPath.startsWith("/login")) {
+    return "auth_login";
+  }
+
+  if (normalizedPath.startsWith("/register")) {
+    return "auth_register";
+  }
+
+  if (normalizedPath.startsWith("/verify-email")) {
+    return "auth_verify_email";
+  }
+
+  if (normalizedPath.startsWith("/invite")) {
+    return "auth_invite_accept";
+  }
+
+  return null;
+}
+
+/**
+ * Returns a safe feature key for analytics transport.
+ *
+ * @param {unknown} featureKey
+ * @returns {string|null}
+ */
+function normalizeFeatureKey(featureKey) {
+  const value = String(featureKey ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_.-]/g, "_")
+    .replace(/_+/g, "_")
+    .slice(0, 64);
+
+  return value === "" ? null : value;
+}
+
+/**
+ * Returns a safe feature action for analytics transport.
+ *
+ * @param {unknown} action
+ * @returns {string}
+ */
+function normalizeFeatureAction(action) {
+  const value = String(action ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_.-]/g, "_")
+    .replace(/_+/g, "_")
+    .slice(0, 32);
+
+  return value === "" ? "interact" : value;
 }
 
 /**

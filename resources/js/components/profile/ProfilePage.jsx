@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { trackFeatureInteraction } from "../../lib/analytics";
 
 /**
  * Renders the Profile Page.
@@ -141,6 +142,10 @@ export default function ProfilePage({
   };
 
   const startTwoFactorSetup = async () => {
+    trackFeatureInteraction("two_factor_auth", "setup_start", {
+      surface: "profile",
+    });
+
     setSecurityBusy(true);
     setSecurityError("");
     setSecuritySuccess("");
@@ -161,6 +166,10 @@ export default function ProfilePage({
 
   const enableTwoFactor = async (event) => {
     event.preventDefault();
+    trackFeatureInteraction("two_factor_auth", "enable_submit", {
+      surface: "profile",
+    });
+
     setSecurityBusy(true);
     setSecurityError("");
     setSecuritySuccess("");
@@ -190,6 +199,10 @@ export default function ProfilePage({
       return;
     }
 
+    trackFeatureInteraction("two_factor_auth", "disable_submit", {
+      surface: "profile",
+    });
+
     setSecurityBusy(true);
     setSecurityError("");
     setSecuritySuccess("");
@@ -214,6 +227,10 @@ export default function ProfilePage({
   };
 
   const regenerateBackupCodes = async () => {
+    trackFeatureInteraction("two_factor_auth", "backup_codes_regenerate", {
+      surface: "profile",
+    });
+
     setSecurityBusy(true);
     setSecurityError("");
     setSecuritySuccess("");
@@ -234,6 +251,10 @@ export default function ProfilePage({
 
   const createAppPassword = async (event) => {
     event.preventDefault();
+    trackFeatureInteraction("dav_app_passwords", "create_submit", {
+      surface: "profile",
+    });
+
     setSecurityBusy(true);
     setSecurityError("");
     setSecuritySuccess("");
@@ -256,6 +277,10 @@ export default function ProfilePage({
   };
 
   const revokeAppPassword = async (appPasswordId) => {
+    trackFeatureInteraction("dav_app_passwords", "revoke_submit", {
+      surface: "profile",
+    });
+
     setSecurityBusy(true);
     setSecurityError("");
     setSecuritySuccess("");

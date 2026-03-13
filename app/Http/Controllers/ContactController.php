@@ -55,7 +55,7 @@ class ContactController extends Controller
         $this->analytics->track('contacts.created', [
             'source' => 'web',
             'status' => 'success',
-            'address_book_count' => count($addressBookIds),
+            'book_count' => count($addressBookIds),
         ], $request->user());
 
         return response()->json($this->serializeContact($contact), 201);
@@ -104,7 +104,7 @@ class ContactController extends Controller
         $this->analytics->track('contacts.updated', [
             'source' => 'web',
             'status' => 'success',
-            'address_book_count' => count($addressBookIds),
+            'book_count' => count($addressBookIds),
         ], $request->user());
 
         return response()->json($this->serializeContact($updated));

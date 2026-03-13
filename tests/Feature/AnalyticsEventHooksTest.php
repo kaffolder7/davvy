@@ -55,7 +55,7 @@ class AnalyticsEventHooksTest extends TestCase
         $this->assertAnalyticsEventSent('contacts.created', function (array $properties): void {
             $this->assertSame('web', $properties['source'] ?? null);
             $this->assertSame('success', $properties['status'] ?? null);
-            $this->assertSame(1, $properties['address_book_count'] ?? null);
+            $this->assertSame(1, $properties['book_count'] ?? null);
         });
     }
 

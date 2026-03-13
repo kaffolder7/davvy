@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   __resetAnalyticsForTests,
   configureAnalytics,
+  trackFeatureInteraction,
   trackClientEvent,
   trackPageView,
 } from "./analytics";
@@ -77,9 +78,34 @@ describe("analytics", () => {
     trackPageView("/contacts/123?foo=bar");
     trackPageView("/contacts/123");
 
-    expect(window.op).toHaveBeenCalledTimes(1);
+    expect(window.op).toHaveBeenCalledTimes(2);
     expect(window.op).toHaveBeenCalledWith("track", "ui.page_view", {
       path: "/contacts/:id",
+    });
+    expect(window.op).toHaveBeenCalledWith("track", "ui.feature_view", {
+      feature_key: "contacts",
+      path: "/contacts/:id",
+    });
+  });
+
+  it("tracks explicit feature interaction events with normalized properties", () => {
+    configureAnalytics({
+      enabled: true,
+      clientId: "client_123",
+      apiUrl: "https://analytics.example.test",
+      scriptUrl: "https://analytics.example.test/op1.js",
+      profileId: null,
+    });
+    window.op.mockClear();
+
+    trackFeatureInteraction("Backups", "Open Restore", {
+      panel: "admin",
+    });
+
+    expect(window.op).toHaveBeenCalledWith("track", "ui.feature_interaction", {
+      feature_key: "backups",
+      action: "open_restore",
+      panel: "admin",
     });
   });
 });

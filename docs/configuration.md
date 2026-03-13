@@ -143,8 +143,8 @@ OpenPanel event taxonomy:
 - `backups.scheduled_run`: scheduler-invoked backup run result (`status`, `code`, `artifact_count`, `tier_count`)
 - `backups.prune`: retention prune outcome (`deleted_count`, `local_deleted_count`, `remote_deleted_count`)
 - `backups.restore`: restore result (`status`, `mode`, `dry_run`, `resource_count`)
-- `contacts.created`: web contact creation result (`source`, `status`, `address_book_count`)
-- `contacts.updated`: web contact update result (`source`, `status`, `address_book_count`)
+- `contacts.created`: web contact creation result (`source`, `status`, `book_count`)
+- `contacts.updated`: web contact update result (`source`, `status`, `book_count`)
 - `contacts.deleted`: web contact deletion result (`source`, `status`)
 - `contacts.change_request_submitted`: moderation queue submit result (`source`, `operation`, `request_count`)
 - `contacts.change_request_reviewed`: moderation review result (`decision`, `operation`, `status`)
@@ -154,6 +154,8 @@ OpenPanel event taxonomy:
 - `sharing.revoked`: share revoke result (`resource_type`, `permission`)
 - `ui.session_started`: browser session bootstrap marker (`path`)
 - `ui.page_view`: SPA route view (`path`)
+- `ui.feature_view`: route-derived feature view marker (`feature_key`, `path`)
+- `ui.feature_interaction`: explicit client feature interaction marker (`feature_key`, `action`, additional non-PII flags)
 - `ui.api_error`: client-side API failure marker (`route`, `method`, `status_family`)
 
 ## Feature Flags in Admin UI

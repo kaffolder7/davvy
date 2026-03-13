@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Toast from "../common/Toast";
+import { trackFeatureInteraction } from "../../lib/analytics";
 
 /**
  * Renders the Admin Page.
@@ -178,6 +179,10 @@ export default function AdminPage({
   };
 
   const openBackupConfigDrawer = () => {
+    trackFeatureInteraction("backups", "open_config", {
+      surface: "admin",
+    });
+
     if (backupConfigOpenFrameRef.current !== null) {
       window.cancelAnimationFrame(backupConfigOpenFrameRef.current);
       backupConfigOpenFrameRef.current = null;
@@ -195,6 +200,10 @@ export default function AdminPage({
   };
 
   const openBackupRestoreDrawer = () => {
+    trackFeatureInteraction("backups", "open_restore", {
+      surface: "admin",
+    });
+
     if (backupRestoreOpenFrameRef.current !== null) {
       window.cancelAnimationFrame(backupRestoreOpenFrameRef.current);
       backupRestoreOpenFrameRef.current = null;
@@ -993,6 +1002,10 @@ export default function AdminPage({
       return;
     }
 
+    trackFeatureInteraction("backups", "run_now_click", {
+      surface: "admin",
+    });
+
     if (!state.backupLocalEnabled && !state.backupS3Enabled) {
       setState((prev) => ({
         ...prev,
@@ -1061,6 +1074,12 @@ export default function AdminPage({
     if (!window.confirm(confirmMessage)) {
       return;
     }
+
+    trackFeatureInteraction("backups", "restore_run", {
+      surface: "admin",
+      mode: backupRestoreMode,
+      dry_run: backupRestoreDryRun,
+    });
 
     setBackupRestoring(true);
     setBackupRestoreResult(null);
