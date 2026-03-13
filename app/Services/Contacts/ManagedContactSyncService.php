@@ -55,7 +55,6 @@ class ManagedContactSyncService
         DB::transaction(function () use (
             $addressBook,
             $card,
-            $actor,
             $uid,
             $payload,
             $fullName,
