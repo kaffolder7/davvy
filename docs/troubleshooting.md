@@ -48,13 +48,23 @@ Examples:
 docker compose exec app php artisan app:user:approve you@example.com --force
 
 # DDEV: approve only
-ddev php artisan app:user:approve you@example.com --approve --force
+ddev artisan app:user:approve you@example.com --approve --force
 ```
 
 Notes:
 - `identifier` accepts either exact email address or numeric user ID.
 - If no action flags are provided, the command applies both `--approve` and `--verify-email`.
 - Omit `--force` to require an interactive confirmation prompt.
+
+Emergency rollback (revoke access quickly):
+
+```bash
+# Revoke approval only (keeps email_verified_at)
+docker compose exec app php artisan app:user:unapprove you@example.com --force
+
+# Revoke approval and clear verification timestamp
+docker compose exec app php artisan app:user:unapprove you@example.com --unverify-email --force
+```
 
 ## Sharing and Permissions
 

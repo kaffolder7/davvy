@@ -102,6 +102,84 @@ Artisan::command(
     },
 )->purpose('Approve and/or verify a user account from CLI');
 
+Artisan::command(
+    'app:user:unapprove
+    {identifier : User email address or numeric user ID}
+    {--unverify-email : Clear the account email verification timestamp}
+    {--force : Apply changes without confirmation}',
+    function (): int {
+        $identifier = trim((string) $this->argument('identifier'));
+        $unverifyEmail = (bool) $this->option('unverify-email');
+        $force = (bool) $this->option('force');
+
+        if ($identifier === '') {
+            $this->error('Identifier cannot be empty.');
+
+            return 1;
+        }
+
+        $user = preg_match('/^\d+$/', $identifier) === 1
+            ? User::query()->whereKey((int) $identifier)->first()
+            : User::query()->where('email', Str::lower($identifier))->first();
+
+        if (! $user) {
+            $this->error('No user found for identifier: '.$identifier);
+
+            return 1;
+        }
+
+        $actions = ['unapprove'];
+        if ($unverifyEmail) {
+            $actions[] = 'unverify-email';
+        }
+
+        $this->line(sprintf(
+            'Target user #%d %s (%s)',
+            (int) $user->id,
+            (string) $user->email,
+            implode(', ', $actions),
+        ));
+
+        if (! $force) {
+            $confirmed = $this->confirm('Apply these account state updates?', false);
+            if (! $confirmed) {
+                $this->warn('Aborted.');
+
+                return 1;
+            }
+        }
+
+        $changed = false;
+
+        if ($user->is_approved || $user->approved_at !== null || $user->approved_by !== null) {
+            $user->is_approved = false;
+            $user->approved_at = null;
+            $user->approved_by = null;
+            $changed = true;
+        }
+
+        if ($unverifyEmail && $user->email_verified_at !== null) {
+            $user->email_verified_at = null;
+            $changed = true;
+        }
+
+        if ($changed) {
+            $user->save();
+            $user->refresh();
+            $this->info('User updated successfully.');
+        } else {
+            $this->line('No changes were needed.');
+        }
+
+        $this->line('Current state:');
+        $this->line('  is_approved='.($user->is_approved ? 'true' : 'false'));
+        $this->line('  approved_at='.($user->approved_at?->toISOString() ?? 'null'));
+        $this->line('  email_verified_at='.($user->email_verified_at?->toISOString() ?? 'null'));
+
+        return 0;
+    },
+)->purpose('Revoke user approval and optionally clear email verification from CLI');
+
 Artisan::command('app:mail:preview-onboarding {--output= : Output directory for preview files}', function (): int {
     $outputDirectory = trim((string) $this->option('output'));
     if ($outputDirectory === '') {
