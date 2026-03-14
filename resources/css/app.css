@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/*@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&display=swap');*/
+/*@import url('https://api.fonts.coollabs.io/css2?family=Space+Grotesk:wght@400..700&display=swap');*/
+/*@import url(https://fonts.bunny.net/css?family=space-grotesk:400,500,700);*/
 @font-face {
   font-family: "Space Grotesk";
   font-style: normal;
