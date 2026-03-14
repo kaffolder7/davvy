@@ -63,13 +63,31 @@ function RelatedNameEditorHarness({ contactOptions }) {
 }
 
 describe("RelatedNameEditor", () => {
-  it("keeps row controls above fields on mobile layouts", () => {
+  it("places mobile controls before fields and keeps desktop controls after fields", () => {
     render(<RelatedNameEditorHarness contactOptions={[]} />);
 
-    const controlsWrapper = screen.getByText("Row controls").parentElement;
-    expect(controlsWrapper).not.toBeNull();
-    expect(controlsWrapper).toHaveClass("order-first");
-    expect(controlsWrapper).toHaveClass("md:order-none");
+    const mobileControls = document.querySelector("[data-row-controls-mobile]");
+    const desktopControls = document.querySelector("[data-row-controls-desktop]");
+    const typeSelect = screen.getByRole("combobox");
+    const nameInput = screen.getByPlaceholderText("Name");
+
+    expect(mobileControls).not.toBeNull();
+    expect(desktopControls).not.toBeNull();
+    expect(mobileControls).toHaveClass("md:hidden");
+    expect(desktopControls).toHaveClass("hidden");
+    expect(desktopControls).toHaveClass("md:block");
+    expect(
+      mobileControls.compareDocumentPosition(typeSelect) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      mobileControls.compareDocumentPosition(nameInput) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      nameInput.compareDocumentPosition(desktopControls) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("matches contacts by nickname and applies full-name selection", async () => {

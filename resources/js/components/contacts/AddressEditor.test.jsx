@@ -54,12 +54,30 @@ function AddressEditorHarness() {
 }
 
 describe("AddressEditor", () => {
-  it("keeps row controls above fields on mobile layouts", () => {
+  it("places mobile controls before fields and keeps desktop controls after fields", () => {
     render(<AddressEditorHarness />);
 
-    const controlsWrapper = screen.getByText("Row controls").parentElement;
-    expect(controlsWrapper).not.toBeNull();
-    expect(controlsWrapper).toHaveClass("order-first");
-    expect(controlsWrapper).toHaveClass("md:order-none");
+    const mobileControls = document.querySelector("[data-row-controls-mobile]");
+    const desktopControls = document.querySelector("[data-row-controls-desktop]");
+    const typeSelect = screen.getByRole("combobox");
+    const streetInput = screen.getByPlaceholderText("Street");
+
+    expect(mobileControls).not.toBeNull();
+    expect(desktopControls).not.toBeNull();
+    expect(mobileControls).toHaveClass("md:hidden");
+    expect(desktopControls).toHaveClass("hidden");
+    expect(desktopControls).toHaveClass("md:block");
+    expect(
+      mobileControls.compareDocumentPosition(typeSelect) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      mobileControls.compareDocumentPosition(streetInput) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      streetInput.compareDocumentPosition(desktopControls) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });

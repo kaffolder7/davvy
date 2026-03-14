@@ -119,6 +119,21 @@ export default function LabeledValueEditor({
                 } ${rowIsDragSource ? "opacity-70" : ""}`}
               >
                 <div className="grid items-center gap-2 md:grid-cols-[12rem_1fr_auto]">
+                  <div className="self-center md:hidden" data-row-controls-mobile>
+                    <RowReorderControls
+                      rowLabel={title}
+                      rowGroup={rowGroup}
+                      rowIndex={index}
+                      rowCount={safeRows.length}
+                      onDragStart={reorder.handleDragStart}
+                      onDragMove={reorder.handleDragMove}
+                      onDragEnd={reorder.completeDrag}
+                      onDragCancel={reorder.completeDrag}
+                      onMoveUp={reorder.moveRowUp}
+                      onMoveDown={reorder.moveRowDown}
+                      onRemove={removeRow}
+                    />
+                  </div>
                   <select
                     className="input"
                     value={resolveLabelSelectValue(
@@ -142,7 +157,10 @@ export default function LabeledValueEditor({
                     }
                     placeholder={valuePlaceholder}
                   />
-                  <div className="order-first self-center md:order-none">
+                  <div
+                    className="hidden self-center md:block"
+                    data-row-controls-desktop
+                  >
                     <RowReorderControls
                       rowLabel={title}
                       rowGroup={rowGroup}
