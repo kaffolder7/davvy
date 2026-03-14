@@ -109,9 +109,12 @@ export default function RelatedNameEditor({
       return safeContactOptions;
     }
 
-    return safeContactOptions.filter((contact) =>
-      contact.display_name.toLowerCase().includes(query),
-    );
+    return safeContactOptions.filter((contact) => {
+      const displayName = String(contact?.display_name ?? "").toLowerCase();
+      const nickname = String(contact?.nickname ?? "").toLowerCase();
+
+      return displayName.includes(query) || nickname.includes(query);
+    });
   };
 
   const selectContactOption = (index, option) => {

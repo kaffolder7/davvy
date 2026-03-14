@@ -78,6 +78,7 @@ export default function useContactsPageState({
       .map((contact) => ({
         id: normalizePositiveInt(contact?.id),
         display_name: String(contact?.display_name ?? "").trim(),
+        nickname: String(contact?.nickname ?? "").trim(),
       }))
       .filter(
         (contact) =>
