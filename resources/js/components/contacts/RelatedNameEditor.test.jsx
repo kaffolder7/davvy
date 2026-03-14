@@ -68,7 +68,7 @@ describe("RelatedNameEditor", () => {
 
     const mobileControls = document.querySelector("[data-row-controls-mobile]");
     const desktopControls = document.querySelector("[data-row-controls-desktop]");
-    const typeSelect = screen.getByRole("combobox");
+    const typeSelect = screen.getByDisplayValue("Other");
     const nameInput = screen.getByPlaceholderText("Name");
 
     expect(mobileControls).not.toBeNull();
