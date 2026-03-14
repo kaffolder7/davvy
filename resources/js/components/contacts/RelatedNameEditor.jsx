@@ -290,7 +290,7 @@ export default function RelatedNameEditor({
                       </div>
                     ) : null}
                   </div>
-                  <div className="self-center">
+                  <div className="order-first self-center md:order-none">
                     <RowReorderControls
                       rowLabel="Related Name"
                       rowGroup={rowGroup}

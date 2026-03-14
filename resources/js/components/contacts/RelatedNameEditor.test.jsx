@@ -37,7 +37,7 @@ function useRowReorderStub() {
 }
 
 function RowReorderControlsStub() {
-  return null;
+  return <div>Row controls</div>;
 }
 
 function RelatedNameEditorHarness({ contactOptions }) {
@@ -63,6 +63,15 @@ function RelatedNameEditorHarness({ contactOptions }) {
 }
 
 describe("RelatedNameEditor", () => {
+  it("keeps row controls above fields on mobile layouts", () => {
+    render(<RelatedNameEditorHarness contactOptions={[]} />);
+
+    const controlsWrapper = screen.getByText("Row controls").parentElement;
+    expect(controlsWrapper).not.toBeNull();
+    expect(controlsWrapper).toHaveClass("order-first");
+    expect(controlsWrapper).toHaveClass("md:order-none");
+  });
+
   it("matches contacts by nickname and applies full-name selection", async () => {
     const user = userEvent.setup();
 
