@@ -127,7 +127,7 @@ export default function AddressEditor({
                     }
                     placeholder="Street"
                   />
-                  <div className="self-center">
+                  <div className="order-first self-center md:order-none">
                     <RowReorderControls
                       rowLabel="Address"
                       rowGroup={rowGroup}

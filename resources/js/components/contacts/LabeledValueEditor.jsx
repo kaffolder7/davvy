@@ -142,7 +142,7 @@ export default function LabeledValueEditor({
                     }
                     placeholder={valuePlaceholder}
                   />
-                  <div className="self-center">
+                  <div className="order-first self-center md:order-none">
                     <RowReorderControls
                       rowLabel={title}
                       rowGroup={rowGroup}
