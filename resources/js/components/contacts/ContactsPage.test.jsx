@@ -21,8 +21,22 @@ function FullPageStateStub({ label }) {
   return <p>{label}</p>;
 }
 
-function ContactsListSidebarStub({ contacts }) {
-  return <p>Sidebar contacts: {contacts.length}</p>;
+function ContactsListSidebarStub({
+  contacts,
+  onStartNewContact,
+  onSelectContact,
+}) {
+  return (
+    <div>
+      <p>Sidebar contacts: {contacts.length}</p>
+      <button type="button" onClick={onStartNewContact}>
+        Stub New Contact
+      </button>
+      <button type="button" onClick={() => onSelectContact(contacts[0])}>
+        Stub Select Contact
+      </button>
+    </div>
+  );
 }
 
 function ContactEditorPanelStub({ saveContact }) {
@@ -229,6 +243,39 @@ describe("ContactsPage", () => {
     ).toBeInTheDocument();
     expect(props.api.post).not.toHaveBeenCalled();
     expect(props.api.patch).not.toHaveBeenCalled();
+  });
+
+  it("supports switching mobile panels and auto-opens editor from sidebar actions", async () => {
+    const user = userEvent.setup();
+    const props = buildProps();
+
+    render(
+      <MemoryRouter>
+        <ContactsPage {...props} />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(props.api.get).toHaveBeenCalledTimes(1));
+
+    const contactsTab = screen.getByRole("tab", { name: "Contacts" });
+    expect(contactsTab).toHaveAttribute("aria-selected", "true");
+
+    await user.click(screen.getByRole("button", { name: "Stub New Contact" }));
+    expect(screen.getByRole("tab", { name: "New/Edit" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+
+    await user.click(contactsTab);
+    expect(contactsTab).toHaveAttribute("aria-selected", "true");
+
+    await user.click(screen.getByRole("button", { name: "Stub Select Contact" }));
+    await waitFor(() =>
+      expect(screen.getByRole("tab", { name: "Edit" })).toHaveAttribute(
+        "aria-selected",
+        "true",
+      ),
+    );
   });
 
   it("refreshes auth and redirects when contact management is disabled", async () => {

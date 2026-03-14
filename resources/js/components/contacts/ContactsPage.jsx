@@ -50,6 +50,7 @@ export default function ContactsPage({
   Field,
 }) {
   const navigate = useNavigate();
+  const [mobilePanel, setMobilePanel] = React.useState("contacts");
   const {
     loading,
     submitting,
@@ -132,6 +133,14 @@ export default function ContactsPage({
     navigate,
   });
 
+  React.useEffect(() => {
+    if (selectedContactId) {
+      setMobilePanel("editor");
+    }
+  }, [selectedContactId]);
+
+  const editorPanelLabel = form.id ? "Edit" : "New/Edit";
+
   return (
     <AppShell auth={auth} theme={theme}>
       {queueStatusNotice ? (
@@ -168,70 +177,123 @@ export default function ContactsPage({
       {loading ? (
         <FullPageState label="Loading contacts..." compact />
       ) : (
-        <div className="mt-6 grid gap-6 lg:grid-cols-[18rem_1fr]">
-          <ContactsListSidebar
-            contacts={contacts}
-            filteredContacts={filteredContacts}
-            paginatedContacts={paginatedContacts}
-            addressBooks={addressBooks}
-            contactSearchTerm={contactSearchTerm}
-            onContactSearchTermChange={setContactSearchTerm}
-            contactAddressBookFilter={contactAddressBookFilter}
-            onContactAddressBookFilterChange={setContactAddressBookFilter}
-            selectedContactId={selectedContactId}
-            onSelectContact={selectContact}
-            onStartNewContact={startNewContact}
-            hasContactFilters={hasContactFilters}
-            onClearFilters={() => {
-              setContactSearchTerm("");
-              setContactAddressBookFilter("all");
-            }}
-            contactsPageSize={CONTACTS_PAGE_SIZE}
-            firstContactIndex={firstContactIndex}
-            lastContactIndex={lastContactIndex}
-            currentContactPage={currentContactPage}
-            totalContactPages={totalContactPages}
-            setContactsPage={setContactsPage}
-          />
+        <>
+          <div
+            className="mt-6 grid grid-cols-2 gap-1 rounded-2xl border border-app-edge bg-app-surface p-1 lg:hidden"
+            role="tablist"
+            aria-label="Contact mobile view"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mobilePanel === "contacts"}
+              className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                mobilePanel === "contacts"
+                  ? "bg-app-panel text-app-strong"
+                  : "text-app-muted hover:text-app-base"
+              }`}
+              onClick={() => setMobilePanel("contacts")}
+            >
+              Contacts
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mobilePanel === "editor"}
+              className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                mobilePanel === "editor"
+                  ? "bg-app-panel text-app-strong"
+                  : "text-app-muted hover:text-app-base"
+              }`}
+              onClick={() => setMobilePanel("editor")}
+            >
+              {editorPanelLabel}
+            </button>
+          </div>
 
-          <ContactEditorPanel
-            form={form}
-            submitting={submitting}
-            addressBooks={addressBooks}
-            selectedAddressBookCount={selectedAddressBookCount}
-            hasRequiredContactIdentity={hasRequiredContactIdentity}
-            saveContact={saveContact}
-            removeContact={removeContact}
-            openSections={openSections}
-            toggleSection={toggleSection}
-            isOptionalFieldVisible={isOptionalFieldVisible}
-            Field={Field}
-            updateFormField={updateFormField}
-            PRONOUN_OPTIONS={PRONOUN_OPTIONS}
-            showOptionalField={showOptionalField}
-            updateBirthdayField={updateBirthdayField}
-            DateEditor={DateEditor}
-            LabeledValueEditor={LabeledValueEditor}
-            AddressEditor={AddressEditor}
-            RelatedNameEditor={RelatedNameEditor}
-            labelOptions={labelOptions}
-            relatedNameOptions={relatedNameOptions}
-            setForm={setForm}
-            hiddenOptionalFields={hiddenOptionalFields}
-            fieldSearchTerm={fieldSearchTerm}
-            setFieldSearchTerm={setFieldSearchTerm}
-            fieldPickerOpen={fieldPickerOpen}
-            setFieldPickerOpen={setFieldPickerOpen}
-            addSelectedOptionalField={addSelectedOptionalField}
-            filteredHiddenOptionalFields={filteredHiddenOptionalFields}
-            fieldToAdd={fieldToAdd}
-            setFieldToAdd={setFieldToAdd}
-            visibleOptionalFields={visibleOptionalFields}
-            hideOptionalField={hideOptionalField}
-            OPTIONAL_CONTACT_FIELDS={OPTIONAL_CONTACT_FIELDS}
-            toggleAssignedAddressBook={toggleAssignedAddressBook}
-          />
-        </div>
+          <div className="mt-4 grid gap-6 lg:mt-6 lg:grid-cols-[18rem_1fr]">
+            <div
+              className={
+                mobilePanel === "contacts" ? "block lg:block" : "hidden lg:block"
+              }
+            >
+              <ContactsListSidebar
+                contacts={contacts}
+                filteredContacts={filteredContacts}
+                paginatedContacts={paginatedContacts}
+                addressBooks={addressBooks}
+                contactSearchTerm={contactSearchTerm}
+                onContactSearchTermChange={setContactSearchTerm}
+                contactAddressBookFilter={contactAddressBookFilter}
+                onContactAddressBookFilterChange={setContactAddressBookFilter}
+                selectedContactId={selectedContactId}
+                onSelectContact={(contact) => {
+                  selectContact(contact);
+                  setMobilePanel("editor");
+                }}
+                onStartNewContact={() => {
+                  startNewContact();
+                  setMobilePanel("editor");
+                }}
+                hasContactFilters={hasContactFilters}
+                onClearFilters={() => {
+                  setContactSearchTerm("");
+                  setContactAddressBookFilter("all");
+                }}
+                contactsPageSize={CONTACTS_PAGE_SIZE}
+                firstContactIndex={firstContactIndex}
+                lastContactIndex={lastContactIndex}
+                currentContactPage={currentContactPage}
+                totalContactPages={totalContactPages}
+                setContactsPage={setContactsPage}
+              />
+            </div>
+
+            <div
+              className={
+                mobilePanel === "editor" ? "block lg:block" : "hidden lg:block"
+              }
+            >
+              <ContactEditorPanel
+                form={form}
+                submitting={submitting}
+                addressBooks={addressBooks}
+                selectedAddressBookCount={selectedAddressBookCount}
+                hasRequiredContactIdentity={hasRequiredContactIdentity}
+                saveContact={saveContact}
+                removeContact={removeContact}
+                openSections={openSections}
+                toggleSection={toggleSection}
+                isOptionalFieldVisible={isOptionalFieldVisible}
+                Field={Field}
+                updateFormField={updateFormField}
+                PRONOUN_OPTIONS={PRONOUN_OPTIONS}
+                showOptionalField={showOptionalField}
+                updateBirthdayField={updateBirthdayField}
+                DateEditor={DateEditor}
+                LabeledValueEditor={LabeledValueEditor}
+                AddressEditor={AddressEditor}
+                RelatedNameEditor={RelatedNameEditor}
+                labelOptions={labelOptions}
+                relatedNameOptions={relatedNameOptions}
+                setForm={setForm}
+                hiddenOptionalFields={hiddenOptionalFields}
+                fieldSearchTerm={fieldSearchTerm}
+                setFieldSearchTerm={setFieldSearchTerm}
+                fieldPickerOpen={fieldPickerOpen}
+                setFieldPickerOpen={setFieldPickerOpen}
+                addSelectedOptionalField={addSelectedOptionalField}
+                filteredHiddenOptionalFields={filteredHiddenOptionalFields}
+                fieldToAdd={fieldToAdd}
+                setFieldToAdd={setFieldToAdd}
+                visibleOptionalFields={visibleOptionalFields}
+                hideOptionalField={hideOptionalField}
+                OPTIONAL_CONTACT_FIELDS={OPTIONAL_CONTACT_FIELDS}
+                toggleAssignedAddressBook={toggleAssignedAddressBook}
+              />
+            </div>
+          </div>
+        </>
       )}
 
       <ContactEditorHideFieldModal
