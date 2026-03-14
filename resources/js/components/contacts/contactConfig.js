@@ -7,4 +7,4 @@ export const PRONOUN_OPTIONS = [
   { value: "custom", label: "Custom..." },
 ];
 
-export const CONTACTS_PAGE_SIZE = 12;
+export const CONTACTS_PAGE_SIZE = 8;
