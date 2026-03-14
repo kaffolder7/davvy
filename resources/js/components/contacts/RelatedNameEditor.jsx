@@ -273,7 +273,7 @@ export default function RelatedNameEditor({
                     {isPickerOpen ? (
                       <div
                         id={optionListId}
-                        className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-app-edge bg-app-surface p-1 shadow-lg backdrop-blur"
+                        className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-app-edge bg-app-surface p-1 shadow-lg backdrop-blur"
                       >
                         {options.length === 0 ? (
                           <p className="px-2 py-2 text-sm text-app-faint">

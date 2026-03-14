@@ -33,6 +33,9 @@ describe("ContactEditorOptionalFieldsSection", () => {
     await user.click(input);
     await user.type(input, "n");
 
+    expect(
+      document.getElementById("optional-field-combobox-list"),
+    ).toHaveClass("z-30");
     expect(props.setFieldPickerOpen).toHaveBeenCalledWith(true);
     expect(props.setFieldSearchTerm).toHaveBeenCalledWith("n");
 

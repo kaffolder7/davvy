@@ -106,6 +106,9 @@ describe("RelatedNameEditor", () => {
     await user.click(input);
     await user.type(input, "ACE");
 
+    expect(
+      document.getElementById("related-name-combobox-list-0"),
+    ).toHaveClass("z-30");
     expect(screen.getByRole("button", { name: "Alex Doe" })).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Taylor Young" }),
